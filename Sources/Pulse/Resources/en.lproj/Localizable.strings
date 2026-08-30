@@ -178,3 +178,4 @@
 "Not yet" = "Not yet";
 "That key was refused. Check it in Settings." = "That key was refused. Check it in Settings.";
 "From opencode.ai, kept in your keychain." = "From opencode.ai, kept in your keychain.";
+"Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code's saved login expired. Use Claude Code, or connect the status line.";

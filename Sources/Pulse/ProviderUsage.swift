@@ -92,6 +92,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case signInRequired
         /// No usable Claude Code login, and nothing captured either.
         case claudeSignInRequired
+        /// Signed in, but the login Claude Code saved has gone stale and
+        /// nothing here can renew it.
+        case claudeLoginExpired
         /// The `codex` command isn't installed, or isn't where we looked.
         case codexNotInstalled
         /// Found `codex`, but `codex app-server` wouldn't start.
@@ -115,6 +118,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .noLimitsReported: .localized("No limits reported.")
             case .signInRequired: .localized("Sign in to Codex to see usage.")
             case .claudeSignInRequired: .localized("Sign in to Claude Code to see usage.")
+            case .claudeLoginExpired: .localized("Claude Code's saved login expired. Use Claude Code, or connect the status line.")
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")

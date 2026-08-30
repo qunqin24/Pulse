@@ -178,3 +178,4 @@
 "Not yet" = "尚未读取";
 "That key was refused. Check it in Settings." = "这个 key 被拒绝了，去设置里检查一下。";
 "From opencode.ai, kept in your keychain." = "在 opencode.ai 获取，存在你的钥匙串里。";
+"Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code 存的登录已过期。用一下 Claude Code，或在设置里连接状态栏。";

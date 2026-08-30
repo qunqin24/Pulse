@@ -39,7 +39,7 @@ struct ClaudeCodeUsageService: Sendable {
             // Pinned to the status line, so a missing reading is reported as
             // such rather than quietly answered from somewhere else.
             return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem())
+                ?? .unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: loadAccessToken() != nil))
 
         case .endpoint:
             guard let token = loadAccessToken() else {
@@ -47,12 +47,16 @@ struct ClaudeCodeUsageService: Sendable {
             }
             switch await fetchOverHTTP(token: token) {
             case .success(let usage): return usage
-            case .needsFreshCredentials: return .unavailable(.claudeCode, reason: .claudeSignInRequired)
+            // A token was found and refused, which is not the same thing as
+            // never having signed in.
+            case .needsFreshCredentials: return .unavailable(.claudeCode, reason: .claudeLoginExpired)
             case .failed(let reason): return .unavailable(.claudeCode, reason: reason)
             }
 
         case .automatic:
+            var hadCredentials = false
             if let token = loadAccessToken() {
+                hadCredentials = true
                 switch await fetchOverHTTP(token: token) {
                 case .success(let usage):
                     return usage
@@ -67,7 +71,7 @@ struct ClaudeCodeUsageService: Sendable {
             }
 
             return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem())
+                ?? .unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: hadCredentials))
         }
     }
 
@@ -300,8 +304,15 @@ struct ClaudeCodeUsageService: Sendable {
         )
     }
 
-    private func capturedUsageProblem() -> ProviderUsage.Unavailability {
-        StatusLineHook.isInstalled ? .awaitingResponse : .claudeSignInRequired
+    /// Why there is nothing to show, told apart properly.
+    ///
+    /// "Sign in to Claude Code" is wrong for someone who *is* signed in and
+    /// whose saved token merely went stale — which is the common case, since it
+    /// expires in hours and only Claude Code itself renews it. Saying that to
+    /// them sends them to re-authenticate something that isn't broken.
+    private func capturedUsageProblem(hadCredentials: Bool) -> ProviderUsage.Unavailability {
+        if StatusLineHook.isInstalled { return .awaitingResponse }
+        return hadCredentials ? .claudeLoginExpired : .claudeSignInRequired
     }
 
     /// The windows Claude Code hands to the status line. Each can be absent on
