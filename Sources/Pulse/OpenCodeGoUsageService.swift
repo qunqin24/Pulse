@@ -88,16 +88,19 @@ struct OpenCodeGoUsageService: Sendable {
         guard let usage = reply.usage else { return [] }
 
         return [
-            window(usage.rolling, id: "rolling", kind: .rolling, seconds: 5 * 3_600),
+            window(usage.rolling, id: "rolling", kind: .fiveHour, seconds: 5 * 3_600),
             window(usage.weekly, id: "weekly", kind: .weekly, seconds: 7 * 86_400),
             window(usage.monthly, id: "monthly", kind: .monthly, seconds: 30 * 86_400),
         ].compactMap { $0 }
     }
 
-    /// `seconds` orders the rows and nothing else. OpenCode names its windows
-    /// rather than timing them — it reports when each one resets, which is what
-    /// the card shows, and never how long it runs. So these are the nominal
-    /// lengths the names imply, used for sorting, never displayed.
+    /// The reply calls the short window "rolling" and never says how long it
+    /// runs, but it is the five-hour one — measured, the reset it reports lands
+    /// five hours out. So it is named as such rather than by the key it arrives
+    /// under; the key stays the id, which is what a pinned window is matched on.
+    ///
+    /// `seconds` orders the rows. Only the reset stamp is ever displayed, so
+    /// for weekly and monthly these are the nominal lengths their names imply.
     private static func window(
         _ reported: Reply.Window?,
         id: String,

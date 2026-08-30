@@ -16,9 +16,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case fiveHour
         case weekly
         case spend
-        /// A window the provider names rather than times — OpenCode Go's
-        /// "rolling" allowance, which it reports a reset for but no length.
-        case rolling
+        /// OpenCode Go's billing period. The others' longest window is a
+        /// week, so this one had nowhere to map.
         case monthly
         case other(seconds: Int)
     }
@@ -50,7 +49,6 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case .fiveHour: .localized("5-hour limit")
         case .weekly: .localized("Weekly limit")
         case .spend: .localized("Spend limit")
-        case .rolling: .localized("Rolling limit")
         case .monthly: .localized("Monthly limit")
         case .other(let seconds):
             seconds >= 86_400

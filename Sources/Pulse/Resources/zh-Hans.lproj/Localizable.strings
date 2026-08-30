@@ -174,5 +174,4 @@
 "API key" = "API key";
 "From opencode.ai. Kept in your keychain, sent only to opencode.ai." = "在 opencode.ai 获取。存在你的钥匙串里，只发往 opencode.ai。";
 "Save" = "保存";
-"Rolling limit" = "滚动额度";
-"Monthly limit" = "每月额度";
+"Monthly limit" = "每月限额";
