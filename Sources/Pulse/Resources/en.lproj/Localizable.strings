@@ -183,4 +183,4 @@
 "Order" = "Order";
 "Move %@" = "Move %@";
 "Add an API key in Settings." = "Add an API key in Settings.";
-"Kept in your keychain, never in preferences." = "Kept in your keychain, never in preferences.";
+"Stored encrypted on this Mac." = "Stored encrypted on this Mac.";

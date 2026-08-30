@@ -5,7 +5,7 @@ import Foundation
 /// The only provider here that Pulse needs a key for. Two places it can come
 /// from, in this order:
 ///
-/// 1. **A key pasted into Settings**, kept in the keychain. It wins, because
+/// 1. **A key pasted into Settings**, kept encrypted on this Mac. It wins, because
 ///    someone who typed a key meant that one to be used — otherwise a stale
 ///    key left behind by OpenCode would quietly override a deliberate choice.
 /// 2. **What OpenCode saved for itself** in `~/.local/share/opencode/auth.json`,
@@ -16,8 +16,8 @@ import Foundation
 /// own docs describe only the model endpoints — so it can change without
 /// notice, exactly like the two undocumented routes the CLIs use.
 struct OpenCodeGoUsageService: Sendable {
-    /// The key the user entered, read from the keychain by the caller so this
-    /// stays free of both UI and storage concerns.
+    /// The key the user entered, read by the caller so this stays free of
+    /// both UI and storage concerns.
     let enteredKey: String?
 
     private static let endpoint = URL(string: "https://opencode.ai/zen/go/v1/usage")!

@@ -19,8 +19,8 @@ struct SettingsView: View {
     @State private var ledgers: [Provider: UsageLedger] = [:]
     @State private var codexAccount: CodexAccountUsage?
     @State private var loadingHistory: Provider?
-    /// The key field's contents. Seeded from the keychain when the pane opens;
-    /// the keychain itself is not observable, so this mirrors it.
+    /// The key field's contents. Seeded from the store when the pane opens;
+    /// the store is a file, not something SwiftUI can observe.
     @State private var apiKey = ""
     @State private var savedKey = ""
 
@@ -526,7 +526,7 @@ struct SettingsView: View {
                 // see OpenCodeGoUsageService for why that way round.
                 SettingsRow(
                     String.localized("API key"),
-                    subtitle: String.localized("Kept in your keychain, never in preferences.")
+                    subtitle: String.localized("Stored encrypted on this Mac.")
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)

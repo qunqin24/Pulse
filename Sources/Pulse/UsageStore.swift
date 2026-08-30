@@ -35,13 +35,7 @@ final class UsageStore {
     /// nothing at all.
     private var observers: [(center: NotificationCenter, token: any NSObjectProtocol)] = []
 
-    /// Keys read from the keychain once per launch rather than once per pass.
-    ///
-    /// Reading is cheap when it is allowed, but every read is a chance for
-    /// macOS to ask — and the permission is bound to the exact binary, so a
-    /// rebuilt or updated Pulse is a different app to the keychain and gets
-    /// asked again. Once per refresh would mean that question every couple of
-    /// minutes, forever, to anyone who ever said no.
+    /// Keys read once per launch rather than once per refresh pass.
     private var apiKeys: [Provider: String] = [:]
 
     private var signals = AdaptiveRefresh.Signals()
@@ -148,8 +142,8 @@ final class UsageStore {
         let claudeSource = settings.source(for: .claudeCode)
         let previous = usage
 
-        // Read here rather than inside the services: the keychain is a
-        // main-actor concern and the fetches are not.
+        // Read here rather than inside the services, which stay free of
+        // storage concerns.
         let openCode = OpenCodeGoUsageService(enteredKey: apiKeys[.openCodeGo])
         let kimi = KimiCodeUsageService(enteredKey: apiKeys[.kimiCode])
         // Nothing is fetched for a provider that isn't on the rail: it would
@@ -226,10 +220,8 @@ final class UsageStore {
         let source = settings.source(for: provider)
         let previous = usage[provider]
         let startedAt = ContinuousClock.now
-        // Asked for by name — from a ring, or from that provider's own pane in
-        // Settings, which is reachable while it is switched off and so cannot
-        // rely on the launch-time cache. Reading the keychain on a deliberate
-        // press is a different thing from reading it on a timer.
+        // A provider's own pane in Settings is reachable while it is switched
+        // off, so its key will not be in the launch-time cache.
         let key = provider.usesAPIKey ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)

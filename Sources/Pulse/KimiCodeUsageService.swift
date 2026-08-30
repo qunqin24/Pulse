@@ -2,7 +2,7 @@ import Foundation
 
 /// Kimi Code's limits, from its own documented usage endpoint.
 ///
-/// Reached with a key the user pastes into Settings, kept in the keychain —
+/// Reached with a key the user pastes into Settings, kept encrypted on this Mac —
 /// the same arrangement as OpenCode Go, and for now without the fallback to a
 /// credential another tool stored.
 ///

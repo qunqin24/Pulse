@@ -1,27 +1,24 @@
+import CryptoKit
 import Foundation
-import Security
+import IOKit
 
-/// Where a key typed into Settings is kept.
+/// Where a key typed into Settings is kept: encrypted, in Pulse's own folder.
 ///
-/// The keychain, not `UserDefaults`. Preferences are a plain plist in the
-/// user's Library that any process running as them can read, and every backup
-/// and sync mechanism copies it around; a credential does not belong there
-/// however convenient the API is. This is the only secret Pulse ever holds —
-/// the other providers' logins stay where their own tools put them, and Pulse
-/// only reads those.
+/// One file, `keys.dat`, holding AES-GCM boxes keyed by provider. The file is
+/// owner-only, and the key that opens it is derived from this Mac rather than
+/// stored anywhere, so a copy of the file on its own — in a backup, a synced
+/// folder, a shared screen — opens nowhere.
 enum APIKeyStore {
-    private static let service = "Pulse API keys"
+    private static var file: URL {
+        PulseStorage.directory.appending(path: "keys.dat")
+    }
 
     static func key(for provider: Provider) -> String? {
-        var query = base(provider)
-        query[kSecReturnData as String] = true
-        query[kSecMatchLimit as String] = kSecMatchLimitOne
-
-        var item: CFTypeRef?
         guard
-            SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-            let data = item as? Data,
-            let key = String(data: data, encoding: .utf8),
+            let stored = load()[provider.rawValue],
+            let box = try? AES.GCM.SealedBox(combined: stored),
+            let opened = try? AES.GCM.open(box, using: secret()),
+            let key = String(data: opened, encoding: .utf8),
             !key.isEmpty
         else { return nil }
 
@@ -31,28 +28,73 @@ enum APIKeyStore {
     /// Stores a key, or removes it when the field is cleared.
     @discardableResult
     static func setKey(_ key: String?, for provider: Provider) -> Bool {
+        var keys = load()
         let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Deleting first rather than updating: an update has to know whether
-        // there was anything there, and this has to work either way.
-        SecItemDelete(base(provider) as CFDictionary)
+        if let trimmed, !trimmed.isEmpty {
+            guard let sealed = try? AES.GCM.seal(Data(trimmed.utf8), using: secret()).combined else {
+                return false
+            }
+            keys[provider.rawValue] = sealed
+        } else {
+            keys[provider.rawValue] = nil
+        }
 
-        guard let trimmed, !trimmed.isEmpty else { return true }
-
-        var item = base(provider)
-        item[kSecValueData as String] = Data(trimmed.utf8)
-        // Available without unlocking the keychain interactively, since the
-        // refresh loop runs unattended; still never leaves this Mac.
-        item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
-
-        return SecItemAdd(item as CFDictionary, nil) == errSecSuccess
+        return save(keys)
     }
 
-    private static func base(_ provider: Provider) -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: provider.rawValue,
-        ]
+    // MARK: - The file
+
+    private static func load() -> [String: Data] {
+        guard
+            let data = try? Data(contentsOf: file),
+            let keys = try? JSONDecoder().decode([String: Data].self, from: data)
+        else { return [:] }
+
+        return keys
+    }
+
+    private static func save(_ keys: [String: Data]) -> Bool {
+        PulseStorage.prepare()
+
+        guard let data = try? JSONEncoder().encode(keys) else { return false }
+        guard (try? data.write(to: file, options: .atomic)) != nil else { return false }
+
+        // Written after the file exists, and again on every save: an atomic
+        // write replaces the file, and the replacement does not inherit it.
+        try? FileManager.default.setAttributes(
+            [.posixPermissions: 0o600],
+            ofItemAtPath: file.path
+        )
+        return true
+    }
+
+    // MARK: - The secret
+
+    /// Derived from this Mac's hardware identifier, so the same file on
+    /// another machine yields nothing.
+    private static func secret() -> SymmetricKey {
+        var material = Data("Pulse api keys".utf8)
+        if let hardware = hardwareIdentifier() {
+            material.append(Data(hardware.utf8))
+        }
+        return SymmetricKey(data: SHA256.hash(data: material))
+    }
+
+    private static func hardwareIdentifier() -> String? {
+        let service = IOServiceGetMatchingService(
+            kIOMainPortDefault,
+            IOServiceMatching("IOPlatformExpertDevice")
+        )
+        guard service != 0 else { return nil }
+        defer { IOObjectRelease(service) }
+
+        let property = IORegistryEntryCreateCFProperty(
+            service,
+            kIOPlatformUUIDKey as CFString,
+            kCFAllocatorDefault,
+            0
+        )
+        return property?.takeRetainedValue() as? String
     }
 }
