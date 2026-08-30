@@ -156,13 +156,25 @@ jobs:
 
           Scripts/appcast.py "$VERSION" "build/Pulse-$VERSION.zip" "$URL"
 
-          if git diff --quiet -- appcast.xml; then
-            echo "Feed already offers $VERSION."
-            exit 0
-          fi
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add appcast.xml
-          git commit -m "Offer $VERSION to Sparkle"
-          git push origin main
+
+          # Staged first, and compared against the index rather than the
+          # working tree: `git diff` only looks at *tracked* files, so on the
+          # very first release — when the feed is brand new — it reported no
+          # change, the step exited green, and nothing was ever committed. A
+          # step that succeeds without doing its job is the worst kind.
+          if git diff --cached --quiet -- appcast.xml; then
+            echo "Feed already offers $VERSION."
+          else
+            git commit -m "Offer $VERSION to Sparkle"
+            git push origin main
+          fi
+
+          # Say it out loud rather than trusting the step's own exit code.
+          if ! git show HEAD:appcast.xml | grep -q "<sparkle:shortVersionString>$VERSION<"; then
+            echo "::error::appcast.xml on main does not offer $VERSION — installed copies would never see it."
+            exit 1
+          fi
+          echo "Feed on main offers $VERSION."
