@@ -322,7 +322,10 @@ struct SettingsView: View {
     private func saveKey(for provider: Provider) {
         APIKeyStore.setKey(apiKey, for: provider)
         savedKey = apiKey
-        // A key is only worth entering if something uses it now.
+        // The store keeps keys for the life of the launch, so it has to be
+        // told; otherwise the key is saved and nothing uses it until restart.
+        store.loadAPIKeys()
+        // And a key is only worth entering if something tries it now.
         store.refresh(provider)
     }
 

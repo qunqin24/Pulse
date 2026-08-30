@@ -35,6 +35,15 @@ final class UsageStore {
     /// nothing at all.
     private var observers: [(center: NotificationCenter, token: any NSObjectProtocol)] = []
 
+    /// Keys read from the keychain once per launch rather than once per pass.
+    ///
+    /// Reading is cheap when it is allowed, but every read is a chance for
+    /// macOS to ask — and the permission is bound to the exact binary, so a
+    /// rebuilt or updated Pulse is a different app to the keychain and gets
+    /// asked again. Once per refresh would mean that question every couple of
+    /// minutes, forever, to anyone who ever said no.
+    private var apiKeys: [Provider: String] = [:]
+
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
 
@@ -58,6 +67,15 @@ final class UsageStore {
         await CodexAccountUsageService(server: appServer).fetch()
     }
 
+    /// Picks up a key that was just entered, or one that changed.
+    func loadAPIKeys() {
+        apiKeys = Dictionary(
+            uniqueKeysWithValues: Provider.allCases
+                .filter { $0.usesAPIKey && settings.isEnabled($0) }
+                .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
+        )
+    }
+
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
@@ -70,6 +88,7 @@ final class UsageStore {
     func start() {
         guard observers.isEmpty else { return }
         observe()
+        loadAPIKeys()
         updateActivityMonitor()
 
         // Only relevant when the app server is being used as a fallback; it
@@ -96,6 +115,7 @@ final class UsageStore {
 
     /// Re-reads settings that affect the loop itself, then refreshes.
     func settingsChanged() {
+        loadAPIKeys()
         updateActivityMonitor()
         refresh()
     }
@@ -128,19 +148,33 @@ final class UsageStore {
         let claudeSource = settings.source(for: .claudeCode)
         let previous = usage
 
-        // The key is read here rather than inside the service: the keychain is
-        // a main-actor concern, the fetch is not.
-        let openCode = OpenCodeGoUsageService(enteredKey: APIKeyStore.key(for: .openCodeGo))
-        let kimi = KimiCodeUsageService(enteredKey: APIKeyStore.key(for: .kimiCode))
+        // Read here rather than inside the services: the keychain is a
+        // main-actor concern and the fetches are not.
+        let openCode = OpenCodeGoUsageService(enteredKey: apiKeys[.openCodeGo])
+        let kimi = KimiCodeUsageService(enteredKey: apiKeys[.kimiCode])
+        // Nothing is fetched for a provider that isn't on the rail: it would
+        // spend someone else's request, and read a credential, for a figure
+        // nobody is going to see.
+        let wanted = settings.enabledProviders
 
         Task { [codex, claudeCode, antigravity] in
             // Independent, so they run side by side rather than one waiting on
             // another's round trip.
-            async let codexUsage = codex.fetch(source: codexSource)
-            async let claudeUsage = claudeCode.fetch(source: claudeSource)
-            async let antigravityUsage = antigravity.fetch()
-            async let openCodeUsage = openCode.fetch()
-            async let kimiUsage = kimi.fetch()
+            async let codexUsage = wanted.contains(.codex)
+                ? await codex.fetch(source: codexSource)
+                : ProviderUsage.unavailable(.codex, reason: .loading)
+            async let claudeUsage = wanted.contains(.claudeCode)
+                ? await claudeCode.fetch(source: claudeSource)
+                : ProviderUsage.unavailable(.claudeCode, reason: .loading)
+            async let antigravityUsage = wanted.contains(.antigravity)
+                ? await antigravity.fetch()
+                : ProviderUsage.unavailable(.antigravity, reason: .loading)
+            async let openCodeUsage = wanted.contains(.openCodeGo)
+                ? await openCode.fetch()
+                : ProviderUsage.unavailable(.openCodeGo, reason: .loading)
+            async let kimiUsage = wanted.contains(.kimiCode)
+                ? await kimi.fetch()
+                : ProviderUsage.unavailable(.kimiCode, reason: .loading)
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
@@ -192,8 +226,13 @@ final class UsageStore {
         let source = settings.source(for: provider)
         let previous = usage[provider]
         let startedAt = ContinuousClock.now
-        let openCode = OpenCodeGoUsageService(enteredKey: APIKeyStore.key(for: .openCodeGo))
-        let kimi = KimiCodeUsageService(enteredKey: APIKeyStore.key(for: .kimiCode))
+        // Asked for by name — from a ring, or from that provider's own pane in
+        // Settings, which is reachable while it is switched off and so cannot
+        // rely on the launch-time cache. Reading the keychain on a deliberate
+        // press is a different thing from reading it on a timer.
+        let key = provider.usesAPIKey ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
+        let openCode = OpenCodeGoUsageService(enteredKey: key)
+        let kimi = KimiCodeUsageService(enteredKey: key)
 
         Task { [codex, claudeCode, antigravity] in
             let raw: ProviderUsage
