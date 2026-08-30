@@ -59,6 +59,9 @@
 "Waiting for the next Claude Code response." = "Waiting for the next Claude Code response.";
 "Loading…" = "Loading…";
 "No reading" = "No reading";
+"Refreshing…" = "Refreshing…";
+"Refresh usage" = "Refresh usage";
+"Activate to refresh usage." = "Activate to refresh usage.";
 "Connection" = "Connection";
 "Claude Code status line" = "Claude Code status line";
 "Connect" = "Connect";
@@ -85,7 +88,6 @@
 "Uses whatever Claude Code last reported to its status line." = "Uses whatever Claude Code last reported to its status line.";
 "Asks the Codex app server, which signs in on its own." = "Asks the Codex app server, which signs in on its own.";
 "Read usage from" = "Read usage from";
-"Updates" = "Updates";
 "Check every" = "Check every";
 "How often to fetch new figures." = "How often to fetch new figures.";
 "%@ seconds" = "%@ seconds";
@@ -152,3 +154,16 @@
 "Liquid Glass" = "Liquid Glass";
 "Frosted glass instead of solid black." = "Frosted glass instead of solid black.";
 "Drag it by a ring while this is on." = "Drag it by a ring while this is on.";
+"Open Antigravity to see its usage." = "Open Antigravity to see its usage.";
+"Asks the language server Antigravity runs while it is open." = "Asks the language server Antigravity runs while it is open.";
+"Only while Antigravity is open." = "Only while Antigravity is open.";
+"Antigravity's language server" = "Antigravity's language server";
+"Refresh" = "Refresh";
+"Pulse %@ is available" = "Pulse %@ is available";
+"Download %@" = "Download %@";
+"Check now" = "Check now";
+"Checking…" = "Checking…";
+"Couldn't reach GitHub to check." = "Couldn't reach GitHub to check.";
+"Built from source — no update check." = "Built from source — no update check.";
+"%@ installed · %@ available" = "%@ installed · %@ available";
+"%@ · up to date" = "%@ · up to date";

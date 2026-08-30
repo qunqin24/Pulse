@@ -9,3 +9,6 @@
 DerivedData/
 xcuserdata/
 *.xcuserstate
+
+# Assembled app bundle
+build/

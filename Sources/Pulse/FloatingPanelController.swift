@@ -108,6 +108,17 @@ final class FloatingPanelController {
                 ? PanelHitArea.rail(edge: placement.edge, railHeight: railHeight, railTop: placement.railTop)
                 : PanelHitArea.strip(edge: placement.edge, railHeight: railHeight, railTop: placement.railTop)
         }
+        panel.onClick = { [settings, placement, store] point in
+            guard placement.isRailExpanded else { return }
+            let providers = Provider.allCases.filter(settings.isEnabled)
+            guard let provider = PanelHitArea.provider(
+                at: point,
+                edge: placement.edge,
+                providers: providers,
+                railTop: placement.railTop
+            ) else { return }
+            store.refresh(provider)
+        }
     }
 
     var isVisible: Bool { panel.isVisible }
@@ -222,12 +233,17 @@ private final class FloatingPanel: NSPanel {
     /// the rail's, and handing the placement a 20pt sliver where it expects a
     /// 64pt rail would throw the panel across the screen on the first drag.
     var railFrame: (() -> CGRect)?
+    /// A short press that ended without moving the panel. The controller maps
+    /// it to a provider ring; empty rail space remains drag-only.
+    var onClick: ((CGPoint) -> Void)?
     var placement: PanelPlacement?
 
     /// Where on the rail the pointer took hold, so the panel doesn't jump to
     /// centre itself under the pointer when the drag starts. Nil when no drag
     /// is in progress.
     private var grab: CGSize?
+    private var pressedAt: CGPoint?
+    private var didDrag = false
 
     override func sendEvent(_ event: NSEvent) {
         switch event.type {
@@ -239,11 +255,11 @@ private final class FloatingPanel: NSPanel {
     }
 
     private func begin(_ event: NSEvent) -> Bool {
+        let location = local(event)
         guard
-            let placement,
             let area = grabArea?(),
             let rail = railFrame?(),
-            area.contains(local(event))
+            area.contains(location)
         else { return false }
 
         // Measured against the rail even when the sliver is what was grabbed,
@@ -255,7 +271,8 @@ private final class FloatingPanel: NSPanel {
         let origin = CGPoint(x: frame.minX + rail.minX, y: frame.maxY - rail.maxY)
         let pointer = NSEvent.mouseLocation
         grab = CGSize(width: pointer.x - origin.x, height: pointer.y - origin.y)
-        placement.isDragging = true
+        pressedAt = location
+        didDrag = false
         return true
     }
 
@@ -270,6 +287,11 @@ private final class FloatingPanel: NSPanel {
         let visible = screen.visibleFrame
         let pointer = NSEvent.mouseLocation
         let rail = railFrame.size
+
+        if !didDrag {
+            didDrag = true
+            placement.isDragging = true
+        }
 
         // Where the rail would like to be, kept wholly on screen.
         let wanted = CGPoint(
@@ -300,8 +322,12 @@ private final class FloatingPanel: NSPanel {
 
     private func finish() -> Bool {
         guard grab != nil else { return false }
+        let click = didDrag ? nil : pressedAt
         grab = nil
+        pressedAt = nil
+        didDrag = false
         placement?.isDragging = false
+        if let click { onClick?(click) }
         return true
     }
 

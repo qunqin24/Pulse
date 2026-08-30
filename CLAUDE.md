@@ -4,13 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Pulse is a macOS menu-bar app prototype: a floating AI usage monitor. SwiftUI renders the UI; a transparent, non-activating AppKit `NSPanel` anchors it to the right edge of the screen. There is no backend or account integration yet — all usage data is static mock data (`UsageMetric.samples`).
+Pulse is a macOS menu-bar app: a floating AI usage monitor. SwiftUI renders the UI; a transparent, non-activating AppKit `NSPanel` anchors it to a side of the screen. It tracks three coding agents — Claude Code, Codex and Antigravity — reading each one's real limits by whatever route that agent offers. There is no backend and no account of its own.
 
 ## Commands
 
 ```bash
-swift run Pulse   # build and run
-swift build       # type-check everything, previews included
+swift run Pulse         # build and run
+swift build             # type-check everything, previews included
+./Scripts/bundle.sh     # assemble build/Pulse.app (add --zip for a release)
+./Scripts/dmg.sh        # the same, wrapped in build/Pulse-<version>.dmg
+./Scripts/check-localization.sh   # the two .strings files carry the same keys
 ```
 
 **`xcode-select` must point at Xcode, not CommandLineTools.** The `#Preview`
@@ -43,6 +46,105 @@ and treat any remaining warning as a failure.
 
 The package requires macOS 14+ and Swift tools 6.0 (see [Package.swift](Package.swift)). It can also be opened directly in Xcode via `Package.swift`. There is no test target and no linter configured.
 
+## Shipping
+
+There is no Xcode project, on purpose — Pulse is a plain package, and
+[Scripts/bundle.sh](Scripts/bundle.sh) is what turns its bare executable into
+something macOS treats as an app. That is not tidiness: **without a bundle
+there is no `Bundle.main`**, which means no version number to compare against
+(so no update check), no `SMAppService` login item (hence the launch-agent
+fallback in [LoginItem.swift](Sources/Pulse/LoginItem.swift)), and nothing to
+hand anyone but a build folder.
+
+- **Pushing a tag is the whole release.**
+  [`.github/workflows/release.yml`](.github/workflows/release.yml) builds,
+  packages and publishes; [`ci.yml`](.github/workflows/ci.yml) runs the same
+  build on every push. Both pin **`macos-26`** rather than `macos-latest`,
+  because `PanelSurface`'s Liquid Glass needs the macOS 26 SDK to compile at
+  all even though it is behind an `#available` check — an older image cannot
+  build the package, so both workflows check `xcrun --show-sdk-version` first
+  and fail with that sentence instead of a hundred lines of "cannot find
+  glassEffect". Warnings fail the build, for the reason at the top of this
+  file. Nothing is signed and no secrets are needed.
+  **The tag is checked against `VERSION`** and a mismatch fails the run: ship
+  them out of step and every installed copy is told, forever, that an update is
+  waiting. A tag with a suffix (`v1.1.0-beta.1`) is published as a pre-release,
+  which GitHub's "latest release" excludes — and so, therefore, does the update
+  check.
+- The version lives in [VERSION](VERSION) and nowhere else. Tag the release
+  `v$(cat VERSION)`: the update check reads GitHub's latest release tag and
+  compares it against `CFBundleShortVersionString`, so the two have to agree.
+- The package's resource bundle must land in `Contents/Resources` —
+  `Bundle.module` looks there through `Bundle.main.resourceURL`. Leave it out
+  and the app runs, silently in English, with no provider marks.
+- `LSUIElement` must be **true**. The code also sets `.accessory`, but that runs
+  after the Dock has already been told what to show, so without the key a Dock
+  icon appears for a moment at every launch.
+- Built for both architectures (`--arch arm64 --arch x86_64`), so one download
+  runs everywhere, and zipped with `ditto`, not `zip` — a plain zip flattens the
+  symlinks in a bundle and the unzipped copy won't launch.
+- `build/` carries a `.metadata_never_index` marker, written by the bundle
+  script. Without it Spotlight indexes the freshly built `Pulse.app` and it
+  appears in search and Launchpad beside the installed one — two identical
+  Pulses with no way to tell them apart, which is exactly as confusing as it
+  sounds. Worse, whichever copy is *opened* claims the login item and rewrites
+  Claude Code's status line path to itself, so deleting the build later breaks
+  both.
+- **The disk image is the install guide** ([Scripts/dmg.sh](Scripts/dmg.sh)).
+  Because Pulse isn't notarised, macOS blocks the first launch and the user has
+  to allow it by hand — and on macOS 15 and later the old Control-click → Open
+  bypass is gone, so it can only be done in System Settings › Privacy & Security
+  › Open Anyway. Instructions that live only in a README are instructions nobody
+  downloading an app ever reads, so they are printed on the window itself.
+  Finder stores the window's size, backdrop and icon positions in a `.DS_Store`,
+  and AppleScript is the only way to *write* one — which needs a logged-in
+  desktop and permission to drive Finder, neither of which a CI runner has. So
+  the layout is captured once on a real Mac
+  ([Scripts/dmg-DS_Store](Scripts/dmg-DS_Store)) and copied into the staging
+  folder, and the build touches Finder only when that file is missing. Verified
+  identical both ways. Re-capture it with `./Scripts/dmg.sh --relayout` after
+  changing the backdrop or the icon positions, and commit the result. Note Finder's window `bounds` **include the title bar**,
+  so the window is 28pt taller than the 660×420 backdrop or its bottom line is
+  cut off. The backdrop is [Scripts/dmg-background.tiff](Scripts/dmg-background.tiff),
+  carrying a 1x and a 2x representation; replace the file to redesign it.
+- The ad-hoc signature is **not** distribution signing. It stops macOS calling
+  the bundle damaged when it is moved; it does nothing for Gatekeeper, which
+  will still warn on first open until there is a Developer ID and notarisation.
+
+**Running from a bundle moves the `UserDefaults` domain**, and that is the sharp
+edge of this whole change. `UserDefaults.standard` writes to a domain named
+after the bundle identifier, or — with no bundle — after the process name. So
+every loose `swift run` build has been keeping its settings in a domain called
+`Pulse`, and `Pulse.app` reads an empty one: panel position, enabled providers,
+language, *and the flag that says opening at login was already decided*. It
+would look like a fresh install and would switch login-at-start back on for
+someone who had turned it off.
+[LegacyDefaults.swift](Sources/Pulse/LegacyDefaults.swift) copies the old domain
+across once, taking only keys the new domain doesn't already have. After that
+the two diverge, which is right: an Xcode build and an installed `Pulse.app` are
+two copies of the app and shouldn't edit each other's settings.
+`LoginItem.adoptBundleIfNeeded` is the same problem in the other direction — a
+launch agent left over from a loose build still names the old binary, so at the
+next login launchd starts the old build *and* `SMAppService` starts the new one.
+
+**The update check is a notice, not an installer**
+([AppUpdate.swift](Sources/Pulse/AppUpdate.swift)). Pulse isn't signed with a
+Developer ID, and an app that downloads and swaps itself out without one is
+asking for trust macOS itself refuses to give. So it reads
+`/repos/qunqin24/Pulse/releases/latest` — which already skips drafts and
+pre-releases, making "tag it" the whole publishing step — and offers a link.
+When there is a Developer ID, **this is the piece Sparkle replaces.** Three
+things it gets right that are easy to get wrong: a **404 means no releases yet**
+and is an answer rather than a failure (a fresh repository would otherwise show
+an error forever); the comparison is component-wise, not string-wise, or 1.10.0
+sorts before 1.9.0; and it only ever reports something *newer*, so a working
+copy running ahead of the published release isn't told to downgrade itself.
+Nothing runs at all without a bundle — telling a developer their working copy is
+out of date is noise.
+
+Note the settings group that holds the *usage* refresh interval is called
+"Refresh", not "Updates". It was "Updates" until the app had updates of its own.
+
 ## Architecture
 
 Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal modules — everything lives in one flat directory with one SwiftUI view per file.
@@ -55,6 +157,7 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
   **The panel stays out of other apps' full-screen Spaces by default.** This is a window collection behavior, not a guessed full-screen detector: `AppSettings.hidesInFullScreen` selects `.fullScreenNone`, while turning the setting off selects `.fullScreenAuxiliary`. Both retain `.canJoinAllSpaces` for ordinary desktop Spaces. Keep this on the public AppKit behavior — checking other apps' windows would require permissions and would confuse maximized windows with real full-screen Spaces.
 
 **SwiftUI view tree (rendered inside the panel):**
+- `UsageDetailCard` — **the window's name has the row to itself; what is spent and when it resets pair off on the line below the bar.** They used to share the top line, which is fine for "5-hour limit" and falls apart the moment a limit is scoped to a model group: "5-hour limit · Claude and GPT" beside "Resets 9月6日 18:14" does not fit a 250pt card, and the half that got cut was the name — the half that says which limit this is. All of Antigravity's four windows are scoped, so it went from an edge case to the normal one.
 - `UsageBubbleShape` — the details card's body *and* its pointer, drawn as **one path**. The two are separate subpaths filled together, so they must **wind the same way**: under the non-zero fill rule opposite windings cancel where they overlap. Mirroring the geometry for the left edge reversed the tail's direction and punched a visible gap between tail and card, so the tail's traversal is flipped to match (`sweep`). Any change to this shape needs checking on both edges. They used to be two views in a stack, with the pointer nudged into place by padding; switching providers changes the card's height and the pointer's target at once, and two views animating separately drift apart — the tail visibly detaches mid-transition. Keep them one shape. `pointerCenterY` is the shape's `animatableData` so the tail moves as geometry rather than as its own animation.
 - `FloatingUsagePanelView` → `UsageDockView` (the always-visible rail of per-provider rings) with `UsageDetailCard` (the flyout for the selected provider) hung off it as an **overlay**, not as a sibling in a stack. Selection is **hover-driven**: pointing at a ring opens that provider's card, and the pointer leaving the panel closes it. Opening and closing come from different mechanisms on purpose — see `PointerEntryReporter` / `PanelPointerWatcher` below.
   **The panel window never changes size** (`FloatingPanelController.Layout.width` is fixed at card + pointer + gap + rail), and the card is an overlay rather than a stack child, for the same reason in both cases: anything that changes the geometry the rail is laid out in will animate the rail sideways when the card opens, even though the rail's position on screen never actually changes. Two separate versions of that bug were fixed by removing the movement rather than trying to animate around it. Keep it that way: don't resize the panel, and don't put the card and the rail in a shared stack.
@@ -67,6 +170,7 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
   **Two things have to be true for the capsule to be draggable, and they are in different files.** First, something in the panel must *claim* the point, or the window is never handed the press at all — that is `PanelSurface`, which is hit-testable on purpose and carries a `contentShape` of the capsule's own outline. Marking it `allowsHitTesting(false)` (which it was, from the day the Liquid Glass option arrived) is what killed dragging in the empty black between the rings: the rings claim their own area for their tracking areas and went on working, the gaps claimed nothing and went dead. Second, the press has to be *taken*, and that is the window:
   **Dragging belongs to the window, not to a view inside it** (`FloatingPanel.sendEvent` in [FloatingPanelController.swift](Sources/Pulse/FloatingPanelController.swift)). It was an `NSViewRepresentable` in the SwiftUI tree for a long time, and that is the wrong place for it: a press only reaches a view inside `NSHostingView` if SwiftUI claims the point first. Once the berth became a `PanelSurface` — added for the Liquid Glass option, and marked `allowsHitTesting(false)` so it could never take a press away from the handle — nothing claimed the empty black between the rings, and the panel could be dragged by its rings and nowhere else. The rings work because their tracking areas carry a `contentShape`; the gaps had nothing. Laying a shape *over* the handle to claim those points was worse: it swallowed the press rather than passing it down, and then nothing could be dragged at all. `sendEvent` sees every event the window server hands the window, before any of SwiftUI's hit testing and before whatever Liquid Glass installs for itself.
   The window is handed **two** rects, not one: `grabArea` (the rail, or its sliver when collapsed) decides whether a press is taken, and `railFrame` (always the rail) is what the placement arithmetic runs on. Collapsed, what is grabbed is the sliver but what is *placed* is still the rail — handing the placement a 20pt sliver where it expects a 64pt rail throws the panel across the screen on the first drag. Both are sized to what is actually drawn, or a press anywhere in the transparent band would move the panel instead of passing through to whatever is behind it.
+  **A ring click and a ring drag share that same window-level input path.** `FloatingPanel` records the press, marks it as a drag only after a real `leftMouseDragged`, and reports a click on mouse-up otherwise. `PanelHitArea.provider(at:...)` accepts only the visible circle, so labels and berth gaps remain drag-only. The click starts a provider-scoped refresh, and `UsageStore.isRefreshing(_:)` is what the ring shows it with: the usage arc **dims but does not move**, and a short bright segment of the ring travels round over track and arc alike. Rotating the usage arc itself was the first attempt and it ties the feedback to the number being shown — at 0% there is no arc, so a click produced no visible response at all (measured: nothing, for the whole 650ms), and at 95% a rotated arc is nearly indistinguishable from a still one. It also takes the reading away while it spins, since the arc starting at twelve o'clock is what makes it a gauge, and puts it back with a jump when the spin stops at whatever angle it had reached. The travelling mark is the usage colour, not white: white on these rings is spoken for by the CLI-activity mark, which rides the empty circle further in. The refresh is held for a minimum 650ms so a local read that returns within a frame still registers, and the arc and the figure both animate to their new values — a manual refresh exists to show what moved. Keep the physical click here rather than adding a SwiftUI button gesture: `sendEvent` deliberately takes the press before SwiftUI sees it. The ring still exposes a default accessibility action through SwiftUI.
   **`hitTest` is worthless for this.** It reported the old handle as reachable at every point of the rail including the gaps, and at widths it did not have (the full 64pt while collapsed to 20). Both are impossible. It lied about Liquid Glass the same way. What a probe *can* answer is geometry — is this point inside the grab area — and that is worth checking, since a missing `railFrame` closure made every press refuse silently. Whether a real click arrives at all is only answered by a person pressing it: ask, rather than building a fourth probe that agrees with the first three.
   The sliver **must be reachable without leaving the rail's hit area** — `PanelHitArea.stripIsContainedInRail()` asserts it, and there is an exhaustive check. Hiding happens only when the pointer is outside the *rail*; if the sliver poked out beyond it, leaving the rail would land on the sliver, whose tracking area shows it again, which hides it again. That is the same open/close loop below, in a new costume.
   The sliver takes the usage colour once a limit is past the warning threshold. A monitor that hides itself has to keep one way of saying "look at me", or auto-hide quietly switches off the thing the app is for.
@@ -113,8 +217,9 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
 - Turning a provider off shortens the rail (`DockLayout.height(for:)`), but **the panel window stays at `DockLayout.maximumHeight`** so nothing has to resize; the rail simply draws shorter and the rest of the panel is transparent. Anything measuring the rail must use `FloatingUsagePanelView.railHeight`, not the window's height.
 
 **Usage data — reported by the provider, with one labelled exception:**
-- [UsageProvider.swift](Sources/Pulse/UsageProvider.swift) — the `Provider` enum (`.claudeCode`, `.codex`): display name, icon resource, accent colour.
-- Both providers can be read two ways, and which one is used is a setting ([UsageSource.swift](Sources/Pulse/UsageSource.swift), `AppSettings.source(for:)`). `.automatic` is the default and should stay it: it takes the endpoint when it can and the other route when it can't, which is what survives an expired token unnoticed. Pinning to one route means a failure is *reported* rather than quietly answered from elsewhere — that's the point of pinning.
+- [UsageProvider.swift](Sources/Pulse/UsageProvider.swift) — the `Provider` enum (`.claudeCode`, `.codex`, `.antigravity`): display name, icon resource, and the two things that differ per provider rather than per feature. `keepsLocalTranscripts` is false for Antigravity, which is an editor rather than a CLI and leaves no session files — so the spending history, the estimated value of a window and the "working right now" mark are **left out** for it rather than shown as zeroes, which would read as "you have spent nothing". `hasSourceChoice` is false for the same reason its route is single.
+- A provider added later is **switched on once, the first time it is seen** (`AppSettings.restored`, `Key.offeredProviders`). The enabled set is stored, so a new case would otherwise be missing from every stored list and never appear at all; switching it on at every launch would override the user turning it off. What is remembered is which providers have been *offered* — the same decided-once shape `LoginItem` uses.
+- The two CLIs can each be read two ways, and which one is used is a setting ([UsageSource.swift](Sources/Pulse/UsageSource.swift), `AppSettings.source(for:)`). `.automatic` is the default and should stay it: it takes the endpoint when it can and the other route when it can't, which is what survives an expired token unnoticed. Pinning to one route means a failure is *reported* rather than quietly answered from elsewhere — that's the point of pinning.
 - **The refresh interval is adaptive by default** ([AdaptiveRefresh.swift](Sources/Pulse/AdaptiveRefresh.swift)), between 2 and 30 minutes. A fixed minute spends the same requests at 3am as mid-session, on figures that haven't moved since last night. The wait is decided from: whether either CLI is writing its transcripts right now (`AgentActivity` — file *metadata* only, ~2ms over both trees, and the signal a menu-bar app can't have), whether the reported figures actually moved, whether the rail was hovered, whether the panel is even on screen, and low power / thermal / display-asleep. **Every signal is a reason to wait longer**, never shorter, so a new one can only save requests. Because the wait changes each pass, `UsageStore` schedules a one-shot timer and reschedules after every refresh rather than repeating on a fixed one.
   Comparing readings to detect movement must compare `windows` only — `observedAt` moves on every successful fetch, so including it reports a change every time and the loop never slows down.
 - **Interpolating an `Int` into a localization key produces `%lld`, not `%@`.** A strings file written with `%@` then never matches and the text silently falls through to English — this shipped once in the refresh-interval labels. Interpolate a `String` instead: `.localized("\("\(count)") minutes")`.
@@ -135,6 +240,9 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
   The saved token expires in hours and **nothing here renews it**, so an expired or refused token falls back to [StatusLineHook.swift](Sources/Pulse/StatusLineHook.swift). That route is officially documented (code.claude.com/docs/en/statusline): Claude Code pipes a blob carrying `rate_limits.five_hour` / `.seven_day` to whatever command is registered as the status line, so Pulse registers itself — run as `Pulse --statusline` it banks the figures and prints a status line back. It is a **push, not a pull**: figures only refresh while a session runs, hence `.stale` and the "as of" line rather than passing an old reading off as current. It carries no per-model windows, which is the other reason it isn't the primary route.
   A network failure prefers a captured reading over showing an error, since a stale number beats no number. Neither endpoint is public API; both can change without notice.
   **The status line hook edits the user's `~/.claude/settings.json`.** It backs the file up to `settings.json.pulse-backup` on first touch, remembers any status line command that was already there so it can chain to it and restore it on disconnect, and rewrites its own path on launch (`repairPathIfNeeded`) since rebuilding moves the executable.
+- [AntigravityUsageService.swift](Sources/Pulse/AntigravityUsageService.swift) — the odd one out, and the only route it has. Antigravity's editor starts a `language_server` of its own and talks to it over HTTPS on the loopback interface; that process is the only thing that knows the quota, so **these figures exist only while the app is open** — which `.antigravityNotRunning` says plainly rather than dressing up as a failure. Three things are discovered and **none may be assumed**: the process (inside the app bundle, not on `PATH`, and matched on `/Antigravity.app/` because `language_server` is Codeium's binary and its other editors use the same name), the port (the app starts it with `--https_server_port 0` — "take any free one", so it differs every launch), and a per-launch CSRF token from the command line, sent as `x-codeium-csrf-token`. It listens on more than one port and does not advertise which speaks this, so they are simply tried in turn.
+  The RPC is `exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary`, POSTed with `{}`. **It reports what is left, not what is gone** — `remainingFraction: 1` means nothing used — and it is the only provider that does, so the inversion happens here and everything downstream stays in terms of what is spent. The reply nests `groups[].buckets[]`, each bucket carrying `bucketId` (stable, so it can be pinned), `window` (`5h` / `weekly`), `remainingFraction` and a real `resetTime` timestamp — no reset time has to be dug out of prose. The group's name becomes the window's `scope` with a trailing "models" trimmed, so rows read "5-hour limit · Gemini". A bucket whose `window` can't be read is **left out rather than guessed at**: a window with no length can't be named or sorted, and inventing one would put a figure under a heading that isn't true.
+  The server signs its own certificate, so `LoopbackTrust` accepts it — and only for `127.0.0.1`. Anything else is refused exactly as it would be anywhere else in the app.
 - [UsageCache.swift](Sources/Pulse/UsageCache.swift) — **the last good reading from each provider, so a refusal shows numbers with a date on them instead of an error with nothing.** Everything Pulse talks to says no sometimes: the endpoint is undocumented and rate limits, saved tokens expire, a VPN drops a connection. These figures move in percent over hours, so the last answer is very nearly the right one. Two rules keep it honest: only `.live` readings are stored and they come back marked `.stale` (which is what puts the "as of" line on the card), and a window whose **reset time has passed is dropped rather than aged** — it hasn't gone stale, it has reset, and what it says is not an old version of the truth but a number about a window that no longer exists. If every window has reset, the error is reported as before. A 24h cap backstops windows that never say when they reset. `reconciled(_:)` prefers whichever reading was actually taken later, so this only ever fills gaps.
 - [UsageStore.swift](Sources/Pulse/UsageStore.swift) — `@Observable`, owns the 60s refresh loop (the interval the Codex CLI itself uses).
 
@@ -156,7 +264,7 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
 
 **Localization:**
 - English and Simplified Chinese. Strings live in [Sources/Pulse/Resources](Sources/Pulse/Resources) as `en.lproj` / `zh-Hans.lproj` `Localizable.strings`, and `Package.swift` declares `defaultLocalization: "en"` (other languages fall back to it).
-- The language follows the system unless the user picks one in Settings, which takes effect **without a relaunch**: `LocalizationSource` swaps in that language's `.lproj` sub-bundle and every lookup reads from it. Because those lookups are a plain function call, SwiftUI has nothing to observe — `SettingsView` and `FloatingUsagePanelView` carry `.id(settings.language)` to force a rebuild. Anything else that caches a localized string needs the same treatment; that is why `UsageMetric.samples` is a computed `var` rather than a `static let`, which would otherwise freeze the sample text in whichever language was current when it was first touched.
+- The language follows the system unless the user picks one in Settings, which takes effect **without a relaunch**: `LocalizationSource` swaps in that language's `.lproj` sub-bundle and every lookup reads from it. Because those lookups are a plain function call, SwiftUI has nothing to observe — `SettingsView` and `FloatingUsagePanelView` carry `.id(settings.language)` to force a rebuild. Anything else that caches a localized string needs the same treatment. The same trap is why `UsageWindow.Kind` and `ProviderUsage.Unavailability` are cases rather than stored strings — see below.
 - **So do large numbers.** Chinese doesn't group in thousands, so "419M" has to be converted in the reader's head before it means anything; `TokenCount.short` switches to 万 (10⁴) and 亿 (10⁸) when `LocalizationSource.groupsByTenThousands`, giving 4764万 and 4.19亿. The unit characters live in code rather than in the strings file deliberately — they belong to the numeral system, not to the copy, and offering a translator "亿" as text to change invites a mistake.
 - **Dates, times and money follow the chosen language too**, via `LocalizationSource.locale` — not `Locale.autoupdatingCurrent`. Picking English and then being told a credit expires "in 22天8小时" is the sort of half-translated seam that reads as unfinished.
 - **A `%` next to a placeholder breaks the lookup.** These values are run through `String(localized:)`, so `"%@ · %@% of tokens"` is a malformed printf conversion; bake the sign into the interpolated value instead (`"\(count)%"`).
@@ -165,4 +273,4 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
 - SwiftPM lowercases `zh-Hans.lproj` to `zh-hans.lproj` in the built bundle. That is harmless — `Bundle.preferredLocalizations` matches case-insensitively — but it means `Bundle.module.path(forResource: "zh-Hans", ofType: "lproj")` returns nil, which matters only if something looks a table up by name.
 
 **Resources:**
-- [Sources/Pulse/Resources](Sources/Pulse/Resources) holds the provider marks as SVG (`claude.svg`, `openai.svg`, `perplexity.svg`), taken from [Lobe Icons](https://github.com/lobehub/lobe-icons) (`packages/static-svg/icons`, monochrome variants). `LobeIconStore` in [UsageRingView.swift](Sources/Pulse/UsageRingView.swift) loads them once via `Bundle.module`, keyed by `Provider.iconResource`. They are vectors, so one file covers every size drawn; note their `width="1em"` makes `NSImage` report a 1x1 intrinsic size, which is why the store assigns an explicit size and marks them as template images before use. Adding a provider requires: a new `Provider` case, its SVG in `Resources/`, and a new entry in `UsageMetric.samples`.
+- [Sources/Pulse/Resources](Sources/Pulse/Resources) holds the provider marks as SVG (`claude.svg`, `openai.svg`, `antigravity.svg`), taken from [Lobe Icons](https://github.com/lobehub/lobe-icons) (`packages/static-svg/icons`, monochrome variants). `LobeIconStore` in [UsageRingView.swift](Sources/Pulse/UsageRingView.swift) loads them once via `Bundle.module`, keyed by `Provider.iconResource`. They are vectors, so one file covers every size drawn; note their `width="1em"` makes `NSImage` report a 1x1 intrinsic size, which is why the store assigns an explicit size and marks them as template images before use. Adding a provider requires: a new `Provider` case, its SVG in `Resources/`, a service that returns a `ProviderUsage`, a branch in `UsageStore.refresh` and `refresh(_:)`, and its answers to `keepsLocalTranscripts` / `hasSourceChoice`. The switches in `AgentActivity.root(for:)` and `UsageLedger.logFiles(for:)` both return an optional root, so an agent with no transcripts opts out there rather than being given a directory that was never going to exist.

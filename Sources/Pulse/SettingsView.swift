@@ -6,6 +6,7 @@ struct SettingsView: View {
     let store: UsageStore
     let settings: AppSettings
     let placement: PanelPlacement
+    let update: AppUpdate
 
     @State private var pane: SettingsPane = .general
     @State private var hookGeneration = 0
@@ -210,7 +211,7 @@ struct SettingsView: View {
                 }
             }
 
-            SettingsGroup(String.localized("Updates")) {
+            SettingsGroup(String.localized("Refresh")) {
                 SettingsRow(
                     String.localized("Check every"),
                     subtitle: refreshSubtitle
@@ -307,9 +308,14 @@ struct SettingsView: View {
 
             liveUsage(for: provider)
 
-            estimatedValue(for: provider)
+            // Both are built from the transcripts the CLIs leave behind, so
+            // for a provider that keeps none they would be a column of zeroes
+            // claiming nothing had been spent.
+            if provider.keepsLocalTranscripts {
+                estimatedValue(for: provider)
 
-            history(for: provider)
+                history(for: provider)
+            }
         }
     }
 
@@ -447,20 +453,35 @@ struct SettingsView: View {
         let source = settings.source(for: provider)
 
         return SettingsGroup(String.localized("Connection")) {
-            SettingsRow(
-                String.localized("Read usage from"),
-                subtitle: source.detail(for: provider)
-            ) {
-                Picker("", selection: Binding(
-                    get: { settings.source(for: provider) },
-                    set: { settings.setSource($0, for: provider) }
-                )) {
-                    ForEach(UsageSource.allCases) { option in
-                        Text(option.title).tag(option)
+            // A provider with a single route gets told, not asked. A picker
+            // with one entry is a control that cannot do anything.
+            if provider.hasSourceChoice {
+                SettingsRow(
+                    String.localized("Read usage from"),
+                    subtitle: source.detail(for: provider)
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.source(for: provider) },
+                        set: { settings.setSource($0, for: provider) }
+                    )) {
+                        ForEach(UsageSource.allCases) { option in
+                            Text(option.title).tag(option)
+                        }
                     }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
-                .labelsHidden()
-                .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+            } else {
+                SettingsRow(
+                    String.localized("Read usage from"),
+                    subtitle: String.localized("Only while Antigravity is open.")
+                ) {
+                    Text(localized: "Antigravity's language server")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
             }
 
             // The status line has to be registered before it can report
@@ -564,10 +585,19 @@ struct SettingsView: View {
     private var about: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup {
-                SettingsRow(String.localized("Version")) {
-                    Text(Self.version)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
+                SettingsRow(String.localized("Version"), subtitle: updateSubtitle) {
+                    if let newer = update.newer {
+                        Button(String.localized("Download \(newer.version)")) {
+                            NSWorkspace.shared.open(newer.page)
+                        }
+                    } else if update.canCheck {
+                        Button(String.localized("Check now")) { update.check() }
+                            .disabled(update.isChecking)
+                    } else {
+                        Text(Self.version)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 SettingsRowDivider()
@@ -589,6 +619,20 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// The version, and what is known about a newer one. All four states are
+    /// distinguishable on purpose: "no update" and "couldn't ask" look
+    /// identical otherwise, and a check that silently failed is worse than one
+    /// that says so.
+    private var updateSubtitle: String {
+        if let newer = update.newer {
+            return .localized("\(Self.version) installed · \(newer.version) available")
+        }
+        if update.isChecking { return .localized("Checking…") }
+        if update.didFail { return .localized("Couldn't reach GitHub to check.") }
+        if !update.canCheck { return .localized("Built from source — no update check.") }
+        return .localized("\(Self.version) · up to date")
     }
 
     private static var version: String {
@@ -622,5 +666,10 @@ enum SettingsPane: Hashable {
 }
 
 #Preview("Settings") {
-    SettingsView(store: UsageStore(settings: AppSettings()), settings: AppSettings(), placement: PanelPlacement())
+    SettingsView(
+        store: UsageStore(settings: AppSettings()),
+        settings: AppSettings(),
+        placement: PanelPlacement(),
+        update: AppUpdate()
+    )
 }

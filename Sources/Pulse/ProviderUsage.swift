@@ -92,6 +92,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexNotInstalled
         /// Found `codex`, but `codex app-server` wouldn't start.
         case codexServerFailed
+        /// Antigravity's limits live in a server it only runs while it is open.
+        case antigravityNotRunning
         case unreachable
         case unreadableReply
         case rateLimited
@@ -107,6 +109,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .claudeSignInRequired: .localized("Sign in to Claude Code to see usage.")
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
+            case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
             case .unreachable: .localized("The service didn't respond.")
             case .unreadableReply: .localized("Couldn't read the reply.")
             case .rateLimited: .localized("Checking too often — easing off.")

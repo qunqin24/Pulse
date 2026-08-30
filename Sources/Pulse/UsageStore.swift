@@ -16,6 +16,9 @@ import Observation
 final class UsageStore {
     private(set) var usage: [Provider: ProviderUsage] = [:]
     private(set) var isRefreshing = false
+    /// Nil while an automatic refresh is fetching every provider; otherwise
+    /// the one provider the user explicitly asked to refresh from its ring.
+    private var refreshingProvider: Provider?
 
     /// What the automatic interval currently works out to, so settings can
     /// show it rather than leaving it a black box.
@@ -25,6 +28,7 @@ final class UsageStore {
     private let appServer = CodexAppServer()
     private let codex: CodexUsageService
     private let claudeCode = ClaudeCodeUsageService()
+    private let antigravity = AntigravityUsageService()
     private var timer: Timer?
     /// Kept with the centre each was registered on: workspace notifications
     /// don't come from the default centre, and removing them there does
@@ -56,6 +60,12 @@ final class UsageStore {
 
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
+
+    /// Whether this provider is being refreshed explicitly from its ring.
+    /// Automatic background passes stay silent on the rail.
+    func isRefreshing(_ provider: Provider) -> Bool {
+        isRefreshing && refreshingProvider == provider
+    }
 
     func start() {
         guard observers.isEmpty else { return }
@@ -112,18 +122,20 @@ final class UsageStore {
     func refresh() {
         guard !isRefreshing else { return }
         isRefreshing = true
+        refreshingProvider = nil
 
         let codexSource = settings.source(for: .codex)
         let claudeSource = settings.source(for: .claudeCode)
         let previous = usage
 
-        Task { [codex, claudeCode] in
+        Task { [codex, claudeCode, antigravity] in
             // Independent, so they run side by side rather than one waiting on
-            // the other's round trip.
+            // another's round trip.
             async let codexUsage = codex.fetch(source: codexSource)
             async let claudeUsage = claudeCode.fetch(source: claudeSource)
+            async let antigravityUsage = antigravity.fetch()
 
-            let (rawCodex, rawClaude) = await (codexUsage, claudeUsage)
+            let (rawCodex, rawClaude, rawAntigravity) = await (codexUsage, claudeUsage, antigravityUsage)
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -131,18 +143,70 @@ final class UsageStore {
             // old it is.
             let fetchedCodex = await UsageCache.shared.reconciled(rawCodex)
             let fetchedClaude = await UsageCache.shared.reconciled(rawClaude)
+            let fetchedAntigravity = await UsageCache.shared.reconciled(rawAntigravity)
 
             self.usage[.codex] = fetchedCodex
             self.usage[.claudeCode] = fetchedClaude
+            self.usage[.antigravity] = fetchedAntigravity
             self.isRefreshing = false
+            self.refreshingProvider = nil
 
             // Compare the windows only. `observedAt` moves on every successful
             // fetch, so including it would report a change every single time
             // and the loop would never slow down.
             let moved = previous[.codex]?.windows != fetchedCodex.windows
                 || previous[.claudeCode]?.windows != fetchedClaude.windows
+                || previous[.antigravity]?.windows != fetchedAntigravity.windows
             if moved { self.signals.lastChange = Date() }
 
+            self.scheduleNext()
+        }
+    }
+
+    /// Re-fetches only the provider whose ring the user clicked.
+    ///
+    /// The automatic pass intentionally remains all-or-nothing so its two
+    /// independent requests stay aligned on one clock. A manual refresh is
+    /// narrower: it should not start the other provider's helper or spend a
+    /// second endpoint request when the user asked about one ring.
+    func refresh(_ provider: Provider) {
+        guard !isRefreshing else { return }
+        isRefreshing = true
+        refreshingProvider = provider
+
+        let source = settings.source(for: provider)
+        let previous = usage[provider]
+        let startedAt = ContinuousClock.now
+
+        Task { [codex, claudeCode, antigravity] in
+            let raw: ProviderUsage
+            switch provider {
+            case .codex:
+                raw = await codex.fetch(source: source)
+            case .claudeCode:
+                raw = await claudeCode.fetch(source: source)
+            case .antigravity:
+                raw = await antigravity.fetch()
+            }
+
+            let fetched = await UsageCache.shared.reconciled(raw)
+            self.usage[provider] = fetched
+
+            if previous?.windows != fetched.windows {
+                self.signals.lastChange = Date()
+            }
+
+            // A local/status-line read can finish within one frame. Keep the
+            // explicit feedback around long enough to be perceived; network
+            // requests naturally exceed this and pay no extra delay.
+            let minimumFeedback = Duration.milliseconds(650)
+            let elapsed = startedAt.duration(to: .now)
+            if elapsed < minimumFeedback {
+                try? await Task.sleep(for: minimumFeedback - elapsed)
+            }
+
+            self.isRefreshing = false
+            self.refreshingProvider = nil
             self.scheduleNext()
         }
     }
