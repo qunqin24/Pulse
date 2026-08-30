@@ -1,0 +1,78 @@
+name: Build
+
+# Every push and every pull request. The package has no test target, so the
+# build itself — under Swift 6's strict rules, with warnings treated as
+# failures — is the check.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Pinned rather than macos-latest: Pulse's Liquid Glass surface is compiled
+    # against the macOS 26 SDK behind an #available check, and an older image
+    # cannot build it at all. Pinning turns a runner change into a deliberate
+    # edit instead of a surprise failure.
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: |
+          swift --version
+          echo "Xcode: $(xcode-select -p)"
+          echo "macOS SDK: $(xcrun --sdk macosx --show-sdk-version)"
+
+      # A clear message beats a hundred lines of "cannot find glassEffect".
+      - name: Check the SDK is new enough
+        run: |
+          SDK="$(xcrun --sdk macosx --show-sdk-version | cut -d. -f1)"
+          if [ "$SDK" -lt 26 ]; then
+            echo "::error::macOS SDK $SDK is too old — PanelSurface needs 26 for glassEffect."
+            exit 1
+          fi
+
+      - name: Localization keys
+        run: ./Scripts/check-localization.sh
+
+      # `#Preview` is expanded by a plugin that ships with Xcode, so the
+      # previews are compiled here too — which is the point. Stripping them
+      # would leave any error inside them completely unreported.
+      - name: Build
+        run: |
+          set -o pipefail
+          swift build -Xswiftc -swift-version -Xswiftc 6 2>&1 | tee build.log
+
+      # Actor-isolation mistakes surface here as warnings and in Xcode as hard
+      # errors that take the whole module down. Treating them as failures is
+      # what stops that reaching anyone.
+      - name: No warnings
+        run: |
+          if grep -q "warning:" build.log; then
+            echo "::error::The build produced warnings, which this project treats as failures."
+            grep "warning:" build.log | head -40
+            exit 1
+          fi
+          echo "Clean."
+
+      # Proves the thing that actually ships can be assembled, not just that
+      # the sources compile.
+      - name: Assemble Pulse.app
+        run: ./Scripts/bundle.sh
+
+      - name: Check the bundle
+        run: |
+          APP="build/Pulse.app"
+          test -x "$APP/Contents/MacOS/Pulse"
+          test -d "$APP/Contents/Resources/Pulse_Pulse.bundle"
+          test -f "$APP/Contents/Resources/AppIcon.icns"
+          test "$(defaults read "$PWD/$APP/Contents/Info.plist" LSUIElement)" = "1"
+          echo "Version: $(defaults read "$PWD/$APP/Contents/Info.plist" CFBundleShortVersionString)"
+          echo "Architectures: $(lipo -archs "$APP/Contents/MacOS/Pulse")"

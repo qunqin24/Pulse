@@ -1,0 +1,120 @@
+name: Release
+
+# Tag and push, and that is the whole publishing step:
+#
+#   ./Scripts/bundle.sh   (locally, to check it)
+#   git tag v1.0.1 && git push origin v1.0.1
+#
+# Pulse's own update check reads GitHub's latest release, so what this
+# publishes is exactly what installed copies are offered.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          # Release notes are generated from the history between tags.
+          fetch-depth: 0
+
+      # The version lives in VERSION and the tag has to agree with it: the
+      # update check compares the published tag against the bundle's
+      # CFBundleShortVersionString, which is read from that file. Mismatched,
+      # every installed copy would be told forever that an update is waiting.
+      - name: Tag and VERSION must agree
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          TAG="${TAG#v}"
+          FILE="$(tr -d '[:space:]' < VERSION)"
+          echo "tag=$TAG  VERSION=$FILE"
+          if [ "$TAG" != "$FILE" ]; then
+            echo "::error::Tag v$TAG does not match VERSION ($FILE). Bump VERSION, commit, then re-tag."
+            exit 1
+          fi
+          echo "VERSION=$FILE" >> "$GITHUB_ENV"
+
+      - name: Check the SDK is new enough
+        run: |
+          SDK="$(xcrun --sdk macosx --show-sdk-version | cut -d. -f1)"
+          if [ "$SDK" -lt 26 ]; then
+            echo "::error::macOS SDK $SDK is too old — PanelSurface needs 26 for glassEffect."
+            exit 1
+          fi
+
+      - name: Localization keys
+        run: ./Scripts/check-localization.sh
+
+      - name: Build
+        run: |
+          set -o pipefail
+          swift build -Xswiftc -swift-version -Xswiftc 6 2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::error::The build produced warnings, which this project treats as failures."
+            grep "warning:" build.log | head -40
+            exit 1
+          fi
+
+      # The disk image carries the install instructions on its window, so it is
+      # the download people should get; the zip is there for anything that
+      # would rather have an archive.
+      - name: Package
+        run: |
+          ./Scripts/dmg.sh
+          ./Scripts/bundle.sh --zip
+          ls -lh build/
+
+      - name: Release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Generated notes plus the part that isn't in the commit history:
+          # what to do when macOS refuses to open it.
+          gh api "repos/${{ github.repository }}/releases/generate-notes" \
+            -f tag_name="v$VERSION" \
+            --jq .body > generated.md || echo "" > generated.md
+
+          {
+            echo "### Install"
+            echo
+            echo "Download **Pulse-$VERSION.dmg**, open it and drag Pulse into Applications."
+            echo
+            echo "Pulse isn't signed with an Apple Developer ID, so macOS blocks the first"
+            echo "launch — and on macOS 15 and later the old right-click → Open trick no"
+            echo "longer works. Open Pulse, dismiss the warning, then go to"
+            echo "**System Settings → Privacy & Security**, scroll to **Security**, and click"
+            echo "**Open Anyway**. Once only."
+            echo
+            echo "Requires macOS 14 or newer. Universal (Apple Silicon and Intel)."
+            echo
+            cat generated.md
+          } > notes.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A tag like v1.1.0-beta.1 is published as a pre-release, which
+          # GitHub's "latest release" excludes — and so, therefore, does
+          # Pulse's update check.
+          PRERELEASE=""
+          case "$VERSION" in *-*) PRERELEASE="--prerelease";; esac
+
+          gh release create "v$VERSION" \
+            "build/Pulse-$VERSION.dmg" \
+            "build/Pulse-$VERSION.zip" \
+            --title "Pulse $VERSION" \
+            --notes-file notes.md \
+            $PRERELEASE
