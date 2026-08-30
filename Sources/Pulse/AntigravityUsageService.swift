@@ -18,9 +18,17 @@ import Foundation
 ///   it the server answers `unauthenticated`, and it is the reason this can
 ///   only ever read the quota of the Antigravity running as this same user.
 struct AntigravityUsageService: Sendable {
-    /// The RPC that carries the quota. Antigravity is built on Codeium's
-    /// language server, hence the `exa.` package and the `x-codeium-` header.
-    private static let method = "exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary"
+    /// The RPCs this uses. Antigravity is built on Codeium's language server,
+    /// hence the `exa.` package and the `x-codeium-` header.
+    ///
+    /// Those two are all there is: of the 306 methods the server exposes, not
+    /// one has "usage" or "credit" in its name, and nothing on disk carries a
+    /// token count either. So Antigravity can say how much of a quota is left
+    /// and what the plan is called — and that is the whole of it. The spending
+    /// history and the window estimate the other two providers get are built
+    /// from per-model token counts, which do not exist here to be read.
+    private static let quotaMethod = "exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary"
+    private static let statusMethod = "exa.language_server_pb.LanguageServerService/GetUserStatus"
     private static let csrfHeader = "x-codeium-csrf-token"
 
     func fetch() async -> ProviderUsage {
@@ -38,9 +46,12 @@ struct AntigravityUsageService: Sendable {
                     windows: windows,
                     observedAt: Date(),
                     state: .live,
-                    // The quota server names neither, and a plan invented from
-                    // the limits would be a guess wearing a fact's clothes.
-                    plan: nil,
+                    // A second call, because the quota reply doesn't name the
+                    // plan. Its absence is not worth failing the reading over.
+                    plan: await Self.plan(port: port, token: server.token),
+                    // Antigravity reports a monthly credit *allowance*, never a
+                    // balance. Putting an allowance here would read as "this is
+                    // what you have left" — which is the one thing it isn't.
                     creditBalance: nil
                 )
             case .success:
@@ -152,6 +163,34 @@ struct AntigravityUsageService: Sendable {
     }
 
     private static func ask(port: Int, token: String) async -> Result<[UsageWindow], Failure> {
+        switch await post(quotaMethod, port: port, token: token) {
+        case .failure(let failure):
+            return .failure(failure)
+        case .success(let data):
+            guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
+                return .failure(.unreadable)
+            }
+            return .success(windows(from: reply))
+        }
+    }
+
+    /// The plan's name — "Pro", and whatever the other tiers are called.
+    ///
+    /// `GetUserStatus` answers with a good deal more than this, the account's
+    /// name and email address among it. Only the plan's name is decoded: the
+    /// rest is the user's, not ours, and nothing here has any use for it.
+    private static func plan(port: Int, token: String) async -> String? {
+        guard
+            case .success(let data) = await post(statusMethod, port: port, token: token),
+            let reply = try? JSONDecoder().decode(StatusReply.self, from: data),
+            let name = reply.userStatus?.planStatus?.planInfo?.planName,
+            !name.isEmpty
+        else { return nil }
+
+        return name
+    }
+
+    private static func post(_ method: String, port: Int, token: String) async -> Result<Data, Failure> {
         guard let url = URL(string: "https://127.0.0.1:\(port)/\(method)") else {
             return .failure(.wrongPort)
         }
@@ -180,11 +219,7 @@ struct AntigravityUsageService: Sendable {
         default: return .failure(.wrongPort)
         }
 
-        guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            return .failure(.unreadable)
-        }
-
-        return .success(windows(from: reply))
+        return .success(data)
     }
 
     // MARK: - Reading the reply
@@ -207,6 +242,15 @@ struct AntigravityUsageService: Sendable {
         }
 
         let response: Response?
+    }
+
+    /// Only the sliver of `GetUserStatus` that is any of Pulse's business.
+    private struct StatusReply: Decodable {
+        struct PlanInfo: Decodable { let planName: String? }
+        struct PlanStatus: Decodable { let planInfo: PlanInfo? }
+        struct UserStatus: Decodable { let planStatus: PlanStatus? }
+
+        let userStatus: UserStatus?
     }
 
     private static func windows(from reply: Reply) -> [UsageWindow] {
