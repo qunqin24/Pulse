@@ -37,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Daily at most, and only from a bundle — see `AppUpdate`.
         update.checkIfDue()
 
+        // Once ever, and only for someone who has Claude Code. Asked after the
+        // panel is up so the app is visibly there before it asks for anything.
+        StatusLineHook.offerOnFirstRun()
+
         store.start()
 
         let controller = FloatingPanelController(store: store, settings: settings, placement: placement)
