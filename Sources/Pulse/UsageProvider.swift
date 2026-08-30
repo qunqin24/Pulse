@@ -80,8 +80,8 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     ///
     /// Only the presence of a directory is checked, never its contents: this
     /// is "has this agent ever run here", not anything about the account.
-    /// The key-based providers are absent by design — they cannot work
-    /// without a key, so there is nothing an installed copy would prove.
+    /// Kimi Code is absent by design: it has nothing to install and Pulse
+    /// never goes looking for its key, so there is nothing to find.
     static func installedOnThisMac() -> Set<Provider> {
         let home = URL(fileURLWithPath: NSHomeDirectory())
         let manager = FileManager.default
@@ -93,9 +93,21 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         if manager.fileExists(atPath: home.appending(path: ".codex").path) {
             found.insert(.codex)
         }
-        if manager.fileExists(atPath: "/Applications/Antigravity.app") {
+        // Not everyone installs into /Applications.
+        let antigravity = ["/Applications/Antigravity.app",
+                           home.appending(path: "Applications/Antigravity.app").path]
+        if antigravity.contains(where: manager.fileExists(atPath:)) {
             found.insert(.antigravity)
         }
+
+        // OpenCode Go has nothing to install, but a key OpenCode already saved
+        // is the same kind of evidence: this Mac is set up for it. Without
+        // this, someone whose only agent is OpenCode Go detects nothing and
+        // gets the everything-on fallback.
+        if OpenCodeGoUsageService.storedKey() != nil {
+            found.insert(.openCodeGo)
+        }
+
         return found
     }
 }

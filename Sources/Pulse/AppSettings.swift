@@ -38,7 +38,11 @@ final class AppSettings {
         didSet {
             guard providerOrder != oldValue else { return }
             UserDefaults.standard.set(providerOrder, forKey: Key.providerOrder)
-            onChange?()
+            // Deliberately no `onChange`: that is how the AppKit side hears
+            // about settings the *usage loop* cares about, and it refetches
+            // every provider when it fires. Rearranging the rail is a layout
+            // change — the panel is `@Observable` and redraws on its own, and
+            // nobody's rate limit should pay for a reorder.
         }
     }
 
@@ -254,19 +258,24 @@ final class AppSettings {
         if !stored.isEmpty { providers.formUnion(fresh) }
         defaults.set(Provider.allCases.map(\.rawValue), forKey: Key.offeredProviders)
 
+        // Worked out here and written back here. Assigning a stored property
+        // in `init` does not run its `didSet`, so without this every launch is
+        // another first run — and installing or removing an agent would
+        // silently rearrange the rail behind the user.
+        if stored.isEmpty {
+            let firstRun = Provider.installedOnThisMac()
+            let chosen = firstRun.isEmpty ? Set(Provider.allCases) : firstRun
+            defaults.set(chosen.map(\.rawValue), forKey: Key.enabledProviders)
+            providers = chosen
+        }
+
         let language = defaults.string(forKey: Key.language)
             .flatMap(AppLanguage.init(rawValue:)) ?? .system
 
         let settings = AppSettings(
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
-            // First run: whatever is installed. Nothing installed at all
-            // falls back to showing everything — an empty rail has nothing to
-            // hover and nothing to grab, and the user should still be able to
-            // see what Pulse supports.
-            enabledProviders: providers.isEmpty
-                ? (Provider.installedOnThisMac().isEmpty ? Set(Provider.allCases) : Provider.installedOnThisMac())
-                : providers,
+            enabledProviders: providers,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],

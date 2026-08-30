@@ -37,6 +37,14 @@ final class UsageStore {
 
     /// Keys read once per launch rather than once per refresh pass.
     private var apiKeys: [Provider: String] = [:]
+    /// A provider asked for while another pass was in flight.
+    ///
+    /// The guard that stops two passes overlapping used to drop these on the
+    /// floor: saving a key during the launch pass, or pressing Refresh while
+    /// anything else was running, did nothing at all — and the pass already
+    /// running had read the old key before it started, so it published the
+    /// missing-key answer and slept for up to half an hour.
+    private var queued: Provider?
 
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
@@ -191,6 +199,7 @@ final class UsageStore {
             self.usage[.kimiCode] = fetchedKimi
             self.isRefreshing = false
             self.refreshingProvider = nil
+            self.runQueued()
 
             // Compare the windows only. `observedAt` moves on every successful
             // fetch, so including it would report a change every single time
@@ -213,7 +222,10 @@ final class UsageStore {
     /// narrower: it should not start the other provider's helper or spend a
     /// second endpoint request when the user asked about one ring.
     func refresh(_ provider: Provider) {
-        guard !isRefreshing else { return }
+        guard !isRefreshing else {
+            queued = provider
+            return
+        }
         isRefreshing = true
         refreshingProvider = provider
 
@@ -260,7 +272,14 @@ final class UsageStore {
             self.isRefreshing = false
             self.refreshingProvider = nil
             self.scheduleNext()
+            self.runQueued()
         }
+    }
+
+    private func runQueued() {
+        guard let provider = queued else { return }
+        queued = nil
+        refresh(provider)
     }
 
     func usage(for provider: Provider) -> ProviderUsage {

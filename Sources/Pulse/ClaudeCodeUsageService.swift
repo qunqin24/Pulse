@@ -38,8 +38,11 @@ struct ClaudeCodeUsageService: Sendable {
         case .tooling:
             // Pinned to the status line, so a missing reading is reported as
             // such rather than quietly answered from somewhere else.
+            // Pinned here, the endpoint is never tried — so a stored token
+            // says nothing about whether it still works, and calling it
+            // expired would be a guess about something this route never asked.
             return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: loadAccessToken() != nil))
+                ?? .unavailable(.claudeCode, reason: StatusLineHook.isInstalled ? .awaitingResponse : .notConnected)
 
         case .endpoint:
             guard let token = loadAccessToken() else {
@@ -54,9 +57,10 @@ struct ClaudeCodeUsageService: Sendable {
             }
 
         case .automatic:
-            var hadCredentials = false
+            // Asked before the token is filtered for expiry: an expired one is
+            // still evidence of a login, and is in fact the common case.
+            let hadCredentials = storedCredentials() != nil
             if let token = loadAccessToken() {
-                hadCredentials = true
                 switch await fetchOverHTTP(token: token) {
                 case .success(let usage):
                     return usage
@@ -135,8 +139,17 @@ struct ClaudeCodeUsageService: Sendable {
     // MARK: - Credentials
 
     private func loadAccessToken() -> String? {
-        (readKeychainCredentials() ?? readCredentialsFile())
-            .flatMap(Self.unexpiredAccessToken)
+        storedCredentials().flatMap(Self.unexpiredAccessToken)
+    }
+
+    /// The blob as stored, expired or not.
+    ///
+    /// Kept apart from `loadAccessToken` because the two answer different
+    /// questions: "is there a usable token" and "is this person signed in at
+    /// all". Reading only the first cannot tell an expired login from no login,
+    /// which is the whole distinction the card is trying to draw.
+    private func storedCredentials() -> [String: Any]? {
+        readKeychainCredentials() ?? readCredentialsFile()
     }
 
     /// The credentials blob Claude Code stores, or nil if it can't be read.

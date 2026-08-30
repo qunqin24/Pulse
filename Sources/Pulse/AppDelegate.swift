@@ -37,9 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Daily at most, and only from a bundle — see `AppUpdate`.
         update.checkIfDue()
 
-        // Once ever, and only for someone who has Claude Code. Asked after the
-        // panel is up so the app is visibly there before it asks for anything.
-        StatusLineHook.offerOnFirstRun()
 
         store.start()
 
@@ -57,6 +54,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settings.isPanelVisible {
             controller.show()
         }
+
+        // Once ever, and only for someone who has Claude Code. After the panel
+        // is actually on screen: a modal put up any earlier blocks the launch
+        // and asks for something while the app is still invisible.
+        StatusLineHook.offerOnFirstRun()
     }
 
     func showSettings() {

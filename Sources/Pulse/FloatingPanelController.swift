@@ -110,7 +110,11 @@ final class FloatingPanelController {
         }
         panel.onClick = { [settings, placement, store] point in
             guard placement.isRailExpanded else { return }
-            let providers = Provider.allCases.filter(settings.isEnabled)
+            // The rail draws them in the user's order, so a click has to be
+            // matched against that order — `PanelHitArea.provider` maps a
+            // position to an index, and the enum's order is not what is on
+            // screen once anything has been moved.
+            let providers = settings.orderedProviders.filter(settings.isEnabled)
             guard let provider = PanelHitArea.provider(
                 at: point,
                 edge: placement.edge,

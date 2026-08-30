@@ -15,9 +15,10 @@ enum APIKeyStore {
 
     static func key(for provider: Provider) -> String? {
         guard
+            let secret = secret(),
             let stored = load()[provider.rawValue],
             let box = try? AES.GCM.SealedBox(combined: stored),
-            let opened = try? AES.GCM.open(box, using: secret()),
+            let opened = try? AES.GCM.open(box, using: secret),
             let key = String(data: opened, encoding: .utf8),
             !key.isEmpty
         else { return nil }
@@ -32,9 +33,11 @@ enum APIKeyStore {
         let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let trimmed, !trimmed.isEmpty {
-            guard let sealed = try? AES.GCM.seal(Data(trimmed.utf8), using: secret()).combined else {
-                return false
-            }
+            guard
+                let secret = secret(),
+                let sealed = try? AES.GCM.seal(Data(trimmed.utf8), using: secret).combined
+            else { return false }
+
             keys[provider.rawValue] = sealed
         } else {
             keys[provider.rawValue] = nil
@@ -73,11 +76,14 @@ enum APIKeyStore {
 
     /// Derived from this Mac's hardware identifier, so the same file on
     /// another machine yields nothing.
-    private static func secret() -> SymmetricKey {
-        var material = Data("Pulse api keys".utf8)
-        if let hardware = hardwareIdentifier() {
-            material.append(Data(hardware.utf8))
-        }
+    ///
+    /// Nil when the identifier can't be read. Falling back to a fixed string
+    /// would give every Mac the same key, which is worse than not encrypting
+    /// at all — it would look protected while a copied file opened anywhere.
+    private static func secret() -> SymmetricKey? {
+        guard let hardware = hardwareIdentifier() else { return nil }
+
+        let material = Data("Pulse api keys".utf8) + Data(hardware.utf8)
         return SymmetricKey(data: SHA256.hash(data: material))
     }
 

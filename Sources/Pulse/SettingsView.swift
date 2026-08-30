@@ -320,7 +320,9 @@ struct SettingsView: View {
     }
 
     private func saveKey(for provider: Provider) {
-        APIKeyStore.setKey(apiKey, for: provider)
+        // Only call it saved if it was. Otherwise the Save button greys out
+        // over a key that never reached disk.
+        guard APIKeyStore.setKey(apiKey, for: provider) else { return }
         savedKey = apiKey
         // The store keeps keys for the life of the launch, so it has to be
         // told; otherwise the key is saved and nothing uses it until restart.
@@ -593,12 +595,24 @@ struct SettingsView: View {
             // Says how current these figures are, and offers to make them
             // current. The rail has the same on a ring click, but nobody
             // reading a settings pane should have to go and find it there.
-            SettingsRow(
-                String.localized("Last read"),
-                subtitle: Self.lastRead(usage)
-            ) {
-                Button(String.localized("Refresh")) { store.refresh(provider) }
-                    .disabled(store.isRefreshing(provider))
+            SettingsRow(String.localized("Last read")) {
+                HStack(spacing: 10) {
+                    // `Text`'s relative style keeps counting on its own. A
+                    // string worked out once said "just now" for the whole
+                    // half hour until something else redrew the view.
+                    if let observed = usage.observedAt {
+                        Text(observed, style: .relative)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(localized: "Not yet")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button(String.localized("Refresh")) { store.refresh(provider) }
+                        .disabled(store.isRefreshing(provider))
+                }
             }
 
             SettingsRowDivider()
@@ -643,19 +657,6 @@ struct SettingsView: View {
                 }
             }
         }
-    }
-
-    /// When this provider last answered, in words. Reads "just now" after a
-    /// manual refresh, which is the point of showing it beside the button.
-    private static func lastRead(_ usage: ProviderUsage) -> String {
-        guard let observed = usage.observedAt else {
-            return .localized("Not yet")
-        }
-
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        formatter.locale = LocalizationSource.locale
-        return formatter.localizedString(for: observed, relativeTo: Date())
     }
 
     private func resetText(_ window: UsageWindow) -> String? {
