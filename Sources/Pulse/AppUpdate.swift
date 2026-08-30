@@ -1,36 +1,40 @@
 import Foundation
 import Observation
+import Sparkle
 
-/// Whether a newer Pulse has been published.
+/// Keeping Pulse up to date, through Sparkle.
 ///
-/// A **notice, not an installer**. Pulse isn't signed with a Developer ID yet,
-/// and an app that downloads and swaps itself out without one is asking the
-/// user to trust something macOS itself refuses to vouch for. So this only
-/// ever says "there is a newer one, here it is" and leaves the download to the
-/// browser. When there is a Developer ID to sign and notarise with, this is
-/// the piece Sparkle replaces.
+/// **An EdDSA key is what makes this safe without an Apple Developer ID.**
+/// Sparkle refuses any archive not signed by the key in `Info.plist`, whoever
+/// served it — so the update path is verifiable even though the app itself
+/// carries only an ad-hoc signature. Apple's signing and notarisation are
+/// recommended by Sparkle rather than required, and the one thing they would
+/// fix — Gatekeeper blocking the *first* launch — is not something an updater
+/// can help with anyway.
 ///
-/// It reads GitHub's own idea of the latest release rather than a feed of our
-/// own: `/releases/latest` already skips drafts and pre-releases, so tagging a
-/// release is the whole publishing step.
+/// **Nothing starts unless Pulse is running from a bundle.** Sparkle needs an
+/// `Info.plist` carrying the feed URL and that public key, its framework in
+/// `Contents/Frameworks`, and a version to compare against; a `swift run`
+/// build has none of them. Started anyway it would log complaints about a
+/// missing feed forever, and telling a developer their working copy is out of
+/// date is noise.
 ///
-/// Nothing happens in a build that isn't an app bundle. A loose executable has
-/// no version to compare against — `swift run` produces one — and telling a
-/// developer their working copy is out of date is noise.
+/// Sparkle owns the schedule and the windows it puts up. What is kept here is
+/// only what the rest of the app asks about: whether a check can happen at
+/// all, whether one is running, and whether a newer version was found — which
+/// is what the menu bar shows.
 @MainActor
 @Observable
 final class AppUpdate {
     struct Release: Equatable, Sendable {
         let version: String
-        let page: URL
     }
 
-    /// Set only when the published version is actually newer than this one.
+    /// Set once Sparkle has found something newer, so the menu bar can say so.
     private(set) var newer: Release?
     private(set) var isChecking = false
-    private(set) var lastChecked: Date?
-    /// The last check couldn't reach GitHub. Worth showing, because otherwise
-    /// "no update" and "no answer" look identical.
+    /// The last check couldn't reach the feed. Worth showing, because "no
+    /// update" and "no answer" look identical otherwise.
     private(set) var didFail = false
 
     /// This build's version, or nil when it isn't running from a bundle.
@@ -38,110 +42,84 @@ final class AppUpdate {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
     }
 
-    var canCheck: Bool { current != nil }
+    var canCheck: Bool { controller != nil }
 
-    private static let endpoint = URL(string: "https://api.github.com/repos/qunqin24/Pulse/releases/latest")!
-    private static let interval: TimeInterval = 24 * 3_600
-    private static let lastCheckedKey = "update.lastChecked"
+    /// Sparkle's own daily schedule. Stored by Sparkle, not by `AppSettings`,
+    /// so it can't drift from what the updater is actually doing.
+    var checksAutomatically: Bool {
+        get { controller?.updater.automaticallyChecksForUpdates ?? false }
+        set { controller?.updater.automaticallyChecksForUpdates = newValue }
+    }
+
+    private var controller: SPUStandardUpdaterController?
+    private let relay = UpdaterRelay()
 
     init() {
-        let stored = UserDefaults.standard.double(forKey: Self.lastCheckedKey)
-        lastChecked = stored > 0 ? Date(timeIntervalSince1970: stored) : nil
+        // The feed URL is the tell: present only in a bundle built by
+        // Scripts/bundle.sh, which is also the only place the framework is.
+        guard
+            Bundle.main.bundleIdentifier != nil,
+            Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil
+        else { return }
+
+        relay.owner = self
+        controller = SPUStandardUpdaterController(
+            startingUpdater: true,
+            updaterDelegate: relay,
+            userDriverDelegate: nil
+        )
     }
 
-    /// Once a day, which is often enough for a release and rare enough to stay
-    /// well inside GitHub's unauthenticated rate limit.
-    func checkIfDue() {
-        guard canCheck else { return }
-        if let lastChecked, Date().timeIntervalSince(lastChecked) < Self.interval { return }
-        check()
-    }
-
+    /// Asks now, and shows Sparkle's own window with whatever it finds.
     func check() {
-        guard canCheck, !isChecking else { return }
+        guard let controller else { return }
         isChecking = true
         didFail = false
-
-        Task { [current] in
-            let answer = await Self.latest()
-
-            self.isChecking = false
-            self.lastChecked = Date()
-            UserDefaults.standard.set(self.lastChecked!.timeIntervalSince1970, forKey: Self.lastCheckedKey)
-
-            switch answer {
-            case .none:
-                // Nothing published yet. That is an answer, not a failure —
-                // and it is the state a repository is in until its first
-                // release, which would otherwise show an error indefinitely.
-                self.newer = nil
-            case .failed:
-                self.didFail = true
-            case .found(let release):
-                // Only ever *newer*. A local build running ahead of the
-                // published release — the normal state while working on it —
-                // must not be told to downgrade itself.
-                self.newer = Self.isNewer(release.version, than: current ?? "0") ? release : nil
-            }
-        }
+        controller.updater.checkForUpdates()
     }
 
-    private enum Answer {
-        case found(Release)
-        /// Reached GitHub; there are no releases.
-        case none
-        case failed
+    /// Nothing to do: Sparkle runs its own schedule from the moment it starts.
+    /// Kept so the app's launch path doesn't have to know which updater is
+    /// behind this.
+    func checkIfDue() {}
+
+    fileprivate func finishCheck(found item: SUAppcastItem?) {
+        isChecking = false
+        didFail = false
+        newer = item.map { Release(version: $0.displayVersionString) }
     }
 
-    private static func latest() async -> Answer {
-        var request = URLRequest(url: endpoint)
-        request.timeoutInterval = 15
-        // GitHub refuses anonymous requests that don't identify themselves.
-        request.setValue("Pulse", forHTTPHeaderField: "User-Agent")
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+    fileprivate func failCheck(_ failed: Bool) {
+        isChecking = false
+        if failed { didFail = true }
+    }
+}
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
-            return .failed
-        }
+/// Sparkle's delegate, kept apart from `AppUpdate` itself.
+///
+/// `SPUUpdaterDelegate` is an `@objc` protocol, so it has to be an `NSObject`
+/// and its methods cannot be main-actor-isolated. Rather than fight that on a
+/// type that is also `@Observable`, this stands between the two and hops onto
+/// the main actor — where Sparkle calls it from in any case.
+private final class UpdaterRelay: NSObject, SPUUpdaterDelegate {
+    /// Weak: the app owns the updater, not the other way round.
+    weak var owner: AppUpdate?
 
-        switch (response as? HTTPURLResponse)?.statusCode {
-        case 200: break
-        // A repository with no releases answers 404, and so does a private or
-        // renamed one. Either way there is nothing to offer.
-        case 404: return .none
-        default: return .failed
-        }
-
-        guard
-            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let tag = root["tag_name"] as? String,
-            let page = (root["html_url"] as? String).flatMap(URL.init(string:))
-        else { return .failed }
-
-        // Tags are published as `v1.2.0`; the bundle's version is `1.2.0`.
-        return .found(Release(version: tag.hasPrefix("v") ? String(tag.dropFirst()) : tag, page: page))
+    nonisolated func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        MainActor.assumeIsolated { owner?.finishCheck(found: item) }
     }
 
-    /// Compares dot-separated version numbers a component at a time.
-    ///
-    /// Not a string comparison: "1.10.0" is newer than "1.9.0" and sorts
-    /// before it. Missing components count as zero, so "1.2" and "1.2.0" are
-    /// the same version rather than different ones.
-    static func isNewer(_ candidate: String, than current: String) -> Bool {
-        let left = components(of: candidate)
-        let right = components(of: current)
-
-        for index in 0..<max(left.count, right.count) {
-            let a = index < left.count ? left[index] : 0
-            let b = index < right.count ? right[index] : 0
-            if a != b { return a > b }
-        }
-        return false
+    nonisolated func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        MainActor.assumeIsolated { owner?.finishCheck(found: nil) }
     }
 
-    private static func components(of version: String) -> [Int] {
-        version
-            .split(separator: ".")
-            .map { part in Int(part.prefix { $0.isNumber }) ?? 0 }
+    nonisolated func updater(_ updater: SPUUpdater, didAbortWithError error: any Error) {
+        // Sparkle aborts for benign reasons too — the user closing its window
+        // is one — and reporting those as "couldn't reach the feed" would be a
+        // lie on the one row that exists to tell the truth about that. Only a
+        // failure to *reach or read* the feed counts.
+        let failed = (error as NSError).domain == NSURLErrorDomain
+            || (error as NSError).code == Int(SUError.appcastError.rawValue)
+        MainActor.assumeIsolated { owner?.failCheck(failed) }
     }
 }

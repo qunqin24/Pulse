@@ -586,17 +586,37 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup {
                 SettingsRow(String.localized("Version"), subtitle: updateSubtitle) {
-                    if let newer = update.newer {
-                        Button(String.localized("Download \(newer.version)")) {
-                            NSWorkspace.shared.open(newer.page)
+                    if update.canCheck {
+                        // Sparkle puts up its own window with whatever it
+                        // finds, so this is the same button either way — there
+                        // is nothing for Pulse to draw on top of it.
+                        Button(
+                            update.newer.map { String.localized("Update to \($0.version)") }
+                                ?? String.localized("Check now")
+                        ) {
+                            update.check()
                         }
-                    } else if update.canCheck {
-                        Button(String.localized("Check now")) { update.check() }
-                            .disabled(update.isChecking)
+                        .disabled(update.isChecking)
                     } else {
                         Text(Self.version)
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                if update.canCheck {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Check automatically"),
+                        subtitle: String.localized("Once a day. Updates are offered, never installed on their own.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { update.checksAutomatically },
+                            set: { update.checksAutomatically = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                     }
                 }
 
@@ -630,7 +650,7 @@ struct SettingsView: View {
             return .localized("\(Self.version) installed · \(newer.version) available")
         }
         if update.isChecking { return .localized("Checking…") }
-        if update.didFail { return .localized("Couldn't reach GitHub to check.") }
+        if update.didFail { return .localized("Couldn't reach the update feed.") }
         if !update.canCheck { return .localized("Built from source — no update check.") }
         return .localized("\(Self.version) · up to date")
     }

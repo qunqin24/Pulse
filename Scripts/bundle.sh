@@ -24,6 +24,11 @@ cd "$(dirname "$0")/.."
 VERSION="$(tr -d '[:space:]' < VERSION)"
 APP="build/Pulse.app"
 BUNDLE_ID="io.github.qunqin24.Pulse"
+FEED_URL="https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast.xml"
+# Public half of the EdDSA key updates are signed with. Safe to commit — it is
+# what *verifies* an update, and Sparkle refuses anything not signed by its
+# private half. See Scripts/appcast.py.
+PUBLIC_KEY="$(tr -d '[:space:]' < Scripts/sparkle-public-key.txt)"
 
 echo "Building Pulse $VERSION (universal)…"
 
@@ -49,6 +54,21 @@ cp "$BUILT/Pulse" "$APP/Contents/MacOS/Pulse"
 cp -R "$BUILT/Pulse_Pulse.bundle" "$APP/Contents/Resources/"
 cp AppIcon/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
+# Sparkle has to travel inside the app. SwiftPM links the executable against
+# the framework but has no app to put it in, which is why a `swift run` build
+# cannot update itself and `AppUpdate` doesn't start the updater there.
+FRAMEWORK="$(find .build/artifacts -maxdepth 6 -type d -name 'Sparkle.framework' | head -1)"
+if [ -z "$FRAMEWORK" ]; then
+    echo "Sparkle.framework not found — run 'swift build' so SwiftPM fetches it." >&2
+    exit 1
+fi
+mkdir -p "$APP/Contents/Frameworks"
+cp -R "$FRAMEWORK" "$APP/Contents/Frameworks/"
+
+# The executable looks for it at @rpath; SwiftPM only ever pointed that at the
+# build directory, so without this the app launches into a dyld failure.
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$APP/Contents/MacOS/Pulse" 2>/dev/null || true
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -70,6 +90,16 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>github.com/qunqin24/Pulse</string>
+    <key>SUFeedURL</key><string>$FEED_URL</string>
+    <key>SUPublicEDKey</key><string>$PUBLIC_KEY</string>
+    <!-- Checked on a schedule without asking first. Sparkle would normally put
+         up a permission prompt, but Pulse is an .accessory app whose panel
+         never becomes key, so that window can open behind everything and go
+         unanswered. The toggle is in Settings instead, where it can be found. -->
+    <key>SUEnableAutomaticChecks</key><true/>
+    <!-- Downloading and installing on its own stays off: an update is offered,
+         not applied behind the user's back. -->
+    <key>SUAutomaticallyUpdate</key><false/>
 </dict>
 </plist>
 PLIST
@@ -78,6 +108,10 @@ PLIST
 # ad-hoc signature does not fix that — only a Developer ID and notarisation do
 # — but it does keep macOS from complaining about a *damaged* bundle when the
 # app is moved or the binary is touched.
+# Inside out: a nested bundle signed after its container invalidates the
+# container's signature, and Sparkle brings several of them (XPC services and
+# its own updater app).
+codesign --force --deep --sign - "$APP/Contents/Frameworks/Sparkle.framework" 2>/dev/null || true
 codesign --force --deep --sign - "$APP" 2>/dev/null || echo "  (ad-hoc signing skipped)"
 
 echo "→ $APP"

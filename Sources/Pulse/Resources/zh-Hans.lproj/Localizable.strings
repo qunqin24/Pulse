@@ -160,10 +160,12 @@
 "Antigravity's language server" = "Antigravity 语言服务器";
 "Refresh" = "刷新";
 "Pulse %@ is available" = "Pulse %@ 可更新";
-"Download %@" = "下载 %@";
 "Check now" = "检查更新";
 "Checking…" = "正在检查…";
-"Couldn't reach GitHub to check." = "连不上 GitHub,没法检查。";
 "Built from source — no update check." = "源码构建,不检查更新。";
 "%@ installed · %@ available" = "已装 %@ · 可更新到 %@";
 "%@ · up to date" = "%@ · 已是最新";
+"Update to %@" = "更新到 %@";
+"Check automatically" = "自动检查";
+"Once a day. Updates are offered, never installed on their own." = "每天一次。只提示，不会自己装。";
+"Couldn't reach the update feed." = "连不上更新源。";

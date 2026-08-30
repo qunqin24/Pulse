@@ -58,15 +58,16 @@ hand anyone but a build folder.
 
 - **Pushing a tag is the whole release.**
   [`.github/workflows/release.yml`](.github/workflows/release.yml) builds,
-  packages and publishes; [`ci.yml`](.github/workflows/ci.yml) runs the same
-  build on every push. Both pin **`macos-26`** rather than `macos-latest`,
+  packages and publishes, then signs the archive and commits the Sparkle feed;
+  [`ci.yml`](.github/workflows/ci.yml) runs the same build on every push. The
+  release needs one secret, `SPARKLE_PRIVATE_KEY`, and fails loudly without it
+  rather than publishing a version no installed copy would ever be offered. Both pin **`macos-26`** rather than `macos-latest`,
   because `PanelSurface`'s Liquid Glass needs the macOS 26 SDK to compile at
   all even though it is behind an `#available` check — an older image cannot
   build the package, so both workflows check `xcrun --show-sdk-version` first
   and fail with that sentence instead of a hundred lines of "cannot find
   glassEffect". Warnings fail the build, for the reason at the top of this
-  file. Nothing is signed and no secrets are needed.
-  **The tag is checked against `VERSION`** and a mismatch fails the run: ship
+  file.   **The tag is checked against `VERSION`** and a mismatch fails the run: ship
   them out of step and every installed copy is told, forever, that an update is
   waiting. A tag with a suffix (`v1.1.0-beta.1`) is published as a pre-release,
   which GitHub's "latest release" excludes — and so, therefore, does the update
@@ -127,20 +128,44 @@ two copies of the app and shouldn't edit each other's settings.
 launch agent left over from a loose build still names the old binary, so at the
 next login launchd starts the old build *and* `SMAppService` starts the new one.
 
-**The update check is a notice, not an installer**
-([AppUpdate.swift](Sources/Pulse/AppUpdate.swift)). Pulse isn't signed with a
-Developer ID, and an app that downloads and swaps itself out without one is
-asking for trust macOS itself refuses to give. So it reads
-`/repos/qunqin24/Pulse/releases/latest` — which already skips drafts and
-pre-releases, making "tag it" the whole publishing step — and offers a link.
-When there is a Developer ID, **this is the piece Sparkle replaces.** Three
-things it gets right that are easy to get wrong: a **404 means no releases yet**
-and is an answer rather than a failure (a fresh repository would otherwise show
-an error forever); the comparison is component-wise, not string-wise, or 1.10.0
-sorts before 1.9.0; and it only ever reports something *newer*, so a working
-copy running ahead of the published release isn't told to downgrade itself.
-Nothing runs at all without a bundle — telling a developer their working copy is
-out of date is noise.
+**Updates install themselves, through Sparkle**
+([AppUpdate.swift](Sources/Pulse/AppUpdate.swift)). The thing that makes this
+safe without an Apple Developer ID is the **EdDSA key**: Sparkle refuses any
+archive not signed by the private half of the key whose public half is in
+`Info.plist`, whoever served it. Apple's signing and notarisation are
+*recommended* by Sparkle rather than required — that was got wrong here once,
+and the mistake cost a whole release cycle of "wait until there's a Developer
+ID". The one thing notarisation would fix, Gatekeeper blocking the **first**
+launch, is not something any updater can help with.
+
+The private key lives only in the `SPARKLE_PRIVATE_KEY` repository secret;
+`Scripts/sparkle-public-key.txt` holds the public half and is meant to be
+committed. [Scripts/appcast.py](Scripts/appcast.py) signs each release's zip
+and appends an entry to [appcast.xml](appcast.xml), which the release workflow
+commits back to `main` — **after** publishing, since the feed points at the
+release's own asset and committing first would advertise a 404. Sparkle updates
+from the **zip**, not the disk image; the image is for people, the zip is for
+the updater.
+
+Three things about the Swift side. `AppUpdate` starts nothing unless
+`SUFeedURL` is present, which is only true in a bundle — Sparkle's framework is
+in `Contents/Frameworks` and a `swift run` build has neither, so starting it
+there would log complaints about a missing feed forever. Sparkle's delegate is
+an `@objc` protocol and so cannot be main-actor-isolated, which is why
+`UpdaterRelay` sits between it and the `@Observable` model rather than
+`AppUpdate` conforming directly. And `didAbortWithError` fires for benign
+reasons too — the user closing Sparkle's window is one — so only a genuine
+failure to reach or read the feed is reported as one, on the single row that
+exists to tell the truth about that.
+
+**Embedding the framework is the fiddly part of the bundle.** SwiftPM links
+against Sparkle but has no app to put it in, so `Scripts/bundle.sh` copies it
+into `Contents/Frameworks` and adds `@executable_path/../Frameworks` to the
+executable's rpath — SwiftPM only ever pointed that at the build directory, and
+without the addition the app launches straight into a dyld failure. Signing then
+has to run inside out: Sparkle brings nested bundles of its own (XPC services
+and its updater app), and signing a container before its contents invalidates
+the container.
 
 Note the settings group that holds the *usage* refresh interval is called
 "Refresh", not "Updates". It was "Updates" until the app had updates of its own.
