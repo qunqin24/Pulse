@@ -160,10 +160,12 @@
 "Antigravity's language server" = "Antigravity's language server";
 "Refresh" = "Refresh";
 "Pulse %@ is available" = "Pulse %@ is available";
-"Download %@" = "Download %@";
 "Check now" = "Check now";
 "Checking…" = "Checking…";
-"Couldn't reach GitHub to check." = "Couldn't reach GitHub to check.";
 "Built from source — no update check." = "Built from source — no update check.";
 "%@ installed · %@ available" = "%@ installed · %@ available";
 "%@ · up to date" = "%@ · up to date";
+"Update to %@" = "Update to %@";
+"Check automatically" = "Check automatically";
+"Once a day. Updates are offered, never installed on their own." = "Once a day. Updates are offered, never installed on their own.";
+"Couldn't reach the update feed." = "Couldn't reach the update feed.";

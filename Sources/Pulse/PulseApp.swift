@@ -65,7 +65,7 @@ private struct MenuBarContent: View {
             // manual one lives in Settings.
             if let newer = update.newer {
                 Button(String.localized("Pulse \(newer.version) is available")) {
-                    NSWorkspace.shared.open(newer.page)
+                    update.check()
                 }
 
                 Divider()

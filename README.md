@@ -50,6 +50,8 @@ gets out of the way the second you look away.
   explicitly in Settings (applies immediately).
 - An adaptive refresh interval (2–30 minutes) that backs off when nothing's
   changing, instead of polling on a fixed schedule around the clock.
+- Updates itself through Sparkle: checked daily, offered rather than forced,
+  and verified against a signing key so an update can only come from here.
 - **Real usage, not estimates.** Codex is read live from the endpoint its
   own CLI polls; Claude Code reports its official 5-hour and weekly limits
   through the status line hook Pulse registers (connect it in
@@ -149,8 +151,11 @@ Every push and pull request also runs
 build with warnings treated as failures, the localization key check, and an
 assembly of `Pulse.app` to prove the thing that ships still builds.
 
-Pulse checks `releases/latest` once a day and offers a link when there is a
-newer tag than the version it is running. It never installs anything itself.
+Installed copies update themselves. Sparkle checks once a day, offers the new
+version, and installs it on approval — the archive is verified against an EdDSA
+key baked into the app, so an update can only come from this repository's
+signing key. The workflow signs each release and commits the feed
+([appcast.xml](appcast.xml)) automatically.
 
 ## Project layout
 

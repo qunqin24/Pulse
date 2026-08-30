@@ -103,6 +103,7 @@ jobs:
           } > notes.md
 
       - name: Publish
+        id: publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -118,3 +119,39 @@ jobs:
             --title "Pulse $VERSION" \
             --notes-file notes.md \
             $PRERELEASE
+
+      # After publishing, because the feed points at the release's own asset —
+      # committing it first would advertise a download that 404s.
+      #
+      # This is what makes updates *install themselves*. Sparkle refuses an
+      # archive that isn't signed by the private half of the key whose public
+      # half is baked into the app, so the signature written here is the whole
+      # trust story: it holds even though the app carries only an ad-hoc
+      # signature and Apple has vouched for nothing.
+      - name: Offer it to Sparkle
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::SPARKLE_PRIVATE_KEY is not set — installed copies would never see this release."
+            exit 1
+          fi
+
+          URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/Pulse-$VERSION.zip"
+
+          # The tag was checked out detached; the feed lives on main.
+          git fetch origin main
+          git checkout -B main origin/main
+
+          Scripts/appcast.py "$VERSION" "build/Pulse-$VERSION.zip" "$URL"
+
+          if git diff --quiet -- appcast.xml; then
+            echo "Feed already offers $VERSION."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "Offer $VERSION to Sparkle"
+          git push origin main
