@@ -117,26 +117,6 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 Swift tools 6.0; the package opens directly in Xcode through `Package.swift`.
 There is no test target and no linter.
 
-## Releasing
-
-Pushing a tag publishes the release.
-
-```bash
-echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
-git tag v1.0.1 && git push && git push origin v1.0.1
-```
-
-[`release.yml`](.github/workflows/release.yml) builds a universal app on a
-macOS 26 runner, packages the `.dmg` and `.zip`, publishes the release, then
-signs the archive and commits the Sparkle feed ([`appcast.xml`](appcast.xml))
-so installed copies are offered it. A tag that doesn't match
-[`VERSION`](VERSION) fails the run rather than shipping a build that tells
-every installed copy it is out of date forever.
-
-Every push and pull request runs [`ci.yml`](.github/workflows/ci.yml): the
-strict Swift 6 build with warnings treated as failures, a check that both
-`.strings` files carry the same keys, and an assembly of `Pulse.app`.
-
 ## Layout
 
 All source is in `Sources/Pulse`, one SwiftUI view per file, with the provider

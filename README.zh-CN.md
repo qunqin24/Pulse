@@ -87,19 +87,6 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
 Swift tools 6.0；用 `Package.swift` 可以直接在 Xcode 里打开。没有测试目标，也没有配 linter。
 
-## 发布
-
-推一个 tag，就完成发布。
-
-```bash
-echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
-git tag v1.0.1 && git push && git push origin v1.0.1
-```
-
-[`release.yml`](.github/workflows/release.yml) 会在 macOS 26 runner 上构建通用二进制，打出 `.dmg` 和 `.zip`，发布 Release，然后给压缩包签名并把 Sparkle 的更新源（[`appcast.xml`](appcast.xml)）提交回来，这样已安装的副本才会被推送到。tag 和 [`VERSION`](VERSION) 对不上会直接让流程失败——两者不一致的话，每一台装了 Pulse 的机器都会被永远提示「有更新」。
-
-每次 push 和 PR 都会跑 [`ci.yml`](.github/workflows/ci.yml)：严格 Swift 6 编译（warning 一律当失败）、中英文案 key 一致性检查，以及完整组装一次 `Pulse.app`。
-
 ## 代码结构
 
 源码都在 `Sources/Pulse`，一个 SwiftUI 视图一个文件，供应商图标在 `Sources/Pulse/Resources`。[CLAUDE.md](CLAUDE.md) 是更深入的说明（英文）——AppKit 浮窗与 SwiftUI 的分界、为什么拖拽归窗口管、三家各自的读取路径实际付出了什么代价。

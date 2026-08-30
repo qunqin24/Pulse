@@ -57,6 +57,12 @@ fallback in [LoginItem.swift](Sources/Pulse/LoginItem.swift)), and nothing to
 hand anyone but a build folder.
 
 - **Pushing a tag is the whole release.**
+
+  ```bash
+  echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
+  git tag v1.0.1 && git push && git push origin v1.0.1
+  ```
+
   [`.github/workflows/release.yml`](.github/workflows/release.yml) builds,
   packages and publishes, then signs the archive and commits the Sparkle feed;
   [`ci.yml`](.github/workflows/ci.yml) runs the same build on every push. The
