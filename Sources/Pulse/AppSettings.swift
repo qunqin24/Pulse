@@ -28,6 +28,45 @@ final class AppSettings {
         }
     }
 
+    /// The order the rail draws them in, as raw values.
+    ///
+    /// Stored rather than derived so it survives a launch, and resolved through
+    /// `orderedProviders` rather than trusted as-is: a provider added in a
+    /// later version is missing from every list stored before it existed, and
+    /// one removed would still be named in lists stored while it did.
+    var providerOrder: [String] {
+        didSet {
+            guard providerOrder != oldValue else { return }
+            UserDefaults.standard.set(providerOrder, forKey: Key.providerOrder)
+            // Deliberately no `onChange`: that is how the AppKit side hears
+            // about settings the *usage loop* cares about, and it refetches
+            // every provider when it fires. Rearranging the rail is a layout
+            // change — the panel is `@Observable` and redraws on its own, and
+            // nobody's rate limit should pay for a reorder.
+        }
+    }
+
+    /// Every provider, in the user's order. Anything the stored order doesn't
+    /// mention goes last, in the order the enum declares — so a new one appears
+    /// at the bottom of the rail rather than in the middle of it.
+    var orderedProviders: [Provider] {
+        let stored = providerOrder.compactMap(Provider.init(rawValue:))
+        return stored + Provider.allCases.filter { !stored.contains($0) }
+    }
+
+    /// Moves a provider one place up or down. Silently does nothing at the
+    /// ends, so the buttons can simply be disabled there.
+    func move(_ provider: Provider, by offset: Int) {
+        var order = orderedProviders
+        guard
+            let from = order.firstIndex(of: provider),
+            order.indices.contains(from + offset)
+        else { return }
+
+        order.swapAt(from, from + offset)
+        providerOrder = order.map(\.rawValue)
+    }
+
     /// Which providers appear in the rail. Never empty — the last one left
     /// can't be switched off, since an empty rail would leave nothing to
     /// hover, and nothing to grab to drag the panel.
@@ -150,6 +189,7 @@ final class AppSettings {
         isPanelVisible: Bool = true,
         hidesInFullScreen: Bool = true,
         enabledProviders: Set<Provider> = Set(Provider.allCases),
+        providerOrder: [String] = [],
         language: AppLanguage = .system,
         pinnedWindows: [String: String] = [:],
         sources: [String: String] = [:],
@@ -161,6 +201,7 @@ final class AppSettings {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
         self.enabledProviders = enabledProviders
+        self.providerOrder = providerOrder
         self.language = language
         self.pinnedWindows = pinnedWindows
         self.sources = sources
@@ -204,18 +245,46 @@ final class AppSettings {
         let visible = defaults.object(forKey: Key.panelVisible) as? Bool ?? true
 
         let stored = defaults.stringArray(forKey: Key.enabledProviders) ?? []
+        let previouslyOffered = defaults.stringArray(forKey: Key.offeredProviders)
         var providers = Set(stored.compactMap(Provider.init(rawValue:)))
 
-        // A provider added in a later version is switched on the first time it
-        // is seen, and only then. Without this it would be missing from every
-        // stored list and would never appear at all; switching it back on for
-        // everyone at each launch would override the user turning it off. So
-        // what is remembered is which providers have been *offered*, the same
-        // decided-once shape `LoginItem` uses for opening at login.
-        let offered = Set(defaults.stringArray(forKey: Key.offeredProviders) ?? [])
-        let fresh = Provider.allCases.filter { !offered.contains($0.rawValue) }
-        if !stored.isEmpty { providers.formUnion(fresh) }
+        // "Has Pulse ever run here" cannot be read off the enabled set: 1.0.0
+        // computed that set and never wrote it, so it is absent for everyone
+        // upgrading. `hasRun` is absent for them too, being new. What 1.0.0
+        // *did* write is the offered list — so its presence is the evidence,
+        // and this flag takes over from the next launch onwards.
+        let hasRunBefore = defaults.bool(forKey: Key.hasRun) || previouslyOffered != nil
+        defaults.set(true, forKey: Key.hasRun)
+
+        if hasRunBefore {
+            // An upgrade with nothing stored is 1.0.0's own default, which was
+            // every provider it knew about — that is what those users have
+            // been looking at, and it is what they keep.
+            if stored.isEmpty, let previouslyOffered {
+                providers = Set(previouslyOffered.compactMap(Provider.init(rawValue:)))
+            }
+
+            // Then a provider added since is switched on once. This has to run
+            // *before* the offered list is stamped, or the very providers it
+            // exists for are marked offered without ever appearing.
+            let offered = Set(previouslyOffered ?? [])
+            providers.formUnion(Provider.allCases.filter { !offered.contains($0.rawValue) })
+        } else {
+            // A genuinely new Mac starts with what is installed. Nothing found
+            // at all falls back to everything: the user should still see what
+            // Pulse supports.
+            let installed = Provider.installedOnThisMac()
+            providers = installed.isEmpty ? Set(Provider.allCases) : installed
+        }
+
         defaults.set(Provider.allCases.map(\.rawValue), forKey: Key.offeredProviders)
+
+        // Never empty. A stored list whose names no longer parse — a provider
+        // renamed or removed — would otherwise leave a rail with nothing to
+        // hover and nothing to grab.
+        if providers.isEmpty { providers = Set(Provider.allCases) }
+
+        defaults.set(providers.map(\.rawValue), forKey: Key.enabledProviders)
 
         let language = defaults.string(forKey: Key.language)
             .flatMap(AppLanguage.init(rawValue:)) ?? .system
@@ -223,7 +292,8 @@ final class AppSettings {
         let settings = AppSettings(
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
-            enabledProviders: providers.isEmpty ? Set(Provider.allCases) : providers,
+            enabledProviders: providers,
+            providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
@@ -267,5 +337,8 @@ final class AppSettings {
         static let panelSize = "settings.panelSize"
         static let usesGlass = "settings.usesGlass"
         static let offeredProviders = "settings.offeredProviders"
+        static let providerOrder = "settings.providerOrder"
+        /// Set the first time Pulse runs on this Mac, and never cleared.
+        static let hasRun = "settings.hasRun"
     }
 }

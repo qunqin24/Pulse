@@ -38,8 +38,11 @@ struct ClaudeCodeUsageService: Sendable {
         case .tooling:
             // Pinned to the status line, so a missing reading is reported as
             // such rather than quietly answered from somewhere else.
+            // Pinned here, the endpoint is never tried — so a stored token
+            // says nothing about whether it still works, and calling it
+            // expired would be a guess about something this route never asked.
             return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem())
+                ?? .unavailable(.claudeCode, reason: StatusLineHook.isInstalled ? .awaitingResponse : .notConnected)
 
         case .endpoint:
             guard let token = loadAccessToken() else {
@@ -47,12 +50,20 @@ struct ClaudeCodeUsageService: Sendable {
             }
             switch await fetchOverHTTP(token: token) {
             case .success(let usage): return usage
-            case .needsFreshCredentials: return .unavailable(.claudeCode, reason: .claudeSignInRequired)
+            // A token was found and refused, which is not the same thing as
+            // never having signed in.
+            case .needsFreshCredentials: return .unavailable(.claudeCode, reason: .claudeLoginExpired)
             case .failed(let reason): return .unavailable(.claudeCode, reason: reason)
             }
 
         case .automatic:
-            if let token = loadAccessToken() {
+            // Read once. Both answers come out of the same blob: an expired
+            // token is still evidence of a login, and asking twice means
+            // spawning `security` twice a pass — which is the thing the read
+            // was pulled out of the loop to stop.
+            let credentials = storedCredentials()
+            let hadCredentials = credentials != nil
+            if let token = credentials.flatMap(Self.unexpiredAccessToken) {
                 switch await fetchOverHTTP(token: token) {
                 case .success(let usage):
                     return usage
@@ -67,7 +78,7 @@ struct ClaudeCodeUsageService: Sendable {
             }
 
             return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem())
+                ?? .unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: hadCredentials))
         }
     }
 
@@ -131,8 +142,17 @@ struct ClaudeCodeUsageService: Sendable {
     // MARK: - Credentials
 
     private func loadAccessToken() -> String? {
-        (readKeychainCredentials() ?? readCredentialsFile())
-            .flatMap(Self.unexpiredAccessToken)
+        storedCredentials().flatMap(Self.unexpiredAccessToken)
+    }
+
+    /// The blob as stored, expired or not.
+    ///
+    /// Kept apart from `loadAccessToken` because the two answer different
+    /// questions: "is there a usable token" and "is this person signed in at
+    /// all". Reading only the first cannot tell an expired login from no login,
+    /// which is the whole distinction the card is trying to draw.
+    private func storedCredentials() -> [String: Any]? {
+        readKeychainCredentials() ?? readCredentialsFile()
     }
 
     /// The credentials blob Claude Code stores, or nil if it can't be read.
@@ -300,8 +320,15 @@ struct ClaudeCodeUsageService: Sendable {
         )
     }
 
-    private func capturedUsageProblem() -> ProviderUsage.Unavailability {
-        StatusLineHook.isInstalled ? .awaitingResponse : .claudeSignInRequired
+    /// Why there is nothing to show, told apart properly.
+    ///
+    /// "Sign in to Claude Code" is wrong for someone who *is* signed in and
+    /// whose saved token merely went stale — which is the common case, since it
+    /// expires in hours and only Claude Code itself renews it. Saying that to
+    /// them sends them to re-authenticate something that isn't broken.
+    private func capturedUsageProblem(hadCredentials: Bool) -> ProviderUsage.Unavailability {
+        if StatusLineHook.isInstalled { return .awaitingResponse }
+        return hadCredentials ? .claudeLoginExpired : .claudeSignInRequired
     }
 
     /// The windows Claude Code hands to the status line. Each can be absent on

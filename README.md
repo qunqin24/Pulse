@@ -122,6 +122,16 @@ marks under `Sources/Pulse/Resources`. [CLAUDE.md](CLAUDE.md) is the deeper
 walkthrough — the AppKit panel and SwiftUI split, why the window owns dragging,
 what each provider's route actually costs.
 
+## Design
+
+Pulse exists because of [a concept Vinz (**@hivinz_**) posted on X](https://x.com/hivinz_/status/2092996055248126353)
+in August 2026 — a Figma design for a Mac tool aimed at people tired of
+checking their Claude and Codex session limits by hand. The rail of rings
+against the edge of the screen is his idea.
+
+This is an independent implementation of it. He didn't build it and isn't
+responsible for it.
+
 ## License
 
 [Apache 2.0](LICENSE). Bundled third-party assets keep their own licenses; see

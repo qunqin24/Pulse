@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Pulse's side of Claude Code's status line.
@@ -143,10 +144,16 @@ enum StatusLineHook {
     /// command that was already there so it can be chained and later restored.
     @discardableResult
     static func install() -> Bool {
-        var settings = readSettings() ?? [:]
+        // A file that exists but will not parse must be left alone. `?? [:]`
+        // meant an unreadable settings.json was replaced wholesale — every
+        // permission, hook and model setting in it gone, in exchange for a
+        // status line. `JSONSerialization` refuses things Claude Code itself
+        // tolerates, comments among them, so this is not a hypothetical.
+        guard let existing = currentSettings() else { return false }
+        var settings = existing
 
-        if let existing = settings["statusLine"] as? [String: Any],
-           let command = existing["command"] as? String,
+        if let previous = settings["statusLine"] as? [String: Any],
+           let command = previous["command"] as? String,
            !command.contains(modeArgument) {
             UserDefaults.standard.set(command, forKey: Key.previousCommand)
         }
@@ -196,6 +203,14 @@ enum StatusLineHook {
 
     // MARK: - Settings file
 
+    /// The settings as they stand, or nil when there is a file here that
+    /// cannot be read. An *absent* file is an empty dictionary — there is
+    /// nothing to lose by creating one.
+    private static func currentSettings() -> [String: Any]? {
+        guard FileManager.default.fileExists(atPath: settingsFile.path) else { return [:] }
+        return readSettings()
+    }
+
     private static func readSettings() -> [String: Any]? {
         guard let data = try? Data(contentsOf: settingsFile),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -219,7 +234,61 @@ enum StatusLineHook {
         return (try? data.write(to: settingsFile)) != nil
     }
 
+    /// Asks — once, ever — whether to connect the status line.
+    ///
+    /// Without it Pulse works only while Claude Code's saved login is fresh,
+    /// which it is for a few hours after Claude Code is used and never at the
+    /// moment someone opens their Mac and wants to know what they have left.
+    /// That is a feature half missing, and leaving the decision to a user who
+    /// has no way of knowing the choice exists is not respecting them, it is
+    /// passing them the bill.
+    ///
+    /// It is still a question rather than a default. Connecting writes into
+    /// *another program's* configuration and changes what that program prints
+    /// at the bottom of the screen — reading a credential is invisible and
+    /// harmless, this is neither.
+    ///
+    /// Asked at first launch and never again, whatever the answer: the reply
+    /// is recorded before the alert is even shown, so a crash mid-question
+    /// cannot turn into a second one. Declining is not a dead end — the row in
+    /// Settings stays, and an expired login now says where to find it.
+    @MainActor
+    static func offerOnFirstRun() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Key.offered) else { return }
+
+        // Nothing to offer someone who doesn't have Claude Code.
+        guard FileManager.default.fileExists(atPath: settingsFile.deletingLastPathComponent().path) else {
+            return
+        }
+
+        defaults.set(true, forKey: Key.offered)
+        guard !isInstalled else { return }
+
+        let alert = NSAlert()
+        alert.messageText = .localized("Keep reading Claude Code's usage after its login expires?")
+        alert.informativeText = .localized("Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings.")
+        alert.addButton(withTitle: .localized("Connect"))
+        alert.addButton(withTitle: .localized("Not now"))
+
+        // An .accessory app has to bring itself forward or the question opens
+        // behind whatever the user was looking at.
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard install() else {
+            // Refusing to touch an unreadable settings.json is the right
+            // answer, but silently is not: the question never comes back.
+            let failed = NSAlert()
+            failed.messageText = .localized("Couldn't connect the status line")
+            failed.informativeText = .localized("~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings.")
+            failed.runModal()
+            return
+        }
+    }
+
     private enum Key {
         static let previousCommand = "statusLine.previousCommand"
+        /// Whether the question has been put, regardless of the answer.
+        static let offered = "statusLine.offered"
     }
 }

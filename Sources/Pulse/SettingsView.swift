@@ -19,6 +19,10 @@ struct SettingsView: View {
     @State private var ledgers: [Provider: UsageLedger] = [:]
     @State private var codexAccount: CodexAccountUsage?
     @State private var loadingHistory: Provider?
+    /// The key field's contents. Seeded from the store when the pane opens;
+    /// the store is a file, not something SwiftUI can observe.
+    @State private var apiKey = ""
+    @State private var savedKey = ""
 
     var body: some View {
         NavigationSplitView {
@@ -28,7 +32,9 @@ struct SettingsView: View {
                 }
 
                 Section(String.localized("Providers")) {
-                    ForEach(Provider.allCases) { provider in
+                    // Same order as the rail: a sidebar that disagreed with
+                    // the thing it configures is its own small confusion.
+                    ForEach(settings.orderedProviders) { provider in
                         row(.provider(provider))
                     }
                 }
@@ -191,6 +197,43 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(String.localized("Order")) {
+                // Arrows rather than dragging. Four rows is not enough to make
+                // a drag worth learning, and a drag that misses does something
+                // — an arrow that misses does nothing.
+                ForEach(Array(settings.orderedProviders.enumerated()), id: \.element) { index, provider in
+                    if index > 0 { SettingsRowDivider() }
+
+                    SettingsRow(
+                        provider.displayName,
+                        // Moving something the rail isn't drawing looks like
+                        // the arrow did nothing; saying so is kinder than
+                        // hiding the row and renumbering everything.
+                        subtitle: settings.isEnabled(provider) ? nil : String.localized("Not shown"),
+                        icon: provider
+                    ) {
+                        HStack(spacing: 4) {
+                            Button {
+                                settings.move(provider, by: -1)
+                            } label: {
+                                Image(systemName: "chevron.up")
+                            }
+                            .disabled(index == 0)
+                            .accessibilityLabel(String.localized("Move \(provider.displayName) up"))
+
+                            Button {
+                                settings.move(provider, by: 1)
+                            } label: {
+                                Image(systemName: "chevron.down")
+                            }
+                            .disabled(index == settings.orderedProviders.count - 1)
+                            .accessibilityLabel(String.localized("Move \(provider.displayName) down"))
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+            }
+
             SettingsGroup(String.localized("Application")) {
                 SettingsRow(
                     String.localized("Open at login"),
@@ -284,6 +327,18 @@ struct SettingsView: View {
         return .localized("2 to 30 minutes as needed. Now: \("\(minutes)") minutes.")
     }
 
+    private func saveKey(for provider: Provider) {
+        // Only call it saved if it was. Otherwise the Save button greys out
+        // over a key that never reached disk.
+        guard APIKeyStore.setKey(apiKey, for: provider) else { return }
+        savedKey = apiKey
+        // The store keeps keys for the life of the launch, so it has to be
+        // told; otherwise the key is saved and nothing uses it until restart.
+        store.loadAPIKeys()
+        // And a key is only worth entering if something tries it now.
+        store.refresh(provider)
+    }
+
     private func providerPane(_ provider: Provider) -> some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup(String.localized("Panel")) {
@@ -316,6 +371,11 @@ struct SettingsView: View {
 
                 history(for: provider)
             }
+        }
+        .onChange(of: provider, initial: true) { _, shown in
+            guard shown.usesAPIKey else { return }
+            apiKey = APIKeyStore.key(for: shown) ?? ""
+            savedKey = apiKey
         }
     }
 
@@ -471,6 +531,23 @@ struct SettingsView: View {
                     .labelsHidden()
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
+            } else if provider.usesAPIKey {
+                // Takes precedence over the key OpenCode saved for itself —
+                // see OpenCodeGoUsageService for why that way round.
+                SettingsRow(
+                    String.localized("API key"),
+                    subtitle: String.localized("Stored encrypted on this Mac.")
+                ) {
+                    HStack(spacing: 8) {
+                        SecureField("", text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: SettingsLayout.controlWidth)
+                            .onSubmit { saveKey(for: provider) }
+
+                        Button(String.localized("Save")) { saveKey(for: provider) }
+                            .disabled(apiKey == savedKey)
+                    }
+                }
             } else {
                 SettingsRow(
                     String.localized("Read usage from"),
@@ -523,6 +600,40 @@ struct SettingsView: View {
         let usage = store.usage(for: provider)
 
         return SettingsGroup(String.localized("Current usage")) {
+            // Says how current these figures are, and offers to make them
+            // current. The rail has the same on a ring click, but nobody
+            // reading a settings pane should have to go and find it there.
+            SettingsRow(String.localized("Last read")) {
+                HStack(spacing: 10) {
+                    // `Text`'s relative style keeps counting on its own. A
+                    // string worked out once said "just now" for the whole
+                    // half hour until something else redrew the view.
+                    if let observed = usage.observedAt {
+                        Text(observed, style: .relative)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            // Every other date in the app is pinned to the
+                            // language chosen in Settings; this one formats
+                            // with the environment's locale, which follows the
+                            // system. Without this, an English Pulse on a
+                            // Chinese Mac prints "4分钟" beside "Refresh".
+                            .environment(\.locale, LocalizationSource.locale)
+                    } else {
+                        Text(localized: "Not yet")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button(String.localized("Refresh")) { store.refresh(provider) }
+                        // Any pass, not just this provider's: during a
+                        // background one the press would only queue, with
+                        // nothing on screen to say so.
+                        .disabled(store.isRefreshing)
+                }
+            }
+
+            SettingsRowDivider()
+
             if usage.windows.isEmpty {
                 SettingsRow(
                     String.localized("No reading"),

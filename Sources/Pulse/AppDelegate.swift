@@ -53,6 +53,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settings.isPanelVisible {
             controller.show()
         }
+
+        // Once ever, and only for someone who has Claude Code. After the panel
+        // is actually on screen: a modal put up any earlier blocks the launch
+        // and asks for something while the app is still invisible.
+        StatusLineHook.offerOnFirstRun()
     }
 
     func showSettings() {

@@ -89,6 +89,14 @@ Swift tools 6.0；用 `Package.swift` 可以直接在 Xcode 里打开。没有�
 
 源码都在 `Sources/Pulse`，一个 SwiftUI 视图一个文件，供应商图标在 `Sources/Pulse/Resources`。[CLAUDE.md](CLAUDE.md) 是更深入的说明（英文）——AppKit 浮窗与 SwiftUI 的分界、为什么拖拽归窗口管、三家各自的读取路径实际付出了什么代价。
 
+## 设计来源
+
+Pulse 的由来是 [Vinz(**@hivinz_**)在 X 上发的一个概念设计](https://x.com/hivinz_/status/2092996055248126353)——
+2026 年 8 月,他在 Figma 里做了一版 Mac 上的用量监视器,给那些厌烦反复手动查
+Claude、Codex 会话限制的人。贴在屏幕边缘的那条圆环胶囊,是他的想法。
+
+这里是照着那个想法独立做出来的实现。他没有参与开发,也不为它负责。
+
 ## 许可
 
 [Apache 2.0](LICENSE)。内置的第三方素材保留各自的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

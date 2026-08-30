@@ -35,6 +35,19 @@ final class UsageStore {
     /// nothing at all.
     private var observers: [(center: NotificationCenter, token: any NSObjectProtocol)] = []
 
+    /// Keys read once per launch rather than once per refresh pass.
+    private var apiKeys: [Provider: String] = [:]
+    /// A provider asked for while another pass was in flight.
+    ///
+    /// The guard that stops two passes overlapping used to drop these on the
+    /// floor: saving a key during the launch pass, or pressing Refresh while
+    /// anything else was running, did nothing at all — and the pass already
+    /// running had read the old key before it started, so it published the
+    /// missing-key answer and slept for up to half an hour.
+    private var queued: Set<Provider> = []
+    /// A whole pass asked for while one was running.
+    private var queuedFullPass = false
+
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
 
@@ -58,6 +71,15 @@ final class UsageStore {
         await CodexAccountUsageService(server: appServer).fetch()
     }
 
+    /// Picks up a key that was just entered, or one that changed.
+    func loadAPIKeys() {
+        apiKeys = Dictionary(
+            uniqueKeysWithValues: Provider.allCases
+                .filter { $0.usesAPIKey && settings.isEnabled($0) }
+                .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
+        )
+    }
+
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
@@ -70,6 +92,7 @@ final class UsageStore {
     func start() {
         guard observers.isEmpty else { return }
         observe()
+        loadAPIKeys()
         updateActivityMonitor()
 
         // Only relevant when the app server is being used as a fallback; it
@@ -96,6 +119,7 @@ final class UsageStore {
 
     /// Re-reads settings that affect the loop itself, then refreshes.
     func settingsChanged() {
+        loadAPIKeys()
         updateActivityMonitor()
         refresh()
     }
@@ -120,7 +144,13 @@ final class UsageStore {
     }
 
     func refresh() {
-        guard !isRefreshing else { return }
+        guard !isRefreshing else {
+            // Dropped, this used to be — and `settingsChanged()` is its main
+            // caller, so switching a provider on mid-pass left it on `.loading`
+            // until the next tick, which can be half an hour away.
+            queuedFullPass = true
+            return
+        }
         isRefreshing = true
         refreshingProvider = nil
 
@@ -128,14 +158,37 @@ final class UsageStore {
         let claudeSource = settings.source(for: .claudeCode)
         let previous = usage
 
+        // Read here rather than inside the services, which stay free of
+        // storage concerns.
+        let openCode = OpenCodeGoUsageService(enteredKey: apiKeys[.openCodeGo])
+        let kimi = KimiCodeUsageService(enteredKey: apiKeys[.kimiCode])
+        // Nothing is fetched for a provider that isn't on the rail: it would
+        // spend someone else's request, and read a credential, for a figure
+        // nobody is going to see.
+        let wanted = settings.enabledProviders
+
         Task { [codex, claudeCode, antigravity] in
             // Independent, so they run side by side rather than one waiting on
             // another's round trip.
-            async let codexUsage = codex.fetch(source: codexSource)
-            async let claudeUsage = claudeCode.fetch(source: claudeSource)
-            async let antigravityUsage = antigravity.fetch()
+            async let codexUsage = wanted.contains(.codex)
+                ? await codex.fetch(source: codexSource)
+                : ProviderUsage.unavailable(.codex, reason: .loading)
+            async let claudeUsage = wanted.contains(.claudeCode)
+                ? await claudeCode.fetch(source: claudeSource)
+                : ProviderUsage.unavailable(.claudeCode, reason: .loading)
+            async let antigravityUsage = wanted.contains(.antigravity)
+                ? await antigravity.fetch()
+                : ProviderUsage.unavailable(.antigravity, reason: .loading)
+            async let openCodeUsage = wanted.contains(.openCodeGo)
+                ? await openCode.fetch()
+                : ProviderUsage.unavailable(.openCodeGo, reason: .loading)
+            async let kimiUsage = wanted.contains(.kimiCode)
+                ? await kimi.fetch()
+                : ProviderUsage.unavailable(.kimiCode, reason: .loading)
 
-            let (rawCodex, rawClaude, rawAntigravity) = await (codexUsage, claudeUsage, antigravityUsage)
+            let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
+                await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
+            let rawKimi = await kimiUsage
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -144,12 +197,17 @@ final class UsageStore {
             let fetchedCodex = await UsageCache.shared.reconciled(rawCodex)
             let fetchedClaude = await UsageCache.shared.reconciled(rawClaude)
             let fetchedAntigravity = await UsageCache.shared.reconciled(rawAntigravity)
+            let fetchedOpenCode = await UsageCache.shared.reconciled(rawOpenCode)
+            let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
 
             self.usage[.codex] = fetchedCodex
             self.usage[.claudeCode] = fetchedClaude
             self.usage[.antigravity] = fetchedAntigravity
+            self.usage[.openCodeGo] = fetchedOpenCode
+            self.usage[.kimiCode] = fetchedKimi
             self.isRefreshing = false
             self.refreshingProvider = nil
+            self.runQueued()
 
             // Compare the windows only. `observedAt` moves on every successful
             // fetch, so including it would report a change every single time
@@ -157,6 +215,8 @@ final class UsageStore {
             let moved = previous[.codex]?.windows != fetchedCodex.windows
                 || previous[.claudeCode]?.windows != fetchedClaude.windows
                 || previous[.antigravity]?.windows != fetchedAntigravity.windows
+                || previous[.openCodeGo]?.windows != fetchedOpenCode.windows
+                || previous[.kimiCode]?.windows != fetchedKimi.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -170,13 +230,21 @@ final class UsageStore {
     /// narrower: it should not start the other provider's helper or spend a
     /// second endpoint request when the user asked about one ring.
     func refresh(_ provider: Provider) {
-        guard !isRefreshing else { return }
+        guard !isRefreshing else {
+            queued.insert(provider)
+            return
+        }
         isRefreshing = true
         refreshingProvider = provider
 
         let source = settings.source(for: provider)
         let previous = usage[provider]
         let startedAt = ContinuousClock.now
+        // A provider's own pane in Settings is reachable while it is switched
+        // off, so its key will not be in the launch-time cache.
+        let key = provider.usesAPIKey ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
+        let openCode = OpenCodeGoUsageService(enteredKey: key)
+        let kimi = KimiCodeUsageService(enteredKey: key)
 
         Task { [codex, claudeCode, antigravity] in
             let raw: ProviderUsage
@@ -187,6 +255,10 @@ final class UsageStore {
                 raw = await claudeCode.fetch(source: source)
             case .antigravity:
                 raw = await antigravity.fetch()
+            case .openCodeGo:
+                raw = await openCode.fetch()
+            case .kimiCode:
+                raw = await kimi.fetch()
             }
 
             let fetched = await UsageCache.shared.reconciled(raw)
@@ -208,7 +280,22 @@ final class UsageStore {
             self.isRefreshing = false
             self.refreshingProvider = nil
             self.scheduleNext()
+            self.runQueued()
         }
+    }
+
+    private func runQueued() {
+        // A whole pass supersedes the individual ones it would have covered.
+        if queuedFullPass {
+            queuedFullPass = false
+            queued.removeAll()
+            refresh()
+            return
+        }
+
+        guard let provider = queued.first else { return }
+        queued.remove(provider)
+        refresh(provider)
     }
 
     func usage(for provider: Provider) -> ProviderUsage {
