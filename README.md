@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="README.zh-CN.md">简体中文</a>
+  <sub><b>macOS 14 Sonoma or newer</b> · Apple Silicon and Intel · <a href="README.zh-CN.md">简体中文</a></sub>
 </p>
 
 <p align="center">
@@ -37,8 +37,6 @@ Once:
 3. Open it again and confirm.
 
 After that it launches normally, and later versions install themselves.
-
-Requires macOS 14 or newer. Universal — Apple Silicon and Intel.
 
 ## What it does
 

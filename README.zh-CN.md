@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a>
+  <sub><b>macOS 14 Sonoma 或更高</b> · Apple 芯片与 Intel 通用 · <a href="README.md">English</a></sub>
 </p>
 
 <p align="center">
@@ -29,8 +29,6 @@ Pulse 还没有 Apple 开发者签名，所以首次启动会被 macOS 拦下—
 3. 再打开一次，确认。
 
 之后就能正常启动了，后续版本会自己更新。
-
-需要 macOS 14 或更高版本。通用二进制——Apple 芯片和 Intel 都能跑。
 
 ## 它能做什么
 
