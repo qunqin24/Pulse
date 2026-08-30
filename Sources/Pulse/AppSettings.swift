@@ -223,7 +223,13 @@ final class AppSettings {
         let settings = AppSettings(
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
-            enabledProviders: providers.isEmpty ? Set(Provider.allCases) : providers,
+            // First run: whatever is installed. Nothing installed at all
+            // falls back to showing everything — an empty rail has nothing to
+            // hover and nothing to grab, and the user should still be able to
+            // see what Pulse supports.
+            enabledProviders: providers.isEmpty
+                ? (Provider.installedOnThisMac().isEmpty ? Set(Provider.allCases) : Provider.installedOnThisMac())
+                : providers,
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],

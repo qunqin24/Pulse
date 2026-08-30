@@ -67,4 +67,32 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool { self == .openCodeGo }
+
+    /// Whether this agent looks installed, for the **first run only**.
+    ///
+    /// Showing all four to someone who uses one is three quarters of a rail
+    /// greyed out, reading as broken rather than as not-yet-configured — and a
+    /// rail half again as tall as it needs to be. So the first launch starts
+    /// with what is actually here, and the rest are a switch away in Settings.
+    ///
+    /// Only the presence of a directory is checked, never its contents: this
+    /// is "has this agent ever run here", not anything about the account.
+    /// OpenCode Go is absent by design — it cannot work without a key, so
+    /// there is nothing an installed copy would prove.
+    static func installedOnThisMac() -> Set<Provider> {
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        let manager = FileManager.default
+
+        var found: Set<Provider> = []
+        if manager.fileExists(atPath: home.appending(path: ".claude").path) {
+            found.insert(.claudeCode)
+        }
+        if manager.fileExists(atPath: home.appending(path: ".codex").path) {
+            found.insert(.codex)
+        }
+        if manager.fileExists(atPath: "/Applications/Antigravity.app") {
+            found.insert(.antigravity)
+        }
+        return found
+    }
 }

@@ -172,6 +172,9 @@
 "Add your OpenCode Go key in Settings." = "Add your OpenCode Go key in Settings.";
 "Uses the key you entered." = "Uses the key you entered.";
 "API key" = "API key";
-"From opencode.ai. Kept in your keychain, sent only to opencode.ai." = "From opencode.ai. Kept in your keychain, sent only to opencode.ai.";
 "Save" = "Save";
 "Monthly limit" = "Monthly limit";
+"Last read" = "Last read";
+"Not yet" = "Not yet";
+"That key was refused. Check it in Settings." = "That key was refused. Check it in Settings.";
+"From opencode.ai, kept in your keychain." = "From opencode.ai, kept in your keychain.";

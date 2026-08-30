@@ -172,6 +172,9 @@
 "Add your OpenCode Go key in Settings." = "在设置里填入你的 OpenCode Go key。";
 "Uses the key you entered." = "使用你填入的 key。";
 "API key" = "API key";
-"From opencode.ai. Kept in your keychain, sent only to opencode.ai." = "在 opencode.ai 获取。存在你的钥匙串里，只发往 opencode.ai。";
 "Save" = "保存";
 "Monthly limit" = "每月限额";
+"Last read" = "上次读取";
+"Not yet" = "尚未读取";
+"That key was refused. Check it in Settings." = "这个 key 被拒绝了，去设置里检查一下。";
+"From opencode.ai, kept in your keychain." = "在 opencode.ai 获取，存在你的钥匙串里。";

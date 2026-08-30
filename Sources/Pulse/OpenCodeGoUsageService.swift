@@ -2,15 +2,15 @@ import Foundation
 
 /// The OpenCode Go plan's limits.
 ///
-/// The only provider here that Pulse needs a key for, and the only one whose
-/// key the user supplies. The other three borrow a login their own tool
-/// stored; this one is used **only** with a key pasted into Settings, which
-/// Pulse keeps in the keychain.
+/// The only provider here that Pulse needs a key for. Two places it can come
+/// from, in this order:
 ///
-/// **It deliberately does not read OpenCode's own `auth.json`**, even though
-/// the key is sitting there. Borrowing a credential a user handed to a
-/// different program is a decision that belongs to them, not to this app, and
-/// the answer here was no. Don't add it back as a "convenience".
+/// 1. **A key pasted into Settings**, kept in the keychain. It wins, because
+///    someone who typed a key meant that one to be used — otherwise a stale
+///    key left behind by OpenCode would quietly override a deliberate choice.
+/// 2. **What OpenCode saved for itself** in `~/.local/share/opencode/auth.json`,
+///    which is the same borrowing Claude Code and Codex get, and means anyone
+///    already signed in there has nothing to configure.
 ///
 /// The endpoint is `GET /zen/go/v1/usage`, which is not documented — OpenCode's
 /// own docs describe only the model endpoints — so it can change without
@@ -23,7 +23,7 @@ struct OpenCodeGoUsageService: Sendable {
     private static let endpoint = URL(string: "https://opencode.ai/zen/go/v1/usage")!
 
     func fetch() async -> ProviderUsage {
-        guard let key = enteredKey, !key.isEmpty else {
+        guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) ?? Self.storedKey() else {
             return .unavailable(.openCodeGo, reason: .openCodeKeyMissing)
         }
 
@@ -37,7 +37,10 @@ struct OpenCodeGoUsageService: Sendable {
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(.openCodeGo, reason: .signInRequired)
+        // Not `.signInRequired`: that message names Codex, and a message that
+        // names the wrong provider is the exact trap this file's neighbours
+        // were fixed for once already.
+        case 401, 403: return .unavailable(.openCodeGo, reason: .openCodeKeyRefused)
         case 429: return .unavailable(.openCodeGo, reason: .rateLimited)
         default: return .unavailable(.openCodeGo, reason: .serverError)
         }
@@ -61,6 +64,22 @@ struct OpenCodeGoUsageService: Sendable {
             plan: nil,
             creditBalance: nil
         )
+    }
+
+    /// The key `opencode` wrote when it signed in.
+    static func storedKey() -> String? {
+        let url = URL(fileURLWithPath: NSHomeDirectory())
+            .appending(path: ".local/share/opencode/auth.json")
+
+        guard
+            let data = try? Data(contentsOf: url),
+            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let entry = root["opencode-go"] as? [String: Any],
+            let key = entry["key"] as? String,
+            !key.isEmpty
+        else { return nil }
+
+        return key
     }
 
     // MARK: - Reading the reply

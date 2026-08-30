@@ -98,8 +98,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexServerFailed
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
-        /// No OpenCode Go key has been entered.
+        /// No OpenCode Go key has been entered, and OpenCode saved none.
         case openCodeKeyMissing
+        /// There is a key, and the service refused it.
+        case openCodeKeyRefused
         case unreachable
         case unreadableReply
         case rateLimited
@@ -117,6 +119,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
             case .openCodeKeyMissing: .localized("Add your OpenCode Go key in Settings.")
+            case .openCodeKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")
             case .unreadableReply: .localized("Couldn't read the reply.")
             case .rateLimited: .localized("Checking too often — easing off.")

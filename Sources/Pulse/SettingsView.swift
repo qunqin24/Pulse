@@ -488,11 +488,11 @@ struct SettingsView: View {
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
             } else if provider.usesAPIKey {
-                // Typed in, never borrowed. Pulse does not read the key
-                // OpenCode stored for itself — see OpenCodeGoUsageService.
+                // Takes precedence over the key OpenCode saved for itself —
+                // see OpenCodeGoUsageService for why that way round.
                 SettingsRow(
                     String.localized("API key"),
-                    subtitle: String.localized("From opencode.ai. Kept in your keychain, sent only to opencode.ai.")
+                    subtitle: String.localized("From opencode.ai, kept in your keychain.")
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)
@@ -556,6 +556,19 @@ struct SettingsView: View {
         let usage = store.usage(for: provider)
 
         return SettingsGroup(String.localized("Current usage")) {
+            // Says how current these figures are, and offers to make them
+            // current. The rail has the same on a ring click, but nobody
+            // reading a settings pane should have to go and find it there.
+            SettingsRow(
+                String.localized("Last read"),
+                subtitle: Self.lastRead(usage)
+            ) {
+                Button(String.localized("Refresh")) { store.refresh(provider) }
+                    .disabled(store.isRefreshing(provider))
+            }
+
+            SettingsRowDivider()
+
             if usage.windows.isEmpty {
                 SettingsRow(
                     String.localized("No reading"),
@@ -596,6 +609,19 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// When this provider last answered, in words. Reads "just now" after a
+    /// manual refresh, which is the point of showing it beside the button.
+    private static func lastRead(_ usage: ProviderUsage) -> String {
+        guard let observed = usage.observedAt else {
+            return .localized("Not yet")
+        }
+
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        formatter.locale = LocalizationSource.locale
+        return formatter.localizedString(for: observed, relativeTo: Date())
     }
 
     private func resetText(_ window: UsageWindow) -> String? {
