@@ -16,6 +16,10 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case fiveHour
         case weekly
         case spend
+        /// A window the provider names rather than times — OpenCode Go's
+        /// "rolling" allowance, which it reports a reset for but no length.
+        case rolling
+        case monthly
         case other(seconds: Int)
     }
 
@@ -46,6 +50,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case .fiveHour: .localized("5-hour limit")
         case .weekly: .localized("Weekly limit")
         case .spend: .localized("Spend limit")
+        case .rolling: .localized("Rolling limit")
+        case .monthly: .localized("Monthly limit")
         case .other(let seconds):
             seconds >= 86_400
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
@@ -94,6 +100,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexServerFailed
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
+        /// No OpenCode Go key has been entered.
+        case openCodeKeyMissing
         case unreachable
         case unreadableReply
         case rateLimited
@@ -110,6 +118,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
+            case .openCodeKeyMissing: .localized("Add your OpenCode Go key in Settings.")
             case .unreachable: .localized("The service didn't respond.")
             case .unreadableReply: .localized("Couldn't read the reply.")
             case .rateLimited: .localized("Checking too often — easing off.")

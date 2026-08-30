@@ -169,3 +169,10 @@
 "Check automatically" = "Check automatically";
 "Once a day. Updates are offered, never installed on their own." = "Once a day. Updates are offered, never installed on their own.";
 "Couldn't reach the update feed." = "Couldn't reach the update feed.";
+"Add your OpenCode Go key in Settings." = "Add your OpenCode Go key in Settings.";
+"Uses the key you entered." = "Uses the key you entered.";
+"API key" = "API key";
+"From opencode.ai. Kept in your keychain, sent only to opencode.ai." = "From opencode.ai. Kept in your keychain, sent only to opencode.ai.";
+"Save" = "Save";
+"Rolling limit" = "Rolling limit";
+"Monthly limit" = "Monthly limit";

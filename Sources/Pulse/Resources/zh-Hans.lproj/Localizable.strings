@@ -169,3 +169,10 @@
 "Check automatically" = "自动检查";
 "Once a day. Updates are offered, never installed on their own." = "每天一次。只提示，不会自己装。";
 "Couldn't reach the update feed." = "连不上更新源。";
+"Add your OpenCode Go key in Settings." = "在设置里填入你的 OpenCode Go key。";
+"Uses the key you entered." = "使用你填入的 key。";
+"API key" = "API key";
+"From opencode.ai. Kept in your keychain, sent only to opencode.ai." = "在 opencode.ai 获取。存在你的钥匙串里，只发往 opencode.ai。";
+"Save" = "保存";
+"Rolling limit" = "滚动额度";
+"Monthly limit" = "每月额度";

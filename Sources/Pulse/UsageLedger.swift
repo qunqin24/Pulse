@@ -284,8 +284,9 @@ actor UsageLedgerReader {
         let root: URL? = switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
-        // An editor rather than a CLI: no session files to add up.
-        case .antigravity: nil
+        // Antigravity is an editor and keeps nothing; OpenCode keeps its own
+        // store rather than the JSONL these two parsers read.
+        case .antigravity, .openCodeGo: nil
         }
 
         guard let root else { return [] }
@@ -305,7 +306,7 @@ actor UsageLedgerReader {
         switch provider {
         case .claudeCode: return parseClaudeCode(data)
         case .codex: return parseCodex(data)
-        case .antigravity: return [:]
+        case .antigravity, .openCodeGo: return [:]
         }
     }
 

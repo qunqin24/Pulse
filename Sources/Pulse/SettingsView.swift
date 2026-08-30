@@ -19,6 +19,10 @@ struct SettingsView: View {
     @State private var ledgers: [Provider: UsageLedger] = [:]
     @State private var codexAccount: CodexAccountUsage?
     @State private var loadingHistory: Provider?
+    /// The key field's contents. Seeded from the keychain when the pane opens;
+    /// the keychain itself is not observable, so this mirrors it.
+    @State private var apiKey = ""
+    @State private var savedKey = ""
 
     var body: some View {
         NavigationSplitView {
@@ -284,6 +288,13 @@ struct SettingsView: View {
         return .localized("2 to 30 minutes as needed. Now: \("\(minutes)") minutes.")
     }
 
+    private func saveKey(for provider: Provider) {
+        APIKeyStore.setKey(apiKey, for: provider)
+        savedKey = apiKey
+        // A key is only worth entering if something uses it now.
+        store.refresh(provider)
+    }
+
     private func providerPane(_ provider: Provider) -> some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup(String.localized("Panel")) {
@@ -316,6 +327,11 @@ struct SettingsView: View {
 
                 history(for: provider)
             }
+        }
+        .onChange(of: provider, initial: true) { _, shown in
+            guard shown.usesAPIKey else { return }
+            apiKey = APIKeyStore.key(for: shown) ?? ""
+            savedKey = apiKey
         }
     }
 
@@ -470,6 +486,23 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            } else if provider.usesAPIKey {
+                // Typed in, never borrowed. Pulse does not read the key
+                // OpenCode stored for itself — see OpenCodeGoUsageService.
+                SettingsRow(
+                    String.localized("API key"),
+                    subtitle: String.localized("From opencode.ai. Kept in your keychain, sent only to opencode.ai.")
+                ) {
+                    HStack(spacing: 8) {
+                        SecureField("", text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: SettingsLayout.controlWidth)
+                            .onSubmit { saveKey(for: provider) }
+
+                        Button(String.localized("Save")) { saveKey(for: provider) }
+                            .disabled(apiKey == savedKey)
+                    }
                 }
             } else {
                 SettingsRow(

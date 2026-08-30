@@ -128,14 +128,20 @@ final class UsageStore {
         let claudeSource = settings.source(for: .claudeCode)
         let previous = usage
 
+        // The key is read here rather than inside the service: the keychain is
+        // a main-actor concern, the fetch is not.
+        let openCode = OpenCodeGoUsageService(enteredKey: APIKeyStore.key(for: .openCodeGo))
+
         Task { [codex, claudeCode, antigravity] in
             // Independent, so they run side by side rather than one waiting on
             // another's round trip.
             async let codexUsage = codex.fetch(source: codexSource)
             async let claudeUsage = claudeCode.fetch(source: claudeSource)
             async let antigravityUsage = antigravity.fetch()
+            async let openCodeUsage = openCode.fetch()
 
-            let (rawCodex, rawClaude, rawAntigravity) = await (codexUsage, claudeUsage, antigravityUsage)
+            let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
+                await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -144,10 +150,12 @@ final class UsageStore {
             let fetchedCodex = await UsageCache.shared.reconciled(rawCodex)
             let fetchedClaude = await UsageCache.shared.reconciled(rawClaude)
             let fetchedAntigravity = await UsageCache.shared.reconciled(rawAntigravity)
+            let fetchedOpenCode = await UsageCache.shared.reconciled(rawOpenCode)
 
             self.usage[.codex] = fetchedCodex
             self.usage[.claudeCode] = fetchedClaude
             self.usage[.antigravity] = fetchedAntigravity
+            self.usage[.openCodeGo] = fetchedOpenCode
             self.isRefreshing = false
             self.refreshingProvider = nil
 
@@ -157,6 +165,7 @@ final class UsageStore {
             let moved = previous[.codex]?.windows != fetchedCodex.windows
                 || previous[.claudeCode]?.windows != fetchedClaude.windows
                 || previous[.antigravity]?.windows != fetchedAntigravity.windows
+                || previous[.openCodeGo]?.windows != fetchedOpenCode.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -177,6 +186,7 @@ final class UsageStore {
         let source = settings.source(for: provider)
         let previous = usage[provider]
         let startedAt = ContinuousClock.now
+        let openCode = OpenCodeGoUsageService(enteredKey: APIKeyStore.key(for: .openCodeGo))
 
         Task { [codex, claudeCode, antigravity] in
             let raw: ProviderUsage
@@ -187,6 +197,8 @@ final class UsageStore {
                 raw = await claudeCode.fetch(source: source)
             case .antigravity:
                 raw = await antigravity.fetch()
+            case .openCodeGo:
+                raw = await openCode.fetch()
             }
 
             let fetched = await UsageCache.shared.reconciled(raw)

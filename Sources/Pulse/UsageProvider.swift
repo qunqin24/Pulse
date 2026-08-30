@@ -8,6 +8,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     case claudeCode
     case codex
     case antigravity
+    case openCodeGo
 
     var id: String { rawValue }
 
@@ -17,6 +18,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .claudeCode: "Claude Code"
         case .codex: "Codex"
         case .antigravity: "Antigravity"
+        case .openCodeGo: "OpenCode Go"
         }
     }
 
@@ -27,6 +29,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .claudeCode: "claude"
         case .codex: "openai"
         case .antigravity: "antigravity"
+        case .openCodeGo: "opencode"
         }
     }
 
@@ -42,7 +45,12 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     var keepsLocalTranscripts: Bool {
         switch self {
         case .claudeCode, .codex: true
-        case .antigravity: false
+        // Antigravity is an editor and keeps nothing. OpenCode *does* keep
+        // sessions with token counts — `opencode stats` adds them up — but in
+        // its own store rather than the JSONL both CLIs above write, so the
+        // ledger cannot read it yet. False here means "no history shown",
+        // which is true today and better than a column of zeroes.
+        case .antigravity, .openCodeGo: false
         }
     }
 
@@ -52,4 +60,11 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     /// has exactly one route — the language server it runs itself — so it is
     /// stated rather than offered.
     var hasSourceChoice: Bool { keepsLocalTranscripts }
+
+    /// Whether Pulse needs an API key from the user for this one.
+    ///
+    /// The others borrow a login their own CLI stored. OpenCode stores one too,
+    /// and that is the route taken first — but a key can also be pasted in for
+    /// anyone on the plan who doesn't run the CLI on this Mac.
+    var usesAPIKey: Bool { self == .openCodeGo }
 }
