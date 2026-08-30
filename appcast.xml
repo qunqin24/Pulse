@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>Pulse</title>
+        <link>https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast.xml</link>
+        <description>Updates for Pulse.</description>
+        <language>en</language>
+        <item>
+            <title>1.0.0</title>
+            <pubDate>Sun, 30 Aug 2026 12:39:20 -0000</pubDate>
+            <sparkle:version>1.0.0</sparkle:version>
+            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.0</link>
+            <sparkle:releaseNotesLink>https://github.com/qunqin24/Pulse/releases/tag/v1.0.0</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.0/Pulse-1.0.0.zip"
+                       length="3145248"
+                       type="application/octet-stream"
+                       sparkle:edSignature="Q8Jk0mwqZ4rokM09lPWYtMSl4SGJUEId7GiGcdW+khACnhzIV5U/uHhQLqKs27VQnZHi8PaGNZnv+3lQJeISAQ==" />
+        </item>
+    </channel>
+</rss>
