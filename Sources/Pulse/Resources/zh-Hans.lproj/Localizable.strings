@@ -183,5 +183,4 @@
 "Order" = "顺序";
 "Move %@" = "移动 %@";
 "Add an API key in Settings." = "在设置里填入 API key。";
-"Plan limit" = "套餐额度";
 "Kept in your keychain, never in preferences." = "存在你的钥匙串里，不写进偏好设置。";

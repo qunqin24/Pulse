@@ -10,9 +10,10 @@ import Foundation
 ///
 /// - `limits[]` — windows the service actually times, each stating a duration
 ///   and a unit (300 minutes, say). These are read as they are given.
-/// - `usage` — the plan's overall allowance, with a reset time but no length
-///   at all. It is the headline number and would be wrong to leave out, so it
-///   gets `Kind.plan` rather than a duration invented for it.
+/// - `usage` — the weekly allowance. The reply gives it a reset time and no
+///   length, and the reset can land anywhere inside the week since the window
+///   rolls, so the length is not inferable from it — it is named from what the
+///   plan actually is.
 ///
 /// Every count arrives as a *string*, and `detail` reports what is left rather
 /// than what is spent, so both are converted here and everything downstream
@@ -95,7 +96,7 @@ struct KimiCodeUsageService: Sendable {
         var found: [UsageWindow] = []
 
         // The timed windows first, named by the length the service states.
-        for (index, limit) in (reply.limits ?? []).enumerated() {
+        for limit in reply.limits ?? [] {
             guard
                 let seconds = duration(of: limit.window),
                 let window = window(
@@ -106,15 +107,14 @@ struct KimiCodeUsageService: Sendable {
                 )
             else { continue }
 
-            _ = index
             found.append(window)
         }
 
-        // Then the plan's own allowance. Sorted last by giving it a longer
-        // nominal length than any real window: it is the widest thing here,
-        // and only its reset time is ever displayed.
-        if let plan = window(from: reply.usage, id: "plan", kind: .plan, seconds: 365 * 86_400) {
-            found.append(plan)
+        // Then the weekly allowance, which the reply carries separately and
+        // does not put a length on. Only its reset time is ever displayed; the
+        // seconds are what sort it after the shorter windows.
+        if let weekly = window(from: reply.usage, id: "weekly", kind: .weekly, seconds: 7 * 86_400) {
+            found.append(weekly)
         }
 
         return found.sorted { $0.windowSeconds < $1.windowSeconds }

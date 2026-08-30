@@ -16,9 +16,6 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case fiveHour
         case weekly
         case spend
-        /// A plan's overall allowance, which the provider gives a reset for
-        /// but no length — Kimi Code's `usage` block.
-        case plan
         /// OpenCode Go's billing period. The others' longest window is a
         /// week, so this one had nowhere to map.
         case monthly
@@ -53,7 +50,6 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case .weekly: .localized("Weekly limit")
         case .spend: .localized("Spend limit")
         case .monthly: .localized("Monthly limit")
-        case .plan: .localized("Plan limit")
         case .other(let seconds):
             seconds >= 86_400
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
