@@ -158,7 +158,7 @@ struct FloatingUsagePanelView: View {
     /// Only the providers switched on in settings, so the rail shrinks when
     /// one is turned off.
     private var entries: [RailEntry] {
-        Provider.allCases
+        settings.orderedProviders
             .filter(settings.isEnabled)
             .map { provider in
                 let usage = store.usage(for: provider)

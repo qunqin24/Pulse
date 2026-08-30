@@ -28,6 +28,41 @@ final class AppSettings {
         }
     }
 
+    /// The order the rail draws them in, as raw values.
+    ///
+    /// Stored rather than derived so it survives a launch, and resolved through
+    /// `orderedProviders` rather than trusted as-is: a provider added in a
+    /// later version is missing from every list stored before it existed, and
+    /// one removed would still be named in lists stored while it did.
+    var providerOrder: [String] {
+        didSet {
+            guard providerOrder != oldValue else { return }
+            UserDefaults.standard.set(providerOrder, forKey: Key.providerOrder)
+            onChange?()
+        }
+    }
+
+    /// Every provider, in the user's order. Anything the stored order doesn't
+    /// mention goes last, in the order the enum declares — so a new one appears
+    /// at the bottom of the rail rather than in the middle of it.
+    var orderedProviders: [Provider] {
+        let stored = providerOrder.compactMap(Provider.init(rawValue:))
+        return stored + Provider.allCases.filter { !stored.contains($0) }
+    }
+
+    /// Moves a provider one place up or down. Silently does nothing at the
+    /// ends, so the buttons can simply be disabled there.
+    func move(_ provider: Provider, by offset: Int) {
+        var order = orderedProviders
+        guard
+            let from = order.firstIndex(of: provider),
+            order.indices.contains(from + offset)
+        else { return }
+
+        order.swapAt(from, from + offset)
+        providerOrder = order.map(\.rawValue)
+    }
+
     /// Which providers appear in the rail. Never empty — the last one left
     /// can't be switched off, since an empty rail would leave nothing to
     /// hover, and nothing to grab to drag the panel.
@@ -150,6 +185,7 @@ final class AppSettings {
         isPanelVisible: Bool = true,
         hidesInFullScreen: Bool = true,
         enabledProviders: Set<Provider> = Set(Provider.allCases),
+        providerOrder: [String] = [],
         language: AppLanguage = .system,
         pinnedWindows: [String: String] = [:],
         sources: [String: String] = [:],
@@ -161,6 +197,7 @@ final class AppSettings {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
         self.enabledProviders = enabledProviders
+        self.providerOrder = providerOrder
         self.language = language
         self.pinnedWindows = pinnedWindows
         self.sources = sources
@@ -230,6 +267,7 @@ final class AppSettings {
             enabledProviders: providers.isEmpty
                 ? (Provider.installedOnThisMac().isEmpty ? Set(Provider.allCases) : Provider.installedOnThisMac())
                 : providers,
+            providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
@@ -273,5 +311,6 @@ final class AppSettings {
         static let panelSize = "settings.panelSize"
         static let usesGlass = "settings.usesGlass"
         static let offeredProviders = "settings.offeredProviders"
+        static let providerOrder = "settings.providerOrder"
     }
 }

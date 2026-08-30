@@ -32,7 +32,9 @@ struct SettingsView: View {
                 }
 
                 Section(String.localized("Providers")) {
-                    ForEach(Provider.allCases) { provider in
+                    // Same order as the rail: a sidebar that disagreed with
+                    // the thing it configures is its own small confusion.
+                    ForEach(settings.orderedProviders) { provider in
                         row(.provider(provider))
                     }
                 }
@@ -192,6 +194,35 @@ struct SettingsView: View {
                     .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            }
+
+            SettingsGroup(String.localized("Order")) {
+                // Arrows rather than dragging. Four rows is not enough to make
+                // a drag worth learning, and a drag that misses does something
+                // — an arrow that misses does nothing.
+                ForEach(Array(settings.orderedProviders.enumerated()), id: \.element) { index, provider in
+                    if index > 0 { SettingsRowDivider() }
+
+                    SettingsRow(provider.displayName, icon: provider) {
+                        HStack(spacing: 4) {
+                            Button {
+                                settings.move(provider, by: -1)
+                            } label: {
+                                Image(systemName: "chevron.up")
+                            }
+                            .disabled(index == 0)
+
+                            Button {
+                                settings.move(provider, by: 1)
+                            } label: {
+                                Image(systemName: "chevron.down")
+                            }
+                            .disabled(index == settings.orderedProviders.count - 1)
+                        }
+                        .buttonStyle(.borderless)
+                        .accessibilityLabel(String.localized("Move \(provider.displayName)"))
+                    }
                 }
             }
 

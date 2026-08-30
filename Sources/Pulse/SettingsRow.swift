@@ -40,16 +40,29 @@ struct SettingsGroup<Content: View>: View {
 struct SettingsRow<Control: View>: View {
     let title: String
     let subtitle: String?
+    /// A provider's mark before the title. Used where the row *is* a provider
+    /// — reordering the rail, say, where the icons are what is being arranged.
+    let icon: Provider?
     @ViewBuilder let control: Control
 
-    init(_ title: String, subtitle: String? = nil, @ViewBuilder control: () -> Control) {
+    init(
+        _ title: String,
+        subtitle: String? = nil,
+        icon: Provider? = nil,
+        @ViewBuilder control: () -> Control
+    ) {
         self.title = title
         self.subtitle = subtitle
+        self.icon = icon
         self.control = control()
     }
 
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
+            if let icon {
+                LobeIconView(provider: icon, size: 15)
+            }
+
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 13))
