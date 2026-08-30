@@ -1,0 +1,154 @@
+/* 菜单栏 */
+"Settings…" = "设置…";
+"Quit Pulse" = "退出 Pulse";
+
+/* 设置窗口 */
+"Pulse Settings" = "Pulse 设置";
+"Panel" = "面板";
+"Application" = "应用";
+"General" = "通用";
+"Providers" = "供应商";
+"About" = "关于";
+
+"Floating panel" = "悬浮面板";
+"Show floating panel" = "显示悬浮面板";
+"The usage rail at the edge of the screen." = "屏幕边缘的用量胶囊。";
+"Hide in full screen" = "全屏时隐藏";
+"Keep the floating panel out of full-screen apps." = "其他应用全屏时隐藏悬浮面板，避免打扰。";
+"Left" = "左侧";
+"Right" = "右侧";
+
+"Show in panel" = "在面板中显示";
+"Current usage" = "当前用量";
+"Account" = "账户";
+
+"Version" = "版本";
+"Usage data" = "用量数据";
+"Credits" = "致谢";
+"Provider marks from github.com/lobehub/lobe-icons." = "服务图标来自 github.com/lobehub/lobe-icons。";
+
+"Language" = "语言";
+"Interface language" = "界面语言";
+"Takes effect right away." = "立即生效。";
+"System" = "跟随系统";
+
+/* 悬浮面板 */
+"%@ Usage" = "%@ 用量";
+
+
+
+/* 辅助功能 */
+"Pulse floating usage panel" = "Pulse 悬浮用量面板";
+"Provider usage selector" = "服务用量选择器";
+"%@ usage" = "%@ 用量";
+"%@ usage details" = "%@ 用量详情";
+"%@ used, %@" = "已用 %@，%@";
+"%@ used. %@" = "已用 %@。%@";
+
+/* Usage data */
+"5-hour limit" = "5 小时限额";
+"Weekly limit" = "每周限额";
+"Spend limit" = "消费限额";
+"%@-day limit" = "%@ 天限额";
+"%@-hour limit" = "%@ 小时限额";
+"%@ days" = "%@ 天";
+"%@ hours" = "%@ 小时";
+"Sign in to Codex to see usage." = "登录 Codex 后才能查看用量。";
+"No limits reported." = "未返回任何限额。";
+"Connect Claude Code in Settings to see usage." = "在设置中连接 Claude Code 后才能查看用量。";
+"Waiting for the next Claude Code response." = "等待 Claude Code 的下一次响应。";
+"Loading…" = "读取中…";
+"No reading" = "暂无数据";
+"Connection" = "连接";
+"Claude Code status line" = "Claude Code 状态栏";
+"Connect" = "连接";
+"Disconnect" = "断开";
+"Plan" = "套餐";
+"Credit balance" = "额度余额";
+"Resets %@" = "%@ 重置";
+"As of %@" = "数据时间：%@";
+"Reading may be out of date" = "数据可能不是最新的";
+"%@ Used" = "已用 %@";
+"Codex isn't installed." = "未检测到 Codex。";
+"Couldn't start the Codex helper." = "无法启动 Codex 辅助进程。";
+"Sign in to Claude Code to see usage." = "登录 Claude Code 后才能查看用量。";
+"A backup for when the saved login expires. Your own status line keeps working." = "登录信息过期时的备用来源。你原有的状态栏照常工作。";
+"Ring shows" = "环上显示";
+"Which limit the rail's ring tracks." = "胶囊上的圆环跟踪哪一条限额。";
+"Highest usage" = "占用最高的一条";
+"Automatic" = "自动";
+"Usage endpoint" = "用量接口";
+"Provider tooling" = "官方工具";
+"Use the endpoint when possible, the other route when not." = "优先用接口，取不到时改用另一条路。";
+"Reads your account's limits with the login Claude Code saved." = "用 Claude Code 保存的登录信息读取账户额度。";
+"Reads your account's limits with the login Codex saved." = "用 Codex 保存的登录信息读取账户额度。";
+"Uses whatever Claude Code last reported to its status line." = "使用 Claude Code 最近一次报告给状态栏的数据。";
+"Asks the Codex app server, which signs in on its own." = "询问 Codex 的 app server，它自己处理登录。";
+"Read usage from" = "用量来源";
+"Updates" = "更新";
+"Check every" = "刷新间隔";
+"How often to fetch new figures." = "多久获取一次最新数据。";
+"%@ seconds" = "%@ 秒";
+"%@ minutes" = "%@ 分钟";
+"The service didn't respond." = "服务没有响应。";
+"Couldn't read the reply." = "无法解析返回的数据。";
+"Checking too often — easing off." = "查询过于频繁，正在放慢。";
+"The service returned an error." = "服务返回了错误。";
+"1 minute" = "1 分钟";
+"Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own." = "直接读取自 Claude Code 和 Codex 的账户数据。Pulse 只展示它们报告的数字，从不自行估算。";
+
+/* Usage history */
+"Usage history" = "用量记录";
+"Today" = "今天";
+"All time" = "累计";
+"Limit reset credits" = "额度重置券";
+"1 available" = "可用 1 张";
+"%@ available" = "可用 %@ 张";
+"%@ tokens" = "%@ tokens";
+"Tokens per day" = "每日 token 用量";
+"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "根据本机的 %@ 日志统计，并按 models.dev 上公布的 API 官方价格折算。你用的是订阅套餐，所以这是同样的用量走 API 需要付多少钱，不是实际扣款金额。";
+"No published price for %@, so those tokens are counted but not costed." = "%@ 没有公开价格，这部分 token 只计数、不计价。";
+"Reading logs" = "正在读取日志";
+"No history yet" = "暂无记录";
+"Nothing has been logged on this Mac yet, so there is no history to add up." = "本机还没有任何日志，暂时统计不出记录。";
+"Account total" = "账户累计";
+
+/* Budget estimate */
+"Busiest day" = "单日最多";
+"Next expires in %@" = "最近一张 %@ 后过期";
+"Top model" = "主力模型";
+"%@ · %@ of tokens" = "%@ · 占 %@";
+"Estimated value" = "额度价值推算";
+"%@ used so far" = "本轮已用 %@";
+"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out." = "这是推算值，不是官方报告的数字：用本机在这一轮里已经花掉的钱，除以官方报告的已用百分比得出。其他设备上的用量统计不到，会让这个数字偏低。用量太少、推算不可靠的窗口不会显示。";
+
+/* Adaptive refresh */
+"2 to 30 minutes as needed. Now: %@ minutes." = "2–30 分钟自动调整，当前 %@ 分钟。";
+
+/* Auto-collapse */
+"Hide until pointed at" = "自动收起";
+"Against a screen edge, the rail shrinks to a sliver until you point at it." = "贴边时缩成细线，鼠标移过去才展开。";
+"Show usage panel" = "展开用量面板";
+
+/* Free placement */
+"Position" = "位置";
+"Free" = "自由";
+"Drag it anywhere; near a side it snaps on." = "可拖到任意位置，靠近左右边缘会自动吸附。";
+"Last 31 days" = "最近 31 天";
+
+/* Panel size */
+"Size" = "整体大小";
+"Size of the rail on screen." = "胶囊显示的大小。";
+"Small" = "小";
+"Standard" = "标准";
+"Large" = "大";
+
+/* Launch at login */
+"Open at login" = "开机自启";
+"Start Pulse automatically when you log in." = "登录后自动启动 Pulse。";
+"Waiting for approval in System Settings › General › Login Items." = "等待在「系统设置 › 通用 › 登录项」中允许。";
+
+/* Liquid Glass */
+"Liquid Glass" = "液态玻璃";
+"Frosted glass instead of solid black." = "用毛玻璃代替纯黑。";
+"Drag it by a ring while this is on." = "开启后只能按住圆环拖动。";

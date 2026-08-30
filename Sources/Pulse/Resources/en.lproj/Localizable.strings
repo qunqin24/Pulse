@@ -1,0 +1,154 @@
+/* Menu bar */
+"Settings…" = "Settings…";
+"Quit Pulse" = "Quit Pulse";
+
+/* Settings window */
+"Pulse Settings" = "Pulse Settings";
+"Panel" = "Panel";
+"Application" = "Application";
+"General" = "General";
+"Providers" = "Providers";
+"About" = "About";
+
+"Floating panel" = "Floating panel";
+"Show floating panel" = "Show floating panel";
+"The usage rail at the edge of the screen." = "The usage rail at the edge of the screen.";
+"Hide in full screen" = "Hide in full screen";
+"Keep the floating panel out of full-screen apps." = "Keep the floating panel out of full-screen apps.";
+"Left" = "Left";
+"Right" = "Right";
+
+"Show in panel" = "Show in panel";
+"Current usage" = "Current usage";
+"Account" = "Account";
+
+"Version" = "Version";
+"Usage data" = "Usage data";
+"Credits" = "Credits";
+"Provider marks from github.com/lobehub/lobe-icons." = "Provider marks from github.com/lobehub/lobe-icons.";
+
+"Language" = "Language";
+"Interface language" = "Interface language";
+"Takes effect right away." = "Takes effect right away.";
+"System" = "System";
+
+/* Floating panel */
+"%@ Usage" = "%@ Usage";
+
+
+
+/* Accessibility */
+"Pulse floating usage panel" = "Pulse floating usage panel";
+"Provider usage selector" = "Provider usage selector";
+"%@ usage" = "%@ usage";
+"%@ usage details" = "%@ usage details";
+"%@ used, %@" = "%@ used, %@";
+"%@ used. %@" = "%@ used. %@";
+
+/* Usage data */
+"5-hour limit" = "5-hour limit";
+"Weekly limit" = "Weekly limit";
+"Spend limit" = "Spend limit";
+"%@-day limit" = "%@-day limit";
+"%@-hour limit" = "%@-hour limit";
+"%@ days" = "%@ days";
+"%@ hours" = "%@ hours";
+"Sign in to Codex to see usage." = "Sign in to Codex to see usage.";
+"No limits reported." = "No limits reported.";
+"Connect Claude Code in Settings to see usage." = "Connect Claude Code in Settings to see usage.";
+"Waiting for the next Claude Code response." = "Waiting for the next Claude Code response.";
+"Loading…" = "Loading…";
+"No reading" = "No reading";
+"Connection" = "Connection";
+"Claude Code status line" = "Claude Code status line";
+"Connect" = "Connect";
+"Disconnect" = "Disconnect";
+"Plan" = "Plan";
+"Credit balance" = "Credit balance";
+"Resets %@" = "Resets %@";
+"As of %@" = "As of %@";
+"Reading may be out of date" = "Reading may be out of date";
+"%@ Used" = "%@ Used";
+"Codex isn't installed." = "Codex isn't installed.";
+"Couldn't start the Codex helper." = "Couldn't start the Codex helper.";
+"Sign in to Claude Code to see usage." = "Sign in to Claude Code to see usage.";
+"A backup for when the saved login expires. Your own status line keeps working." = "A backup for when the saved login expires. Your own status line keeps working.";
+"Ring shows" = "Ring shows";
+"Which limit the rail's ring tracks." = "Which limit the rail's ring tracks.";
+"Highest usage" = "Highest usage";
+"Automatic" = "Automatic";
+"Usage endpoint" = "Usage endpoint";
+"Provider tooling" = "Provider tooling";
+"Use the endpoint when possible, the other route when not." = "Use the endpoint when possible, the other route when not.";
+"Reads your account's limits with the login Claude Code saved." = "Reads your account's limits with the login Claude Code saved.";
+"Reads your account's limits with the login Codex saved." = "Reads your account's limits with the login Codex saved.";
+"Uses whatever Claude Code last reported to its status line." = "Uses whatever Claude Code last reported to its status line.";
+"Asks the Codex app server, which signs in on its own." = "Asks the Codex app server, which signs in on its own.";
+"Read usage from" = "Read usage from";
+"Updates" = "Updates";
+"Check every" = "Check every";
+"How often to fetch new figures." = "How often to fetch new figures.";
+"%@ seconds" = "%@ seconds";
+"%@ minutes" = "%@ minutes";
+"The service didn't respond." = "The service didn't respond.";
+"Couldn't read the reply." = "Couldn't read the reply.";
+"Checking too often — easing off." = "Checking too often — easing off.";
+"The service returned an error." = "The service returned an error.";
+"1 minute" = "1 minute";
+"Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own." = "Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own.";
+
+/* Usage history */
+"Usage history" = "Usage history";
+"Today" = "Today";
+"All time" = "All time";
+"Limit reset credits" = "Limit reset credits";
+"1 available" = "1 available";
+"%@ available" = "%@ available";
+"%@ tokens" = "%@ tokens";
+"Tokens per day" = "Tokens per day";
+"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged.";
+"No published price for %@, so those tokens are counted but not costed." = "No published price for %@, so those tokens are counted but not costed.";
+"Reading logs" = "Reading logs";
+"No history yet" = "No history yet";
+"Nothing has been logged on this Mac yet, so there is no history to add up." = "Nothing has been logged on this Mac yet, so there is no history to add up.";
+"Account total" = "Account total";
+
+/* Budget estimate */
+"Busiest day" = "Busiest day";
+"Next expires in %@" = "Next expires in %@";
+"Top model" = "Top model";
+"%@ · %@ of tokens" = "%@ · %@ of tokens";
+"Estimated value" = "Estimated value";
+"%@ used so far" = "%@ used so far";
+"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out." = "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.";
+
+/* Adaptive refresh */
+"2 to 30 minutes as needed. Now: %@ minutes." = "2 to 30 minutes as needed. Now: %@ minutes.";
+
+/* Auto-collapse */
+"Hide until pointed at" = "Hide until pointed at";
+"Against a screen edge, the rail shrinks to a sliver until you point at it." = "Against a screen edge, the rail shrinks to a sliver until you point at it.";
+"Show usage panel" = "Show usage panel";
+
+/* Free placement */
+"Position" = "Position";
+"Free" = "Free";
+"Drag it anywhere; near a side it snaps on." = "Drag it anywhere; near a side it snaps on.";
+"Last 31 days" = "Last 31 days";
+
+/* Panel size */
+"Size" = "Size";
+"Size of the rail on screen." = "Size of the rail on screen.";
+"Small" = "Small";
+"Standard" = "Standard";
+"Large" = "Large";
+
+/* Launch at login */
+"Open at login" = "Open at login";
+"Start Pulse automatically when you log in." = "Start Pulse automatically when you log in.";
+"Waiting for approval in System Settings › General › Login Items." = "Waiting for approval in System Settings › General › Login Items.";
+
+/* Liquid Glass */
+"Liquid Glass" = "Liquid Glass";
+"Frosted glass instead of solid black." = "Frosted glass instead of solid black.";
+"Drag it by a ring while this is on." = "Drag it by a ring while this is on.";
