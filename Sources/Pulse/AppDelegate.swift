@@ -37,7 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Daily at most, and only from a bundle — see `AppUpdate`.
         update.checkIfDue()
 
-
         store.start()
 
         let controller = FloatingPanelController(store: store, settings: settings, placement: placement)

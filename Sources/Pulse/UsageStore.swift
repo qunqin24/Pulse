@@ -44,7 +44,9 @@ final class UsageStore {
     /// anything else was running, did nothing at all — and the pass already
     /// running had read the old key before it started, so it published the
     /// missing-key answer and slept for up to half an hour.
-    private var queued: Provider?
+    private var queued: Set<Provider> = []
+    /// A whole pass asked for while one was running.
+    private var queuedFullPass = false
 
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
@@ -142,7 +144,13 @@ final class UsageStore {
     }
 
     func refresh() {
-        guard !isRefreshing else { return }
+        guard !isRefreshing else {
+            // Dropped, this used to be — and `settingsChanged()` is its main
+            // caller, so switching a provider on mid-pass left it on `.loading`
+            // until the next tick, which can be half an hour away.
+            queuedFullPass = true
+            return
+        }
         isRefreshing = true
         refreshingProvider = nil
 
@@ -223,7 +231,7 @@ final class UsageStore {
     /// second endpoint request when the user asked about one ring.
     func refresh(_ provider: Provider) {
         guard !isRefreshing else {
-            queued = provider
+            queued.insert(provider)
             return
         }
         isRefreshing = true
@@ -277,8 +285,16 @@ final class UsageStore {
     }
 
     private func runQueued() {
-        guard let provider = queued else { return }
-        queued = nil
+        // A whole pass supersedes the individual ones it would have covered.
+        if queuedFullPass {
+            queuedFullPass = false
+            queued.removeAll()
+            refresh()
+            return
+        }
+
+        guard let provider = queued.first else { return }
+        queued.remove(provider)
         refresh(provider)
     }
 

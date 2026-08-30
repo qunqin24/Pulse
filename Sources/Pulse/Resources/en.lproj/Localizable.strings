@@ -181,6 +181,10 @@
 "Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings.";
 "Not now" = "Not now";
 "Order" = "Order";
-"Move %@" = "Move %@";
 "Add an API key in Settings." = "Add an API key in Settings.";
 "Stored encrypted on this Mac." = "Stored encrypted on this Mac.";
+"Couldn't connect the status line" = "Couldn't connect the status line";
+"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings.";
+"Move %@ up" = "Move %@ up";
+"Move %@ down" = "Move %@ down";
+"Not shown" = "Not shown";

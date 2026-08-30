@@ -245,29 +245,46 @@ final class AppSettings {
         let visible = defaults.object(forKey: Key.panelVisible) as? Bool ?? true
 
         let stored = defaults.stringArray(forKey: Key.enabledProviders) ?? []
+        let previouslyOffered = defaults.stringArray(forKey: Key.offeredProviders)
         var providers = Set(stored.compactMap(Provider.init(rawValue:)))
 
-        // A provider added in a later version is switched on the first time it
-        // is seen, and only then. Without this it would be missing from every
-        // stored list and would never appear at all; switching it back on for
-        // everyone at each launch would override the user turning it off. So
-        // what is remembered is which providers have been *offered*, the same
-        // decided-once shape `LoginItem` uses for opening at login.
-        let offered = Set(defaults.stringArray(forKey: Key.offeredProviders) ?? [])
-        let fresh = Provider.allCases.filter { !offered.contains($0.rawValue) }
-        if !stored.isEmpty { providers.formUnion(fresh) }
+        // "Has Pulse ever run here" cannot be read off the enabled set: 1.0.0
+        // computed that set and never wrote it, so it is absent for everyone
+        // upgrading. `hasRun` is absent for them too, being new. What 1.0.0
+        // *did* write is the offered list — so its presence is the evidence,
+        // and this flag takes over from the next launch onwards.
+        let hasRunBefore = defaults.bool(forKey: Key.hasRun) || previouslyOffered != nil
+        defaults.set(true, forKey: Key.hasRun)
+
+        if hasRunBefore {
+            // An upgrade with nothing stored is 1.0.0's own default, which was
+            // every provider it knew about — that is what those users have
+            // been looking at, and it is what they keep.
+            if stored.isEmpty, let previouslyOffered {
+                providers = Set(previouslyOffered.compactMap(Provider.init(rawValue:)))
+            }
+
+            // Then a provider added since is switched on once. This has to run
+            // *before* the offered list is stamped, or the very providers it
+            // exists for are marked offered without ever appearing.
+            let offered = Set(previouslyOffered ?? [])
+            providers.formUnion(Provider.allCases.filter { !offered.contains($0.rawValue) })
+        } else {
+            // A genuinely new Mac starts with what is installed. Nothing found
+            // at all falls back to everything: the user should still see what
+            // Pulse supports.
+            let installed = Provider.installedOnThisMac()
+            providers = installed.isEmpty ? Set(Provider.allCases) : installed
+        }
+
         defaults.set(Provider.allCases.map(\.rawValue), forKey: Key.offeredProviders)
 
-        // Worked out here and written back here. Assigning a stored property
-        // in `init` does not run its `didSet`, so without this every launch is
-        // another first run — and installing or removing an agent would
-        // silently rearrange the rail behind the user.
-        if stored.isEmpty {
-            let firstRun = Provider.installedOnThisMac()
-            let chosen = firstRun.isEmpty ? Set(Provider.allCases) : firstRun
-            defaults.set(chosen.map(\.rawValue), forKey: Key.enabledProviders)
-            providers = chosen
-        }
+        // Never empty. A stored list whose names no longer parse — a provider
+        // renamed or removed — would otherwise leave a rail with nothing to
+        // hover and nothing to grab.
+        if providers.isEmpty { providers = Set(Provider.allCases) }
+
+        defaults.set(providers.map(\.rawValue), forKey: Key.enabledProviders)
 
         let language = defaults.string(forKey: Key.language)
             .flatMap(AppLanguage.init(rawValue:)) ?? .system
@@ -321,5 +338,7 @@ final class AppSettings {
         static let usesGlass = "settings.usesGlass"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
+        /// Set the first time Pulse runs on this Mac, and never cleared.
+        static let hasRun = "settings.hasRun"
     }
 }

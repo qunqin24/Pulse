@@ -96,12 +96,15 @@ struct KimiCodeUsageService: Sendable {
         var found: [UsageWindow] = []
 
         // The timed windows first, named by the length the service states.
-        for limit in reply.limits ?? [] {
+        for (index, limit) in (reply.limits ?? []).enumerated() {
             guard
                 let seconds = duration(of: limit.window),
                 let window = window(
                     from: limit.detail,
-                    id: "limit.\(seconds)",
+                    // The position too: two windows of the same length is
+                    // exactly the shape the other providers' per-model limits
+                    // take, and duplicate ids collapse rows in the card.
+                    id: "limit.\(index).\(seconds)",
                     kind: kind(forSeconds: seconds),
                     seconds: seconds
                 )

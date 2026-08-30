@@ -144,10 +144,16 @@ enum StatusLineHook {
     /// command that was already there so it can be chained and later restored.
     @discardableResult
     static func install() -> Bool {
-        var settings = readSettings() ?? [:]
+        // A file that exists but will not parse must be left alone. `?? [:]`
+        // meant an unreadable settings.json was replaced wholesale — every
+        // permission, hook and model setting in it gone, in exchange for a
+        // status line. `JSONSerialization` refuses things Claude Code itself
+        // tolerates, comments among them, so this is not a hypothetical.
+        guard let existing = currentSettings() else { return false }
+        var settings = existing
 
-        if let existing = settings["statusLine"] as? [String: Any],
-           let command = existing["command"] as? String,
+        if let previous = settings["statusLine"] as? [String: Any],
+           let command = previous["command"] as? String,
            !command.contains(modeArgument) {
             UserDefaults.standard.set(command, forKey: Key.previousCommand)
         }
@@ -196,6 +202,14 @@ enum StatusLineHook {
     }
 
     // MARK: - Settings file
+
+    /// The settings as they stand, or nil when there is a file here that
+    /// cannot be read. An *absent* file is an empty dictionary — there is
+    /// nothing to lose by creating one.
+    private static func currentSettings() -> [String: Any]? {
+        guard FileManager.default.fileExists(atPath: settingsFile.path) else { return [:] }
+        return readSettings()
+    }
 
     private static func readSettings() -> [String: Any]? {
         guard let data = try? Data(contentsOf: settingsFile),
@@ -260,8 +274,15 @@ enum StatusLineHook {
         // An .accessory app has to bring itself forward or the question opens
         // behind whatever the user was looking at.
         NSApp.activate(ignoringOtherApps: true)
-        if alert.runModal() == .alertFirstButtonReturn {
-            _ = install()
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard install() else {
+            // Refusing to touch an unreadable settings.json is the right
+            // answer, but silently is not: the question never comes back.
+            let failed = NSAlert()
+            failed.messageText = .localized("Couldn't connect the status line")
+            failed.informativeText = .localized("~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings.")
+            failed.runModal()
+            return
         }
     }
 

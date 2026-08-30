@@ -57,10 +57,13 @@ struct ClaudeCodeUsageService: Sendable {
             }
 
         case .automatic:
-            // Asked before the token is filtered for expiry: an expired one is
-            // still evidence of a login, and is in fact the common case.
-            let hadCredentials = storedCredentials() != nil
-            if let token = loadAccessToken() {
+            // Read once. Both answers come out of the same blob: an expired
+            // token is still evidence of a login, and asking twice means
+            // spawning `security` twice a pass — which is the thing the read
+            // was pulled out of the loop to stop.
+            let credentials = storedCredentials()
+            let hadCredentials = credentials != nil
+            if let token = credentials.flatMap(Self.unexpiredAccessToken) {
                 switch await fetchOverHTTP(token: token) {
                 case .success(let usage):
                     return usage

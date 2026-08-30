@@ -204,7 +204,14 @@ struct SettingsView: View {
                 ForEach(Array(settings.orderedProviders.enumerated()), id: \.element) { index, provider in
                     if index > 0 { SettingsRowDivider() }
 
-                    SettingsRow(provider.displayName, icon: provider) {
+                    SettingsRow(
+                        provider.displayName,
+                        // Moving something the rail isn't drawing looks like
+                        // the arrow did nothing; saying so is kinder than
+                        // hiding the row and renumbering everything.
+                        subtitle: settings.isEnabled(provider) ? nil : String.localized("Not shown"),
+                        icon: provider
+                    ) {
                         HStack(spacing: 4) {
                             Button {
                                 settings.move(provider, by: -1)
@@ -212,6 +219,7 @@ struct SettingsView: View {
                                 Image(systemName: "chevron.up")
                             }
                             .disabled(index == 0)
+                            .accessibilityLabel(String.localized("Move \(provider.displayName) up"))
 
                             Button {
                                 settings.move(provider, by: 1)
@@ -219,9 +227,9 @@ struct SettingsView: View {
                                 Image(systemName: "chevron.down")
                             }
                             .disabled(index == settings.orderedProviders.count - 1)
+                            .accessibilityLabel(String.localized("Move \(provider.displayName) down"))
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel(String.localized("Move \(provider.displayName)"))
                     }
                 }
             }
@@ -604,6 +612,12 @@ struct SettingsView: View {
                         Text(observed, style: .relative)
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
+                            // Every other date in the app is pinned to the
+                            // language chosen in Settings; this one formats
+                            // with the environment's locale, which follows the
+                            // system. Without this, an English Pulse on a
+                            // Chinese Mac prints "4分钟" beside "Refresh".
+                            .environment(\.locale, LocalizationSource.locale)
                     } else {
                         Text(localized: "Not yet")
                             .font(.system(size: 12))
@@ -611,7 +625,10 @@ struct SettingsView: View {
                     }
 
                     Button(String.localized("Refresh")) { store.refresh(provider) }
-                        .disabled(store.isRefreshing(provider))
+                        // Any pass, not just this provider's: during a
+                        // background one the press would only queue, with
+                        // nothing on screen to say so.
+                        .disabled(store.isRefreshing)
                 }
             }
 

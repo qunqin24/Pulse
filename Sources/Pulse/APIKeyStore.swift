@@ -29,7 +29,10 @@ enum APIKeyStore {
     /// Stores a key, or removes it when the field is cleared.
     @discardableResult
     static func setKey(_ key: String?, for provider: Provider) -> Bool {
-        var keys = load()
+        // A file that exists but won't decode is not an empty one. Treating it
+        // as empty meant saving one provider's key silently threw away every
+        // other provider's — and said it had succeeded.
+        guard var keys = readable() else { return false }
         let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let trimmed, !trimmed.isEmpty {
@@ -48,11 +51,17 @@ enum APIKeyStore {
 
     // MARK: - The file
 
-    private static func load() -> [String: Data] {
+    private static func load() -> [String: Data] { readable() ?? [:] }
+
+    /// What is stored, or nil when there is a file here that cannot be read.
+    /// An absent file is empty; an unreadable one is not.
+    private static func readable() -> [String: Data]? {
+        guard FileManager.default.fileExists(atPath: file.path) else { return [:] }
+
         guard
             let data = try? Data(contentsOf: file),
             let keys = try? JSONDecoder().decode([String: Data].self, from: data)
-        else { return [:] }
+        else { return nil }
 
         return keys
     }
