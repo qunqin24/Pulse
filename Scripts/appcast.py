@@ -44,14 +44,30 @@ def sign(archive: Path) -> tuple[str, str]:
         sys.exit("sign_update not found — run `swift build` first so Sparkle's tools are fetched.")
 
     command = [str(tools[0])]
-    # In CI the key comes from the secret; on a developer's Mac `generate_keys`
-    # has already put it in the login keychain and the tool finds it there.
+
+    # In CI the key comes from the secret and is piped in; on a developer's Mac
+    # `generate_keys` has already put it in the login keychain and the tool
+    # finds it there on its own.
+    #
+    # Through stdin, not `-s`: that flag is deprecated and explicitly refuses
+    # newly generated keys, which is every key anyone would make today. It
+    # fails with a message you only see if stderr is not swallowed, which is
+    # the other half of why this cost a release run.
     key = os.environ.get("SPARKLE_PRIVATE_KEY", "").strip()
     if key:
-        command += ["-s", key]
+        command += ["--ed-key-file", "-"]
     command.append(str(archive))
 
-    output = subprocess.run(command, capture_output=True, text=True, check=True).stdout
+    result = subprocess.run(
+        command,
+        input=key + "\n" if key else None,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        sys.exit(f"sign_update failed ({result.returncode}):\n{result.stderr.strip()}")
+
+    output = result.stdout
 
     # It prints the two attributes ready to paste: sparkle:edSignature="…" length="…"
     parts = dict(

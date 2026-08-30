@@ -113,12 +113,23 @@ jobs:
           PRERELEASE=""
           case "$VERSION" in *-*) PRERELEASE="--prerelease";; esac
 
-          gh release create "v$VERSION" \
-            "build/Pulse-$VERSION.dmg" \
-            "build/Pulse-$VERSION.zip" \
-            --title "Pulse $VERSION" \
-            --notes-file notes.md \
-            $PRERELEASE
+          # Re-runnable. A later step failing used to mean deleting the release
+          # and the tag and starting over, which is a lot of ceremony for a
+          # typo in the step after this one.
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release exists — replacing its assets."
+            gh release upload "v$VERSION" \
+              "build/Pulse-$VERSION.dmg" \
+              "build/Pulse-$VERSION.zip" \
+              --clobber
+          else
+            gh release create "v$VERSION" \
+              "build/Pulse-$VERSION.dmg" \
+              "build/Pulse-$VERSION.zip" \
+              --title "Pulse $VERSION" \
+              --notes-file notes.md \
+              $PRERELEASE
+          fi
 
       # After publishing, because the feed points at the release's own asset —
       # committing it first would advertise a download that 404s.
