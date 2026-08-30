@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="README.zh-CN.md">简体中文</a>
+</p>
+
+<p align="center">
   <img src="Docs/panel.png" width="440" alt="The Pulse rail docked to the right of the screen, with a provider's limits open beside it">
 </p>
 
