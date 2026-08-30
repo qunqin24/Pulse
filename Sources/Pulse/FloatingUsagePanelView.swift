@@ -239,9 +239,18 @@ struct FloatingUsagePanelView: View {
     /// three pieces `FloatingPanelController.Layout.expandedWidth` adds to the
     /// rail's width, which is why the card lands exactly inside the widened
     /// panel.
-    private static let cardInset = DetailCardLayout.width
-        + DetailCardLayout.pointerWidth
-        + DetailCardLayout.horizontalGap
+    ///
+    /// A computed `var`, and it has to be: a `static let` is worked out once
+    /// per process and never again, so changing the panel's size afterwards
+    /// left the card offset by the *old* size's width — at Large that is 61pt
+    /// short, which parks the card squarely on top of the rail. Rebuilding the
+    /// view does not help; nothing rebuilds a `static let`. Every constant
+    /// derived from `PanelMetrics` has to be computed on each read.
+    private static var cardInset: CGFloat {
+        DetailCardLayout.width
+            + DetailCardLayout.pointerWidth
+            + DetailCardLayout.horizontalGap
+    }
 
     /// How the card comes and goes: it grows out of the tip of its own
     /// pointer, the way a system popover unfolds from its arrow.
