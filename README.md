@@ -124,12 +124,15 @@ what each provider's route actually costs.
 
 ## Design
 
-Pulse exists because of [a concept Vinz (**@hivinz_**) posted on X](https://x.com/hivinz_/status/2092996055248126353)
-in August 2026 — a Figma design for a Mac tool aimed at people tired of
-checking their Claude and Codex session limits by hand. The rail of rings
-against the edge of the screen is his idea.
+Thank you, [**Vinz** (@hivinz_)](https://x.com/hivinz_/status/2092996055248126353).
 
-This is an independent implementation of it. He didn't build it and isn't
+Pulse exists because of a concept he posted on X in August 2026 — a Figma
+design for people tired of checking their Claude and Codex limits by hand. It
+stopped me the moment I saw it: a rail of rings held against the edge of the
+screen, everything worth knowing in one glance and nothing else. That idea is
+his, and most of the work here has been trying not to spoil it.
+
+This is an independent implementation. He didn't build it and isn't
 responsible for it.
 
 ## License
