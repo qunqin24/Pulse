@@ -735,13 +735,26 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Usage data"),
-                    subtitle: String.localized("Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own.")
+                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.")
                 ) {
                     EmptyView()
                 }
             }
 
             SettingsGroup(String.localized("Credits")) {
+                SettingsRow(
+                    "Vinz (@hivinz_)",
+                    subtitle: String.localized("Pulse is built from a design he posted on X.")
+                ) {
+                    Button(String.localized("Open")) {
+                        NSWorkspace.shared.open(
+                            URL(string: "https://x.com/hivinz_/status/2092996055248126353")!
+                        )
+                    }
+                }
+
+                SettingsRowDivider()
+
                 SettingsRow(
                     "Lobe Icons",
                     subtitle: String.localized("Provider marks from github.com/lobehub/lobe-icons.")

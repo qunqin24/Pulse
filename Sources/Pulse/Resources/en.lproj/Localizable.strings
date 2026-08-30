@@ -97,7 +97,6 @@
 "Checking too often — easing off." = "Checking too often — easing off.";
 "The service returned an error." = "The service returned an error.";
 "1 minute" = "1 minute";
-"Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own." = "Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own.";
 
 /* Usage history */
 "Usage history" = "Usage history";
@@ -188,3 +187,6 @@
 "Move %@ up" = "Move %@ up";
 "Move %@ down" = "Move %@ down";
 "Not shown" = "Not shown";
+"Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.";
+"Pulse is built from a design he posted on X." = "Pulse is built from a design he posted on X.";
+"Open" = "Open";

@@ -97,7 +97,6 @@
 "Checking too often — easing off." = "查询过于频繁，正在放慢。";
 "The service returned an error." = "服务返回了错误。";
 "1 minute" = "1 分钟";
-"Read from Claude Code's and Codex's own accounts. Pulse shows the figures they report and never estimates one of its own." = "直接读取自 Claude Code 和 Codex 的账户数据。Pulse 只展示它们报告的数字，从不自行估算。";
 
 /* Usage history */
 "Usage history" = "用量记录";
@@ -188,3 +187,6 @@
 "Move %@ up" = "把 %@ 上移";
 "Move %@ down" = "把 %@ 下移";
 "Not shown" = "未显示";
+"Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
+"Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
+"Open" = "打开";
