@@ -16,6 +16,9 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case fiveHour
         case weekly
         case spend
+        /// A plan's overall allowance, which the provider gives a reset for
+        /// but no length — Kimi Code's `usage` block.
+        case plan
         /// OpenCode Go's billing period. The others' longest window is a
         /// week, so this one had nowhere to map.
         case monthly
@@ -50,6 +53,7 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case .weekly: .localized("Weekly limit")
         case .spend: .localized("Spend limit")
         case .monthly: .localized("Monthly limit")
+        case .plan: .localized("Plan limit")
         case .other(let seconds):
             seconds >= 86_400
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
@@ -101,10 +105,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexServerFailed
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
-        /// No OpenCode Go key has been entered, and OpenCode saved none.
-        case openCodeKeyMissing
+        /// No key has been entered for a provider that needs one.
+        case apiKeyMissing
         /// There is a key, and the service refused it.
-        case openCodeKeyRefused
+        case apiKeyRefused
         case unreachable
         case unreadableReply
         case rateLimited
@@ -122,8 +126,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
-            case .openCodeKeyMissing: .localized("Add your OpenCode Go key in Settings.")
-            case .openCodeKeyRefused: .localized("That key was refused. Check it in Settings.")
+            case .apiKeyMissing: .localized("Add an API key in Settings.")
+            case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")
             case .unreadableReply: .localized("Couldn't read the reply.")
             case .rateLimited: .localized("Checking too often — easing off.")

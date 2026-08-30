@@ -9,6 +9,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     case codex
     case antigravity
     case openCodeGo
+    case kimiCode
 
     var id: String { rawValue }
 
@@ -19,6 +20,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .codex: "Codex"
         case .antigravity: "Antigravity"
         case .openCodeGo: "OpenCode Go"
+        case .kimiCode: "Kimi Code"
         }
     }
 
@@ -30,6 +32,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .codex: "openai"
         case .antigravity: "antigravity"
         case .openCodeGo: "opencode"
+        case .kimiCode: "kimi"
         }
     }
 
@@ -50,7 +53,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .openCodeGo: false
+        case .antigravity, .openCodeGo, .kimiCode: false
         }
     }
 
@@ -66,7 +69,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     /// The others borrow a login their own CLI stored. OpenCode stores one too,
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
-    var usesAPIKey: Bool { self == .openCodeGo }
+    var usesAPIKey: Bool { self == .openCodeGo || self == .kimiCode }
 
     /// Whether this agent looks installed, for the **first run only**.
     ///
@@ -77,8 +80,8 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     ///
     /// Only the presence of a directory is checked, never its contents: this
     /// is "has this agent ever run here", not anything about the account.
-    /// OpenCode Go is absent by design — it cannot work without a key, so
-    /// there is nothing an installed copy would prove.
+    /// The key-based providers are absent by design — they cannot work
+    /// without a key, so there is nothing an installed copy would prove.
     static func installedOnThisMac() -> Set<Provider> {
         let home = URL(fileURLWithPath: NSHomeDirectory())
         let manager = FileManager.default

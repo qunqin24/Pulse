@@ -24,7 +24,7 @@ struct OpenCodeGoUsageService: Sendable {
 
     func fetch() async -> ProviderUsage {
         guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) ?? Self.storedKey() else {
-            return .unavailable(.openCodeGo, reason: .openCodeKeyMissing)
+            return .unavailable(.openCodeGo, reason: .apiKeyMissing)
         }
 
         var request = URLRequest(url: Self.endpoint)
@@ -40,7 +40,7 @@ struct OpenCodeGoUsageService: Sendable {
         // Not `.signInRequired`: that message names Codex, and a message that
         // names the wrong provider is the exact trap this file's neighbours
         // were fixed for once already.
-        case 401, 403: return .unavailable(.openCodeGo, reason: .openCodeKeyRefused)
+        case 401, 403: return .unavailable(.openCodeGo, reason: .apiKeyRefused)
         case 429: return .unavailable(.openCodeGo, reason: .rateLimited)
         default: return .unavailable(.openCodeGo, reason: .serverError)
         }

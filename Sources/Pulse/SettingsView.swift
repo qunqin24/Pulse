@@ -523,7 +523,7 @@ struct SettingsView: View {
                 // see OpenCodeGoUsageService for why that way round.
                 SettingsRow(
                     String.localized("API key"),
-                    subtitle: String.localized("From opencode.ai, kept in your keychain.")
+                    subtitle: String.localized("Kept in your keychain, never in preferences.")
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)

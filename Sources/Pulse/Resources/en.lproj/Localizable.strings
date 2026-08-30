@@ -169,7 +169,6 @@
 "Check automatically" = "Check automatically";
 "Once a day. Updates are offered, never installed on their own." = "Once a day. Updates are offered, never installed on their own.";
 "Couldn't reach the update feed." = "Couldn't reach the update feed.";
-"Add your OpenCode Go key in Settings." = "Add your OpenCode Go key in Settings.";
 "Uses the key you entered." = "Uses the key you entered.";
 "API key" = "API key";
 "Save" = "Save";
@@ -177,10 +176,12 @@
 "Last read" = "Last read";
 "Not yet" = "Not yet";
 "That key was refused. Check it in Settings." = "That key was refused. Check it in Settings.";
-"From opencode.ai, kept in your keychain." = "From opencode.ai, kept in your keychain.";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code's saved login expired. Use Claude Code, or connect the status line.";
 "Keep reading Claude Code's usage after its login expires?" = "Keep reading Claude Code's usage after its login expires?";
 "Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings.";
 "Not now" = "Not now";
 "Order" = "Order";
 "Move %@" = "Move %@";
+"Add an API key in Settings." = "Add an API key in Settings.";
+"Plan limit" = "Plan limit";
+"Kept in your keychain, never in preferences." = "Kept in your keychain, never in preferences.";
