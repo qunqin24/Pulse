@@ -44,6 +44,10 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             .localized("Uses whatever Claude Code last reported to its status line.")
         case (.tooling, .codex):
             .localized("Asks the Codex app server, which signs in on its own.")
+        case (_, .antigravity):
+            // Never shown — Antigravity has one route, so settings states it
+            // rather than offering a choice. See `Provider.hasSourceChoice`.
+            .localized("Asks the language server Antigravity runs while it is open.")
         }
     }
 }

@@ -5,6 +5,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Not private: the menu bar scene reads the language from it so the menu
     /// rebuilds when the language changes.
     let settings = AppSettings.restored()
+    /// Not private for the same reason: the menu bar scene shows a newer
+    /// version when there is one.
+    let update = AppUpdate()
     private let placement = PanelPlacement.restored()
     private lazy var store = UsageStore(settings: settings)
 
@@ -22,10 +25,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // this takes the orphans away rather than leaving them on disk.
         PulseStorage.removeSupersededFiles()
 
+        // A launch agent left over from a loose build has to be handed over
+        // before anything reads the state, or both builds start at login.
+        LoginItem.adoptBundleIfNeeded()
+
         // On by default, decided once — and repaired rather than re-added, so
         // switching it off stays off.
         LoginItem.applyDefaultOnFirstRun()
         LoginItem.repairPathIfNeeded()
+
+        // Daily at most, and only from a bundle — see `AppUpdate`.
+        update.checkIfDue()
 
         store.start()
 
@@ -46,7 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showSettings() {
-        let window = settingsWindow ?? SettingsWindowController(store: store, settings: settings, placement: placement)
+        let window = settingsWindow ?? SettingsWindowController(store: store, settings: settings, placement: placement, update: update)
         settingsWindow = window
         window.show()
     }

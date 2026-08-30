@@ -59,6 +59,9 @@
 "Waiting for the next Claude Code response." = "等待 Claude Code 的下一次响应。";
 "Loading…" = "读取中…";
 "No reading" = "暂无数据";
+"Refreshing…" = "正在刷新…";
+"Refresh usage" = "刷新用量";
+"Activate to refresh usage." = "点击可刷新用量。";
 "Connection" = "连接";
 "Claude Code status line" = "Claude Code 状态栏";
 "Connect" = "连接";
@@ -85,7 +88,6 @@
 "Uses whatever Claude Code last reported to its status line." = "使用 Claude Code 最近一次报告给状态栏的数据。";
 "Asks the Codex app server, which signs in on its own." = "询问 Codex 的 app server，它自己处理登录。";
 "Read usage from" = "用量来源";
-"Updates" = "更新";
 "Check every" = "刷新间隔";
 "How often to fetch new figures." = "多久获取一次最新数据。";
 "%@ seconds" = "%@ 秒";
@@ -152,3 +154,16 @@
 "Liquid Glass" = "液态玻璃";
 "Frosted glass instead of solid black." = "用毛玻璃代替纯黑。";
 "Drag it by a ring while this is on." = "开启后只能按住圆环拖动。";
+"Open Antigravity to see its usage." = "打开 Antigravity 才能读到它的用量。";
+"Asks the language server Antigravity runs while it is open." = "向 Antigravity 打开时运行的语言服务器读取。";
+"Only while Antigravity is open." = "仅在 Antigravity 打开时可读。";
+"Antigravity's language server" = "Antigravity 语言服务器";
+"Refresh" = "刷新";
+"Pulse %@ is available" = "Pulse %@ 可更新";
+"Download %@" = "下载 %@";
+"Check now" = "检查更新";
+"Checking…" = "正在检查…";
+"Couldn't reach GitHub to check." = "连不上 GitHub,没法检查。";
+"Built from source — no update check." = "源码构建,不检查更新。";
+"%@ installed · %@ available" = "已装 %@ · 可更新到 %@";
+"%@ · up to date" = "%@ · 已是最新";

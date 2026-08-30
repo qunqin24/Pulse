@@ -107,6 +107,10 @@ enum AgentActivity {
                 case "task_complete", "turn_aborted": return .finished
                 default: continue
                 }
+
+            case .antigravity:
+                // Keeps no transcripts, so nothing ever gets this far.
+                return .finished
             }
         }
 
@@ -138,8 +142,10 @@ enum AgentActivity {
     /// first. Only file metadata is read here; measured at about 2ms across
     /// both trees on a machine holding a few hundred megabytes of them.
     private static func transcripts(for provider: Provider) -> [(url: URL, modified: Date)] {
+        guard let root = root(for: provider) else { return [] }
+
         guard let walker = FileManager.default.enumerator(
-            at: root(for: provider),
+            at: root,
             includingPropertiesForKeys: [.contentModificationDateKey],
             options: [.skipsHiddenFiles, .skipsPackageDescendants]
         ) else { return [] }
@@ -158,11 +164,14 @@ enum AgentActivity {
         return found.sorted { $0.modified > $1.modified }
     }
 
-    static func root(for provider: Provider) -> URL {
+    /// Nil for an agent that leaves no transcripts, which is what keeps this
+    /// from walking a directory that was never going to exist.
+    static func root(for provider: Provider) -> URL? {
         let home = URL(fileURLWithPath: NSHomeDirectory())
         return switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
+        case .antigravity: nil
         }
     }
 }

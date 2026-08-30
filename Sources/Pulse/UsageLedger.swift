@@ -281,10 +281,14 @@ actor UsageLedgerReader {
 
     private static func logFiles(for provider: Provider) -> [URL] {
         let home = URL(fileURLWithPath: NSHomeDirectory())
-        let root: URL = switch provider {
+        let root: URL? = switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
+        // An editor rather than a CLI: no session files to add up.
+        case .antigravity: nil
         }
+
+        guard let root else { return [] }
 
         guard let walker = FileManager.default.enumerator(
             at: root,
@@ -301,6 +305,7 @@ actor UsageLedgerReader {
         switch provider {
         case .claudeCode: return parseClaudeCode(data)
         case .codex: return parseCodex(data)
+        case .antigravity: return [:]
         }
     }
 

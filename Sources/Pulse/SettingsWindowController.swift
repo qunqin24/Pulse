@@ -14,12 +14,14 @@ final class SettingsWindowController {
     private let store: UsageStore
     private let settings: AppSettings
     private let placement: PanelPlacement
+    private let update: AppUpdate
     private var window: NSWindow?
 
-    init(store: UsageStore, settings: AppSettings, placement: PanelPlacement) {
+    init(store: UsageStore, settings: AppSettings, placement: PanelPlacement, update: AppUpdate) {
         self.store = store
         self.settings = settings
         self.placement = placement
+        self.update = update
     }
 
     func show() {
@@ -69,7 +71,7 @@ final class SettingsWindowController {
         window.titlebarSeparatorStyle = .automatic
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(
-            rootView: SettingsView(store: store, settings: settings, placement: placement)
+            rootView: SettingsView(store: store, settings: settings, placement: placement, update: update)
         )
         return window
     }

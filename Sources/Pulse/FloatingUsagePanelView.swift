@@ -65,6 +65,7 @@ struct FloatingUsagePanelView: View {
                     alert: alertTint,
                     usesGlass: settings.usesGlass,
                     onEnter: select,
+                    onRefresh: store.refresh,
                     onOpen: show
                 )
                 .fixedSize()
@@ -164,7 +165,8 @@ struct FloatingUsagePanelView: View {
                 return RailEntry(
                     usage: usage,
                     headline: usage.headlineWindow(preferring: settings.pinnedWindow(for: provider)),
-                    isRunning: store.isRunning(provider)
+                    isRunning: store.isRunning(provider),
+                    isRefreshing: store.isRefreshing(provider)
                 )
             }
     }
@@ -396,6 +398,40 @@ enum PanelHitArea {
             width: DockLayout.width,
             height: railHeight
         )
+    }
+
+    /// The provider ring under a point in the panel's top-left coordinate
+    /// space. Only the circle is clickable: the label and the empty berth keep
+    /// their existing meaning as drag surface.
+    static func provider(
+        at point: CGPoint,
+        edge: PanelEdge,
+        providers: [Provider],
+        railTop: CGFloat
+    ) -> Provider? {
+        let rail = rail(
+            edge: edge,
+            railHeight: DockLayout.height(for: providers.count),
+            railTop: railTop
+        )
+        guard rail.contains(point) else { return nil }
+
+        let centerX = rail.midX
+        // Includes the selected ring's 1.06 scale and a small amount of pointer
+        // forgiveness without reaching the percentage label beneath it.
+        let radius = DockLayout.ringDiameter / 2 * 1.08
+
+        for (index, provider) in providers.enumerated() {
+            let centerY = rail.minY
+                + DockLayout.verticalPadding
+                + CGFloat(index) * (DockLayout.itemHeight + DockLayout.itemSpacing)
+                + DockLayout.ringDiameter / 2
+            let dx = point.x - centerX
+            let dy = point.y - centerY
+            if dx * dx + dy * dy <= radius * radius { return provider }
+        }
+
+        return nil
     }
 
     /// The sliver only ever exists docked — off the edge the rail stays open —

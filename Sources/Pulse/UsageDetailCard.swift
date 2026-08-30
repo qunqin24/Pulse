@@ -179,27 +179,36 @@ private struct ProgressMetricRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: DetailCardLayout.rowInternalSpacing) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(title)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Spacer(minLength: 0)
-
-                Text(resetDescription)
-                    .foregroundStyle(.primary.opacity(0.45))
-                    .lineLimit(1)
-                    .layoutPriority(1)
-            }
-            .font(.system(size: 11.5, weight: .regular, design: .rounded))
+            // The name gets the row to itself. It used to share the line with
+            // the reset time, which is fine for "5-hour limit" and falls apart
+            // the moment a limit is scoped to something: "5-hour limit ·
+            // Claude and GPT" next to "Resets 9月6日 18:14" does not fit in a
+            // 250pt card, and it was the *name* that got cut — the half that
+            // says which limit this is.
+            Text(title)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .font(.system(size: 11.5, weight: .regular, design: .rounded))
 
             ProgressView(value: progress)
                 .progressViewStyle(PulseProgressStyle(accent: accent))
 
-            Text(localized: "\(percentageText) Used")
-                .font(.system(size: 11.5, weight: .medium, design: .rounded))
-                .foregroundStyle(isSpent ? Color.pulseExhausted : .primary.opacity(0.9))
+            // The two short facts pair off on the line below instead: what is
+            // gone, and when it comes back.
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(localized: "\(percentageText) Used")
+                    .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                    .foregroundStyle(isSpent ? Color.pulseExhausted : .primary.opacity(0.9))
+
+                Spacer(minLength: 0)
+
+                Text(resetDescription)
+                    .font(.system(size: 11.5, weight: .regular, design: .rounded))
+                    .foregroundStyle(.primary.opacity(0.45))
+                    .lineLimit(1)
+                    .layoutPriority(1)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)

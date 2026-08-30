@@ -79,6 +79,8 @@ struct RailEntry: Identifiable, Equatable {
     /// Whether this provider's CLI is working at this moment, which the ring
     /// shows as a turning mark.
     var isRunning: Bool = false
+    /// Whether Pulse is currently fetching a fresh reading for this provider.
+    var isRefreshing: Bool = false
 
     var id: Provider { usage.provider }
 }
@@ -109,6 +111,9 @@ struct UsageDockView: View {
     /// follows the pointer rather than a click, so this is what drives
     /// selection. Leaving is handled by `PanelPointerWatcher`, not here.
     let onEnter: (Provider) -> Void
+    /// The accessibility/default action for a provider ring. Physical clicks
+    /// are resolved by `FloatingPanel`, which owns mouse input ahead of SwiftUI.
+    var onRefresh: (Provider) -> Void = { _ in }
     /// Called as the pointer arrives on the collapsed sliver.
     var onOpen: () -> Void = {}
 
@@ -184,7 +189,8 @@ struct UsageDockView: View {
                     entry: entry,
                     isSelected: selectedProvider == entry.usage.provider,
                     isInteractive: isExpanded,
-                    onEnter: { onEnter(entry.usage.provider) }
+                    onEnter: { onEnter(entry.usage.provider) },
+                    onRefresh: { onRefresh(entry.usage.provider) }
                 )
             }
         }
@@ -202,6 +208,7 @@ private struct UsageDockItem: View {
     /// area would open a card for a provider nobody can see.
     let isInteractive: Bool
     let onEnter: () -> Void
+    let onRefresh: () -> Void
 
     private var usage: ProviderUsage { entry.usage }
     private var headline: UsageWindow? { entry.headline }
@@ -214,6 +221,7 @@ private struct UsageDockItem: View {
                 diameter: DockLayout.ringDiameter,
                 lineWidth: DockLayout.ringLineWidth,
                 isBusy: entry.isRunning,
+                isRefreshing: entry.isRefreshing,
                 highlight: isSelected
             )
             .scaleEffect(isSelected ? 1.06 : 1)
@@ -230,6 +238,14 @@ private struct UsageDockItem: View {
                         : .primary.opacity(headline == nil ? 0.4 : 1)
                 )
                 .monospacedDigit()
+                // Dimmed with the arc, so the whole ring goes quiet together
+                // while its reading is being fetched and comes back with it.
+                .opacity(entry.isRefreshing ? 0.4 : 1)
+                .animation(.easeOut(duration: 0.2), value: entry.isRefreshing)
+                // Digits change places rather than cutting, so a figure that
+                // actually moved is visibly what moved.
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
         }
         .contentShape(.rect)
         .background {
@@ -237,8 +253,18 @@ private struct UsageDockItem: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(String.localized("\(usage.provider.displayName) usage"))
-        .accessibilityValue(headline.map { String.localized("\($0.percentText) used, \($0.name)") }
-            ?? String.localized("No reading"))
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(String.localized("Activate to refresh usage."))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction(named: Text(String.localized("Refresh usage")), onRefresh)
+    }
+
+    private var accessibilityValue: String {
+        let reading = headline.map { String.localized("\($0.percentText) used, \($0.name)") }
+            ?? String.localized("No reading")
+        return entry.isRefreshing
+            ? "\(reading). \(String.localized("Refreshing…"))"
+            : reading
     }
 }
 

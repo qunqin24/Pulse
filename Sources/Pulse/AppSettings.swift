@@ -204,7 +204,18 @@ final class AppSettings {
         let visible = defaults.object(forKey: Key.panelVisible) as? Bool ?? true
 
         let stored = defaults.stringArray(forKey: Key.enabledProviders) ?? []
-        let providers = Set(stored.compactMap(Provider.init(rawValue:)))
+        var providers = Set(stored.compactMap(Provider.init(rawValue:)))
+
+        // A provider added in a later version is switched on the first time it
+        // is seen, and only then. Without this it would be missing from every
+        // stored list and would never appear at all; switching it back on for
+        // everyone at each launch would override the user turning it off. So
+        // what is remembered is which providers have been *offered*, the same
+        // decided-once shape `LoginItem` uses for opening at login.
+        let offered = Set(defaults.stringArray(forKey: Key.offeredProviders) ?? [])
+        let fresh = Provider.allCases.filter { !offered.contains($0.rawValue) }
+        if !stored.isEmpty { providers.formUnion(fresh) }
+        defaults.set(Provider.allCases.map(\.rawValue), forKey: Key.offeredProviders)
 
         let language = defaults.string(forKey: Key.language)
             .flatMap(AppLanguage.init(rawValue:)) ?? .system
@@ -255,5 +266,6 @@ final class AppSettings {
         static let autoCollapse = "settings.autoCollapse"
         static let panelSize = "settings.panelSize"
         static let usesGlass = "settings.usesGlass"
+        static let offeredProviders = "settings.offeredProviders"
     }
 }

@@ -8,12 +8,17 @@ struct UsageRingView: View {
     let usedFraction: Double?
     let diameter: CGFloat
     let lineWidth: CGFloat
-    /// Whether this provider's CLI is working right now.
+    /// Whether this provider's CLI is working right now. This drives the white
+    /// travelling mark inside the usage ring.
     var isBusy: Bool = false
+    /// Whether Pulse is fetching a fresh usage reading. This rotates the
+    /// coloured usage arc itself, keeping white reserved for CLI activity.
+    var isRefreshing: Bool = false
     /// Whether this ring is the one being pointed at.
     var highlight: Bool = false
 
     @State private var spinning = false
+    @State private var refreshSpinning = false
 
     /// Gap between the progress ring and the dark disc it encircles.
     private static let centreGap: CGFloat = 4
@@ -43,6 +48,12 @@ struct UsageRingView: View {
     private static let busySweep: CGFloat = 0.22
     private static let busyPeriod: TimeInterval = 1.0
 
+    /// How much of the circle the refresh mark covers, and how long it takes
+    /// to go round. Shorter and quicker than the activity mark, so the two
+    /// read as different things when a provider happens to be doing both.
+    private static let refreshSweep: CGFloat = 0.16
+    private static let refreshPeriod: TimeInterval = 0.85
+
     /// Spread of the glow that marks the ring being pointed at.
     private static let haloRadius: CGFloat = 10
 
@@ -51,28 +62,16 @@ struct UsageRingView: View {
             Circle()
                 .stroke(Color.primary.opacity(0.18), lineWidth: lineWidth)
 
-            Circle()
-                // Never let a full ring mean "over limit": clamp the arc, and
-                // let the number next to it carry any overage.
-                .trim(from: 0, to: min(max(usedFraction ?? 0, 0), 1))
-                .stroke(
-                    // Colour says how full the limit is, not which provider
-                    // this is — the icon already says that.
-                    UsageTint.color(for: usedFraction ?? 0),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
+            usageArc
                 .rotationEffect(.degrees(-90))
-                // The pointed-at halo belongs to the *arc*, not to the ring
-                // view as a whole. Hung on the whole view it is drawn behind
-                // everything, including behind the icon — whose antialiased
-                // edges let it through, so the mark picks up a wash of
-                // whatever colour the limit happens to be. Measured at a green
-                // cast of +16 over neutral on a 35% ring.
-                .shadow(
-                    color: UsageTint.color(for: usedFraction ?? 0).opacity(highlight ? 0.42 : 0),
-                    radius: Self.haloRadius
-                )
-                .mask { haloMask }
+                // Quietened while a reading is being fetched, never moved.
+                // The arc starts at twelve o'clock and that is what makes it a
+                // gauge; turning it takes the reading away for as long as the
+                // refresh lasts, and puts it back with a jump when the spin
+                // stops at whatever angle it had reached.
+                .opacity(isRefreshing ? 0.3 : 1)
+
+            if isRefreshing { refreshMark }
 
             LobeIconView(
                 provider: provider,
@@ -108,7 +107,67 @@ struct UsageRingView: View {
             }
         }
         .frame(width: diameter, height: diameter)
+        .animation(.easeOut(duration: 0.2), value: isRefreshing)
         .accessibilityHidden(true)
+    }
+
+    /// The mark that says a fresh reading is being fetched: a short segment of
+    /// the ring, in the usage colour, travelling the whole circle.
+    ///
+    /// It runs over the track and the usage arc alike, which is the point.
+    /// Spinning the usage arc itself instead makes the feedback depend on the
+    /// number it is showing: at 0% there is no arc, so a click produced no
+    /// visible response whatsoever, and at 95% a rotated arc is nearly
+    /// indistinguishable from a still one. This is the same at every reading.
+    ///
+    /// The usage colour rather than white: white on this ring is spoken for by
+    /// the CLI-activity mark, which rides the empty circle further in.
+    private var refreshMark: some View {
+        Circle()
+            .trim(from: 0, to: Self.refreshSweep)
+            .stroke(
+                UsageTint.color(for: usedFraction ?? 0),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
+            .rotationEffect(.degrees(-90 + (refreshSpinning ? 360 : 0)))
+            // Core Animation drives it, for the same reason the activity mark
+            // does — and the reset on the way out matters just as much, or a
+            // second refresh sets an already-true value and animates nothing.
+            .animation(
+                .linear(duration: Self.refreshPeriod).repeatForever(autoreverses: false),
+                value: refreshSpinning
+            )
+            .onAppear { refreshSpinning = true }
+            .onDisappear { refreshSpinning = false }
+            .transition(.opacity)
+    }
+
+    private var usageArc: some View {
+        Circle()
+            // Never let a full ring mean "over limit": clamp the arc, and let
+            // the number next to it carry any overage.
+            .trim(from: 0, to: min(max(usedFraction ?? 0, 0), 1))
+            .stroke(
+                // Colour says how full the limit is, not which provider this
+                // is — the icon already says that.
+                UsageTint.color(for: usedFraction ?? 0),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+            )
+            // The pointed-at halo belongs to the *arc*, not to the ring view as
+            // a whole. Hung on the whole view it is drawn behind everything,
+            // including behind the icon — whose antialiased edges let it
+            // through, so the mark picks up a wash of whatever colour the limit
+            // happens to be. Measured at a green cast of +16 over neutral on a
+            // 35% ring.
+            .shadow(
+                color: UsageTint.color(for: usedFraction ?? 0).opacity(highlight ? 0.42 : 0),
+                radius: Self.haloRadius
+            )
+            .mask { haloMask }
+            // A new reading slides into place rather than cutting to it. This
+            // is what a manual refresh is *for*: if the figure moved, the
+            // movement is the answer.
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: usedFraction)
     }
 
     /// Keeps the halo out of the ring's centre.

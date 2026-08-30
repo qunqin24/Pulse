@@ -27,6 +27,10 @@ enum PulseMain {
             exit(0)
         }
 
+        // Before anything reads a setting: running from a bundle changes
+        // which `UserDefaults` domain that means.
+        LegacyDefaults.migrateIfNeeded()
+
         PulseApp.main()
     }
 }
@@ -41,6 +45,7 @@ struct PulseApp: App {
         MenuBarExtra("Pulse", systemImage: "chart.pie.fill") {
             MenuBarContent(
                 settings: appDelegate.settings,
+                update: appDelegate.update,
                 openSettings: appDelegate.showSettings
             )
         }
@@ -49,10 +54,23 @@ struct PulseApp: App {
 
 private struct MenuBarContent: View {
     let settings: AppSettings
+    let update: AppUpdate
     let openSettings: () -> Void
 
     var body: some View {
         Group {
+            // Only when there is one. A permanent "check for updates" item
+            // would be a chore offered to everyone so that the rare person who
+            // needs it can find it; the check runs on its own daily, and the
+            // manual one lives in Settings.
+            if let newer = update.newer {
+                Button(String.localized("Pulse \(newer.version) is available")) {
+                    NSWorkspace.shared.open(newer.page)
+                }
+
+                Divider()
+            }
+
             Button(String.localized("Settings…"), action: openSettings)
                 .keyboardShortcut(",")
 
@@ -66,6 +84,6 @@ private struct MenuBarContent: View {
         // The menu is built once and kept; without a dependency on the
         // language it would still be showing whatever was current at launch.
         // Reading `settings.language` here is what makes SwiftUI rebuild it.
-        .id(settings.language)
+        .id("\(settings.language.rawValue)-\(update.newer?.version ?? "")")
     }
 }

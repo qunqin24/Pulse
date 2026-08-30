@@ -74,6 +74,21 @@ enum LoginItem {
         setEnabled(true)
     }
 
+    /// Hands a launch agent over to the supported route once there is a bundle
+    /// to register.
+    ///
+    /// A build that has become an app bundle leaves its old agent behind, still
+    /// naming the loose binary — so at the next login launchd starts the old
+    /// build *and* `SMAppService` starts the new one, and there are two Pulses
+    /// on screen. The agent existing is proof it was switched on, so the answer
+    /// is to move that decision across rather than to drop it.
+    static func adoptBundleIfNeeded() {
+        guard usesAppService, FileManager.default.fileExists(atPath: agentURL.path) else { return }
+
+        _ = removeAgent()
+        setEnabled(true)
+    }
+
     /// Rebuilding moves the executable, which leaves the agent pointing at a
     /// binary that is no longer there. Same problem, and same fix, as
     /// `StatusLineHook.repairPathIfNeeded`.
