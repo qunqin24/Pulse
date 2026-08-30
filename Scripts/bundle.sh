@@ -8,8 +8,8 @@
 # version number to compare against (so no update check), `SMAppService` cannot
 # register a login item, and there is nothing to hand anyone but a build folder.
 #
-#   ./Scripts/bundle.sh            → build/Pulse.app
-#   ./Scripts/bundle.sh --zip      → and build/Pulse-<version>.zip to attach
+#   ./Scripts/bundle.sh            → build.noindex/Pulse.app
+#   ./Scripts/bundle.sh --zip      → and build.noindex/Pulse-<version>.zip to attach
 #                                    to the release
 #   ./Scripts/bundle.sh --open     → and reveal it in Finder
 #
@@ -22,7 +22,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
-APP="build/Pulse.app"
+APP="build.noindex/Pulse.app"
 BUNDLE_ID="io.github.qunqin24.Pulse"
 FEED_URL="https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast.xml"
 # Public half of the EdDSA key updates are signed with. Safe to commit — it is
@@ -44,7 +44,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # project folder turns up in Launchpad and search beside the installed copy —
 # two identical Pulses, and no way to tell which is which. This marker keeps
 # the whole build directory out of the index.
-touch "build/.metadata_never_index"
+touch "build.noindex/.metadata_never_index"
 
 cp "$BUILT/Pulse" "$APP/Contents/MacOS/Pulse"
 
@@ -119,7 +119,7 @@ echo "→ $APP"
 # `ditto`, not `zip`: an app bundle carries symlinks and resource forks that a
 # plain zip quietly flattens, and the unzipped copy then refuses to launch.
 if [ "${1:-}" = "--zip" ]; then
-    ZIP="build/Pulse-$VERSION.zip"
+    ZIP="build.noindex/Pulse-$VERSION.zip"
     rm -f "$ZIP"
     ditto -c -k --keepParent "$APP" "$ZIP"
     echo "→ $ZIP"

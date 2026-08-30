@@ -73,8 +73,8 @@ Pulse 没有自己的后端。它只访问你的 CLI 本来就在访问的接口
 ```bash
 swift run Pulse              # 构建并运行
 swift build                  # 全量类型检查，含 preview
-./Scripts/bundle.sh          # → build/Pulse.app
-./Scripts/dmg.sh             # → build/Pulse-<版本>.dmg
+./Scripts/bundle.sh          # → build.noindex/Pulse.app
+./Scripts/dmg.sh             # → build.noindex/Pulse-<版本>.dmg
 ```
 
 `xcode-select` 必须指向 Xcode 而不是 CommandLineTools——`#Preview` 宏是由 Xcode 自带的插件展开的。如果构建报 `PreviewsMacros plugin not found`：

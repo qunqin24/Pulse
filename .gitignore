@@ -11,4 +11,4 @@ xcuserdata/
 *.xcuserstate
 
 # Assembled app bundle
-build/
+build.noindex/

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Builds build/Pulse-<version>.dmg: the app, a shortcut to Applications, and a
+# Builds build.noindex/Pulse-<version>.dmg: the app, a shortcut to Applications, and a
 # backdrop telling you what to do with them.
 #
 # The disk image is the install guide. Pulse is not signed with an Apple
@@ -28,16 +28,16 @@ cd "$(dirname "$0")/.."
 
 VERSION="$(tr -d '[:space:]' < VERSION)"
 VOLUME="Pulse"
-STAGING="build/dmg"
-WRITABLE="build/pulse-rw.dmg"
-FINAL="build/Pulse-$VERSION.dmg"
+STAGING="build.noindex/dmg"
+WRITABLE="build.noindex/pulse-rw.dmg"
+FINAL="build.noindex/Pulse-$VERSION.dmg"
 
 ./Scripts/bundle.sh
 
 echo "Staging the disk image…"
 rm -rf "$STAGING" "$WRITABLE" "$FINAL"
 mkdir -p "$STAGING/.background"
-cp -R "build/Pulse.app" "$STAGING/"
+cp -R "build.noindex/Pulse.app" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 cp Scripts/dmg-background.tiff "$STAGING/.background/background.tiff"
 

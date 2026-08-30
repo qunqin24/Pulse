@@ -74,7 +74,7 @@ jobs:
         run: |
           ./Scripts/dmg.sh
           ./Scripts/bundle.sh --zip
-          ls -lh build/
+          ls -lh build.noindex/
 
       - name: Release notes
         env:
@@ -119,13 +119,13 @@ jobs:
           if gh release view "v$VERSION" >/dev/null 2>&1; then
             echo "Release exists — replacing its assets."
             gh release upload "v$VERSION" \
-              "build/Pulse-$VERSION.dmg" \
-              "build/Pulse-$VERSION.zip" \
+              "build.noindex/Pulse-$VERSION.dmg" \
+              "build.noindex/Pulse-$VERSION.zip" \
               --clobber
           else
             gh release create "v$VERSION" \
-              "build/Pulse-$VERSION.dmg" \
-              "build/Pulse-$VERSION.zip" \
+              "build.noindex/Pulse-$VERSION.dmg" \
+              "build.noindex/Pulse-$VERSION.zip" \
               --title "Pulse $VERSION" \
               --notes-file notes.md \
               $PRERELEASE
@@ -154,7 +154,7 @@ jobs:
           git fetch origin main
           git checkout -B main origin/main
 
-          Scripts/appcast.py "$VERSION" "build/Pulse-$VERSION.zip" "$URL"
+          Scripts/appcast.py "$VERSION" "build.noindex/Pulse-$VERSION.zip" "$URL"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

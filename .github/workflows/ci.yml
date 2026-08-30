@@ -69,7 +69,7 @@ jobs:
 
       - name: Check the bundle
         run: |
-          APP="build/Pulse.app"
+          APP="build.noindex/Pulse.app"
           test -x "$APP/Contents/MacOS/Pulse"
           test -d "$APP/Contents/Resources/Pulse_Pulse.bundle"
           test -f "$APP/Contents/Resources/AppIcon.icns"

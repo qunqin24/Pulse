@@ -100,8 +100,8 @@ uploaded anywhere.
 ```bash
 swift run Pulse              # build and run
 swift build                  # type-check everything, previews included
-./Scripts/bundle.sh          # → build/Pulse.app
-./Scripts/dmg.sh             # → build/Pulse-<version>.dmg
+./Scripts/bundle.sh          # → build.noindex/Pulse.app
+./Scripts/dmg.sh             # → build.noindex/Pulse-<version>.dmg
 ```
 
 `xcode-select` has to point at Xcode rather than CommandLineTools — the

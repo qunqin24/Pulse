@@ -11,8 +11,8 @@ Pulse is a macOS menu-bar app: a floating AI usage monitor. SwiftUI renders the 
 ```bash
 swift run Pulse         # build and run
 swift build             # type-check everything, previews included
-./Scripts/bundle.sh     # assemble build/Pulse.app (add --zip for a release)
-./Scripts/dmg.sh        # the same, wrapped in build/Pulse-<version>.dmg
+./Scripts/bundle.sh     # assemble build.noindex/Pulse.app (add --zip for a release)
+./Scripts/dmg.sh        # the same, wrapped in build.noindex/Pulse-<version>.dmg
 ./Scripts/check-localization.sh   # the two .strings files carry the same keys
 ```
 
@@ -90,13 +90,17 @@ hand anyone but a build folder.
 - Built for both architectures (`--arch arm64 --arch x86_64`), so one download
   runs everywhere, and zipped with `ditto`, not `zip` — a plain zip flattens the
   symlinks in a bundle and the unzipped copy won't launch.
-- `build/` carries a `.metadata_never_index` marker, written by the bundle
-  script. Without it Spotlight indexes the freshly built `Pulse.app` and it
-  appears in search and Launchpad beside the installed one — two identical
-  Pulses with no way to tell them apart, which is exactly as confusing as it
-  sounds. Worse, whichever copy is *opened* claims the login item and rewrites
-  Claude Code's status line path to itself, so deleting the build later breaks
-  both.
+- **The output directory is named `build.noindex/` for a reason.** Spotlight
+  indexes an `.app` wherever it finds one, so a build sitting in the project
+  folder turns up in Launchpad and search beside the installed copy — two
+  identical Pulses with no way to tell them apart. Worse, whichever one is
+  *opened* claims the login item and rewrites Claude Code's status line path to
+  itself, so deleting the build later breaks both.
+  A `.noindex` suffix is the convention Spotlight honours and the one Xcode's
+  own DerivedData relies on. A `.metadata_never_index` marker file was tried
+  first and did **not** work — the build was indexed anyway — so the marker is
+  kept as a second line but the directory name is what does the job. Don't
+  rename it back.
 - **The disk image is the install guide** ([Scripts/dmg.sh](Scripts/dmg.sh)).
   Because Pulse isn't notarised, macOS blocks the first launch and the user has
   to allow it by hand — and on macOS 15 and later the old Control-click → Open
