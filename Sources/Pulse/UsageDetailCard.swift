@@ -24,6 +24,19 @@ enum DetailCardLayout {
     static var progressBarHeight: CGFloat { 6 * PanelMetrics.scale }
     /// Rendered line height of the header row (icon + title).
     static var headerHeight: CGFloat { 19 * PanelMetrics.scale }
+
+    // Type scales with everything else. It did not, once: the card's *width*
+    // followed `PanelMetrics` while every font in it was written as a constant,
+    // so at Small a 205pt card still tried to hold 14pt text and truncated its
+    // own title, and at Large a 305pt card held the same 11.5pt rows and read
+    // as half empty next to rings that had grown. The line-height budgets above
+    // were already scaled, which is what makes these ratios hold at every size.
+    static var titleFontSize: CGFloat { 14 * PanelMetrics.scale }
+    static var rowFontSize: CGFloat { 11.5 * PanelMetrics.scale }
+    static var messageFontSize: CGFloat { 12 * PanelMetrics.scale }
+    static var footnoteFontSize: CGFloat { 11 * PanelMetrics.scale }
+    /// The provider's mark in the header.
+    static var headerIconSize: CGFloat { 16 * PanelMetrics.scale }
     /// Rendered line height of a row's title/percent text.
     static var rowTextLineHeight: CGFloat { 14 * PanelMetrics.scale }
 
@@ -90,14 +103,14 @@ struct UsageDetailCard: View {
 
             if case .unavailable(let reason) = usage.state {
                 Text(reason.message)
-                    .font(.system(size: 12, weight: .regular, design: .rounded))
+                    .font(.system(size: DetailCardLayout.messageFontSize, weight: .regular, design: .rounded))
                     .foregroundStyle(.primary.opacity(0.55))
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             if let footnote {
                 Text(footnote)
-                    .font(.system(size: 11, weight: .regular, design: .rounded))
+                    .font(.system(size: DetailCardLayout.footnoteFontSize, weight: .regular, design: .rounded))
                     .foregroundStyle(.primary.opacity(0.4))
             }
         }
@@ -157,11 +170,11 @@ struct UsageDetailCard: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            LobeIconView(provider: usage.provider, size: 16)
+            LobeIconView(provider: usage.provider, size: DetailCardLayout.headerIconSize)
                 .foregroundStyle(.primary)
 
             Text(localized: "\(usage.provider.displayName) Usage")
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                .font(.system(size: DetailCardLayout.titleFontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
 
             Spacer(minLength: 0)
@@ -189,7 +202,7 @@ private struct ProgressMetricRow: View {
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .font(.system(size: 11.5, weight: .regular, design: .rounded))
+                .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
 
             ProgressView(value: progress)
                 .progressViewStyle(PulseProgressStyle(accent: accent))
@@ -198,13 +211,13 @@ private struct ProgressMetricRow: View {
             // gone, and when it comes back.
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(localized: "\(percentageText) Used")
-                    .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .medium, design: .rounded))
                     .foregroundStyle(isSpent ? Color.pulseExhausted : .primary.opacity(0.9))
 
                 Spacer(minLength: 0)
 
                 Text(resetDescription)
-                    .font(.system(size: 11.5, weight: .regular, design: .rounded))
+                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
                     .foregroundStyle(.primary.opacity(0.45))
                     .lineLimit(1)
                     .layoutPriority(1)
