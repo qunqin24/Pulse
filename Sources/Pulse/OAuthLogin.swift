@@ -216,7 +216,16 @@ enum OAuthLogin {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            // Cancellation is not the service failing to answer. Reported as
+            // one, pressing Cancel wrote an error into a pane the user had
+            // just cleared on purpose.
+            if error is CancellationError { throw error }
+            try Task.checkCancellation()
             throw Failure.refused(String.localized("The service didn't respond."))
         }
 
@@ -240,7 +249,16 @@ enum OAuthLogin {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            // Cancellation is not the service failing to answer. Reported as
+            // one, pressing Cancel wrote an error into a pane the user had
+            // just cleared on purpose.
+            if error is CancellationError { throw error }
+            try Task.checkCancellation()
             throw Failure.refused(String.localized("The service didn't respond."))
         }
 
@@ -296,7 +314,7 @@ enum OAuthLogin {
         // Bound first: the port is part of the redirect address, and the
         // redirect address is part of the request the browser is about to be
         // sent to. Both halves of the exchange have to name the same one.
-        try await listener.start()
+        try await listener.start(expecting: state)
         let redirect = "http://localhost:\(listener.port)\(configuration.redirectPath)"
         guard let url = authorizeURL(configuration, redirect: redirect, challenge: challenge, state: state) else {
             throw Failure.unsupported
@@ -304,7 +322,7 @@ enum OAuthLogin {
 
         _ = await MainActor.run { NSWorkspace.shared.open(url) }
 
-        let code = try await listener.awaitCode(matching: state, giveUpAfter: Self.patience)
+        let code = try await listener.awaitCode(giveUpAfter: Self.patience)
         return try await exchange(code, configuration: configuration, verifier: verifier, redirect: redirect, state: state)
     }
 
@@ -393,21 +411,34 @@ enum OAuthLogin {
                 .joined(separator: "&").utf8)
         }
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            // Cancellation is not the service failing to answer. Reported as
+            // one, pressing Cancel wrote an error into a pane the user had
+            // just cleared on purpose.
+            if error is CancellationError { throw error }
+            try Task.checkCancellation()
             throw Failure.refused(String.localized("The service didn't respond."))
         }
 
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw Failure.unreadableReply
-        }
-
+        // The status is read **before** the body is parsed. A provider that
+        // answers a refusal with an HTML error page has plenty to say — the
+        // step, the status — and reading the body first threw all of it away
+        // as "couldn't read the reply".
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+
         guard status == 200 else {
             // The provider's own words when it has them: "invalid_scope" says
             // something a generic failure cannot.
-            let said = (json["error_description"] as? String) ?? (json["error"] as? String)
+            let said = (json?["error_description"] as? String) ?? (json?["error"] as? String)
             throw Failure.refused(said.map { "oauth/token: HTTP \(status) — \($0)" } ?? "oauth/token: HTTP \(status)")
         }
+
+        guard let json else { throw Failure.unreadableReply }
 
         guard
             let access = json["access_token"] as? String,
@@ -473,7 +504,14 @@ enum OAuthLogin {
     /// asks of a verifier, and the same generator serves the state.
     static func randomToken() -> String {
         var bytes = [UInt8](repeating: 0, count: 32)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        guard SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes) == errSecSuccess else {
+            // Unpredictability is load-bearing here — this is both the PKCE
+            // verifier and the `state`. Discarding the status would have left
+            // 32 zero bytes standing in for both, which is worse than not
+            // signing in at all, so fall back to a source that cannot fail
+            // quietly.
+            return Data((0..<32).map { _ in UInt8.random(in: .min ... .max) }).base64URLEncoded
+        }
         return Data(bytes).base64URLEncoded
     }
 }

@@ -917,9 +917,17 @@ struct SettingsView: View {
 
         signInTask = Task {
             defer {
-                signingIn = nil
-                devicePrompt = nil
-                signInTask = nil
+                // Only an attempt that is still the one on screen clears the
+                // pane. A cancelled one has already had its state cleared by
+                // the button that cancelled it, and by the time it unwinds the
+                // user may well have started another — which would otherwise
+                // lose its Cancel button and its code to a sign-in nobody is
+                // waiting for any more.
+                if !Task.isCancelled {
+                    signingIn = nil
+                    devicePrompt = nil
+                    signInTask = nil
+                }
             }
             do {
                 let credentials: AccountCredentials
@@ -945,11 +953,12 @@ struct SettingsView: View {
                 store.refresh(added)
                 pane = .account(added)
             } catch let failure as OAuthLogin.Failure {
-                signInError = failure.message
+                if !Task.isCancelled { signInError = failure.message }
             } catch is CancellationError {
-                signInError = nil
+                // Cancelling is not a failure, and nothing about it belongs in
+                // a pane that may already be showing the next attempt.
             } catch {
-                signInError = String.localized("Sign-in was cancelled.")
+                if !Task.isCancelled { signInError = String.localized("Sign-in was cancelled.") }
             }
         }
     }

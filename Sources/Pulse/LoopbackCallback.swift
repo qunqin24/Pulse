@@ -47,9 +47,16 @@ final class LoopbackCallback: @unchecked Sendable {
     }
 
     /// Binds, and returns once the port is known.
-    func start() async throws {
+    ///
+    /// The `state` is taken here rather than at `awaitCode`, because the
+    /// browser can beat that call: the redirect is answered on the listener's
+    /// own queue as soon as it arrives, and until this sign-in's value is
+    /// known every arrival is a mismatch. Set it before anything can come
+    /// back, which is before the browser is even opened.
+    func start(expecting state: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             lock.lock()
+            expectedState = state
             ready = continuation
             lock.unlock()
 
@@ -62,9 +69,14 @@ final class LoopbackCallback: @unchecked Sendable {
                 case .ready:
                     self.port = self.listener.port?.rawValue ?? self.requestedPort ?? 0
                     self.resumeReady(.success(()))
-                case .failed, .cancelled:
+                case .failed, .cancelled, .waiting:
                     // The one address this provider accepts is taken, almost
                     // always by the CLI's own sign-in running right now.
+                    //
+                    // `.waiting` counts. A busy port does not fail a listener,
+                    // it parks it there to retry — so a fixed-port sign-in
+                    // would have hung with nothing on screen but a button that
+                    // had stopped working.
                     let failure = OAuthLogin.Failure.portBusy(self.requestedPort ?? 0)
                     self.resumeReady(.failure(failure))
                     self.finish(.failure(failure))
@@ -81,7 +93,7 @@ final class LoopbackCallback: @unchecked Sendable {
     /// The `state` is checked here rather than by the caller: a redirect that
     /// does not carry the value this sign-in generated did not come from this
     /// sign-in, and the code in it is not ours to use.
-    func awaitCode(matching state: String, giveUpAfter patience: Duration) async throws -> String {
+    func awaitCode(giveUpAfter patience: Duration) async throws -> String {
         // Nothing here can tell a sign-in still being typed from one that
         // ended on the provider's own error page — that page never reaches
         // this listener at all. So the wait is bounded, and giving up is
@@ -93,20 +105,30 @@ final class LoopbackCallback: @unchecked Sendable {
         }
         defer { timeout.cancel() }
 
-        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
-            lock.lock()
-            expectedState = state
+        // **Cancelling has to unwind this, not merely mark it cancelled.** A
+        // bare continuation ignores cancellation entirely, so pressing Cancel
+        // left the attempt running with its listener still bound — and five
+        // minutes later the abandoned one's cleanup cleared the pane and wrote
+        // a timeout into it, over the top of a second sign-in the user had
+        // since started.
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+                lock.lock()
 
-            // The browser can beat this call — a redirect that has already
-            // arrived is answered from what was kept rather than waited for.
-            if let captured {
+                // The browser can beat this call — a redirect that has already
+                // arrived is answered from what was kept rather than waited for.
+                if let captured {
+                    lock.unlock()
+                    continuation.resume(with: captured)
+                    return
+                }
+
+                waiting = continuation
                 lock.unlock()
-                continuation.resume(with: captured)
-                return
             }
-
-            waiting = continuation
-            lock.unlock()
+        } onCancel: {
+            finish(.failure(CancellationError()))
+            stop()
         }
     }
 
