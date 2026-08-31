@@ -1,10 +1,14 @@
-name: Question or problem
-description: Anything else — a question, or a problem you can't pin down.
+name: Question or problem · 疑问或其他
+description: Anything else. 其他问题。
 labels: ["question"]
 body:
+  - type: markdown
+    attributes:
+      value: "English or 中文, whichever you'd rather. 中英文都可以。"
+
   - type: textarea
     id: detail
     attributes:
-      label: What's going on?
+      label: What's going on? / 具体情况
     validations:
       required: true

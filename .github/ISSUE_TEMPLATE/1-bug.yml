@@ -1,20 +1,24 @@
-name: Bug report
-description: Something is broken or behaving wrongly.
+name: Bug report · 问题报告
+description: Something is broken or behaving wrongly. 功能异常或行为不对。
 title: "[Bug] "
 labels: ["bug"]
 body:
+  - type: markdown
+    attributes:
+      value: "English or 中文, whichever you'd rather. 中英文都可以。"
+
   - type: textarea
     id: what
     attributes:
-      label: What happened
-      description: And what you expected instead.
+      label: What happened / 发生了什么
+      description: And what you expected instead. 以及你期望看到的结果。
     validations:
       required: true
 
   - type: textarea
     id: steps
     attributes:
-      label: Steps to reproduce
+      label: Steps to reproduce / 复现步骤
       placeholder: |
         1.
         2.
@@ -24,8 +28,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Pulse version
-      description: Settings › About.
+      label: Pulse version / Pulse 版本
+      description: Settings › About. 设置 › 关于。
       placeholder: "1.0.2"
     validations:
       required: true
@@ -33,7 +37,7 @@ body:
   - type: input
     id: macos
     attributes:
-      label: macOS version
+      label: macOS version / 系统版本
       placeholder: "macOS 26.1"
     validations:
       required: true
@@ -41,7 +45,7 @@ body:
   - type: checkboxes
     id: secrets
     attributes:
-      label: Before posting
+      label: Before posting / 发布前
       options:
-        - label: My report and screenshots contain no API key, token, cookie or account id.
+        - label: No API key, token, cookie or account id in my report or screenshots. 内容和截图中不含密钥、令牌、cookie 或账号 id。
           required: true

@@ -1,19 +1,23 @@
-name: Feature request
-description: Something you would like Pulse to do.
+name: Feature request · 功能请求
+description: Something you would like Pulse to do. 希望 Pulse 增加的功能。
 title: "[Feature] "
 labels: ["enhancement"]
 body:
+  - type: markdown
+    attributes:
+      value: "English or 中文, whichever you'd rather. 中英文都可以。"
+
   - type: textarea
     id: request
     attributes:
-      label: What would you like?
+      label: What would you like? / 你希望它做什么
     validations:
       required: true
 
   - type: textarea
     id: why
     attributes:
-      label: Why
-      description: What you do about it today.
+      label: Why / 为什么
+      description: What you do about it today. 你现在是怎么解决的。
     validations:
       required: false
