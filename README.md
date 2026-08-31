@@ -5,7 +5,7 @@
 <h1 align="center">Pulse</h1>
 
 <p align="center">
-  <b>Know how much Claude Code, Codex or Antigravity you have left,<br>without leaving what you're doing.</b>
+  <b>Know how much Claude Code, Codex, Antigravity, OpenCode Go or Kimi Code<br>you have left, without leaving what you're doing.</b>
 </p>
 
 <p align="center">
@@ -42,17 +42,22 @@ After that it launches normally, and later versions install themselves.
 
 <img src="Docs/rail.png" width="150" align="right" alt="The rail, three rings">
 
-**Three agents, one rail.** Claude Code, Codex and Antigravity, each a ring.
-The colour says how close you are — green, amber, red — before you read a
-number. Click a ring to refresh just that one.
+**Five agents, one rail.** Claude Code, Codex, Antigravity, OpenCode Go and
+Kimi Code, each a ring. The colour says how close you are — green, amber,
+red — before you read a number. Click a ring to refresh just that one.
 
 **Real limits, not guesses.** Every figure comes from the provider's own
 account. Pulse never works a percentage out from local token counts, and when
 a provider won't answer it says so rather than showing something plausible.
+Three of the five are read with a login your own CLI or app already stored;
+OpenCode Go and Kimi Code don't have one to borrow, so those two are reached
+with an API key you paste into Settings instead.
 
 **It knows when you're working.** A mark turns inside a ring while that CLI is
 mid-turn — read from the transcript's actual turn boundaries, not from "wrote
 to a file recently", so a slow tool call doesn't look like a finished turn.
+Claude Code and Codex only — the other three don't keep a transcript on disk
+for Pulse to read.
 
 **Out of the way.** Docks to either screen edge or floats anywhere on the
 desktop, hides down to a 6pt sliver when you're not near it, and stays out of
@@ -60,10 +65,11 @@ other apps' full-screen Spaces. The sliver still turns red when a limit is
 nearly gone — a monitor that hides itself has to keep one way of saying *look
 at me*.
 
-**What it costs.** Settings reconstructs a spending history from the CLIs' own
-session logs, priced at each provider's published API rates — plus a clearly
-labelled estimate of what a rate-limit window is worth, since no provider
-reports one.
+**What it costs.** Settings reconstructs a spending history from Claude Code's
+and Codex's own session logs, priced at each provider's published API rates —
+plus a clearly labelled estimate of what a rate-limit window is worth, since
+no provider reports one. The other three providers keep no local log for this
+to be built from.
 
 **Adaptive refresh.** Between 2 and 30 minutes, backing off when nothing is
 moving instead of polling on a fixed schedule around the clock.
@@ -84,16 +90,19 @@ Each agent is read by whatever route it actually offers, and all three differ:
 | **Claude Code** | The account's usage endpoint, using the login Claude Code already stored — falling back to the status line, which Pulse can register for itself | The saved token expires in hours and nothing here renews it, hence the fallback |
 | **Codex** | The same endpoint Codex's own client uses, falling back to `codex app-server` | Not public API; it can change without notice |
 | **Antigravity** | The language server the editor runs on the loopback interface | Reports only while Antigravity is open — the figures live in that process |
+| **OpenCode Go** | An API key you paste into Settings — or the login OpenCode's own CLI already stored, if you're signed in there | Not public API; it can change without notice |
+| **Kimi Code** | An API key you paste into Settings | The one documented endpoint of the five — still no promise it won't change |
 
 A reading that fails falls back to the last good one, shown with the time it
 was taken rather than passed off as current.
 
 ## Privacy
 
-Pulse has no backend. It talks only to the endpoints your own CLIs already
-use, with credentials they already stored on this Mac, and works out the
-spending history entirely on-device from log files already on disk. Nothing is
-uploaded anywhere.
+Pulse has no backend. Three of the five providers are read with a login your
+own CLI or app already stored on this Mac; the other two, OpenCode Go and
+Kimi Code, need an API key you paste in yourself, which Pulse keeps encrypted
+in its own folder. Spending history is worked out entirely on-device from log
+files already on disk. Nothing is uploaded anywhere.
 
 ## Build from source
 
