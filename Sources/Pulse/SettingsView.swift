@@ -504,31 +504,51 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Ring colour"),
-                    // Says what is being given up, in one line. The automatic
-                    // colours are the reading; a fixed one is only a label.
-                    subtitle: String.localized("Automatic colours by how much is left.")
+                    // Which state it is in, said outright. A colour well always
+                    // shows *a* colour, so on its own it cannot tell "automatic"
+                    // from "they picked green" — and a greyed-out button next to
+                    // it reads as unavailable, not as the state you are in.
+                    subtitle: settings.ringTint(for: account) == nil
+                        ? String.localized("Coloured by how much is left.")
+                        : String.localized("A colour of your own, whatever the usage.")
                 ) {
-                    HStack(spacing: 10) {
-                        // The system's own well: any colour, with the eyedropper
-                        // and the recents that come with it. `supportsOpacity`
-                        // is off — a translucent ring reads as a dim one, which
-                        // is a state this app already uses for "no reading".
+                    Picker("", selection: Binding(
+                        get: { settings.ringTint(for: account) != nil },
+                        set: { custom in
+                            // Switching on lands on something visibly chosen
+                            // rather than on the colour the automatic mode
+                            // happened to be showing.
+                            settings.setRingTint(custom ? RingTint.suggestions.first : nil, for: account)
+                        }
+                    )) {
+                        Text(localized: "Automatic").tag(false)
+                        Text(localized: "Custom").tag(true)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+
+                // Only when there is a colour to change. Shown otherwise it is
+                // a control that contradicts the row above it.
+                if let chosen = settings.ringTint(for: account) {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Colour"),
+                        subtitle: chosen.hexString
+                    ) {
                         ColorPicker(
                             "",
                             selection: Binding(
-                                get: { settings.ringTint(for: account) ?? UsageTint.color(for: 0) },
+                                get: { chosen },
                                 set: { settings.setRingTint($0, for: account) }
                             ),
+                            // A translucent ring reads as a dim one, and dim
+                            // already means "no reading".
                             supportsOpacity: false
                         )
                         .labelsHidden()
-
-                        // Back to meaning something. Only offered when there is
-                        // something to go back from.
-                        Button(String.localized("Automatic")) {
-                            settings.setRingTint(nil, for: account)
-                        }
-                        .disabled(settings.ringTint(for: account) == nil)
                     }
                 }
             }

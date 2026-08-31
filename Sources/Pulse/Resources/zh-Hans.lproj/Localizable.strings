@@ -84,7 +84,10 @@
 "A backup for when the saved login expires. Your own status line keeps working." = "登录信息过期时的备用来源。你原有的状态栏照常工作。";
 "Ring shows" = "环上显示";
 "Ring colour" = "环的颜色";
-"Automatic colours by how much is left." = "「自动」按剩余量变色。";
+"Custom" = "自定义";
+"Colour" = "颜色";
+"Coloured by how much is left." = "按剩余量变色。";
+"A colour of your own, whatever the usage." = "固定使用你选的颜色,与用量无关。";
 "Which limit the rail's ring tracks." = "胶囊上的圆环跟踪哪一条限额。";
 "Highest usage" = "占用最高的一条";
 "Automatic" = "自动";

@@ -84,7 +84,10 @@
 "A backup for when the saved login expires. Your own status line keeps working." = "A backup for when the saved login expires. Your own status line keeps working.";
 "Ring shows" = "Ring shows";
 "Ring colour" = "Ring colour";
-"Automatic colours by how much is left." = "Automatic colours by how much is left.";
+"Custom" = "Custom";
+"Colour" = "Colour";
+"Coloured by how much is left." = "Coloured by how much is left.";
+"A colour of your own, whatever the usage." = "A colour of your own, whatever the usage.";
 "Which limit the rail's ring tracks." = "Which limit the rail's ring tracks.";
 "Highest usage" = "Highest usage";
 "Automatic" = "Automatic";
