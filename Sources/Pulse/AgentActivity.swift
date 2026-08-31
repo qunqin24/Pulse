@@ -14,22 +14,50 @@ import Observation
 /// - Claude Code stamps every assistant record with a `stop_reason`.
 ///   `tool_use` means it is handing off to a tool and will be back; `end_turn`
 ///   means the turn is over. A trailing `user` record — a prompt, or a tool's
-///   result coming back — means it is the model's move.
-/// - Codex brackets each turn with `task_started` and `task_complete` events.
+///   result coming back — means it is the model's move, unless it is the one
+///   Claude Code writes when the turn is interrupted.
+/// - Codex brackets each turn with `task_started` and `task_complete` events,
+///   and its tool calls and their results say which half of a turn is in
+///   flight.
 ///
 /// So only the tail of the newest transcripts is read, and the answer is exact
 /// rather than a guess with a timer attached.
+///
+/// A timer is still needed for one case — a session that *died* mid-turn, from
+/// a force quit, a crash, or a lid closed — because the transcript's last word
+/// then claims a turn that will never finish. What that timer is worth
+/// depends on what the turn was waiting for, which is why `Wait` exists.
 enum AgentActivity {
     struct State: Sendable, Equatable {
         var lastWrite: Date?
         var isWorking: Bool
     }
 
-    /// A turn claiming to be in flight for longer than this is taken as a
-    /// session that died — force-quit, crashed, or a machine put to sleep —
-    /// rather than one still thinking. Without it a killed session spins for
-    /// ever.
-    static let sessionTimeout: TimeInterval = 5 * 60
+    /// What a turn in flight is waiting for, which is what decides how long
+    /// its claim to be working may outlive the record that made it. A single
+    /// timeout cannot serve both: it has to be long enough for the slowest
+    /// tool, and that is far longer than a dead session should go on spinning.
+    ///
+    /// Measured over this machine's own transcripts, 3,110 turns of one and
+    /// 2,783 of the other:
+    ///
+    /// - **the model's move** — median 7s, 99% inside 70s, 10 of 3,110 over
+    ///   two minutes. So a turn that has been the model's move for a minute
+    ///   and a half is a session that ended without saying so.
+    /// - **a tool** — median 2s, but shells, builds and test runs write
+    ///   nothing while they run and the longest here was 15 minutes. This is
+    ///   the case the old single timeout was sized for, and it keeps it.
+    enum Wait: Equatable {
+        case tool
+        case model
+
+        var grace: TimeInterval {
+            switch self {
+            case .tool: 5 * 60
+            case .model: 90
+            }
+        }
+    }
 
     /// Used only when the tail says nothing recognisable: a format that has
     /// changed under us, or a transcript too new to have a decisive record
@@ -44,18 +72,25 @@ enum AgentActivity {
             var state = State(lastWrite: files.first?.modified, isWorking: false)
 
             // Any live session counts: two terminals can be running at once,
-            // and the newest file is not necessarily the busy one. Anything
-            // untouched for longer than the timeout belongs to a session that
-            // is over, one way or another.
-            for file in files where now.timeIntervalSince(file.modified) <= sessionTimeout {
+            // and the newest file is not necessarily the busy one. The filter
+            // is the longest grace any verdict can claim, so nothing older is
+            // worth opening.
+            for file in files where now.timeIntervalSince(file.modified) <= Wait.tool.grace {
                 switch verdict(for: file.url, provider: provider) {
-                case .working:
-                    state.isWorking = true
+                case .working(let wait, let at):
+                    // Timed from the record's *own* stamp, not the file's.
+                    // Claude Code goes on writing bookkeeping into a transcript
+                    // long after the turn it belongs to ended — titles, modes,
+                    // background monitors — so a file's modification date says
+                    // when something last touched it, not when the agent last
+                    // did anything. Timing the grace off that let a session
+                    // that died mid-turn look freshly written for ever, and the
+                    // ring turned for as long as the file kept being poked.
+                    state.isWorking = now.timeIntervalSince(at ?? file.modified) <= wait.grace
                 case .finished:
                     continue
                 case .unknown:
-                    state.isWorking = state.isWorking
-                        || now.timeIntervalSince(file.modified) <= unknownFormatWindow
+                    state.isWorking = now.timeIntervalSince(file.modified) <= unknownFormatWindow
                 }
                 if state.isWorking { break }
             }
@@ -71,8 +106,11 @@ enum AgentActivity {
     /// Internal rather than private so the rule can be driven directly against
     /// real and synthetic transcripts — it is the whole feature, and "the
     /// spinner looked right for a moment" is not a check.
-    enum Verdict: String, Equatable {
-        case working
+    enum Verdict: Equatable {
+        /// A turn is in flight, waiting on `wait`, as of the moment the record
+        /// that says so was written. That stamp is nil only for a record which
+        /// carries none, which in practice means a format we half-recognise.
+        case working(Wait, at: Date?)
         case finished
         case unknown
     }
@@ -88,13 +126,29 @@ enum AgentActivity {
                 switch record["type"] as? String {
                 case "assistant":
                     let stop = (record["message"] as? [String: Any])?["stop_reason"] as? String
-                    // A turn still streaming has no stop reason yet.
-                    guard let stop else { return .working }
-                    return stop == "tool_use" ? .working : .finished
+                    guard let stop else {
+                        // No stop reason at all is what a subagent's records
+                        // look like: they are written into the same transcript
+                        // inline, and one of them is the file's last word
+                        // whenever a background agent outlives the turn that
+                        // started it. Counting that as a turn still streaming
+                        // gave it the full tool grace — five minutes of ring
+                        // for an agent that had already answered.
+                        return .working(.model, at: stamp(of: record))
+                    }
+                    return stop == "tool_use"
+                        ? .working(.tool, at: stamp(of: record))
+                        : .finished
                 case "user":
-                    // Either a fresh prompt or a tool's result coming back —
-                    // both leave the next move with the model.
-                    return .working
+                    // Pressing escape ends the turn and says so in the record
+                    // it leaves behind. Read as an ordinary prompt it means the
+                    // exact opposite — that the model is about to answer — so
+                    // the ring went on turning after every interrupt for as
+                    // long as the timeout allowed.
+                    if isInterruption(record) { return .finished }
+                    // Otherwise a prompt, or a tool's result coming back: both
+                    // leave the next move with the model.
+                    return .working(.model, at: stamp(of: record))
                 default:
                     // Bookkeeping records (queued operations, attachments, the
                     // window title) say nothing about the turn.
@@ -103,9 +157,21 @@ enum AgentActivity {
 
             case .codex:
                 switch (record["payload"] as? [String: Any])?["type"] as? String {
-                case "task_started": return .working
-                case "task_complete", "turn_aborted": return .finished
-                default: continue
+                case "task_complete", "turn_aborted":
+                    return .finished
+                case "task_started":
+                    return .working(.model, at: stamp(of: record))
+                // Codex writes the call, then the result, as two records. Which
+                // of them the tail ends on is which half of the turn is running
+                // — and they are the only way to tell, since a turn is bounded
+                // by `task_started` alone until it completes.
+                case "function_call", "custom_tool_call", "local_shell_call",
+                     "web_search_call", "tool_search_call":
+                    return .working(.tool, at: stamp(of: record))
+                case "function_call_output", "custom_tool_call_output", "tool_search_output":
+                    return .working(.model, at: stamp(of: record))
+                default:
+                    continue
                 }
 
             case .antigravity, .openCodeGo, .kimiCode:
@@ -116,6 +182,42 @@ enum AgentActivity {
         }
 
         return .unknown
+    }
+
+    /// Claude Code records an interrupted turn as a user message saying so,
+    /// which is the only thing in the file that marks the difference between a
+    /// turn the user stopped and one about to be answered.
+    private static func isInterruption(_ record: [String: Any]) -> Bool {
+        let content = (record["message"] as? [String: Any])?["content"]
+
+        let text: String
+        switch content {
+        case let plain as String:
+            text = plain
+        case let blocks as [[String: Any]]:
+            text = blocks.compactMap { $0["text"] as? String }.joined(separator: "\n")
+        default:
+            return false
+        }
+
+        return text.contains("[Request interrupted by user")
+    }
+
+    /// When the record was written, by its own account. Both CLIs stamp every
+    /// record that means anything; the bookkeeping ones carry no stamp, which
+    /// is part of what marks them out as bookkeeping.
+    ///
+    /// Built per call rather than kept: `ISO8601DateFormatter` is not
+    /// `Sendable`, and this runs at most once per file consulted.
+    private static func stamp(of record: [String: Any]) -> Date? {
+        guard let text = record["timestamp"] as? String else { return nil }
+
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = formatter.date(from: text) { return date }
+
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter.date(from: text)
     }
 
     /// The last stretch of a file, split into whole lines.
