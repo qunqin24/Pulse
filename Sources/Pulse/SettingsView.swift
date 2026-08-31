@@ -23,6 +23,11 @@ struct SettingsView: View {
     /// the store is a file, not something SwiftUI can observe.
     @State private var apiKey = ""
     @State private var savedKey = ""
+    /// Kept separate from API keys: an Ollama web session is a browser credential,
+    /// not an API credential, and must never be imported from the browser.
+    @State private var ollamaCookie = ""
+    @State private var savedOllamaCookie = ""
+    @State private var ollamaCookieSaveFailed = false
 
     var body: some View {
         NavigationSplitView {
@@ -339,6 +344,16 @@ struct SettingsView: View {
         store.refresh(provider)
     }
 
+    private func saveOllamaCookie() {
+        guard OllamaCookieStore.save(ollamaCookie) else {
+            ollamaCookieSaveFailed = true
+            return
+        }
+        savedOllamaCookie = ollamaCookie
+        ollamaCookieSaveFailed = false
+        store.ollamaCookieChanged()
+    }
+
     private func providerPane(_ provider: Provider) -> some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup(String.localized("Panel")) {
@@ -373,9 +388,21 @@ struct SettingsView: View {
             }
         }
         .onChange(of: provider, initial: true) { _, shown in
-            guard shown.usesAPIKey else { return }
-            apiKey = APIKeyStore.key(for: shown) ?? ""
-            savedKey = apiKey
+            if shown == .ollamaCloud {
+                ollamaCookie = OllamaCookieStore.cookie() ?? ""
+                savedOllamaCookie = ollamaCookie
+                ollamaCookieSaveFailed = false
+            } else if shown.usesAPIKey {
+                apiKey = APIKeyStore.key(for: shown) ?? ""
+                savedKey = apiKey
+            }
+        }
+        .onDisappear {
+            // The credential lives in Keychain. Do not keep an editable copy
+            // alive once its provider pane is gone.
+            ollamaCookie = ""
+            savedOllamaCookie = ""
+            ollamaCookieSaveFailed = false
         }
     }
 
@@ -515,7 +542,9 @@ struct SettingsView: View {
         return SettingsGroup(String.localized("Connection")) {
             // A provider with a single route gets told, not asked. A picker
             // with one entry is a control that cannot do anything.
-            if provider.hasSourceChoice {
+            if provider == .ollamaCloud {
+                ollamaCloudConnection
+            } else if provider.hasSourceChoice {
                 SettingsRow(
                     String.localized("Read usage from"),
                     subtitle: source.detail(for: provider)
@@ -567,6 +596,60 @@ struct SettingsView: View {
             if provider == .claudeCode, source != .endpoint {
                 SettingsRowDivider()
                 claudeCodeStatusLine
+            }
+        }
+    }
+
+    private var ollamaCloudConnection: some View {
+        Group {
+            SettingsRow(
+                String.localized("Session cookie"),
+                subtitle: String.localized("Paste the Cookie header from an Ollama settings request. Treat it like a password. Stored in macOS Keychain; never imported from your browser.")
+            ) {
+                HStack(spacing: 8) {
+                    SecureField("", text: $ollamaCookie)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: SettingsLayout.controlWidth)
+                        .onSubmit { saveOllamaCookie() }
+
+                    Button(String.localized("Save")) { saveOllamaCookie() }
+                        .disabled(ollamaCookie == savedOllamaCookie)
+
+                    Button(String.localized("Clear")) {
+                        ollamaCookie = ""
+                        saveOllamaCookie()
+                    }
+                    .disabled(savedOllamaCookie.isEmpty)
+                }
+            }
+
+            if ollamaCookieSaveFailed {
+                SettingsRowDivider()
+                SettingsRow(
+                    String.localized("Couldn’t save session cookie"),
+                    subtitle: String.localized("Check the Cookie header and macOS Keychain access, then try again.")
+                ) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                }
+            }
+
+            SettingsRowDivider()
+
+            SettingsRow(
+                String.localized("About this connection"),
+                subtitle: String.localized("Reads the signed-in Ollama settings page. This is not an official usage API.")
+            ) {
+                Link(String.localized("Open settings"), destination: URL(string: "https://ollama.com/settings")!)
+            }
+
+            SettingsRowDivider()
+
+            SettingsRow(
+                String.localized("How to find the cookie"),
+                subtitle: String.localized("In your browser’s Network inspector, copy the Cookie request header from an Ollama settings request.")
+            ) {
+                EmptyView()
             }
         }
     }

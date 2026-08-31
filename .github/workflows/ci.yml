@@ -42,6 +42,9 @@ jobs:
       - name: Localization keys
         run: ./Scripts/check-localization.sh
 
+      - name: Ollama Cloud adapter tests
+        run: ./Scripts/test-ollama.sh
+
       # `#Preview` is expanded by a plugin that ships with Xcode, so the
       # previews are compiled here too — which is the point. Stripping them
       # would leave any error inside them completely unreported.

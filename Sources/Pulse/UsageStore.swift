@@ -36,6 +36,8 @@ final class UsageStore {
     private var observers: [(center: NotificationCenter, token: any NSObjectProtocol)] = []
 
     /// Keys read once per launch rather than once per refresh pass.
+    private var ollamaCookie: String?
+    private var ollamaGeneration = 0
     private var apiKeys: [Provider: String] = [:]
     /// A provider asked for while another pass was in flight.
     ///
@@ -73,11 +75,27 @@ final class UsageStore {
 
     /// Picks up a key that was just entered, or one that changed.
     func loadAPIKeys() {
+        let cookie = settings.isEnabled(.ollamaCloud) ? OllamaCookieStore.cookie() : nil
+        if cookie != ollamaCookie {
+            ollamaCookie = cookie
+            ollamaGeneration += 1
+            usage[.ollamaCloud] = .unavailable(.ollamaCloud, reason: .loading)
+        }
         apiKeys = Dictionary(
             uniqueKeysWithValues: Provider.allCases
                 .filter { $0.usesAPIKey && settings.isEnabled($0) }
                 .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
         )
+    }
+
+    /// Called after every explicit cookie save/clear, including while hidden.
+    /// A hidden provider's launch-time cookie is nil, so comparing that cache
+    /// alone cannot invalidate an in-flight manual request for its old account.
+    func ollamaCookieChanged() {
+        ollamaGeneration += 1
+        loadAPIKeys()
+        usage[.ollamaCloud] = .unavailable(.ollamaCloud, reason: .loading)
+        refresh(.ollamaCloud)
     }
 
     /// Whether a provider's CLI is working at this moment.
@@ -166,6 +184,8 @@ final class UsageStore {
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
         let wanted = settings.enabledProviders
+        let ollama = OllamaCloudUsageService(cookie: ollamaCookie)
+        let generation = ollamaGeneration
 
         Task { [codex, claudeCode, antigravity] in
             // Independent, so they run side by side rather than one waiting on
@@ -186,9 +206,14 @@ final class UsageStore {
                 ? await kimi.fetch()
                 : ProviderUsage.unavailable(.kimiCode, reason: .loading)
 
+            async let ollamaUsage = wanted.contains(.ollamaCloud)
+                ? await ollama.fetch()
+                : ProviderUsage.unavailable(.ollamaCloud, reason: .loading)
+
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
             let rawKimi = await kimiUsage
+            let rawOllama = await ollamaUsage
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -205,6 +230,11 @@ final class UsageStore {
             self.usage[.antigravity] = fetchedAntigravity
             self.usage[.openCodeGo] = fetchedOpenCode
             self.usage[.kimiCode] = fetchedKimi
+            // Never cache Ollama quota across browser sessions: the scraped page
+            // does not give us a verified account identity to key that cache by.
+            if generation == self.ollamaGeneration {
+                self.usage[.ollamaCloud] = rawOllama
+            }
             self.isRefreshing = false
             self.refreshingProvider = nil
             self.runQueued()
@@ -217,6 +247,7 @@ final class UsageStore {
                 || previous[.antigravity]?.windows != fetchedAntigravity.windows
                 || previous[.openCodeGo]?.windows != fetchedOpenCode.windows
                 || previous[.kimiCode]?.windows != fetchedKimi.windows
+                || previous[.ollamaCloud]?.windows != self.usage[.ollamaCloud]?.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -245,6 +276,8 @@ final class UsageStore {
         let key = provider.usesAPIKey ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)
+        let ollama = OllamaCloudUsageService(cookie: provider == .ollamaCloud ? OllamaCookieStore.cookie() : nil)
+        let generation = ollamaGeneration
 
         Task { [codex, claudeCode, antigravity] in
             let raw: ProviderUsage
@@ -259,10 +292,16 @@ final class UsageStore {
                 raw = await openCode.fetch()
             case .kimiCode:
                 raw = await kimi.fetch()
+            case .ollamaCloud:
+                raw = await ollama.fetch()
             }
 
-            let fetched = await UsageCache.shared.reconciled(raw)
-            self.usage[provider] = fetched
+            let fetched = provider == .ollamaCloud
+                ? raw
+                : await UsageCache.shared.reconciled(raw)
+            if provider != .ollamaCloud || generation == self.ollamaGeneration {
+                self.usage[provider] = fetched
+            }
 
             if previous?.windows != fetched.windows {
                 self.signals.lastChange = Date()

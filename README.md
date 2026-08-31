@@ -88,9 +88,28 @@ Each agent is read by whatever route it actually offers, and all three differ:
 A reading that fails falls back to the last good one, shown with the time it
 was taken rather than passed off as current.
 
+## Ollama Cloud (experimental)
+
+Ollama Cloud can show session (5-hour) and weekly quota usage and reset times.
+Enable **Ollama Cloud** in Settings and supply a **session Cookie header**, not an
+API key. The cookie is saved separately in macOS Keychain. Pulse does not import
+browser cookies or call model-generation endpoints.
+
+This reads the signed-in `https://ollama.com/settings` HTML, **not a documented
+quota API**. Login expiry or page changes can stop it working. Both quota windows
+must be readable; missing data is never shown as zero. Unlike the other providers,
+Ollama readings are not cached or reused after a failed refresh, avoiding quota
+from a previous login being attributed to another account. Purely local Ollama
+models, extra-usage balances, plan names and model-level spending are not covered.
+
+See [setup, limitations and validation](Docs/ollama-cloud.md). This adapter has
+fixture coverage but still needs live-account and settings-UI acceptance testing.
+
 ## Privacy
 
-Pulse has no backend. It talks only to the endpoints your own CLIs already
+Pulse has no backend. For Ollama, a user-supplied session cookie is sent only to
+Ollama’s settings page; its HTML is not saved. Other providers use the routes above.
+It talks only to the endpoints your own CLIs already
 use, with credentials they already stored on this Mac, and works out the
 spending history entirely on-device from log files already on disk. Nothing is
 uploaded anywhere.

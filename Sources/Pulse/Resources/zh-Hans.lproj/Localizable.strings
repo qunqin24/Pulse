@@ -190,3 +190,31 @@
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
 "Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
 "Open" = "打开";
+
+"Session cookie" = "会话 Cookie";
+
+"Paste the Cookie header from an Ollama settings request. Treat it like a password. Stored in macOS Keychain; never imported from your browser." = "粘贴 Ollama 设置页请求的 Cookie 请求头。请像密码一样保管；它保存在 macOS 钥匙串中，不会从浏览器自动导入。";
+
+"Clear" = "清除";
+
+"Couldn’t save session cookie" = "无法保存会话 Cookie";
+
+"Check the Cookie header and macOS Keychain access, then try again." = "请检查 Cookie 请求头和 macOS 钥匙串访问权限，然后重试。";
+
+"About this connection" = "关于此连接";
+
+"Reads the signed-in Ollama settings page. This is not an official usage API." = "读取已登录的 Ollama 设置页。这不是官方用量 API。";
+
+"Open settings" = "打开设置页";
+
+"How to find the cookie" = "如何获取 Cookie";
+
+"In your browser’s Network inspector, copy the Cookie request header from an Ollama settings request." = "在浏览器开发者工具的网络面板中，复制 Ollama 设置页请求的 Cookie 请求头。";
+
+"Reads the signed-in Ollama settings page." = "读取已登录的 Ollama 设置页。";
+
+"Add an Ollama session cookie in Settings." = "请在设置中添加 Ollama 会话 Cookie。";
+
+"Ollama session expired. Sign in again and replace the cookie in Settings." = "Ollama 会话已过期。请重新登录，并在设置中替换 Cookie。";
+
+"Could not read Ollama's settings page. Its format may have changed." = "无法读取 Ollama 设置页，页面格式可能已发生变化。";

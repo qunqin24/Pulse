@@ -190,3 +190,31 @@
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.";
 "Pulse is built from a design he posted on X." = "Pulse is built from a design he posted on X.";
 "Open" = "Open";
+
+"Session cookie" = "Session cookie";
+
+"Paste the Cookie header from an Ollama settings request. Treat it like a password. Stored in macOS Keychain; never imported from your browser." = "Paste the Cookie header from an Ollama settings request. Treat it like a password. Stored in macOS Keychain; never imported from your browser.";
+
+"Clear" = "Clear";
+
+"Couldn’t save session cookie" = "Couldn’t save session cookie";
+
+"Check the Cookie header and macOS Keychain access, then try again." = "Check the Cookie header and macOS Keychain access, then try again.";
+
+"About this connection" = "About this connection";
+
+"Reads the signed-in Ollama settings page. This is not an official usage API." = "Reads the signed-in Ollama settings page. This is not an official usage API.";
+
+"Open settings" = "Open settings";
+
+"How to find the cookie" = "How to find the cookie";
+
+"In your browser’s Network inspector, copy the Cookie request header from an Ollama settings request." = "In your browser’s Network inspector, copy the Cookie request header from an Ollama settings request.";
+
+"Reads the signed-in Ollama settings page." = "Reads the signed-in Ollama settings page.";
+
+"Add an Ollama session cookie in Settings." = "Add an Ollama session cookie in Settings.";
+
+"Ollama session expired. Sign in again and replace the cookie in Settings." = "Ollama session expired. Sign in again and replace the cookie in Settings.";
+
+"Could not read Ollama's settings page. Its format may have changed." = "Could not read Ollama's settings page. Its format may have changed.";

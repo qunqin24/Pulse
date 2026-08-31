@@ -102,6 +102,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
         /// No key has been entered for a provider that needs one.
+        case ollamaSessionMissing
+        case ollamaSessionExpired
+        case ollamaPageChanged
         case apiKeyMissing
         /// There is a key, and the service refused it.
         case apiKeyRefused
@@ -122,6 +125,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
+            case .ollamaSessionMissing: .localized("Add an Ollama session cookie in Settings.")
+            case .ollamaSessionExpired: .localized("Ollama session expired. Sign in again and replace the cookie in Settings.")
+            case .ollamaPageChanged: .localized("Could not read Ollama's settings page. Its format may have changed.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

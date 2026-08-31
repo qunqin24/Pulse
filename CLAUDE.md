@@ -333,3 +333,21 @@ Single executable target `Pulse` at [Sources/Pulse](Sources/Pulse), no internal 
 
 **Resources:**
 - [Sources/Pulse/Resources](Sources/Pulse/Resources) holds the provider marks as SVG (`claude.svg`, `openai.svg`, `antigravity.svg`), taken from [Lobe Icons](https://github.com/lobehub/lobe-icons) (`packages/static-svg/icons`, monochrome variants). `LobeIconStore` in [UsageRingView.swift](Sources/Pulse/UsageRingView.swift) loads them once via `Bundle.module`, keyed by `Provider.iconResource`. They are vectors, so one file covers every size drawn; note their `width="1em"` makes `NSImage` report a 1x1 intrinsic size, which is why the store assigns an explicit size and marks them as template images before use. Adding a provider requires: a new `Provider` case, its SVG in `Resources/`, a service that returns a `ProviderUsage`, a branch in `UsageStore.refresh` and `refresh(_:)`, and its answers to `keepsLocalTranscripts` / `hasSourceChoice`. The switches in `AgentActivity.root(for:)` and `UsageLedger.logFiles(for:)` both return an optional root, so an agent with no transcripts opts out there rather than being given a directory that was never going to exist.
+
+
+## Ollama Cloud adapter
+
+`OllamaCloudClient.swift` is Foundation-only: it fetches the signed-in settings
+page, with redirects refused and ephemeral cookies/cache disabled, and reads the
+explicit session/weekly totals. `OllamaCloudUsageService` maps those totals into
+`ProviderUsage`. This is an experimental HTML integration, not a public quota API.
+
+The session cookie is explicitly pasted by the user and saved only by
+`OllamaCookieStore` in macOS Keychain; never use `APIKeyStore` or import browser
+credentials for it. The provider does not use transcript activity, cost history,
+or `UsageCache`. Failed refreshes show an error, not another account's cached data.
+
+Run `./Scripts/test-ollama.sh` for the production parser/request boundary tests.
+They use synthetic HTML and credentials without launching the app or networking.
+Full app builds must still include all `#Preview` blocks on an Xcode-equipped Mac.
+See `Docs/ollama-cloud.md` for setup and the remaining live acceptance checks.

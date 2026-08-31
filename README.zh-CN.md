@@ -103,3 +103,12 @@ Claude、Codex 会话限制的人做的一版 Figma 稿。我第一眼就被它�
 ## 许可
 
 [Apache 2.0](LICENSE)。内置的第三方素材保留各自的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+
+## Ollama Cloud（实验性）
+
+在设置中启用 **Ollama Cloud**，输入 Ollama 设置页请求的 **Cookie 请求头**，即可尝试读取 5 小时和每周额度及重置时间。这里需要的是登录会话 Cookie，不是 API Key。Cookie 单独保存在 macOS 钥匙串；不会自动读取浏览器登录数据，也不会调用模型生成接口。
+
+该功能读取 `https://ollama.com/settings` 的 HTML，并非官方公开额度 API；登录过期或网页变化都可能导致读取失败。两个额度窗口必须都可读，缺失数据不会显示为 0。为避免切换账号后误显示前一账号额度，Ollama 不保存额度缓存，刷新失败时直接显示错误。不支持纯本地模型、额外付费余额、套餐名称或按模型计费统计。
+
+配置步骤和限制见 [Ollama Cloud 接入说明](Docs/ollama-cloud.md)。目前有合成页面测试覆盖，仍需真实账号及设置界面验收。

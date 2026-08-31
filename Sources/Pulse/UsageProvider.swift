@@ -10,6 +10,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
     case antigravity
     case openCodeGo
     case kimiCode
+    case ollamaCloud
 
     var id: String { rawValue }
 
@@ -21,6 +22,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .antigravity: "Antigravity"
         case .openCodeGo: "OpenCode Go"
         case .kimiCode: "Kimi Code"
+        case .ollamaCloud: "Ollama Cloud"
         }
     }
 
@@ -33,6 +35,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .antigravity: "antigravity"
         case .openCodeGo: "opencode"
         case .kimiCode: "kimi"
+        case .ollamaCloud: "ollama"
         }
     }
 
@@ -53,7 +56,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .openCodeGo, .kimiCode: false
+        case .antigravity, .openCodeGo, .kimiCode, .ollamaCloud: false
         }
     }
 
