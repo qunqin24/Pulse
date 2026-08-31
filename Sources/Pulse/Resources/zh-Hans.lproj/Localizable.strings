@@ -182,8 +182,8 @@
 "API key" = "API key";
 "Session cookie" = "登录 Cookie";
 "Read from browser" = "从浏览器读取";
-"Looks in %@." = "会在 %@ 里找。";
-"Looks in %@. It will ask for the keychain." = "会在 %@ 里找,并请求钥匙串授权。";
+"Starts with %@." = "先从 %@ 找起。";
+"Starts with %@. It will ask for the keychain." = "先从 %@ 找起,会请求钥匙串授权。";
 "Finds it in the browser you signed in with." = "在你登录用的那个浏览器里找。";
 "Read" = "读取";
 "No browser cookie store was found." = "没有找到任何浏览器的 Cookie 存储。";

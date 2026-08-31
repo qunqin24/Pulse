@@ -51,6 +51,25 @@ enum BrowserCookies {
             }
         }
 
+        /// What the browser calls its key in the login keychain.
+        ///
+        /// **Not the display name**, which is the mistake this replaced: Edge
+        /// is shown as "Edge" and stores its key under "Microsoft Edge Safe
+        /// Storage", so building the service name from the display name found
+        /// nothing, failed silently, and fell through to the next browser —
+        /// which then reported having read the cookie from somewhere the user
+        /// never signed in.
+        var keychainService: String? {
+            switch self {
+            case .firefox, .safari: nil
+            case .chrome: "Chrome Safe Storage"
+            case .edge: "Microsoft Edge Safe Storage"
+            case .brave: "Brave Safe Storage"
+            case .vivaldi: "Vivaldi Safe Storage"
+            case .arc: "Arc Safe Storage"
+            }
+        }
+
         /// Whether reading this one raises a prompt the user has to answer.
         /// Asked before anything is attempted, so the prompt is never a
         /// surprise.
@@ -228,7 +247,7 @@ enum BrowserCookies {
     /// The browser's own storage key, which lives in the login keychain — this
     /// is the read that raises the prompt.
     private static func chromiumKey(_ browser: Browser) -> Data? {
-        let service = "\(browser.name) Safe Storage"
+        guard let service = browser.keychainService else { return nil }
 
         var request: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

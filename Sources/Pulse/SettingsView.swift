@@ -380,9 +380,12 @@ struct SettingsView: View {
             return String.localized("Finds it in the browser you signed in with.")
         }
 
+        // "Starts with", not "looks in": if the session isn't there the rest
+        // are tried too, and a hint that promised one browser and then reported
+        // another reads as the app having ignored it.
         return first.promptsForKeychain
-            ? String.localized("Looks in \(first.name). It will ask for the keychain.")
-            : String.localized("Looks in \(first.name).")
+            ? String.localized("Starts with \(first.name). It will ask for the keychain.")
+            : String.localized("Starts with \(first.name).")
     }
 
     private func readSession(for account: AccountKey) {

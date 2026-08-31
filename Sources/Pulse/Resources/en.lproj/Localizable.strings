@@ -182,8 +182,8 @@
 "API key" = "API key";
 "Session cookie" = "Session cookie";
 "Read from browser" = "Read from browser";
-"Looks in %@." = "Looks in %@.";
-"Looks in %@. It will ask for the keychain." = "Looks in %@. It will ask for the keychain.";
+"Starts with %@." = "Starts with %@.";
+"Starts with %@. It will ask for the keychain." = "Starts with %@. It will ask for the keychain.";
 "Finds it in the browser you signed in with." = "Finds it in the browser you signed in with.";
 "Read" = "Read";
 "No browser cookie store was found." = "No browser cookie store was found.";
