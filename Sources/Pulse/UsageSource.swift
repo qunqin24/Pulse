@@ -157,8 +157,19 @@ enum PanelMetrics {
     /// lives here. `AppSettings` writes both.
     nonisolated(unsafe) private static var storedTopPercentages = false
 
+    /// How many rings the panel has to leave room for.
+    ///
+    /// Not `Provider.allCases.count` any more: one provider can be signed in
+    /// to more than once, so the rail can be longer than there are providers.
+    /// It lives here beside the scale for the same reason — the AppKit frame
+    /// is worked out from it before SwiftUI lays anything out — and getting it
+    /// wrong slices the end off the rail, which is exactly what happened the
+    /// first time a seventh account existed.
+    nonisolated(unsafe) private static var storedCapacity = Provider.allCases.count
+
     static var scale: CGFloat { lock.withLock { stored } }
     static var topRailShowsPercentages: Bool { lock.withLock { storedTopPercentages } }
+    static var railCapacity: Int { lock.withLock { storedCapacity } }
 
     static func use(_ size: PanelSize) {
         lock.withLock { stored = size.scale }
@@ -166,5 +177,9 @@ enum PanelMetrics {
 
     static func showTopPercentages(_ shows: Bool) {
         lock.withLock { storedTopPercentages = shows }
+    }
+
+    static func makeRoom(for accounts: Int) {
+        lock.withLock { storedCapacity = max(accounts, 1) }
     }
 }

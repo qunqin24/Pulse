@@ -53,6 +53,9 @@ final class AppSettings {
     var extraAccounts: [ExtraAccount] {
         didSet {
             guard extraAccounts != oldValue else { return }
+            // Before the change is announced: whoever reacts is about to
+            // measure the panel, and the rail is now longer than it was.
+            PanelMetrics.makeRoom(for: allAccounts.count)
             let data = try? JSONEncoder().encode(extraAccounts)
             UserDefaults.standard.set(data, forKey: Key.extraAccounts)
             onChange?()
@@ -374,6 +377,7 @@ final class AppSettings {
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
+        PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }
 

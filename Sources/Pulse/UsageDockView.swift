@@ -112,7 +112,7 @@ enum DockLayout {
     /// Rail length with every provider switched on, which is what the panel
     /// has to leave room for.
     static func maximumLength(on axis: PanelEdge.Axis) -> CGFloat {
-        length(for: Provider.allCases.count, on: axis)
+        length(for: PanelMetrics.railCapacity, on: axis)
     }
 
     /// Kept for the vertical rail, which is what every existing caller means.

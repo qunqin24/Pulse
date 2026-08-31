@@ -143,13 +143,26 @@ actor CodexAppServer {
         }
 
         return try await withCheckedThrowingContinuation { continuation in
-            pending[id] = continuation
-            stdin?.write(data)
-            stdin?.write(Data("\n".utf8))
+            // Nothing to write to means nothing will ever answer, and a
+            // continuation nobody answers suspends its caller for ever.
+            guard let stdin else {
+                continuation.resume(throwing: Failure.startFailed)
+                return
+            }
 
-            Task { [weak self] in
+            pending[id] = continuation
+            stdin.write(data)
+            stdin.write(Data("\n".utf8))
+
+            // Strongly held, deliberately. Weakly, this server going away
+            // before the timeout fires leaves every request it was carrying
+            // suspended with nobody left to resume them — which Swift reports
+            // as a leaked continuation and the caller experiences as a hang.
+            // A strong reference costs at most twenty seconds of lifetime and
+            // makes that impossible.
+            Task { [self] in
                 try? await Task.sleep(for: .seconds(20))
-                await self?.timeOut(id)
+                self.timeOut(id)
             }
         }
     }
