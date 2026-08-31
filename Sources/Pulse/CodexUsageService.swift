@@ -75,7 +75,13 @@ struct CodexUsageService: Sendable {
         var request = URLRequest(url: endpoint)
         request.timeoutInterval = 20
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
-        request.setValue(credentials.accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
+        // Sent only when there is one. An empty header is not the same as no
+        // header: it names no account, and the service is free to answer for
+        // whichever it likes — which on an added account would put the *other*
+        // login's figures under this one's ring.
+        if !credentials.accountID.isEmpty {
+            request.setValue(credentials.accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         // `URLSession` follows the system proxy settings, so on a machine

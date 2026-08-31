@@ -18,7 +18,12 @@ struct CursorUsageService: Sendable {
 
     func fetch() async -> ProviderUsage {
         guard let session = CursorAppLogin.session() else {
-            return .unavailable(.cursor, reason: .cursorSignInRequired)
+            // A token that is stored but spent is a login gone stale, not an
+            // absent one — so say what actually helps.
+            return .unavailable(
+                .cursor,
+                reason: CursorAppLogin.hasStoredToken() ? .cursorLoginExpired : .cursorSignInRequired
+            )
         }
 
         var request = URLRequest(url: Self.endpoint)
@@ -26,7 +31,17 @@ struct CursorUsageService: Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 15
 
-        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+        // The session goes out as a `Cookie` header, which `URLSession` will
+        // happily carry across a redirect to another host — unlike
+        // `Authorization`, which it strips. So redirects are refused outright.
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpShouldSetCookies = false
+        configuration.httpCookieStorage = nil
+        configuration.urlCache = nil
+        let http = URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
+        defer { http.invalidateAndCancel() }
+
+        guard let (data, response) = try? await http.data(for: request) else {
             return .unavailable(.cursor, reason: .unreachable)
         }
 

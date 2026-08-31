@@ -56,6 +56,14 @@ enum CursorAppLogin {
         return Session(cookie: "WorkosCursorSessionToken=\(account)%3A%3A\(token)")
     }
 
+    /// Whether a token is stored at all, as against a *usable* one.
+    ///
+    /// The difference decides what the user is told. A token that is present
+    /// but past its life means they are signed in and Cursor needs opening to
+    /// renew it — a different remedy from signing in, and the wrong one to be
+    /// given when the right one is already written.
+    static func hasStoredToken() -> Bool { accessToken() != nil }
+
     /// Whether Cursor has ever been signed in here — the file's presence, not
     /// its contents, so this stays cheap enough to ask on a first run.
     static func hasStoredLogin() -> Bool {

@@ -415,8 +415,9 @@ struct FloatingUsagePanelView: View {
 /// stick out beyond it there would be points that hide the rail and then
 /// immediately land on the sliver — whose tracking area shows it again, which
 /// hides it again. That is the open/close loop this file has already been
-/// fixed for twice, in a new costume. `PanelHitAreaCheck` asserts the
-/// containment for every provider count and both edges.
+/// fixed for twice, in a new costume. `stripIsContainedInRail()` asserts the
+/// containment for every rail length and every edge, and is run on every debug
+/// launch from `FloatingPanelController`.
 enum PanelHitArea {
     /// Forgiveness around the edges before the pointer counts as gone.
     ///
@@ -496,10 +497,19 @@ enum PanelHitArea {
     }
 
     /// Whether the sliver is reachable without leaving the rail's area, for
-    /// every rail size the app can produce.
+    /// every rail length the app can produce.
+    ///
+    /// Measured against the metrics currently in force — panel size, ring
+    /// spacing and both label flags all change the rail, and all of them can
+    /// change while the app runs, so the assertion is worth its cost on every
+    /// launch rather than once against one arbitrary combination.
+    ///
+    /// The bound is the rail's **capacity**, not the number of providers: the
+    /// rail is keyed by account now, and a second Codex login makes it longer
+    /// than `Provider.allCases` ever describes.
     static func stripIsContainedInRail() -> Bool {
         for edge in [PanelEdge.left, .right, .top] {
-            for count in 1...Provider.allCases.count {
+            for count in 1...max(PanelMetrics.railCapacity, 1) {
                 // Docked is the only state the sliver exists in — off the edge
                 // the rail stays open — but it is measured here in both so a
                 // change to the floating length cannot quietly break it.

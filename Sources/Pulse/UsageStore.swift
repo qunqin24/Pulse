@@ -237,13 +237,22 @@ final class UsageStore {
                 self.usage[account.id] = await UsageCache.shared.reconciled(raw)
             }
 
-            self.usage[AccountKey(.codex).id] = fetchedCodex
-            self.usage[AccountKey(.claudeCode).id] = fetchedClaude
-            self.usage[AccountKey(.antigravity).id] = fetchedAntigravity
-            self.usage[AccountKey(.openCodeGo).id] = fetchedOpenCode
-            self.usage[AccountKey(.kimiCode).id] = fetchedKimi
-            self.usage[AccountKey(.cursor).id] = fetchedCursor
-            self.usage[AccountKey(.ollamaCloud).id] = fetchedOllama
+            // Only what was actually fetched is written back. A provider that
+            // is off the rail was never asked, so its slot here would be
+            // overwritten with a stale cache entry every automatic pass —
+            // quietly undoing the deliberate refresh its own settings pane
+            // offers, a minute or two after the user pressed it.
+            for (provider, fetched) in [
+                (Provider.codex, fetchedCodex),
+                (.claudeCode, fetchedClaude),
+                (.antigravity, fetchedAntigravity),
+                (.openCodeGo, fetchedOpenCode),
+                (.kimiCode, fetchedKimi),
+                (.cursor, fetchedCursor),
+                (.ollamaCloud, fetchedOllama),
+            ] where wanted.contains(provider) {
+                self.usage[AccountKey(provider).id] = fetched
+            }
             self.isRefreshing = false
             self.refreshingAccount = nil
             self.runQueued()
