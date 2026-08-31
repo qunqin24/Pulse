@@ -221,7 +221,7 @@ enum OAuthLogin {
 
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         if status == 403 || status == 404 { return nil }
-        guard status == 200 else { throw Failure.refused(String.localized("The service returned an error.")) }
+        guard status == 200 else { throw Failure.refused(described(status, data, step: "deviceauth/token")) }
 
         guard
             let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -242,13 +242,34 @@ enum OAuthLogin {
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
             throw Failure.refused(String.localized("The service didn't respond."))
         }
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw Failure.refused(String.localized("The service returned an error."))
-        }
+
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else { throw Failure.refused(described(status, data, step: url.lastPathComponent)) }
         guard let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw Failure.unreadableReply
         }
         return reply
+    }
+
+    /// A refusal in enough detail to act on: which step, what status, and the
+    /// provider's own words when it gave any.
+    ///
+    /// "The service returned an error" is true of every failure and tells
+    /// nobody anything — two sign-in attempts were spent on the strength of it.
+    private static func described(_ status: Int, _ data: Data, step: String) -> String {
+        var said = ""
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            said = (json["error_description"] as? String)
+                ?? (json["detail"] as? String)
+                ?? (json["message"] as? String)
+                ?? (json["error"] as? String)
+                ?? ""
+        }
+        if said.isEmpty, let text = String(data: data, encoding: .utf8) {
+            said = text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(160).description
+        }
+
+        return said.isEmpty ? "\(step): HTTP \(status)" : "\(step): HTTP \(status) — \(said)"
     }
 
     /// Whether this provider is signed in to by showing a code rather than by
@@ -379,11 +400,12 @@ enum OAuthLogin {
             throw Failure.unreadableReply
         }
 
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200 else {
             // The provider's own words when it has them: "invalid_scope" says
             // something a generic failure cannot.
-            let described = (json["error_description"] as? String) ?? (json["error"] as? String)
-            throw Failure.refused(described ?? String.localized("The service returned an error."))
+            let said = (json["error_description"] as? String) ?? (json["error"] as? String)
+            throw Failure.refused(said.map { "oauth/token: HTTP \(status) — \($0)" } ?? "oauth/token: HTTP \(status)")
         }
 
         guard
