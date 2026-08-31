@@ -13,6 +13,12 @@ struct UsageRingView: View {
     /// a **spent** limit still shows the spent colour: being blocked is not a
     /// matter of taste, and it is the one reading the app exists to give.
     var chosenTint: Color?
+    /// Whether the provider says this limit is **spent**, which it can say
+    /// well short of 100% — Claude Code reports a locked reason, Codex flags a
+    /// group, OpenCode a status other than `ok`. Reading it off the fraction
+    /// instead is how the spent colour came to be shown only at 100%, and how
+    /// a chosen colour came to survive a limit the user is blocked on.
+    var isSpent: Bool = false
     let diameter: CGFloat
     let lineWidth: CGFloat
     /// Whether this provider's CLI is working right now. This drives the white
@@ -66,11 +72,12 @@ struct UsageRingView: View {
 
     /// What the arc and the halo are drawn in.
     private var arcColour: Color {
-        let automatic = UsageTint.color(for: usedFraction ?? 0)
-        guard let chosenTint else { return automatic }
+        let spent = isSpent || (usedFraction ?? 0) >= 1
+        let automatic = UsageTint.color(for: usedFraction ?? 0, isExhausted: spent)
 
         // Spent is the one state a chosen colour does not get to hide.
-        return (usedFraction ?? 0) >= 1 ? automatic : chosenTint
+        guard let chosenTint, !spent else { return automatic }
+        return chosenTint
     }
 
     var body: some View {

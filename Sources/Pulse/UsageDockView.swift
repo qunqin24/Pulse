@@ -178,7 +178,7 @@ enum DockLayout {
     /// whatever is switched on, so turning a provider off never has to resize
     /// the window — the rail simply draws shorter inside it, and the leftover
     /// space is transparent.
-    static var maximumHeight: CGFloat { height(for: Provider.allCases.count) }
+    static var maximumHeight: CGFloat { height(for: PanelMetrics.railCapacity) }
 }
 
 /// A provider's place in the rail: what it reports, and the one window its
@@ -349,6 +349,7 @@ private struct UsageDockItem: View {
                 provider: usage.provider,
                 usedFraction: headline?.usedFraction,
                 chosenTint: entry.tint,
+                isSpent: UsageTint.isSpent(headline),
                 diameter: DockLayout.ringDiameter,
                 lineWidth: DockLayout.ringLineWidth,
                 isBusy: entry.isRunning,
