@@ -344,8 +344,21 @@ final class AppSettings {
     }
 
     func setRingTint(_ colour: Color?, for account: AccountKey) {
+        // A colour that will not convert to sRGB has no hex, and storing that
+        // nil would *remove* the key — silently putting the account back on
+        // Automatic and taking the colour row off the pane, which reads as the
+        // picker having refused to work. Keep whatever was chosen last
+        // instead; only an explicit nil clears it.
+        guard let colour else {
+            var updated = ringTints
+            updated[account.id] = nil
+            ringTints = updated
+            return
+        }
+        guard let hex = colour.hexString else { return }
+
         var updated = ringTints
-        updated[account.id] = colour?.hexString
+        updated[account.id] = hex
         ringTints = updated
     }
 
@@ -431,7 +444,14 @@ final class AppSettings {
         // Never empty. A stored list whose names no longer parse — a provider
         // renamed or removed — would otherwise leave a rail with nothing to
         // hover and nothing to grab.
-        if providers.isEmpty { providers = Set(Provider.allCases) }
+        //
+        // What must not be empty is the **rail**, not this set: an added
+        // account is switched on through `enabledExtras` and is not a provider
+        // here, so someone monitoring a second Codex login and nothing else
+        // has an empty `providers` and a perfectly full rail. Rebuilding from
+        // `allCases` there switched all seven back on *and wrote it to disk*,
+        // destroying the choice rather than merely misdrawing it.
+        if providers.isEmpty && enabledExtras.isEmpty { providers = Set(Provider.allCases) }
 
         let accounts = Set(providers.map { AccountKey($0).id }).union(enabledExtras)
         defaults.set(Array(accounts), forKey: Key.enabledProviders)
@@ -507,6 +527,8 @@ final class AppSettings {
         providerOrder.removeAll { $0 == account.id }
         pinnedWindows[account.id] = nil
         sources[account.id] = nil
+        ringTints[account.id] = nil
+        sessionBrowsers[account.id] = nil
     }
 
     func rename(_ account: AccountKey, to label: String) {
