@@ -549,11 +549,17 @@ struct SettingsView: View {
                     }
                 }
             } else {
-                SettingsRow(
-                    String.localized("Read usage from"),
-                    subtitle: String.localized("Only while Antigravity is open.")
-                ) {
-                    Text(localized: "Antigravity's language server")
+                // One route, so it is stated rather than offered — but what
+                // that route is differs: a server one of them runs while it is
+                // open, a login the other one already saved.
+                let route = provider == .cursor
+                    ? (name: String.localized("Cursor's own login"),
+                       note: String.localized("Uses the login Cursor already saved."))
+                    : (name: String.localized("Antigravity's language server"),
+                       note: String.localized("Only while Antigravity is open."))
+
+                SettingsRow(String.localized("Read usage from"), subtitle: route.note) {
+                    Text(route.name)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.trailing)

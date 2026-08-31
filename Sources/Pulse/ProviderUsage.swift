@@ -101,6 +101,11 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexServerFailed
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
+        /// Cursor has never been signed in on this Mac, so there is no login
+        /// to borrow.
+        case cursorSignInRequired
+        /// There is a login, and the account refused it.
+        case cursorLoginExpired
         /// No key has been entered for a provider that needs one.
         case apiKeyMissing
         /// There is a key, and the service refused it.
@@ -122,6 +127,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
+            case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
+            case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

@@ -174,7 +174,7 @@ enum AgentActivity {
                     continue
                 }
 
-            case .antigravity, .openCodeGo, .kimiCode:
+            case .antigravity, .cursor, .openCodeGo, .kimiCode:
                 // None of these leaves transcripts Pulse reads, so nothing
                 // ever gets this far.
                 return .finished
@@ -274,7 +274,7 @@ enum AgentActivity {
         return switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
-        case .antigravity, .openCodeGo, .kimiCode: nil
+        case .antigravity, .cursor, .openCodeGo, .kimiCode: nil
         }
     }
 }

@@ -2,12 +2,14 @@ import Foundation
 
 /// The coding agents Pulse tracks.
 ///
-/// All three report their own usage, by three quite different routes — see
-/// `ClaudeCodeUsageService`, `CodexUsageService` and `AntigravityUsageService`.
+/// Each reports its own usage, by routes that have almost nothing in common —
+/// see `ClaudeCodeUsageService`, `CodexUsageService`, `AntigravityUsageService`,
+/// `CursorUsageService` and the two key-based ones.
 enum Provider: String, CaseIterable, Identifiable, Sendable {
     case claudeCode
     case codex
     case antigravity
+    case cursor
     case openCodeGo
     case kimiCode
 
@@ -19,6 +21,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .claudeCode: "Claude Code"
         case .codex: "Codex"
         case .antigravity: "Antigravity"
+        case .cursor: "Cursor"
         case .openCodeGo: "OpenCode Go"
         case .kimiCode: "Kimi Code"
         }
@@ -31,6 +34,7 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         case .claudeCode: "claude"
         case .codex: "openai"
         case .antigravity: "antigravity"
+        case .cursor: "cursor"
         case .openCodeGo: "opencode"
         case .kimiCode: "kimi"
         }
@@ -53,15 +57,16 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .openCodeGo, .kimiCode: false
+        case .antigravity, .cursor, .openCodeGo, .kimiCode: false
         }
     }
 
     /// Whether the route to this provider's figures is a choice.
     ///
     /// The two CLIs can each be read two ways, which is a setting. Antigravity
-    /// has exactly one route — the language server it runs itself — so it is
-    /// stated rather than offered.
+    /// and Cursor have exactly one route each — a server one of them runs
+    /// itself, a login the other one stored — so it is stated rather than
+    /// offered.
     var hasSourceChoice: Bool { keepsLocalTranscripts }
 
     /// Whether Pulse needs an API key from the user for this one.
@@ -98,6 +103,13 @@ enum Provider: String, CaseIterable, Identifiable, Sendable {
                            home.appending(path: "Applications/Antigravity.app").path]
         if antigravity.contains(where: manager.fileExists(atPath:)) {
             found.insert(.antigravity)
+        }
+
+        // Cursor's own store, rather than the bundle: it is the same
+        // "has this ever run here" evidence as `~/.claude`, and it does not
+        // care where the app was dragged to.
+        if CursorAppLogin.hasStoredLogin() {
+            found.insert(.cursor)
         }
 
         // OpenCode Go has nothing to install, but a key OpenCode already saved

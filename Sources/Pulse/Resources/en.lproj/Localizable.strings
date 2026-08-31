@@ -149,6 +149,13 @@
 "Start Pulse automatically when you log in." = "Start Pulse automatically when you log in.";
 "Waiting for approval in System Settings › General › Login Items." = "Waiting for approval in System Settings › General › Login Items.";
 
+/* Cursor */
+"Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
+"Cursor's saved login was refused. Open Cursor to renew it." = "Cursor's saved login was refused. Open Cursor to renew it.";
+"Reads your account's limits with the login Cursor saved." = "Reads your account's limits with the login Cursor saved.";
+"Cursor's own login" = "Cursor's own login";
+"Uses the login Cursor already saved." = "Uses the login Cursor already saved.";
+
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
 "Frosted glass instead of solid black." = "Frosted glass instead of solid black.";

@@ -29,6 +29,7 @@ final class UsageStore {
     private let codex: CodexUsageService
     private let claudeCode = ClaudeCodeUsageService()
     private let antigravity = AntigravityUsageService()
+    private let cursor = CursorUsageService()
     private var timer: Timer?
     /// Kept with the centre each was registered on: workspace notifications
     /// don't come from the default centre, and removing them there does
@@ -167,7 +168,7 @@ final class UsageStore {
         // nobody is going to see.
         let wanted = settings.enabledProviders
 
-        Task { [codex, claudeCode, antigravity] in
+        Task { [codex, claudeCode, antigravity, cursor] in
             // Independent, so they run side by side rather than one waiting on
             // another's round trip.
             async let codexUsage = wanted.contains(.codex)
@@ -179,6 +180,9 @@ final class UsageStore {
             async let antigravityUsage = wanted.contains(.antigravity)
                 ? await antigravity.fetch()
                 : ProviderUsage.unavailable(.antigravity, reason: .loading)
+            async let cursorUsage = wanted.contains(.cursor)
+                ? await cursor.fetch()
+                : ProviderUsage.unavailable(.cursor, reason: .loading)
             async let openCodeUsage = wanted.contains(.openCodeGo)
                 ? await openCode.fetch()
                 : ProviderUsage.unavailable(.openCodeGo, reason: .loading)
@@ -188,7 +192,7 @@ final class UsageStore {
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
-            let rawKimi = await kimiUsage
+            let (rawKimi, rawCursor) = await (kimiUsage, cursorUsage)
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -199,12 +203,14 @@ final class UsageStore {
             let fetchedAntigravity = await UsageCache.shared.reconciled(rawAntigravity)
             let fetchedOpenCode = await UsageCache.shared.reconciled(rawOpenCode)
             let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
+            let fetchedCursor = await UsageCache.shared.reconciled(rawCursor)
 
             self.usage[.codex] = fetchedCodex
             self.usage[.claudeCode] = fetchedClaude
             self.usage[.antigravity] = fetchedAntigravity
             self.usage[.openCodeGo] = fetchedOpenCode
             self.usage[.kimiCode] = fetchedKimi
+            self.usage[.cursor] = fetchedCursor
             self.isRefreshing = false
             self.refreshingProvider = nil
             self.runQueued()
@@ -217,6 +223,7 @@ final class UsageStore {
                 || previous[.antigravity]?.windows != fetchedAntigravity.windows
                 || previous[.openCodeGo]?.windows != fetchedOpenCode.windows
                 || previous[.kimiCode]?.windows != fetchedKimi.windows
+                || previous[.cursor]?.windows != fetchedCursor.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -246,7 +253,7 @@ final class UsageStore {
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)
 
-        Task { [codex, claudeCode, antigravity] in
+        Task { [codex, claudeCode, antigravity, cursor] in
             let raw: ProviderUsage
             switch provider {
             case .codex:
@@ -255,6 +262,8 @@ final class UsageStore {
                 raw = await claudeCode.fetch(source: source)
             case .antigravity:
                 raw = await antigravity.fetch()
+            case .cursor:
+                raw = await cursor.fetch()
             case .openCodeGo:
                 raw = await openCode.fetch()
             case .kimiCode:

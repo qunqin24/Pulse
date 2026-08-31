@@ -286,7 +286,7 @@ actor UsageLedgerReader {
         case .codex: home.appending(path: ".codex/sessions")
         // Antigravity is an editor and keeps nothing; OpenCode keeps its own
         // store rather than the JSONL these two parsers read.
-        case .antigravity, .openCodeGo, .kimiCode: nil
+        case .antigravity, .cursor, .openCodeGo, .kimiCode: nil
         }
 
         guard let root else { return [] }
@@ -306,7 +306,7 @@ actor UsageLedgerReader {
         switch provider {
         case .claudeCode: return parseClaudeCode(data)
         case .codex: return parseCodex(data)
-        case .antigravity, .openCodeGo, .kimiCode: return [:]
+        case .antigravity, .cursor, .openCodeGo, .kimiCode: return [:]
         }
     }
 
