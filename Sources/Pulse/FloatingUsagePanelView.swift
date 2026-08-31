@@ -173,7 +173,7 @@ struct FloatingUsagePanelView: View {
                 // not say which. Every account of that provider shows the mark.
                 isRunning: store.isRunning(account.provider),
                 isRefreshing: store.isRefreshing(account),
-                tint: settings.ringTint(for: account)?.color
+                tint: settings.ringTint(for: account)
             )
         }
     }

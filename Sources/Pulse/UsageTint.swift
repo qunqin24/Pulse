@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 extension UsageWindow {
@@ -36,9 +37,9 @@ enum UsageTint {
     }
 }
 
-/// A colour someone has chosen for one account's ring.
+/// A colour someone has chosen for one account's ring, stored as hex.
 ///
-/// **The default is not one of these**, and should stay that way. Colour on
+/// **The default is no colour at all**, and should stay that way. Colour on
 /// these rings means how much of a limit is gone; giving a ring a fixed hue
 /// takes that reading away, which is what the app is for. It was how the rings
 /// worked once — each provider in its own brand colour — and it read as a
@@ -48,39 +49,70 @@ enum UsageTint {
 /// A spent limit still shows the spent colour whatever is chosen. Being
 /// blocked is not a matter of taste.
 ///
-/// A fixed set rather than a free colour well: these have to stay legible at
-/// ring size on the panel's black *and* on Liquid Glass, which takes whatever
-/// is behind it — a dark navy someone picked against a bright backdrop would
-/// disappear against a dark one.
-enum RingTint: String, CaseIterable, Identifiable, Sendable {
-    case blue, purple, pink, red, orange, yellow, green, teal
+/// Free rather than a fixed palette, because eight swatches is not a choice —
+/// and the eight had to be legible on both the panel's black and on Liquid
+/// Glass, which is a constraint on *us*, not on the person picking. Anything
+/// can be chosen; `RingTint.suggestions` is only a starting point.
+enum RingTint {
+    /// A few that read at ring size on both surfaces, offered as a start.
+    /// Not a limit — the colour well takes anything.
+    static let suggestions: [Color] = [
+        Color(red: 0.25, green: 0.60, blue: 1.00),
+        Color(red: 0.70, green: 0.50, blue: 1.00),
+        Color(red: 1.00, green: 0.44, blue: 0.72),
+        Color(red: 1.00, green: 0.56, blue: 0.20),
+        Color(red: 0.20, green: 0.82, blue: 0.82),
+    ]
 
-    var id: String { rawValue }
-
-    var color: Color {
-        switch self {
-        case .blue: Color(red: 0.25, green: 0.60, blue: 1.00)
-        case .purple: Color(red: 0.70, green: 0.50, blue: 1.00)
-        case .pink: Color(red: 1.00, green: 0.44, blue: 0.72)
-        case .red: .pulseWarning
-        case .orange: Color(red: 1.00, green: 0.56, blue: 0.20)
-        case .yellow: .pulseCaution
-        case .green: .pulseGood
-        case .teal: Color(red: 0.20, green: 0.82, blue: 0.82)
-        }
+    /// The colour a stored value means, or nil for "colour it by usage".
+    ///
+    /// Accepts the eight names the first version of this stored, so a choice
+    /// made before it became a colour well is not silently dropped.
+    static func color(from stored: String?) -> Color? {
+        guard let stored, !stored.isEmpty else { return nil }
+        if let named = legacy[stored] { return named }
+        return Color(hex: stored)
     }
 
-    var title: String {
-        switch self {
-        case .blue: .localized("Blue")
-        case .purple: .localized("Purple")
-        case .pink: .localized("Pink")
-        case .red: .localized("Red")
-        case .orange: .localized("Orange")
-        case .yellow: .localized("Yellow")
-        case .green: .localized("Green")
-        case .teal: .localized("Teal")
-        }
+    private static let legacy: [String: Color] = [
+        "blue": Color(red: 0.25, green: 0.60, blue: 1.00),
+        "purple": Color(red: 0.70, green: 0.50, blue: 1.00),
+        "pink": Color(red: 1.00, green: 0.44, blue: 0.72),
+        "red": .pulseWarning,
+        "orange": Color(red: 1.00, green: 0.56, blue: 0.20),
+        "yellow": .pulseCaution,
+        "green": .pulseGood,
+        "teal": Color(red: 0.20, green: 0.82, blue: 0.82),
+    ]
+}
+
+extension Color {
+    /// "#RRGGBB", which is what a chosen colour is stored as.
+    ///
+    /// Converted through sRGB explicitly: a colour picked in another space
+    /// answers its components in that space, and the numbers would not survive
+    /// a round trip.
+    var hexString: String? {
+        guard let srgb = NSColor(self).usingColorSpace(.sRGB) else { return nil }
+        return String(
+            format: "#%02X%02X%02X",
+            Int((srgb.redComponent * 255).rounded()),
+            Int((srgb.greenComponent * 255).rounded()),
+            Int((srgb.blueComponent * 255).rounded())
+        )
+    }
+
+    init?(hex: String) {
+        var text = hex.trimmingCharacters(in: .whitespaces)
+        if text.hasPrefix("#") { text.removeFirst() }
+        guard text.count == 6, let value = UInt32(text, radix: 16) else { return nil }
+
+        self.init(
+            .sRGB,
+            red: Double((value >> 16) & 0xFF) / 255,
+            green: Double((value >> 8) & 0xFF) / 255,
+            blue: Double(value & 0xFF) / 255
+        )
     }
 }
 

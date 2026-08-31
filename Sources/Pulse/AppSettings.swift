@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import SwiftUI
 
 /// User-facing preferences, persisted in `UserDefaults`.
 @Observable
@@ -338,13 +339,13 @@ final class AppSettings {
     }
 
     /// The colour chosen for an account's ring, or nil to colour it by usage.
-    func ringTint(for account: AccountKey) -> RingTint? {
-        ringTints[account.id].flatMap(RingTint.init(rawValue:))
+    func ringTint(for account: AccountKey) -> Color? {
+        RingTint.color(from: ringTints[account.id])
     }
 
-    func setRingTint(_ tint: RingTint?, for account: AccountKey) {
+    func setRingTint(_ colour: Color?, for account: AccountKey) {
         var updated = ringTints
-        updated[account.id] = tint?.rawValue
+        updated[account.id] = colour?.hexString
         ringTints = updated
     }
 

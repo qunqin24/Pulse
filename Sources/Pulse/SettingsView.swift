@@ -508,25 +508,28 @@ struct SettingsView: View {
                     // colours are the reading; a fixed one is only a label.
                     subtitle: String.localized("Automatic colours by how much is left.")
                 ) {
-                    Picker("", selection: Binding(
-                        get: { settings.ringTint(for: account) },
-                        set: { settings.setRingTint($0, for: account) }
-                    )) {
-                        Text(localized: "Automatic").tag(RingTint?.none)
+                    HStack(spacing: 10) {
+                        // The system's own well: any colour, with the eyedropper
+                        // and the recents that come with it. `supportsOpacity`
+                        // is off — a translucent ring reads as a dim one, which
+                        // is a state this app already uses for "no reading".
+                        ColorPicker(
+                            "",
+                            selection: Binding(
+                                get: { settings.ringTint(for: account) ?? UsageTint.color(for: 0) },
+                                set: { settings.setRingTint($0, for: account) }
+                            ),
+                            supportsOpacity: false
+                        )
+                        .labelsHidden()
 
-                        ForEach(RingTint.allCases) { tint in
-                            // The swatch beside the name, since the name of a
-                            // colour is a poor way to choose one.
-                            Label {
-                                Text(tint.title)
-                            } icon: {
-                                Circle().fill(tint.color)
-                            }
-                            .tag(RingTint?.some(tint))
+                        // Back to meaning something. Only offered when there is
+                        // something to go back from.
+                        Button(String.localized("Automatic")) {
+                            settings.setRingTint(nil, for: account)
                         }
+                        .disabled(settings.ringTint(for: account) == nil)
                     }
-                    .labelsHidden()
-                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
             }
 
