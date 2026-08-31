@@ -74,6 +74,7 @@ struct FloatingUsagePanelView: View {
                         UsageDetailCard(
                             usesGlass: settings.usesGlass,
                             usage: selected,
+                            title: settings.label(for: selected.account),
                             edge: placement.edge,
                             pointerCenter: pointerCentre(for: index)
                         )

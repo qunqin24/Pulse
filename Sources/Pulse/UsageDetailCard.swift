@@ -74,6 +74,11 @@ struct UsageDetailCard: View {
     /// Liquid Glass instead of flat black, matching the rail.
     var usesGlass: Bool = false
     let usage: ProviderUsage
+    /// What this account is called. The provider's own name for the first
+    /// account of it, the user's label for the rest — two subscriptions to the
+    /// same plan are told apart by nothing else, and a card headed "Codex" on
+    /// both of them is a card that cannot say which one you are looking at.
+    var title: String?
     /// Which screen edge the panel is docked against; the pointer goes on the
     /// side facing the rail.
     let edge: PanelEdge
@@ -135,7 +140,7 @@ struct UsageDetailCard: View {
             }()
         )
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(String.localized("\(usage.provider.displayName) usage details"))
+        .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
     }
 
     /// Which side of the card the tail leaves from: the one facing the rail.
@@ -183,7 +188,12 @@ struct UsageDetailCard: View {
             LobeIconView(provider: usage.provider, size: DetailCardLayout.headerIconSize)
                 .foregroundStyle(.primary)
 
-            Text(localized: "\(usage.provider.displayName) Usage")
+            Text(localized: "\(title ?? usage.provider.displayName) Usage")
+                // One line, always. The card's height is worked out from
+                // `DetailCardLayout` before SwiftUI lays anything out, so a
+                // header that wrapped would make the card taller than the
+                // window budgeted for it and get sliced off against the edge.
+                .lineLimit(1)
                 .font(.system(size: DetailCardLayout.titleFontSize, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
 

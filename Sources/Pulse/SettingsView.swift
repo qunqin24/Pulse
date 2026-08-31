@@ -35,7 +35,7 @@ struct SettingsView: View {
                     row(.general)
                 }
 
-                Section(String.localized("Providers")) {
+                Section(String.localized("Accounts")) {
                     // Same order as the rail: a sidebar that disagreed with
                     // the thing it configures is its own small confusion.
                     ForEach(settings.orderedAccounts) { account in
@@ -397,10 +397,14 @@ struct SettingsView: View {
 
             liveUsage(for: account)
 
-            // Both are built from the transcripts the CLIs leave behind, so
+            // Both are built from the transcripts the CLI leaves behind, so
             // for a provider that keeps none they would be a column of zeroes
-            // claiming nothing had been spent.
-            if provider.keepsLocalTranscripts {
+            // claiming nothing had been spent — and for an account Pulse
+            // signed in to itself they would be worse than that. Those
+            // transcripts belong to whichever account the CLI is signed in to,
+            // which is not this one, so showing them here would report one
+            // account's spending under another's name.
+            if provider.keepsLocalTranscripts, account.isPrimary {
                 estimatedValue(for: account)
 
                 history(for: account)
@@ -678,10 +682,7 @@ struct SettingsView: View {
                 let credentials = try await OAuthLogin.signIn(to: provider)
                 // Seeded from whatever the provider said about the account, so
                 // two subscriptions are not both offered as "Codex".
-                let added = settings.addAccount(
-                    provider,
-                    label: credentials.accountName ?? provider.displayName
-                )
+                let added = settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
                 guard AccountCredentialStore.set(credentials, for: added) else {
                     settings.removeAccount(added)
                     signInError = String.localized("Couldn't save the login on this Mac.")
@@ -695,6 +696,21 @@ struct SettingsView: View {
                 signInError = String.localized("Sign-in was cancelled.")
             }
         }
+    }
+
+    /// What to call a newly added account.
+    ///
+    /// The part of the address before the "@", because the card's header is
+    /// one line at a fixed width and a whole email address spends all of it.
+    /// A provider that names nothing gets a number, which at least counts.
+    /// Either way it is the user's to change.
+    private static func label(for credentials: AccountCredentials, provider: Provider, in settings: AppSettings) -> String {
+        if let name = credentials.accountName?.split(separator: "@").first, !name.isEmpty {
+            return String(name)
+        }
+
+        let existing = settings.extraAccounts.filter { $0.provider == provider }.count
+        return "\(provider.displayName) \(existing + 2)"
     }
 
     /// Registering Pulse as Claude Code's status line is the backup route for
