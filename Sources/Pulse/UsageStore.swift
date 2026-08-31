@@ -98,6 +98,23 @@ final class UsageStore {
         loadAPIKeys()
         updateActivityMonitor()
 
+        // Last time's numbers, on screen before the first request has even
+        // gone out. They arrive marked stale, so the card says when they were
+        // taken and a window that has since reset is dropped rather than aged
+        // — nothing here is passed off as current. Without this every ring is
+        // blank for as long as the slowest provider takes to answer, which on
+        // a cold start is most of a second and looks like an app that has not
+        // finished loading.
+        Task { [accounts = settings.allAccounts] in
+            for account in accounts {
+                guard let cached = await UsageCache.shared.lastReading(for: account) else { continue }
+                // A fetch that has already landed is newer than anything on
+                // disk and must not be undone by it.
+                guard case .unavailable = self.usage(for: account).state else { continue }
+                self.usage[account.id] = cached
+            }
+        }
+
         // Only relevant when the app server is being used as a fallback; it
         // pushes when limits change, which saves waiting for the next tick.
         Task { [appServer] in

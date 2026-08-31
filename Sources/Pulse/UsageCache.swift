@@ -81,6 +81,16 @@ actor UsageCache {
         write(all)
     }
 
+    /// The last good reading for an account, if there is one worth showing.
+    ///
+    /// Used to put something on the rail the moment Pulse opens, rather than
+    /// leaving every ring blank through the first round trip. It comes back
+    /// `.stale`, so the card says when it was taken — the same honesty that
+    /// applies when a fetch fails.
+    func lastReading(for account: AccountKey) -> ProviderUsage? {
+        reading(for: account)
+    }
+
     private func reading(for account: AccountKey) -> ProviderUsage? {
         guard let stored = load()[account.id] else { return nil }
 
