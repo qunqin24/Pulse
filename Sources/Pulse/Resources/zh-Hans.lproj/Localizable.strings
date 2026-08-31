@@ -213,6 +213,7 @@
 "This provider can't be signed in to from Pulse." = "这个服务无法从 Pulse 登录。";
 "Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录,然后重试。";
 "Sign-in was cancelled." = "登录已取消。";
+"The browser didn't come back. If it showed an error, try again." = "浏览器没有回来。如果它显示了错误,请重试。";
 "This page can be closed." = "这个页面可以关闭了。";
 "Sign-in failed. You can close this page." = "登录失败,可以关闭这个页面。";
 "Signed in. You can close this page and go back to Pulse." = "已登录,可以关闭页面回到 Pulse 了。";

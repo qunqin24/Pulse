@@ -35,6 +35,10 @@ enum OAuthLogin {
         /// Anthropic's token endpoint takes JSON; OpenAI's takes a form, which
         /// is what the specification asks for. Neither accepts the other.
         let sendsJSON: Bool
+        /// Anthropic's exchange carries the `state` back; OpenAI's is the four
+        /// fields the specification names and nothing else. Sending one an
+        /// extra field is not harmless — see the note on the scopes.
+        let exchangeCarriesState: Bool
 
         static func of(_ provider: Provider) -> Configuration? {
             switch provider {
@@ -54,14 +58,20 @@ enum OAuthLogin {
                     fixedPort: nil,
                     redirectPath: "/callback",
                     extraAuthorizeItems: [URLQueryItem(name: "code", value: "true")],
-                    sendsJSON: true
+                    sendsJSON: true,
+                    exchangeCarriesState: true
                 )
             case .codex:
                 Configuration(
                     authorize: URL(string: "https://auth.openai.com/oauth/authorize")!,
                     token: URL(string: "https://auth.openai.com/oauth/token")!,
                     clientID: "app_EMoamEEZ73f0CkXaXp7hrann",
-                    scopes: ["openid", "profile", "email", "offline_access"],
+                    // The full set its own client asks for. A subset looked
+                    // like good practice and is not on offer here: the sign-in
+                    // ended on OpenAI's error page before the browser ever came
+                    // back. Taken from codex-rs/login/src/server.rs.
+                    scopes: ["openid", "profile", "email", "offline_access",
+                             "api.connectors.read", "api.connectors.invoke"],
                     // Not negotiable: this client is registered for exactly
                     // this loopback address, so the port has to be free.
                     fixedPort: 1455,
@@ -71,13 +81,21 @@ enum OAuthLogin {
                         URLQueryItem(name: "codex_cli_simplified_flow", value: "true"),
                         URLQueryItem(name: "originator", value: "codex_cli_rs"),
                     ],
-                    sendsJSON: false
+                    sendsJSON: false,
+                    exchangeCarriesState: false
                 )
             case .antigravity, .cursor, .openCodeGo, .kimiCode:
                 nil
             }
         }
     }
+
+    /// How long to hold the callback open. Long enough to find a password and
+    /// a second factor, short enough that a sign-in abandoned in the browser
+    /// — or one the provider ended on an error page of its own, which never
+    /// comes back here at all — releases the button instead of waiting for
+    /// ever.
+    static let patience: Duration = .seconds(300)
 
     enum Failure: Error, Equatable {
         /// This provider has no login Pulse can drive.
@@ -86,6 +104,9 @@ enum OAuthLogin {
         /// usually by the CLI's own sign-in, running at the same moment.
         case portBusy(UInt16)
         case cancelled
+        /// The browser never came back. Usually the sign-in was abandoned, or
+        /// it ended on the provider's own error page.
+        case timedOut
         case refused(String)
         case unreadableReply
 
@@ -94,6 +115,7 @@ enum OAuthLogin {
             case .unsupported: .localized("This provider can't be signed in to from Pulse.")
             case .portBusy: .localized("Finish or close the sign-in already running, then try again.")
             case .cancelled: .localized("Sign-in was cancelled.")
+            case .timedOut: .localized("The browser didn't come back. If it showed an error, try again.")
             case .refused(let why): why
             case .unreadableReply: .localized("Couldn't read the reply.")
             }
@@ -125,7 +147,7 @@ enum OAuthLogin {
 
         _ = await MainActor.run { NSWorkspace.shared.open(url) }
 
-        let code = try await listener.awaitCode(matching: state)
+        let code = try await listener.awaitCode(matching: state, giveUpAfter: Self.patience)
         return try await exchange(code, configuration: configuration, verifier: verifier, redirect: redirect, state: state)
     }
 
@@ -164,14 +186,16 @@ enum OAuthLogin {
         redirect: String,
         state: String
     ) async throws -> AccountCredentials {
-        try await post([
+        var body = [
             "grant_type": "authorization_code",
             "code": code,
             "redirect_uri": redirect,
             "client_id": configuration.clientID,
             "code_verifier": verifier,
-            "state": state,
-        ], to: configuration)
+        ]
+        if configuration.exchangeCarriesState { body["state"] = state }
+
+        return try await post(body, to: configuration)
     }
 
     /// Renews an account's access token.
@@ -205,9 +229,11 @@ enum OAuthLogin {
             request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         } else {
             request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-            var form = URLComponents()
-            form.queryItems = body.map { URLQueryItem(name: $0.key, value: $0.value) }
-            request.httpBody = form.percentEncodedQuery.map { Data($0.utf8) }
+            // Encoded strictly — `URLComponents` leaves ":" and "/" alone in a
+            // query value, which is legal in a URL and wrong in a form body,
+            // and it would pass a "+" through to be read back as a space.
+            request.httpBody = Data(body.map { "\($0.key)=\(Self.formEncoded($0.value))" }
+                .joined(separator: "&").utf8)
         }
 
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
@@ -237,6 +263,13 @@ enum OAuthLogin {
             accountName: accountName(in: json),
             accountID: accountID(in: access)
         )
+    }
+
+    /// Everything but the unreserved set, which is what a form body wants and
+    /// what the published client does.
+    private static func formEncoded(_ value: String) -> String {
+        let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
+        return value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? value
     }
 
     /// Whatever the reply says about who this is, so two subscriptions are not

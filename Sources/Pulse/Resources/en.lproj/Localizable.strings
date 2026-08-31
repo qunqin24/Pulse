@@ -213,6 +213,7 @@
 "This provider can't be signed in to from Pulse." = "This provider can't be signed in to from Pulse.";
 "Finish or close the sign-in already running, then try again." = "Finish or close the sign-in already running, then try again.";
 "Sign-in was cancelled." = "Sign-in was cancelled.";
+"The browser didn't come back. If it showed an error, try again." = "The browser didn't come back. If it showed an error, try again.";
 "This page can be closed." = "This page can be closed.";
 "Sign-in failed. You can close this page." = "Sign-in failed. You can close this page.";
 "Signed in. You can close this page and go back to Pulse." = "Signed in. You can close this page and go back to Pulse.";

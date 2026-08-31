@@ -81,8 +81,19 @@ final class LoopbackCallback: @unchecked Sendable {
     /// The `state` is checked here rather than by the caller: a redirect that
     /// does not carry the value this sign-in generated did not come from this
     /// sign-in, and the code in it is not ours to use.
-    func awaitCode(matching state: String) async throws -> String {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
+    func awaitCode(matching state: String, giveUpAfter patience: Duration) async throws -> String {
+        // Nothing here can tell a sign-in still being typed from one that
+        // ended on the provider's own error page — that page never reaches
+        // this listener at all. So the wait is bounded, and giving up is
+        // reported rather than left to look like a button that stopped working.
+        let timeout = Task {
+            try? await Task.sleep(for: patience)
+            guard !Task.isCancelled else { return }
+            self.finish(.failure(OAuthLogin.Failure.timedOut))
+        }
+        defer { timeout.cancel() }
+
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
             lock.lock()
             expectedState = state
 
