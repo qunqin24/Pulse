@@ -377,8 +377,15 @@ enum BrowserCookies {
                     let record = page + Int(le32(data, at: offsetAt))
                     guard record + 48 <= data.count else { continue }
 
+                    // Scoped to the host, exactly as the two SQL routes are.
+                    // `hasSuffix` is not that test: asking for `ollama.com`
+                    // also matched `notollama.com` and `evil-ollama.com`,
+                    // which are unrelated registrable domains — and whatever
+                    // it returned would have been joined into the header sent
+                    // to the real one.
                     let url = string(data, at: record + Int(le32(data, at: record + 16)))
-                    guard url.hasSuffix(host) else { continue }
+                    guard url == host || url == "." + host || url.hasSuffix("." + host)
+                    else { continue }
 
                     let name = string(data, at: record + Int(le32(data, at: record + 20)))
                     let value = string(data, at: record + Int(le32(data, at: record + 28)))

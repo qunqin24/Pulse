@@ -43,9 +43,18 @@ enum OllamaSessionCookie {
             }
             guard recognized else { continue }
             guard !value.isEmpty, !value.contains("\""), !value.contains("\\"),
-                  !value.contains(" "), seen.insert(name).inserted else {
+                  !value.contains(" ") else {
                 throw OllamaCloudError.invalidCookie
             }
+            // A repeated name is not a malformed cookie. Every browser store
+            // routinely holds both a host-only and a domain row for the same
+            // session name, and the host match returns both on purpose — so
+            // throwing here threw away the whole browser (the call site takes
+            // this through `try?`) and moved on to the next one without a
+            // word, which is exactly the "a wrong lookup reads as an empty
+            // one" failure this feature is prone to. The first wins, as it
+            // does in any cookie header.
+            guard seen.insert(name).inserted else { continue }
             found.append("\(name)=\(value)")
         }
         guard !found.isEmpty else { throw OllamaCloudError.invalidCookie }
@@ -163,7 +172,7 @@ struct OllamaCloudClient: Sendable {
         configuration.httpCookieStorage = nil
         configuration.urlCache = nil
         configuration.timeoutIntervalForResource = 30
-        let session = URLSession(configuration: configuration, delegate: OllamaNoRedirects(), delegateQueue: nil)
+        let session = URLSession(configuration: configuration, delegate: NoRedirects(), delegateQueue: nil)
         defer { session.invalidateAndCancel() }
         let (bytes, response) = try await session.bytes(for: Self.request(cookie: cookie))
         guard let http = response as? HTTPURLResponse else { throw OllamaCloudError.invalidPage }
@@ -177,8 +186,12 @@ struct OllamaCloudClient: Sendable {
     }
 }
 
-/// Never forward the session cookie to a redirect target, including login hosts.
-final class OllamaNoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
+/// Never forward a session cookie to a redirect target, including login hosts.
+///
+/// `URLSession` strips `Authorization` across hosts by itself; a `Cookie`
+/// header set by hand it forwards, which is how a redirect off the provider's
+/// own domain would carry the user's session with it.
+final class NoRedirects: NSObject, URLSessionTaskDelegate, Sendable {
     func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
                     completionHandler: @escaping @Sendable (URLRequest?) -> Void) {
