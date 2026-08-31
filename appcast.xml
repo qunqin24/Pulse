@@ -6,6 +6,19 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.2</title>
+            <pubDate>Mon, 31 Aug 2026 12:00:46 -0000</pubDate>
+            <sparkle:version>1.0.2</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.2</link>
+            <sparkle:releaseNotesLink>https://github.com/qunqin24/Pulse/releases/tag/v1.0.2</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.2/Pulse-1.0.2.zip"
+                       length="3815430"
+                       type="application/octet-stream"
+                       sparkle:edSignature="+fzUWpMOIjBWlsdZIa0Lb7tGYUrQxPnBlDpvf6/IkQQa1nvC5H7Cmg+yw0+K8OkogjDuBZ9RpjnybVGjyHLOCw==" />
+        </item>
+        <item>
             <title>1.0.1</title>
             <pubDate>Sun, 30 Aug 2026 16:02:00 -0000</pubDate>
             <sparkle:version>1.0.1</sparkle:version>
