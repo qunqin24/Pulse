@@ -41,7 +41,7 @@ final class SettingsWindowController {
     }
 
     private func makeWindow() -> NSWindow {
-        let window = NSWindow(
+        let window = SettingsWindow(
             contentRect: NSRect(x: 0, y: 0, width: 760, height: 500),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
@@ -74,5 +74,38 @@ final class SettingsWindowController {
             rootView: SettingsView(store: store, settings: settings, placement: placement, update: update)
         )
         return window
+    }
+}
+
+/// Clicking away from the key field has to end its editing, and on macOS
+/// nothing does that by itself: a text field holds first responder until some
+/// other view asks for it, and nothing else in this window ever does. So the
+/// field kept its focus ring wherever else you clicked, and only changing pane
+/// — which tears the field down — let it go.
+///
+/// The window is the right place for it because it sees the press before
+/// anything decides what it landed on, the same reason the floating panel
+/// takes its drags here. The test is plain geometry against the field being
+/// edited, not a hit test: a hit test asks a hosted SwiftUI tree a question it
+/// answers unreliably, and this one only needs "was that inside the box".
+final class SettingsWindow: NSWindow {
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown, let field = fieldBeingEdited() {
+            let box = field.convert(field.bounds, to: nil)
+            if !box.contains(event.locationInWindow) { makeFirstResponder(nil) }
+        }
+
+        super.sendEvent(event)
+    }
+
+    /// The text field the window's field editor is currently working for, or
+    /// nil when nothing is being edited.
+    private func fieldBeingEdited() -> NSView? {
+        guard let editor = firstResponder as? NSText, editor.isFieldEditor else { return nil }
+
+        // The field editor is shared and installed into whichever field is
+        // active, which it keeps as its delegate.
+        if let field = (editor as? NSTextView)?.delegate as? NSView { return field }
+        return editor.superview?.superview
     }
 }
