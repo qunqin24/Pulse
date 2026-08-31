@@ -31,10 +31,8 @@ struct SettingsView: View {
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     @State private var devicePrompt: OAuthLogin.DevicePrompt?
-    /// What the last look through the browsers found, and the ones not tried
-    /// yet because doing so raises a prompt the user has to be asked for.
+    /// What the last look through the browsers found.
     @State private var sessionMessage: String?
-    @State private var awaitingKeychain: [BrowserCookies.Browser] = []
     /// Held so it can be called off. A device-code sign-in polls for fifteen
     /// minutes, and a sign-in that failed in the browser gives this side no
     /// sign at all — without a way out the button stays disabled for the whole
@@ -369,25 +367,29 @@ struct SettingsView: View {
 
     /// Finds this provider's session in whichever browser signed in.
     ///
-    /// Two passes, and the split is the whole point. The browsers that need no
-    /// permission are tried first; the ones that raise a keychain prompt are
-    /// only tried after the user has said yes to that prompt. Whatever turns up
-    /// goes through the provider's own filter before it is kept, so only the
-    /// cookies that actually authenticate ever reach the store — everything
-    /// else read along the way is discarded unseen.
-    private func readSession(for account: AccountKey, mayPrompt: Bool) {
-        let present = BrowserCookies.present()
-        let quiet = present.filter { !$0.promptsForKeychain }
-        let loud = present.filter(\.promptsForKeychain)
-
-        guard !present.isEmpty else {
-            sessionMessage = String.localized("No browser cookie store was found.")
-            return
+    /// The default browser leads, because that is where the session actually
+    /// is — another browser may hold one months out of date, and finding that
+    /// is worse than the keychain asking. Whatever turns up goes through the
+    /// provider's own filter before it is kept, so only the cookies that
+    /// actually authenticate ever reach the store; everything else read along
+    /// the way is discarded unseen.
+    /// Names the browser about to be opened, and warns when opening it will
+    /// ask for the keychain.
+    private static func browserHint() -> String {
+        guard let first = BrowserCookies.present().first else {
+            return String.localized("Finds it in the browser you signed in with.")
         }
 
-        let browsers = mayPrompt ? quiet + loud : quiet
+        return first.promptsForKeychain
+            ? String.localized("Looks in \(first.name). It will ask for the keychain.")
+            : String.localized("Looks in \(first.name).")
+    }
+
+    private func readSession(for account: AccountKey) {
+        let browsers = BrowserCookies.present()
+
         guard !browsers.isEmpty else {
-            awaitingKeychain = loud
+            sessionMessage = String.localized("No browser cookie store was found.")
             return
         }
 
@@ -404,20 +406,10 @@ struct SettingsView: View {
             if let found {
                 apiKey = found.header
                 saveKey(for: account)
-                awaitingKeychain = []
                 sessionMessage = String.localized("Read from \(found.browser.name).")
                 return
             }
 
-            // Nothing in the quiet ones. Offer the rest rather than reaching
-            // for them.
-            if !mayPrompt, !loud.isEmpty {
-                awaitingKeychain = loud
-                sessionMessage = nil
-                return
-            }
-
-            awaitingKeychain = []
             sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
         }
     }
@@ -675,25 +667,13 @@ struct SettingsView: View {
 
                     SettingsRow(
                         String.localized("Read from browser"),
-                        subtitle: sessionMessage ?? String.localized("Finds it in the browser you signed in with.")
+                        // Says which one it will open, and that it may ask —
+                        // Chromium keeps its cookies under a key in the login
+                        // keychain, and being told a second before the dialog
+                        // appears is the difference between a step and a scare.
+                        subtitle: sessionMessage ?? Self.browserHint()
                     ) {
-                        Button(String.localized("Read")) { readSession(for: account, mayPrompt: false) }
-                    }
-
-                    // Chromium keeps its cookies encrypted under a key in the
-                    // login keychain, so reading them raises a prompt. It is
-                    // asked for rather than sprung: the browsers that need no
-                    // permission are tried first, and this row only appears
-                    // once they have turned up nothing.
-                    if !awaitingKeychain.isEmpty {
-                        SettingsRowDivider()
-
-                        SettingsRow(
-                            String.localized("Ask the keychain"),
-                            subtitle: String.localized("\(awaitingKeychain.map(\.name).joined(separator: ", ")) will ask permission first.")
-                        ) {
-                            Button(String.localized("Continue")) { readSession(for: account, mayPrompt: true) }
-                        }
+                        Button(String.localized("Read")) { readSession(for: account) }
                     }
                 }
             } else {

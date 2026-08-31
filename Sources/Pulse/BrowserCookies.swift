@@ -1,3 +1,4 @@
+import AppKit
 import CommonCrypto
 import Foundation
 import SQLite3
@@ -21,8 +22,13 @@ import SQLite3
 /// granted per application — so a `swift run` build cannot have it and only
 /// the bundled app can. Chromium encrypts its values with a key kept in the
 /// login keychain, so reading them raises the "Pulse wants to use your
-/// confidential information" prompt. They are tried in that order, quietest
-/// first, and each is independent: one failing tells the next nothing.
+/// confidential information" prompt.
+///
+/// **The default browser is tried first regardless**, which is a decision
+/// taken deliberately over trying the free ones first. The browser the user
+/// opens links with is where they are actually signed in; the others may hold
+/// a session that is months stale, and finding *that* is worse than a prompt.
+/// Each browser is independent: one failing tells the next nothing.
 enum BrowserCookies {
     enum Browser: String, CaseIterable, Sendable {
         case firefox
@@ -87,15 +93,45 @@ enum BrowserCookies {
         return nil
     }
 
-    /// Which browsers are actually installed and have a cookie store, so the
-    /// UI can say what it is about to try rather than listing everything.
+    /// Which browsers are actually installed and have a cookie store, **the
+    /// default one first** — so the first thing tried is where the session
+    /// actually is, and the UI can say what it is about to open.
     static func present(_ browsers: [Browser] = Browser.allCases) -> [Browser] {
-        browsers.filter { browser in
+        let installed = browsers.filter { browser in
             switch browser {
             case .firefox: !firefoxStores().isEmpty
             case .safari: !safariStores().isEmpty
             default: !chromiumStores(browser).isEmpty
             }
+        }
+
+        // Moved to the front rather than sorted: "is it the default" is not an
+        // ordering, and `sorted` given something that isn't one is free to
+        // return anything at all.
+        guard let preferred = preferred(), installed.contains(preferred) else { return installed }
+        return [preferred] + installed.filter { $0 != preferred }
+    }
+
+    /// The browser this Mac opens links with.
+    ///
+    /// Asked of LaunchServices rather than guessed from what is installed:
+    /// having Chrome on disk says nothing about whether it is ever used.
+    static func preferred() -> Browser? {
+        guard
+            let https = URL(string: "https://example.com"),
+            let application = NSWorkspace.shared.urlForApplication(toOpen: https),
+            let bundle = Bundle(url: application)?.bundleIdentifier
+        else { return nil }
+
+        return switch bundle {
+        case "com.apple.Safari", "com.apple.SafariTechnologyPreview": .safari
+        case "org.mozilla.firefox", "org.mozilla.firefoxdeveloperedition": .firefox
+        case "com.google.Chrome", "com.google.Chrome.canary": .chrome
+        case "com.microsoft.edgemac", "com.microsoft.edgemac.Beta": .edge
+        case "com.brave.Browser", "com.brave.Browser.beta": .brave
+        case "com.vivaldi.Vivaldi": .vivaldi
+        case "company.thebrowser.Browser": .arc
+        default: nil
         }
     }
 
