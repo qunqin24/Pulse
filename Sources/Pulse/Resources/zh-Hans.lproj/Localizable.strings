@@ -144,6 +144,10 @@
 
 /* Panel size */
 "Size" = "整体大小";
+"Spacing" = "间距";
+"How much air there is between the rings." = "圆环之间留多少空隙。";
+"Tight" = "紧凑";
+"Loose" = "宽松";
 "Size of the rail on screen." = "胶囊显示的大小。";
 "Small" = "小";
 "Standard" = "标准";

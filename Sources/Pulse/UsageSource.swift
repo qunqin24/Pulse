@@ -138,6 +138,40 @@ enum PanelSize: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// How much air there is between the rings.
+///
+/// Separate from `PanelSize`, which scales everything at once — this moves only
+/// the gap, so the rings stay the size they were and the rail gets shorter or
+/// longer around them. Someone watching seven accounts wants it tighter than
+/// someone watching two, and that is not the same wish as wanting bigger rings.
+enum RailSpacing: String, CaseIterable, Identifiable, Sendable {
+    case compact
+    case standard
+    case roomy
+
+    static let `default` = RailSpacing.standard
+
+    var id: String { rawValue }
+
+    /// Applied to `DockLayout.itemSpacing`, so the standard one is what the
+    /// rail has always been.
+    var scale: CGFloat {
+        switch self {
+        case .compact: 0.6
+        case .standard: 1
+        case .roomy: 1.4
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .compact: .localized("Tight")
+        case .standard: .localized("Standard")
+        case .roomy: .localized("Loose")
+        }
+    }
+}
+
 /// The scale every panel measurement is multiplied by.
 ///
 /// A stored value rather than something threaded through every call site,
@@ -158,6 +192,11 @@ enum PanelMetrics {
     /// the rail's *thickness*, which the AppKit window frame is worked out
     /// from before SwiftUI has laid anything out — the same reason `scale`
     /// lives here. `AppSettings` writes both.
+    /// The gap between rings, as a multiplier. Here rather than passed down
+    /// for the same reason as the scale: it changes the rail's length, and the
+    /// AppKit frame is worked out from that before SwiftUI lays anything out.
+    nonisolated(unsafe) private static var storedSpacing = RailSpacing.default.scale
+
     nonisolated(unsafe) private static var storedTopPercentages = false
     /// The same for a rail down a side, where the default is the other way
     /// round: the label sits under its ring and costs nothing there.
@@ -174,12 +213,17 @@ enum PanelMetrics {
     nonisolated(unsafe) private static var storedCapacity = Provider.allCases.count
 
     static var scale: CGFloat { lock.withLock { stored } }
+    static var spacing: CGFloat { lock.withLock { storedSpacing } }
     static var topRailShowsPercentages: Bool { lock.withLock { storedTopPercentages } }
     static var sideRailShowsPercentages: Bool { lock.withLock { storedSidePercentages } }
     static var railCapacity: Int { lock.withLock { storedCapacity } }
 
     static func use(_ size: PanelSize) {
         lock.withLock { stored = size.scale }
+    }
+
+    static func use(_ spacing: RailSpacing) {
+        lock.withLock { storedSpacing = spacing.scale }
     }
 
     static func showTopPercentages(_ shows: Bool) {

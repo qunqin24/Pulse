@@ -25,8 +25,12 @@ enum DockLayout {
     /// compute `height` up front, since the AppKit panel needs a concrete
     /// frame before SwiftUI ever lays anything out.
     static var percentTextHeight: CGFloat { 15 * PanelMetrics.scale }
-    /// Vertical gap between the three ring+label items.
-    static var itemSpacing: CGFloat { 30 * PanelMetrics.scale }
+    /// Gap between the ring+label items, along the rail.
+    ///
+    /// The only measurement `RailSpacing` touches: the rings keep their size
+    /// and the rail grows or shrinks around them, which is a different wish
+    /// from wanting the whole panel bigger.
+    static var itemSpacing: CGFloat { 30 * PanelMetrics.scale * PanelMetrics.spacing }
 
     /// Reach of the two convex corners on the rail's inner side. They are
     /// drawn as superellipse ("squircle") corners rather than circular arcs —

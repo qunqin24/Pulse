@@ -144,6 +144,10 @@
 
 /* Panel size */
 "Size" = "Size";
+"Spacing" = "Spacing";
+"How much air there is between the rings." = "How much air there is between the rings.";
+"Tight" = "Tight";
+"Loose" = "Loose";
 "Size of the rail on screen." = "Size of the rail on screen.";
 "Small" = "Small";
 "Standard" = "Standard";

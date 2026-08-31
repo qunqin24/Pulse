@@ -173,6 +173,26 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Spacing"),
+                    subtitle: String.localized("How much air there is between the rings.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.railSpacing },
+                        set: { settings.railSpacing = $0 }
+                    )) {
+                        ForEach(RailSpacing.allCases) { spacing in
+                            Text(spacing.title).tag(spacing)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Liquid Glass"),
                     subtitle: glassSubtitle
                 ) {

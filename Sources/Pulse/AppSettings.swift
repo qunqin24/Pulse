@@ -203,6 +203,18 @@ final class AppSettings {
         }
     }
 
+    /// How much air there is between the rings.
+    var railSpacing: RailSpacing {
+        didSet {
+            guard railSpacing != oldValue else { return }
+            // Before the change is announced, like `panelSize`: whoever reacts
+            // is about to measure the rail.
+            PanelMetrics.use(railSpacing)
+            UserDefaults.standard.set(railSpacing.rawValue, forKey: Key.railSpacing)
+            onChange?()
+        }
+    }
+
     /// Whether the rail keeps its percent labels down a side of the screen.
     ///
     /// On by default, which is the opposite of the top rail's. Against a side
@@ -280,6 +292,7 @@ final class AppSettings {
         refreshInterval: RefreshInterval = .default,
         autoCollapse: Bool = true,
         panelSize: PanelSize = .default,
+        railSpacing: RailSpacing = .default,
         usesGlass: Bool = false,
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true
@@ -296,6 +309,7 @@ final class AppSettings {
         self.refreshInterval = refreshInterval
         self.autoCollapse = autoCollapse
         self.panelSize = panelSize
+        self.railSpacing = railSpacing
         self.usesGlass = usesGlass
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
@@ -416,12 +430,15 @@ final class AppSettings {
             autoCollapse: defaults.object(forKey: Key.autoCollapse) as? Bool ?? true,
             panelSize: defaults.string(forKey: Key.panelSize)
                 .flatMap(PanelSize.init(rawValue:)) ?? .default,
+            railSpacing: defaults.string(forKey: Key.railSpacing)
+                .flatMap(RailSpacing.init(rawValue:)) ?? .default,
             usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
+        PanelMetrics.use(settings.railSpacing)
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
@@ -488,6 +505,7 @@ final class AppSettings {
         static let refreshInterval = "settings.refreshInterval.v2"
         static let autoCollapse = "settings.autoCollapse"
         static let panelSize = "settings.panelSize"
+        static let railSpacing = "settings.railSpacing"
         static let usesGlass = "settings.usesGlass"
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
