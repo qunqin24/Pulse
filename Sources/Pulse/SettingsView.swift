@@ -584,9 +584,18 @@ struct SettingsView: View {
             } else if account.provider.usesAPIKey {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
+                // What this provider wants is not always a key. Ollama has no
+                // quota API, so the figures come from its signed-in settings
+                // page and a browser session is the only credential there is —
+                // calling it an API key would send people looking for one that
+                // does not exist.
                 SettingsRow(
-                    String.localized("API key"),
-                    subtitle: String.localized("Stored encrypted on this Mac.")
+                    account.provider.usesSessionCookie
+                        ? String.localized("Session cookie")
+                        : String.localized("API key"),
+                    subtitle: account.provider.usesSessionCookie
+                        ? String.localized("Copied from your browser. Stored encrypted on this Mac.")
+                        : String.localized("Stored encrypted on this Mac.")
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)

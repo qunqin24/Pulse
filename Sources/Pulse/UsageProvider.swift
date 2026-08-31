@@ -12,6 +12,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case cursor
     case openCodeGo
     case kimiCode
+    case ollamaCloud
 
     var id: String { rawValue }
 
@@ -24,6 +25,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .cursor: "Cursor"
         case .openCodeGo: "OpenCode Go"
         case .kimiCode: "Kimi Code"
+        case .ollamaCloud: "Ollama Cloud"
         }
     }
 
@@ -37,6 +39,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .cursor: "cursor"
         case .openCodeGo: "opencode"
         case .kimiCode: "kimi"
+        case .ollamaCloud: "ollama"
         }
     }
 
@@ -57,7 +60,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode: false
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud: false
         }
     }
 
@@ -74,7 +77,14 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// The others borrow a login their own CLI stored. OpenCode stores one too,
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
-    var usesAPIKey: Bool { self == .openCodeGo || self == .kimiCode }
+    var usesAPIKey: Bool { self == .openCodeGo || self == .kimiCode || self == .ollamaCloud }
+
+    /// Whether what the user pastes is a browser session rather than an API
+    /// key. Ollama has no quota API at all — the figures are read from its
+    /// signed-in settings page — so a session is the only credential there is,
+    /// and calling it an API key in Settings would send people looking for one
+    /// that does not exist.
+    var usesSessionCookie: Bool { self == .ollamaCloud }
 
     /// Whether this agent looks installed, for the **first run only**.
     ///

@@ -124,6 +124,15 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// reach this, and a message naming one is the trap the rest of this
         /// enum was fixed for once already.
         case signedOut
+        /// Ollama has no quota API: the figures come from its signed-in
+        /// settings page, so what it needs is a browser session rather than a
+        /// key, and the three ways that can fail are worth telling apart.
+        case ollamaSessionMissing
+        case ollamaSessionExpired
+        /// The page was fetched and did not contain the two figures. Reported
+        /// rather than shown as zero: reading a page is reading someone's
+        /// layout, and a layout can change.
+        case ollamaPageChanged
         /// No key has been entered for a provider that needs one.
         case apiKeyMissing
         /// There is a key, and the service refused it.
@@ -148,6 +157,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
             case .signedOut: .localized("Sign in to this account again in Settings.")
+            case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")
+            case .ollamaSessionExpired: .localized("The Ollama session expired. Sign in again and add it.")
+            case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

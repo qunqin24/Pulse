@@ -47,6 +47,9 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
         case (_, .openCodeGo), (_, .kimiCode):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
+        case (_, .ollamaCloud):
+            // Never shown: one route, and it reads a page rather than an API.
+            .localized("Reads your quota from Ollama's own settings page.")
         case (_, .antigravity):
             // Never shown — Antigravity has one route, so settings states it
             // rather than offering a choice. See `Provider.hasSourceChoice`.

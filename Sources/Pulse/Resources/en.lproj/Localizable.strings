@@ -180,6 +180,12 @@
 "Couldn't reach the update feed." = "Couldn't reach the update feed.";
 "Uses the key you entered." = "Uses the key you entered.";
 "API key" = "API key";
+"Session cookie" = "Session cookie";
+"Copied from your browser. Stored encrypted on this Mac." = "Copied from your browser. Stored encrypted on this Mac.";
+"Add an Ollama session in Settings." = "Add an Ollama session in Settings.";
+"The Ollama session expired. Sign in again and add it." = "The Ollama session expired. Sign in again and add it.";
+"Ollama's page has changed and can no longer be read." = "Ollama's page has changed and can no longer be read.";
+"Reads your quota from Ollama's own settings page." = "Reads your quota from Ollama's own settings page.";
 "Save" = "Save";
 "Monthly limit" = "Monthly limit";
 "Last read" = "Last read";

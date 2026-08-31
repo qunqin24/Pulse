@@ -180,6 +180,12 @@
 "Couldn't reach the update feed." = "连不上更新源。";
 "Uses the key you entered." = "使用你填入的 key。";
 "API key" = "API key";
+"Session cookie" = "登录 Cookie";
+"Copied from your browser. Stored encrypted on this Mac." = "从浏览器复制。加密保存在本机。";
+"Add an Ollama session in Settings." = "请在设置中添加 Ollama 的登录信息。";
+"The Ollama session expired. Sign in again and add it." = "Ollama 的登录已过期,请重新登录后再添加。";
+"Ollama's page has changed and can no longer be read." = "Ollama 的页面变了,已经读不出来了。";
+"Reads your quota from Ollama's own settings page." = "从 Ollama 自己的设置页面读取额度。";
 "Save" = "保存";
 "Monthly limit" = "每月限额";
 "Last read" = "上次读取";
