@@ -180,7 +180,7 @@ struct FloatingUsagePanelView: View {
     /// The rail's size for what is actually being shown. The panel window
     /// stays at its maximum regardless, so this is what the card's placement
     /// and the pointer test have to measure against — not the window.
-    private var railSize: CGSize { DockLayout.size(for: entries.count, on: placement.edge.axis) }
+    private var railSize: CGSize { DockLayout.size(for: entries.count, on: placement.edge.axis, docked: placement.isDocked) }
 
     /// Which way the rail runs, which is the axis the card slides along to
     /// stay level with the ring it belongs to.
@@ -222,7 +222,7 @@ struct FloatingUsagePanelView: View {
     /// the rail and the card share. Centres march from the rail's first-ring
     /// offset, advancing one item plus one gap each time.
     private func ringCentre(for index: Int) -> CGFloat {
-        DockLayout.firstRingAlong
+        DockLayout.firstRingAlong(docked: placement.isDocked)
             + CGFloat(index) * DockLayout.ringStep(on: placement.edge.axis)
     }
 
@@ -445,9 +445,10 @@ enum PanelHitArea {
         edge: PanelEdge,
         accounts: [AccountKey],
         railTop: CGFloat,
-        railLeading: CGFloat
+        railLeading: CGFloat,
+        docked: Bool
     ) -> AccountKey? {
-        let size = DockLayout.size(for: accounts.count, on: edge.axis)
+        let size = DockLayout.size(for: accounts.count, on: edge.axis, docked: docked)
         let rail = rail(edge: edge, railSize: size, railTop: railTop, railLeading: railLeading)
         guard rail.contains(point) else { return nil }
 
@@ -457,7 +458,7 @@ enum PanelHitArea {
         let across = DockLayout.ringCentreAcross(on: edge.axis)
 
         for (index, account) in accounts.enumerated() {
-            let along = DockLayout.firstRingAlong
+            let along = DockLayout.firstRingAlong(docked: docked)
                 + CGFloat(index) * DockLayout.ringStep(on: edge.axis)
             let centre = edge.isVertical
                 ? CGPoint(x: rail.minX + across, y: rail.minY + along)
@@ -498,7 +499,10 @@ enum PanelHitArea {
     static func stripIsContainedInRail() -> Bool {
         for edge in [PanelEdge.left, .right, .top] {
             for count in 1...Provider.allCases.count {
-                let size = DockLayout.size(for: count, on: edge.axis)
+                // Docked is the only state the sliver exists in — off the edge
+                // the rail stays open — but it is measured here in both so a
+                // change to the floating length cannot quietly break it.
+                let size = DockLayout.size(for: count, on: edge.axis, docked: true)
                 let panel = FloatingPanelController.Layout.size(for: edge)
                 // Every offset the rail can take inside the panel, since it is
                 // no longer pinned to the middle of it.

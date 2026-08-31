@@ -118,18 +118,22 @@ final class FloatingPanelController {
         panel.railFrame = { [settings, placement] in
             PanelHitArea.rail(
                 edge: placement.edge,
-                railSize: DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis),
+                railSize: DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis, docked: placement.isDocked),
                 railTop: placement.railTop,
                 railLeading: placement.railLeading
             )
         }
         // The rail's size for a dock it is not on yet, which the drag needs:
         // crossing onto the other axis turns the rail as it goes.
-        panel.railSize = { [settings] edge in
-            DockLayout.size(for: settings.shownAccounts.count, on: edge.axis)
+        // Takes the dock it is *landing* on, not the one it is leaving: the
+        // rail's ends lose the flare's worth of padding the moment it comes off
+        // an edge, and measuring the old state throws the placement off by that
+        // much on the frame it changes.
+        panel.railSize = { [settings] edge, docked in
+            DockLayout.size(for: settings.shownAccounts.count, on: edge.axis, docked: docked)
         }
         panel.grabArea = { [settings, placement] in
-            let size = DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis)
+            let size = DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis, docked: placement.isDocked)
             return placement.isRailExpanded
                 ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
                 : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
@@ -146,7 +150,8 @@ final class FloatingPanelController {
                 edge: placement.edge,
                 accounts: accounts,
                 railTop: placement.railTop,
-                railLeading: placement.railLeading
+                railLeading: placement.railLeading,
+                docked: placement.isDocked
             ) else { return }
             store.refresh(account)
         }
@@ -218,7 +223,7 @@ final class FloatingPanelController {
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
             panel: Layout.size(for: edge),
-            rail: DockLayout.size(for: settings.shownAccounts.count, on: edge.axis)
+            rail: DockLayout.size(for: settings.shownAccounts.count, on: edge.axis, docked: placement.isDocked)
         )
 
         panel.applyLevel(for: placement.dock)
@@ -265,7 +270,7 @@ private final class FloatingPanel: NSPanel {
     var railFrame: (() -> CGRect)?
     /// The rail's size on a given edge, which the drag needs for an edge the
     /// panel has not reached yet.
-    var railSize: ((PanelEdge) -> CGSize)?
+    var railSize: ((PanelEdge, Bool) -> CGSize)?
 
     /// Where a top-docked rail's top edge belongs: the display's physical top,
     /// less whatever a notch takes out of it.
@@ -388,7 +393,7 @@ private final class FloatingPanel: NSPanel {
         // one it is leaving. Measuring in the old one throws the panel across
         // the screen on the frame the axis changes.
         let landing = dock.edge ?? placement.edge
-        let landingRail = railSize?(landing) ?? rail
+        let landingRail = railSize?(landing, dock.isDocked) ?? rail
         let landingPanel = FloatingPanelController.Layout.size(for: landing)
 
         // Under the pointer, in the new orientation. Carrying the old grab

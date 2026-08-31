@@ -53,6 +53,19 @@ enum DockLayout {
             : PanelMetrics.topRailShowsPercentages
     }
 
+    /// The room left at each end of the rail, before the first ring.
+    ///
+    /// Less when the rail is floating, and that is not a taste: docked, the
+    /// concave flare carves `flareHeight` out of each end, so the black you
+    /// actually see above the first ring is the difference. Off the edge there
+    /// is no flare and the whole padding shows — 46pt against a 30pt gap
+    /// between rings, which reads as the ends having been forgotten. Taking
+    /// the flare off the number keeps the *visible* breathing room the same on
+    /// both, which is what anyone is actually looking at.
+    static func endPadding(docked: Bool) -> CGFloat {
+        docked ? verticalPadding : verticalPadding - flareHeight
+    }
+
     /// One item's extent **along** the rail.
     ///
     /// Down a side that is the ring stacked over its label; across the top the
@@ -82,14 +95,14 @@ enum DockLayout {
     /// Rail length for a given number of providers: the padding at each end +
     /// the items + the gaps between them. Providers can be switched off in
     /// settings, so this is not a constant.
-    static func length(for itemCount: Int, on axis: PanelEdge.Axis) -> CGFloat {
+    static func length(for itemCount: Int, on axis: PanelEdge.Axis, docked: Bool = true) -> CGFloat {
         let count = CGFloat(max(itemCount, 1))
-        return verticalPadding * 2 + itemLength(on: axis) * count + itemSpacing * (count - 1)
+        return endPadding(docked: docked) * 2 + itemLength(on: axis) * count + itemSpacing * (count - 1)
     }
 
     /// The rail's full size, laid the way `edge` lays it.
-    static func size(for itemCount: Int, on axis: PanelEdge.Axis) -> CGSize {
-        let along = length(for: itemCount, on: axis)
+    static func size(for itemCount: Int, on axis: PanelEdge.Axis, docked: Bool = true) -> CGSize {
+        let along = length(for: itemCount, on: axis, docked: docked)
         let across = thickness(on: axis)
         return axis == .vertical
             ? CGSize(width: across, height: along)
@@ -111,15 +124,18 @@ enum DockLayout {
 
     /// How far along the rail the first ring's centre sits, and the step from
     /// one to the next.
-    static var firstRingAlong: CGFloat { verticalPadding + ringDiameter / 2 }
+    static func firstRingAlong(docked: Bool = true) -> CGFloat {
+        endPadding(docked: docked) + ringDiameter / 2
+    }
     static func ringStep(on axis: PanelEdge.Axis) -> CGFloat {
         itemLength(on: axis) + itemSpacing
     }
 
     /// Rail length with every provider switched on, which is what the panel
-    /// has to leave room for.
+    /// has to leave room for. Measured docked, which is the longer of the two —
+    /// the window never needs to shrink, only the rail drawn inside it.
     static func maximumLength(on axis: PanelEdge.Axis) -> CGFloat {
-        length(for: PanelMetrics.railCapacity, on: axis)
+        length(for: PanelMetrics.railCapacity, on: axis, docked: true)
     }
 
     /// Kept for the vertical rail, which is what every existing caller means.
@@ -208,7 +224,7 @@ struct UsageDockView: View {
     /// Called as the pointer arrives on the collapsed sliver.
     var onOpen: () -> Void = {}
 
-    private var railSize: CGSize { DockLayout.size(for: entries.count, on: edge.axis) }
+    private var railSize: CGSize { DockLayout.size(for: entries.count, on: edge.axis, docked: isDocked) }
     private var currentSize: CGSize {
         isExpanded ? railSize : DockLayout.collapsedSize(on: edge.axis)
     }
@@ -299,7 +315,7 @@ struct UsageDockView: View {
         // The padding follows the run too: the generous end padding is what
         // the flare needs room inside, and the flare is at the rail's ends
         // whichever way it is lying.
-        .padding(edge.isVertical ? .vertical : .horizontal, DockLayout.verticalPadding)
+        .padding(edge.isVertical ? .vertical : .horizontal, DockLayout.endPadding(docked: isDocked))
         .padding(edge.isVertical ? .horizontal : .vertical, DockLayout.horizontalPadding)
         .frame(width: railSize.width, height: railSize.height)
     }
