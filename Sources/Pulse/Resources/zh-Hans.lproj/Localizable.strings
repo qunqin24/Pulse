@@ -203,6 +203,9 @@
 "Add another account" = "添加另一个账号";
 "Opens the provider's own sign-in page." = "会打开该服务自己的登录页面。";
 "Sign in…" = "登录…";
+"Code" = "验证码";
+"Enter it on the page that opened." = "在刚打开的页面里输入它。";
+"Open page" = "打开页面";
 "Sign-in" = "登录";
 "Name" = "名称";
 "Remove account" = "移除账号";

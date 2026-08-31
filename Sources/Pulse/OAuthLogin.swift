@@ -39,6 +39,13 @@ enum OAuthLogin {
         /// fields the specification names and nothing else. Sending one an
         /// extra field is not harmless — see the note on the scopes.
         let exchangeCarriesState: Bool
+        /// Codex offers a device-code flow, and it is the better one to take:
+        /// no local port to collide with the CLI's own sign-in, no redirect
+        /// back to this Mac at all, and the provider generates the proof key
+        /// itself. It is also the path that works — the redirect flow, matched
+        /// field for field to the published client, still ended on OpenAI's
+        /// own error page.
+        let deviceCodeBase: URL?
 
         static func of(_ provider: Provider) -> Configuration? {
             switch provider {
@@ -59,7 +66,8 @@ enum OAuthLogin {
                     redirectPath: "/callback",
                     extraAuthorizeItems: [URLQueryItem(name: "code", value: "true")],
                     sendsJSON: true,
-                    exchangeCarriesState: true
+                    exchangeCarriesState: true,
+                    deviceCodeBase: nil
                 )
             case .codex:
                 Configuration(
@@ -82,7 +90,8 @@ enum OAuthLogin {
                         URLQueryItem(name: "originator", value: "codex_cli_rs"),
                     ],
                     sendsJSON: false,
-                    exchangeCarriesState: false
+                    exchangeCarriesState: false,
+                    deviceCodeBase: URL(string: "https://auth.openai.com/api/accounts")!
                 )
             case .antigravity, .cursor, .openCodeGo, .kimiCode:
                 nil
@@ -120,6 +129,132 @@ enum OAuthLogin {
             case .unreadableReply: .localized("Couldn't read the reply.")
             }
         }
+    }
+
+    /// What to put in front of the user while a device-code sign-in is
+    /// waiting: a short code, and where to type it.
+    struct DevicePrompt: Sendable, Equatable {
+        let userCode: String
+        let verificationURL: URL
+        let deviceAuthID: String
+        let interval: Duration
+    }
+
+    // MARK: - Device code
+
+    /// Asks the provider for a code to show the user.
+    static func startDevice(_ provider: Provider) async throws -> DevicePrompt {
+        guard
+            let configuration = Configuration.of(provider),
+            let base = configuration.deviceCodeBase
+        else { throw Failure.unsupported }
+
+        let reply = try await postJSON(
+            ["client_id": configuration.clientID],
+            to: base.appending(path: "deviceauth/usercode")
+        )
+
+        guard
+            let code = (reply["user_code"] as? String) ?? (reply["usercode"] as? String),
+            let id = reply["device_auth_id"] as? String
+        else { throw Failure.unreadableReply }
+
+        // The reply states how often to ask; a provider that says nothing gets
+        // the five seconds its own client falls back to.
+        let seconds = (reply["interval"] as? Double)
+            ?? (reply["interval"] as? String).flatMap(Double.init)
+            ?? 5
+
+        return DevicePrompt(
+            userCode: code,
+            verificationURL: URL(string: "https://auth.openai.com/codex/device")!,
+            deviceAuthID: id,
+            interval: .seconds(max(seconds, 1))
+        )
+    }
+
+    /// Waits for the user to enter that code, then turns what comes back into
+    /// tokens.
+    ///
+    /// The provider generates the proof key for this flow and hands both
+    /// halves back with the authorization code, so there is none to make here
+    /// — which is also why the redirect address is one of *theirs*.
+    static func awaitDevice(_ prompt: DevicePrompt, for provider: Provider) async throws -> AccountCredentials {
+        guard
+            let configuration = Configuration.of(provider),
+            let base = configuration.deviceCodeBase
+        else { throw Failure.unsupported }
+
+        let deadline = Date().addingTimeInterval(15 * 60)
+        let url = base.appending(path: "deviceauth/token")
+
+        while Date() < deadline {
+            let body = ["device_auth_id": prompt.deviceAuthID, "user_code": prompt.userCode]
+            if let granted = try await pollDevice(body, at: url) {
+                return try await post([
+                    "grant_type": "authorization_code",
+                    "code": granted.code,
+                    "redirect_uri": "https://auth.openai.com/deviceauth/callback",
+                    "client_id": configuration.clientID,
+                    "code_verifier": granted.verifier,
+                ], to: configuration)
+            }
+            try await Task.sleep(for: prompt.interval)
+        }
+
+        throw Failure.timedOut
+    }
+
+    /// Nil while the user has not finished; the code and its verifier once
+    /// they have. Still-waiting is a 403 or a 404 here, which is the provider's
+    /// own convention rather than the specification's `authorization_pending`.
+    private static func pollDevice(_ body: [String: String], at url: URL) async throws -> (code: String, verifier: String)? {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+            throw Failure.refused(String.localized("The service didn't respond."))
+        }
+
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        if status == 403 || status == 404 { return nil }
+        guard status == 200 else { throw Failure.refused(String.localized("The service returned an error.")) }
+
+        guard
+            let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let code = reply["authorization_code"] as? String,
+            let verifier = reply["code_verifier"] as? String
+        else { throw Failure.unreadableReply }
+
+        return (code, verifier)
+    }
+
+    private static func postJSON(_ body: [String: String], to url: URL) async throws -> [String: Any] {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+            throw Failure.refused(String.localized("The service didn't respond."))
+        }
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw Failure.refused(String.localized("The service returned an error."))
+        }
+        guard let reply = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw Failure.unreadableReply
+        }
+        return reply
+    }
+
+    /// Whether this provider is signed in to by showing a code rather than by
+    /// sending the browser back here.
+    static func usesDeviceCode(_ provider: Provider) -> Bool {
+        Configuration.of(provider)?.deviceCodeBase != nil
     }
 
     // MARK: - Signing in

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// The settings window: a source list on the left, one pane at a time on the
@@ -27,6 +28,9 @@ struct SettingsView: View {
     /// wrong with the last one.
     @State private var signingIn: Provider?
     @State private var signInError: String?
+    /// Shown while a device-code sign-in is waiting: the code the provider
+    /// gave, and where to type it.
+    @State private var devicePrompt: OAuthLogin.DevicePrompt?
 
     var body: some View {
         NavigationSplitView {
@@ -640,6 +644,27 @@ struct SettingsView: View {
                             .disabled(signingIn != nil)
                     }
 
+                    // While a device-code sign-in is waiting, the code is the
+                    // whole interaction: it is typed on the provider's page,
+                    // not here, and nothing comes back to this Mac.
+                    if let devicePrompt {
+                        SettingsRowDivider()
+                        SettingsRow(
+                            String.localized("Code"),
+                            subtitle: String.localized("Enter it on the page that opened.")
+                        ) {
+                            HStack(spacing: 10) {
+                                Text(devicePrompt.userCode)
+                                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                                    .textSelection(.enabled)
+
+                                Button(String.localized("Open page")) {
+                                    NSWorkspace.shared.open(devicePrompt.verificationURL)
+                                }
+                            }
+                        }
+                    }
+
                     if let signInError {
                         SettingsRowDivider()
                         SettingsRow(String.localized("Sign-in"), subtitle: signInError) { EmptyView() }
@@ -677,9 +702,23 @@ struct SettingsView: View {
         signInError = nil
 
         Task {
-            defer { signingIn = nil }
+            defer {
+                signingIn = nil
+                devicePrompt = nil
+            }
             do {
-                let credentials = try await OAuthLogin.signIn(to: provider)
+                let credentials: AccountCredentials
+                if OAuthLogin.usesDeviceCode(provider) {
+                    // A code the user types on the provider's own page. No
+                    // local port to collide with the CLI's sign-in, and
+                    // nothing redirected back to this Mac.
+                    let prompt = try await OAuthLogin.startDevice(provider)
+                    devicePrompt = prompt
+                    NSWorkspace.shared.open(prompt.verificationURL)
+                    credentials = try await OAuthLogin.awaitDevice(prompt, for: provider)
+                } else {
+                    credentials = try await OAuthLogin.signIn(to: provider)
+                }
                 // Seeded from whatever the provider said about the account, so
                 // two subscriptions are not both offered as "Codex".
                 let added = settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))

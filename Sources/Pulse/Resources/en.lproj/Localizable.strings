@@ -203,6 +203,9 @@
 "Add another account" = "Add another account";
 "Opens the provider's own sign-in page." = "Opens the provider's own sign-in page.";
 "Sign in…" = "Sign in…";
+"Code" = "Code";
+"Enter it on the page that opened." = "Enter it on the page that opened.";
+"Open page" = "Open page";
 "Sign-in" = "Sign-in";
 "Name" = "Name";
 "Remove account" = "Remove account";
