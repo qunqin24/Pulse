@@ -203,6 +203,23 @@ final class AppSettings {
         }
     }
 
+    /// Whether the rail keeps its percent labels down a side of the screen.
+    ///
+    /// On by default, which is the opposite of the top rail's. Against a side
+    /// the label sits under its ring and costs only the rail's length; across
+    /// the top it is a second line of type directly under the menu bar. Same
+    /// control, opposite defaults, for that reason.
+    var sideRailShowsPercentages: Bool {
+        didSet {
+            guard sideRailShowsPercentages != oldValue else { return }
+            // Before the change is announced, like `panelSize`: whoever reacts
+            // is about to measure the rail, and it just got shorter or longer.
+            PanelMetrics.showSidePercentages(sideRailShowsPercentages)
+            UserDefaults.standard.set(sideRailShowsPercentages, forKey: Key.sideRailShowsPercentages)
+            onChange?()
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -264,7 +281,8 @@ final class AppSettings {
         autoCollapse: Bool = true,
         panelSize: PanelSize = .default,
         usesGlass: Bool = false,
-        topRailShowsPercentages: Bool = false
+        topRailShowsPercentages: Bool = false,
+        sideRailShowsPercentages: Bool = true
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -280,6 +298,7 @@ final class AppSettings {
         self.panelSize = panelSize
         self.usesGlass = usesGlass
         self.topRailShowsPercentages = topRailShowsPercentages
+        self.sideRailShowsPercentages = sideRailShowsPercentages
     }
 
     func source(for account: AccountKey) -> UsageSource {
@@ -398,11 +417,13 @@ final class AppSettings {
             panelSize: defaults.string(forKey: Key.panelSize)
                 .flatMap(PanelSize.init(rawValue:)) ?? .default,
             usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
-            topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false
+            topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
+            sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
+        PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }
@@ -469,6 +490,7 @@ final class AppSettings {
         static let panelSize = "settings.panelSize"
         static let usesGlass = "settings.usesGlass"
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
+        static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

@@ -159,6 +159,9 @@ enum PanelMetrics {
     /// from before SwiftUI has laid anything out — the same reason `scale`
     /// lives here. `AppSettings` writes both.
     nonisolated(unsafe) private static var storedTopPercentages = false
+    /// The same for a rail down a side, where the default is the other way
+    /// round: the label sits under its ring and costs nothing there.
+    nonisolated(unsafe) private static var storedSidePercentages = true
 
     /// How many rings the panel has to leave room for.
     ///
@@ -172,6 +175,7 @@ enum PanelMetrics {
 
     static var scale: CGFloat { lock.withLock { stored } }
     static var topRailShowsPercentages: Bool { lock.withLock { storedTopPercentages } }
+    static var sideRailShowsPercentages: Bool { lock.withLock { storedSidePercentages } }
     static var railCapacity: Int { lock.withLock { storedCapacity } }
 
     static func use(_ size: PanelSize) {
@@ -180,6 +184,10 @@ enum PanelMetrics {
 
     static func showTopPercentages(_ shows: Bool) {
         lock.withLock { storedTopPercentages = shows }
+    }
+
+    static func showSidePercentages(_ shows: Bool) {
+        lock.withLock { storedSidePercentages = shows }
     }
 
     static func makeRoom(for accounts: Int) {

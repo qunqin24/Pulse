@@ -43,11 +43,14 @@ enum DockLayout {
     /// Height of one ring + its percent label.
     static var itemHeight: CGFloat { ringDiameter + ringToTextSpacing + percentTextHeight }
 
-    /// Whether an item carries its percent label, which is a setting only
-    /// while the rail is lying across the top — see
-    /// `AppSettings.topRailShowsPercentages`.
+    /// Whether an item carries its percent label. A setting on both axes, with
+    /// opposite defaults: down a side the label sits under its ring and costs
+    /// nothing, while across the top it is a second line of type directly under
+    /// the menu bar.
     static func showsPercentages(on axis: PanelEdge.Axis) -> Bool {
-        axis == .vertical || PanelMetrics.topRailShowsPercentages
+        axis == .vertical
+            ? PanelMetrics.sideRailShowsPercentages
+            : PanelMetrics.topRailShowsPercentages
     }
 
     /// One item's extent **along** the rail.
@@ -57,7 +60,7 @@ enum DockLayout {
     /// is only as long as the ring. The label is narrower than the ring at
     /// every size the rail is drawn at, so it never sets this.
     static func itemLength(on axis: PanelEdge.Axis) -> CGFloat {
-        axis == .vertical ? itemHeight : ringDiameter
+        showsPercentages(on: axis) && axis == .vertical ? itemHeight : ringDiameter
     }
 
     /// The rail's extent **across** its run: its width down a side, its height
@@ -67,6 +70,10 @@ enum DockLayout {
     /// always been drawn wider than its contents — so a top rail without
     /// labels keeps exactly the same proportion by using the same number. With
     /// labels there is a second line to make room for.
+    /// Down a side this is always `width`, labels or not: the berth's flare
+    /// and its corners share that measurement (`cornerRadius + flareWidth <=
+    /// width`), so narrowing the rail when the labels go would fold the shape
+    /// in on itself. Only the rail's *length* changes there.
     static func thickness(on axis: PanelEdge.Axis) -> CGFloat {
         guard axis == .horizontal, showsPercentages(on: .horizontal) else { return width }
         return itemHeight + horizontalPadding * 2

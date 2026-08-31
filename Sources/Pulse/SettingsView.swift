@@ -223,6 +223,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Percentages at the side"),
+                    subtitle: String.localized("The figure under each ring, docked left or right.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.sideRailShowsPercentages },
+                        set: { settings.sideRailShowsPercentages = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Percentages on top"),
                     subtitle: String.localized("Only when the panel is docked to the top.")
                 ) {
@@ -232,6 +247,7 @@ struct SettingsView: View {
                     ))
                     .labelsHidden()
                     .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
                 }
             }
 
