@@ -197,6 +197,25 @@
 "Move %@ up" = "Move %@ up";
 "Move %@ down" = "Move %@ down";
 "Not shown" = "Not shown";
+
+/* Accounts */
+"Accounts" = "Accounts";
+"Add another account" = "Add another account";
+"Opens the provider's own sign-in page." = "Opens the provider's own sign-in page.";
+"Sign in…" = "Sign in…";
+"Sign-in" = "Sign-in";
+"Name" = "Name";
+"Remove account" = "Remove account";
+"Forgets its login and takes it off the rail." = "Forgets its login and takes it off the rail.";
+"Remove" = "Remove";
+"Couldn't save the login on this Mac." = "Couldn't save the login on this Mac.";
+"Sign in to this account again in Settings." = "Sign in to this account again in Settings.";
+"This provider can't be signed in to from Pulse." = "This provider can't be signed in to from Pulse.";
+"Finish or close the sign-in already running, then try again." = "Finish or close the sign-in already running, then try again.";
+"Sign-in was cancelled." = "Sign-in was cancelled.";
+"This page can be closed." = "This page can be closed.";
+"Sign-in failed. You can close this page." = "Sign-in failed. You can close this page.";
+"Signed in. You can close this page and go back to Pulse." = "Signed in. You can close this page and go back to Pulse.";
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.";
 "Pulse is built from a design he posted on X." = "Pulse is built from a design he posted on X.";
 "Open" = "Open";

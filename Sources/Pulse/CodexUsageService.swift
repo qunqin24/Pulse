@@ -52,6 +52,25 @@ struct CodexUsageService: Sendable {
 
     private func fetchOverHTTP() async -> HTTPOutcome {
         guard let credentials = loadCredentials() else { return .needsFreshCredentials }
+        return await fetchOverHTTP(credentials, for: AccountKey(.codex))
+    }
+
+    /// An account Pulse signed in to itself, read with the token it holds for
+    /// it. No route to choose: the app server and the stored CLI login both
+    /// belong to whichever account the CLI is signed in to, not this one.
+    func fetch(account: AccountKey, credentials: AccountCredentials) async -> ProviderUsage {
+        let borrowed = Credentials(
+            accessToken: credentials.accessToken,
+            accountID: credentials.accountID ?? ""
+        )
+        switch await fetchOverHTTP(borrowed, for: account) {
+        case .success(let usage): return usage
+        case .needsFreshCredentials: return .unavailable(account, reason: .signInRequired)
+        case .failed(let reason): return .unavailable(account, reason: reason)
+        }
+    }
+
+    private func fetchOverHTTP(_ credentials: Credentials, for account: AccountKey) async -> HTTPOutcome {
 
         var request = URLRequest(url: endpoint)
         request.timeoutInterval = 20
@@ -75,7 +94,7 @@ struct CodexUsageService: Sendable {
                     guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         return .failed(.unreadableReply)
                     }
-                    return .success(Self.parseUsageResponse(root))
+                    return .success(Self.parseUsageResponse(root, for: account))
                 case 401, 403:
                     // The stored token has aged out; the app server can renew it.
                     return .needsFreshCredentials
@@ -131,7 +150,7 @@ struct CodexUsageService: Sendable {
     }
 
     /// The shape `wham/usage` returns.
-    private static func parseUsageResponse(_ root: [String: Any]) -> ProviderUsage {
+    private static func parseUsageResponse(_ root: [String: Any], for account: AccountKey) -> ProviderUsage {
         var windows: [UsageWindow] = []
 
         // Account-wide limits, which the server leaves unnamed.
@@ -163,7 +182,7 @@ struct CodexUsageService: Sendable {
         let credits = root["credits"] as? [String: Any]
 
         return ProviderUsage(
-            account: AccountKey(.codex),
+            account: account,
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,

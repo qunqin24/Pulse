@@ -33,6 +33,18 @@ struct ClaudeCodeUsageService: Sendable {
     /// minutes means the session has gone quiet.
     var freshFor: TimeInterval = 10 * 60
 
+    /// An account Pulse signed in to itself, read with the token it holds for
+    /// it. There is no route to choose here: the status-line fallback and the
+    /// stored CLI login both belong to whichever account the CLI is signed in
+    /// to, which is not this one.
+    func fetch(account: AccountKey, token: String) async -> ProviderUsage {
+        switch await fetchOverHTTP(token: token, for: account) {
+        case .success(let usage): return usage
+        case .needsFreshCredentials: return .unavailable(account, reason: .claudeLoginExpired)
+        case .failed(let reason): return .unavailable(account, reason: reason)
+        }
+    }
+
     func fetch(source: UsageSource = .automatic) async -> ProviderUsage {
         switch source {
         case .tooling:
@@ -48,7 +60,7 @@ struct ClaudeCodeUsageService: Sendable {
             guard let token = loadAccessToken() else {
                 return .unavailable(.claudeCode, reason: .claudeSignInRequired)
             }
-            switch await fetchOverHTTP(token: token) {
+            switch await fetchOverHTTP(token: token, for: AccountKey(.claudeCode)) {
             case .success(let usage): return usage
             // A token was found and refused, which is not the same thing as
             // never having signed in.
@@ -64,7 +76,7 @@ struct ClaudeCodeUsageService: Sendable {
             let credentials = storedCredentials()
             let hadCredentials = credentials != nil
             if let token = credentials.flatMap(Self.unexpiredAccessToken) {
-                switch await fetchOverHTTP(token: token) {
+                switch await fetchOverHTTP(token: token, for: AccountKey(.claudeCode)) {
                 case .success(let usage):
                     return usage
                 case .needsFreshCredentials:
@@ -90,7 +102,7 @@ struct ClaudeCodeUsageService: Sendable {
         case failed(ProviderUsage.Unavailability)
     }
 
-    private func fetchOverHTTP(token: String) async -> HTTPOutcome {
+    private func fetchOverHTTP(token: String, for account: AccountKey) async -> HTTPOutcome {
         var request = URLRequest(url: endpoint)
         request.timeoutInterval = 20
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -108,7 +120,7 @@ struct ClaudeCodeUsageService: Sendable {
                     guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         return .failed(.unreadableReply)
                     }
-                    return .success(Self.parse(root))
+                    return .success(Self.parse(root, for: account))
                 case 401, 403:
                     return .needsFreshCredentials
                 case 429:
@@ -203,7 +215,7 @@ struct ClaudeCodeUsageService: Sendable {
 
     // MARK: - Parsing
 
-    private static func parse(_ root: [String: Any]) -> ProviderUsage {
+    private static func parse(_ root: [String: Any], for account: AccountKey) -> ProviderUsage {
         // `limits` is the fuller answer: it carries per-model windows too,
         // which the top-level `five_hour`/`seven_day` fields don't.
         var windows = (root["limits"] as? [[String: Any]] ?? []).compactMap(window(fromLimit:))
@@ -229,7 +241,7 @@ struct ClaudeCodeUsageService: Sendable {
         }
 
         return ProviderUsage(
-            account: AccountKey(.claudeCode),
+            account: account,
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,

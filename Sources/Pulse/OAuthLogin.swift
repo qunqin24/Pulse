@@ -1,0 +1,298 @@
+import AppKit
+import CryptoKit
+import Foundation
+import Network
+
+/// Signing Pulse in to one account of a provider, so it can watch more than
+/// one subscription at a time.
+///
+/// **Pulse cannot register an OAuth application of its own with either
+/// provider** — neither offers that — so it drives the same public client the
+/// provider's own CLI uses, with the same authorize and token endpoints. Two
+/// consequences worth being clear about, both of them stated in Settings
+/// before anyone signs in: the consent page names the CLI rather than Pulse,
+/// and this is not an official integration, so either provider can change or
+/// withdraw it.
+///
+/// What it is *not* is a way to disturb the CLI's own login. The tokens
+/// obtained here are Pulse's, kept in `AccountCredentialStore` and renewed
+/// from Pulse's own refresh token; nothing here reads or writes what the CLI
+/// stored. That separation is the reason for signing in at all rather than
+/// copying the credential the CLI already has — copied, it would expire in
+/// hours with no way to renew it that did not risk invalidating the CLI's.
+enum OAuthLogin {
+    struct Configuration: Sendable {
+        let authorize: URL
+        let token: URL
+        let clientID: String
+        let scopes: [String]
+        /// A port the provider's client is registered for, when it insists on
+        /// one; nil takes any free port, which is what a public client that
+        /// accepts arbitrary loopback redirects allows.
+        let fixedPort: UInt16?
+        let redirectPath: String
+        let extraAuthorizeItems: [URLQueryItem]
+        /// Anthropic's token endpoint takes JSON; OpenAI's takes a form, which
+        /// is what the specification asks for. Neither accepts the other.
+        let sendsJSON: Bool
+
+        static func of(_ provider: Provider) -> Configuration? {
+            switch provider {
+            case .claudeCode:
+                // Read out of the installed CLI rather than remembered: an
+                // OAuth flow with one parameter wrong fails in a way that
+                // looks like the user's fault.
+                Configuration(
+                    authorize: URL(string: "https://claude.com/cai/oauth/authorize")!,
+                    token: URL(string: "https://platform.claude.com/v1/oauth/token")!,
+                    clientID: "9d1c250a-e61b-44d9-88ed-5944d1962f5e",
+                    // The narrowest set that can read an account's limits. The
+                    // CLI asks for inference and session scopes as well, which
+                    // would let Pulse *spend* the plan it is only supposed to
+                    // be reporting on.
+                    scopes: ["user:profile"],
+                    fixedPort: nil,
+                    redirectPath: "/callback",
+                    extraAuthorizeItems: [URLQueryItem(name: "code", value: "true")],
+                    sendsJSON: true
+                )
+            case .codex:
+                Configuration(
+                    authorize: URL(string: "https://auth.openai.com/oauth/authorize")!,
+                    token: URL(string: "https://auth.openai.com/oauth/token")!,
+                    clientID: "app_EMoamEEZ73f0CkXaXp7hrann",
+                    scopes: ["openid", "profile", "email", "offline_access"],
+                    // Not negotiable: this client is registered for exactly
+                    // this loopback address, so the port has to be free.
+                    fixedPort: 1455,
+                    redirectPath: "/auth/callback",
+                    extraAuthorizeItems: [
+                        URLQueryItem(name: "id_token_add_organizations", value: "true"),
+                        URLQueryItem(name: "codex_cli_simplified_flow", value: "true"),
+                        URLQueryItem(name: "originator", value: "codex_cli_rs"),
+                    ],
+                    sendsJSON: false
+                )
+            case .antigravity, .cursor, .openCodeGo, .kimiCode:
+                nil
+            }
+        }
+    }
+
+    enum Failure: Error, Equatable {
+        /// This provider has no login Pulse can drive.
+        case unsupported
+        /// The one port the provider's client accepts is already in use —
+        /// usually by the CLI's own sign-in, running at the same moment.
+        case portBusy(UInt16)
+        case cancelled
+        case refused(String)
+        case unreadableReply
+
+        var message: String {
+            switch self {
+            case .unsupported: .localized("This provider can't be signed in to from Pulse.")
+            case .portBusy: .localized("Finish or close the sign-in already running, then try again.")
+            case .cancelled: .localized("Sign-in was cancelled.")
+            case .refused(let why): why
+            case .unreadableReply: .localized("Couldn't read the reply.")
+            }
+        }
+    }
+
+    // MARK: - Signing in
+
+    /// Opens the provider's consent page and waits for the browser to come
+    /// back. Returns the tokens; storing them is the caller's business.
+    static func signIn(to provider: Provider) async throws -> AccountCredentials {
+        guard let configuration = Configuration.of(provider) else { throw Failure.unsupported }
+
+        let verifier = randomToken()
+        let challenge = Data(SHA256.hash(data: Data(verifier.utf8))).base64URLEncoded
+        let state = randomToken()
+
+        let listener = try LoopbackCallback(port: configuration.fixedPort, path: configuration.redirectPath)
+        defer { listener.stop() }
+
+        // Bound first: the port is part of the redirect address, and the
+        // redirect address is part of the request the browser is about to be
+        // sent to. Both halves of the exchange have to name the same one.
+        try await listener.start()
+        let redirect = "http://localhost:\(listener.port)\(configuration.redirectPath)"
+        guard let url = authorizeURL(configuration, redirect: redirect, challenge: challenge, state: state) else {
+            throw Failure.unsupported
+        }
+
+        _ = await MainActor.run { NSWorkspace.shared.open(url) }
+
+        let code = try await listener.awaitCode(matching: state)
+        return try await exchange(code, configuration: configuration, verifier: verifier, redirect: redirect, state: state)
+    }
+
+    /// Internal rather than private so the request can be driven directly in
+    /// a probe — an OAuth flow with one parameter wrong fails in a way that
+    /// looks like the user's fault, so the request is worth being able to read
+    /// without performing a sign-in to see it.
+    static func authorizeURL(
+        _ configuration: Configuration,
+        redirect: String,
+        challenge: String,
+        state: String
+    ) -> URL? {
+        guard var components = URLComponents(url: configuration.authorize, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+
+        components.queryItems = configuration.extraAuthorizeItems + [
+            URLQueryItem(name: "client_id", value: configuration.clientID),
+            URLQueryItem(name: "response_type", value: "code"),
+            URLQueryItem(name: "redirect_uri", value: redirect),
+            URLQueryItem(name: "scope", value: configuration.scopes.joined(separator: " ")),
+            URLQueryItem(name: "code_challenge", value: challenge),
+            URLQueryItem(name: "code_challenge_method", value: "S256"),
+            URLQueryItem(name: "state", value: state),
+        ]
+        return components.url
+    }
+
+    // MARK: - Tokens
+
+    private static func exchange(
+        _ code: String,
+        configuration: Configuration,
+        verifier: String,
+        redirect: String,
+        state: String
+    ) async throws -> AccountCredentials {
+        try await post([
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": redirect,
+            "client_id": configuration.clientID,
+            "code_verifier": verifier,
+            "state": state,
+        ], to: configuration)
+    }
+
+    /// Renews an account's access token.
+    ///
+    /// The provider may hand back a new refresh token; when it doesn't, the
+    /// old one stays valid and is carried forward. Nothing here touches the
+    /// CLI's own stored login, so a renewal cannot sign the user out of it.
+    static func refresh(_ credentials: AccountCredentials, for provider: Provider) async throws -> AccountCredentials {
+        guard let configuration = Configuration.of(provider) else { throw Failure.unsupported }
+
+        var renewed = try await post([
+            "grant_type": "refresh_token",
+            "refresh_token": credentials.refreshToken,
+            "client_id": configuration.clientID,
+            "scope": configuration.scopes.joined(separator: " "),
+        ], to: configuration)
+
+        if renewed.refreshToken.isEmpty { renewed.refreshToken = credentials.refreshToken }
+        renewed.accountName = renewed.accountName ?? credentials.accountName
+        renewed.accountID = renewed.accountID ?? credentials.accountID
+        return renewed
+    }
+
+    private static func post(_ body: [String: String], to configuration: Configuration) async throws -> AccountCredentials {
+        var request = URLRequest(url: configuration.token)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+
+        if configuration.sendsJSON {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        } else {
+            request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+            var form = URLComponents()
+            form.queryItems = body.map { URLQueryItem(name: $0.key, value: $0.value) }
+            request.httpBody = form.percentEncodedQuery.map { Data($0.utf8) }
+        }
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request) else {
+            throw Failure.refused(String.localized("The service didn't respond."))
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw Failure.unreadableReply
+        }
+
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            // The provider's own words when it has them: "invalid_scope" says
+            // something a generic failure cannot.
+            let described = (json["error_description"] as? String) ?? (json["error"] as? String)
+            throw Failure.refused(described ?? String.localized("The service returned an error."))
+        }
+
+        guard
+            let access = json["access_token"] as? String,
+            let lifetime = json["expires_in"] as? Double
+        else { throw Failure.unreadableReply }
+
+        return AccountCredentials(
+            accessToken: access,
+            refreshToken: json["refresh_token"] as? String ?? "",
+            expiresAt: Date().addingTimeInterval(lifetime),
+            accountName: accountName(in: json),
+            accountID: accountID(in: access)
+        )
+    }
+
+    /// Whatever the reply says about who this is, so two subscriptions are not
+    /// both offered to the user as "Codex". OpenAI returns an id token with an
+    /// email in it; Anthropic names the plan.
+    private static func accountName(in json: [String: Any]) -> String? {
+        if let claims = (json["id_token"] as? String).flatMap(claims(inJWT:)) {
+            if let email = claims["email"] as? String, !email.isEmpty { return email }
+        }
+        if let account = json["account"] as? [String: Any] {
+            if let email = account["email_address"] as? String, !email.isEmpty { return email }
+        }
+        return nil
+    }
+
+    /// The account the token was issued for, which Codex's usage endpoint
+    /// wants in a header. It is nested in a namespaced claim rather than at
+    /// the top level, and only the access token carries it.
+    private static func accountID(in accessToken: String) -> String? {
+        guard
+            let claims = claims(inJWT: accessToken),
+            let auth = claims["https://api.openai.com/auth"] as? [String: Any]
+        else { return nil }
+
+        return auth["chatgpt_account_id"] as? String
+    }
+
+    private static func claims(inJWT token: String) -> [String: Any]? {
+        let parts = token.split(separator: ".")
+        guard parts.count == 3 else { return nil }
+
+        var encoded = parts[1]
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        encoded += String(repeating: "=", count: (4 - encoded.count % 4) % 4)
+
+        return (try? Data(base64Encoded: encoded).flatMap {
+            try JSONSerialization.jsonObject(with: $0) as? [String: Any]
+        }) ?? nil
+    }
+
+    /// 32 bytes, base64url — comfortably inside the 43…128 characters PKCE
+    /// asks of a verifier, and the same generator serves the state.
+    static func randomToken() -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return Data(bytes).base64URLEncoded
+    }
+}
+
+private extension Data {
+    /// Base64 as OAuth wants it: URL-safe, unpadded.
+    var base64URLEncoded: String {
+        base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+}

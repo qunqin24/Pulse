@@ -15,10 +15,8 @@ enum APIKeyStore {
 
     static func key(for provider: Provider) -> String? {
         guard
-            let secret = secret(),
             let stored = load()[provider.rawValue],
-            let box = try? AES.GCM.SealedBox(combined: stored),
-            let opened = try? AES.GCM.open(box, using: secret),
+            let opened = LocalSecrets.open(stored, purpose: Self.purpose),
             let key = String(data: opened, encoding: .utf8),
             !key.isEmpty
         else { return nil }
@@ -36,11 +34,7 @@ enum APIKeyStore {
         let trimmed = key?.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if let trimmed, !trimmed.isEmpty {
-            guard
-                let secret = secret(),
-                let sealed = try? AES.GCM.seal(Data(trimmed.utf8), using: secret).combined
-            else { return false }
-
+            guard let sealed = LocalSecrets.seal(Data(trimmed.utf8), purpose: Self.purpose) else { return false }
             keys[provider.rawValue] = sealed
         } else {
             keys[provider.rawValue] = nil
@@ -48,6 +42,10 @@ enum APIKeyStore {
 
         return save(keys)
     }
+
+    /// Distinct from the account logins' purpose, so a box from one store can
+    /// never be opened by the other.
+    private static let purpose = "Pulse api keys"
 
     // MARK: - The file
 
@@ -67,49 +65,7 @@ enum APIKeyStore {
     }
 
     private static func save(_ keys: [String: Data]) -> Bool {
-        PulseStorage.prepare()
-
         guard let data = try? JSONEncoder().encode(keys) else { return false }
-        guard (try? data.write(to: file, options: .atomic)) != nil else { return false }
-
-        // Written after the file exists, and again on every save: an atomic
-        // write replaces the file, and the replacement does not inherit it.
-        try? FileManager.default.setAttributes(
-            [.posixPermissions: 0o600],
-            ofItemAtPath: file.path
-        )
-        return true
-    }
-
-    // MARK: - The secret
-
-    /// Derived from this Mac's hardware identifier, so the same file on
-    /// another machine yields nothing.
-    ///
-    /// Nil when the identifier can't be read. Falling back to a fixed string
-    /// would give every Mac the same key, which is worse than not encrypting
-    /// at all — it would look protected while a copied file opened anywhere.
-    private static func secret() -> SymmetricKey? {
-        guard let hardware = hardwareIdentifier() else { return nil }
-
-        let material = Data("Pulse api keys".utf8) + Data(hardware.utf8)
-        return SymmetricKey(data: SHA256.hash(data: material))
-    }
-
-    private static func hardwareIdentifier() -> String? {
-        let service = IOServiceGetMatchingService(
-            kIOMainPortDefault,
-            IOServiceMatching("IOPlatformExpertDevice")
-        )
-        guard service != 0 else { return nil }
-        defer { IOObjectRelease(service) }
-
-        let property = IORegistryEntryCreateCFProperty(
-            service,
-            kIOPlatformUUIDKey as CFString,
-            kCFAllocatorDefault,
-            0
-        )
-        return property?.takeRetainedValue() as? String
+        return LocalSecrets.write(data, to: file)
     }
 }

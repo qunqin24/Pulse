@@ -23,6 +23,10 @@ struct SettingsView: View {
     /// the store is a file, not something SwiftUI can observe.
     @State private var apiKey = ""
     @State private var savedKey = ""
+    /// The provider a browser sign-in is currently open for, and what went
+    /// wrong with the last one.
+    @State private var signingIn: Provider?
+    @State private var signInError: String?
 
     var body: some View {
         NavigationSplitView {
@@ -389,6 +393,8 @@ struct SettingsView: View {
 
             connection(for: account)
 
+            accounts(for: account)
+
             liveUsage(for: account)
 
             // Both are built from the transcripts the CLIs leave behind, so
@@ -604,6 +610,89 @@ struct SettingsView: View {
             if account.provider == .claudeCode, source != .endpoint {
                 SettingsRowDivider()
                 claudeCodeStatusLine
+            }
+        }
+    }
+
+    /// Signing in to another subscription of the same provider, and getting
+    /// rid of one.
+    ///
+    /// Only shown where it can work. The other providers are read from a login
+    /// their own tool stored, and that store holds exactly one — a second
+    /// account of theirs is not something Pulse can be shown, so offering it
+    /// would be a control that cannot do anything.
+    @ViewBuilder
+    private func accounts(for account: AccountKey) -> some View {
+        if account.provider.supportsMultipleAccounts {
+            SettingsGroup(String.localized("Accounts")) {
+                if account.isPrimary {
+                    SettingsRow(
+                        String.localized("Add another account"),
+                        // The one thing someone should know before they start:
+                        // whose name is on the page that opens.
+                        subtitle: String.localized("Opens the provider's own sign-in page.")
+                    ) {
+                        Button(String.localized("Sign in…")) { signIn(to: account.provider) }
+                            .disabled(signingIn != nil)
+                    }
+
+                    if let signInError {
+                        SettingsRowDivider()
+                        SettingsRow(String.localized("Sign-in"), subtitle: signInError) { EmptyView() }
+                    }
+                } else {
+                    SettingsRow(String.localized("Name")) {
+                        TextField("", text: Binding(
+                            get: { settings.label(for: account) },
+                            set: { settings.rename(account, to: $0) }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: SettingsLayout.controlWidth)
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Remove account"),
+                        subtitle: String.localized("Forgets its login and takes it off the rail.")
+                    ) {
+                        Button(String.localized("Remove"), role: .destructive) {
+                            AccountCredentialStore.set(nil, for: account)
+                            settings.removeAccount(account)
+                            pane = .general
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Runs the browser sign-in, then keeps whatever came back.
+    private func signIn(to provider: Provider) {
+        signingIn = provider
+        signInError = nil
+
+        Task {
+            defer { signingIn = nil }
+            do {
+                let credentials = try await OAuthLogin.signIn(to: provider)
+                // Seeded from whatever the provider said about the account, so
+                // two subscriptions are not both offered as "Codex".
+                let added = settings.addAccount(
+                    provider,
+                    label: credentials.accountName ?? provider.displayName
+                )
+                guard AccountCredentialStore.set(credentials, for: added) else {
+                    settings.removeAccount(added)
+                    signInError = String.localized("Couldn't save the login on this Mac.")
+                    return
+                }
+                store.refresh(added)
+                pane = .account(added)
+            } catch let failure as OAuthLogin.Failure {
+                signInError = failure.message
+            } catch {
+                signInError = String.localized("Sign-in was cancelled.")
             }
         }
     }

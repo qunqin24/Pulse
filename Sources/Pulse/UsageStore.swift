@@ -169,6 +169,7 @@ final class UsageStore {
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
         let wanted = Set(settings.shownAccounts.filter(\.isPrimary).map(\.provider))
+        let extras = settings.shownAccounts.filter { !$0.isPrimary }
 
         Task { [codex, claudeCode, antigravity, cursor] in
             // Independent, so they run side by side rather than one waiting on
@@ -206,6 +207,13 @@ final class UsageStore {
             let fetchedOpenCode = await UsageCache.shared.reconciled(rawOpenCode)
             let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
             let fetchedCursor = await UsageCache.shared.reconciled(rawCursor)
+
+            // Accounts Pulse signed in to itself, read one at a time: each
+            // may have to renew its token first, and they are few.
+            for account in extras {
+                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
+                self.usage[account.id] = await UsageCache.shared.reconciled(raw)
+            }
 
             self.usage[AccountKey(.codex).id] = fetchedCodex
             self.usage[AccountKey(.claudeCode).id] = fetchedClaude
@@ -258,6 +266,9 @@ final class UsageStore {
 
         Task { [codex, claudeCode, antigravity, cursor] in
             let raw: ProviderUsage
+            if !account.isPrimary {
+                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
+            } else {
             switch provider {
             case .codex:
                 raw = await codex.fetch(source: source)
@@ -271,6 +282,7 @@ final class UsageStore {
                 raw = await openCode.fetch()
             case .kimiCode:
                 raw = await kimi.fetch()
+            }
             }
 
             let fetched = await UsageCache.shared.reconciled(raw)
@@ -293,6 +305,38 @@ final class UsageStore {
             self.refreshingAccount = nil
             self.scheduleNext()
             self.runQueued()
+        }
+    }
+
+    /// An account Pulse signed in to itself.
+    ///
+    /// Its token is renewed here when it is close to expiring, because nothing
+    /// else will: the CLI keeps its own login fresh, and this one is not that.
+    /// A renewal that fails leaves the account signed out rather than
+    /// reporting a network error — the remedy is the same either way, and it
+    /// is one the user can act on.
+    private static func fetchAdded(
+        _ account: AccountKey,
+        claudeCode: ClaudeCodeUsageService,
+        codex: CodexUsageService
+    ) async -> ProviderUsage {
+        guard var credentials = AccountCredentialStore.credentials(for: account) else {
+            return .unavailable(account, reason: .signedOut)
+        }
+
+        if !credentials.isFresh {
+            guard let renewed = try? await OAuthLogin.refresh(credentials, for: account.provider) else {
+                return .unavailable(account, reason: .signedOut)
+            }
+            credentials = renewed
+            AccountCredentialStore.set(credentials, for: account)
+        }
+
+        return switch account.provider {
+        case .claudeCode: await claudeCode.fetch(account: account, token: credentials.accessToken)
+        case .codex: await codex.fetch(account: account, credentials: credentials)
+        // Nothing else can be signed in to, so nothing else gets here.
+        case .antigravity, .cursor, .openCodeGo, .kimiCode: .unavailable(account, reason: .loading)
         }
     }
 

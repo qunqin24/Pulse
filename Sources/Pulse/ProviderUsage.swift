@@ -106,6 +106,11 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case cursorSignInRequired
         /// There is a login, and the account refused it.
         case cursorLoginExpired
+        /// An account Pulse signed in to itself, whose login has gone and
+        /// cannot be renewed. Names no provider: every added account can
+        /// reach this, and a message naming one is the trap the rest of this
+        /// enum was fixed for once already.
+        case signedOut
         /// No key has been entered for a provider that needs one.
         case apiKeyMissing
         /// There is a key, and the service refused it.
@@ -129,6 +134,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
+            case .signedOut: .localized("Sign in to this account again in Settings.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

@@ -197,6 +197,25 @@
 "Move %@ up" = "把 %@ 上移";
 "Move %@ down" = "把 %@ 下移";
 "Not shown" = "未显示";
+
+/* Accounts */
+"Accounts" = "账号";
+"Add another account" = "添加另一个账号";
+"Opens the provider's own sign-in page." = "会打开该服务自己的登录页面。";
+"Sign in…" = "登录…";
+"Sign-in" = "登录";
+"Name" = "名称";
+"Remove account" = "移除账号";
+"Forgets its login and takes it off the rail." = "忘记它的登录,并从胶囊上移除。";
+"Remove" = "移除";
+"Couldn't save the login on this Mac." = "无法在本机保存登录信息。";
+"Sign in to this account again in Settings." = "请在设置中重新登录这个账号。";
+"This provider can't be signed in to from Pulse." = "这个服务无法从 Pulse 登录。";
+"Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录,然后重试。";
+"Sign-in was cancelled." = "登录已取消。";
+"This page can be closed." = "这个页面可以关闭了。";
+"Sign-in failed. You can close this page." = "登录失败,可以关闭这个页面。";
+"Signed in. You can close this page and go back to Pulse." = "已登录,可以关闭页面回到 Pulse 了。";
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
 "Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
 "Open" = "打开";
