@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="Docs/demo.gif" width="330" alt="The Pulse rail against the left of the screen: rings for each agent, opening a card as the pointer reaches one">
+  <img src="Docs/demo.gif" width="330" alt="The Pulse rail against the left of the screen: it opens from a sliver as the pointer reaches it, shows a provider's limits, and lifts off the edge into a floating capsule">
 </p>
 
 Pulse is a small floating monitor that lives against the edge of your screen.
