@@ -460,7 +460,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Text(localized: "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the account.provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.")
+                Text(localized: "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
