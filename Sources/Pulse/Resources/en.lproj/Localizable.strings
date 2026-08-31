@@ -181,6 +181,15 @@
 "Uses the key you entered." = "Uses the key you entered.";
 "API key" = "API key";
 "Session cookie" = "Session cookie";
+"Read from browser" = "Read from browser";
+"Finds it in the browser you signed in with." = "Finds it in the browser you signed in with.";
+"Read" = "Read";
+"Ask the keychain" = "Ask the keychain";
+"%@ will ask permission first." = "%@ will ask permission first.";
+"Continue" = "Continue";
+"No browser cookie store was found." = "No browser cookie store was found.";
+"Read from %@." = "Read from %@.";
+"No Ollama session found. Sign in at ollama.com first." = "No Ollama session found. Sign in at ollama.com first.";
 "Copied from your browser. Stored encrypted on this Mac." = "Copied from your browser. Stored encrypted on this Mac.";
 "Add an Ollama session in Settings." = "Add an Ollama session in Settings.";
 "The Ollama session expired. Sign in again and add it." = "The Ollama session expired. Sign in again and add it.";

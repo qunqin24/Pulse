@@ -31,6 +31,10 @@ struct SettingsView: View {
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     @State private var devicePrompt: OAuthLogin.DevicePrompt?
+    /// What the last look through the browsers found, and the ones not tried
+    /// yet because doing so raises a prompt the user has to be asked for.
+    @State private var sessionMessage: String?
+    @State private var awaitingKeychain: [BrowserCookies.Browser] = []
     /// Held so it can be called off. A device-code sign-in polls for fifteen
     /// minutes, and a sign-in that failed in the browser gives this side no
     /// sign at all — without a way out the button stays disabled for the whole
@@ -363,6 +367,61 @@ struct SettingsView: View {
         return .localized("2 to 30 minutes as needed. Now: \("\(minutes)") minutes.")
     }
 
+    /// Finds this provider's session in whichever browser signed in.
+    ///
+    /// Two passes, and the split is the whole point. The browsers that need no
+    /// permission are tried first; the ones that raise a keychain prompt are
+    /// only tried after the user has said yes to that prompt. Whatever turns up
+    /// goes through the provider's own filter before it is kept, so only the
+    /// cookies that actually authenticate ever reach the store — everything
+    /// else read along the way is discarded unseen.
+    private func readSession(for account: AccountKey, mayPrompt: Bool) {
+        let present = BrowserCookies.present()
+        let quiet = present.filter { !$0.promptsForKeychain }
+        let loud = present.filter(\.promptsForKeychain)
+
+        guard !present.isEmpty else {
+            sessionMessage = String.localized("No browser cookie store was found.")
+            return
+        }
+
+        let browsers = mayPrompt ? quiet + loud : quiet
+        guard !browsers.isEmpty else {
+            awaitingKeychain = loud
+            return
+        }
+
+        Task {
+            // Off the main thread: this opens a database or two and may ask
+            // the keychain, and the settings window should not freeze while it
+            // does.
+            let found = await Task.detached(priority: .userInitiated) {
+                BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
+                    try? OllamaSessionCookie.normalize($0)
+                }
+            }.value
+
+            if let found {
+                apiKey = found.header
+                saveKey(for: account)
+                awaitingKeychain = []
+                sessionMessage = String.localized("Read from \(found.browser.name).")
+                return
+            }
+
+            // Nothing in the quiet ones. Offer the rest rather than reaching
+            // for them.
+            if !mayPrompt, !loud.isEmpty {
+                awaitingKeychain = loud
+                sessionMessage = nil
+                return
+            }
+
+            awaitingKeychain = []
+            sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
+        }
+    }
+
     private func saveKey(for account: AccountKey) {
         // Only call it saved if it was. Otherwise the Save button greys out
         // over a key that never reached disk.
@@ -605,6 +664,36 @@ struct SettingsView: View {
 
                         Button(String.localized("Save")) { saveKey(for: account) }
                             .disabled(apiKey == savedKey)
+                    }
+                }
+
+                // Only where a browser session *is* the credential. Every
+                // other provider borrows a login its own tool stored, and none
+                // of them should be going through anybody's cookies to do it.
+                if account.provider.usesSessionCookie {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Read from browser"),
+                        subtitle: sessionMessage ?? String.localized("Finds it in the browser you signed in with.")
+                    ) {
+                        Button(String.localized("Read")) { readSession(for: account, mayPrompt: false) }
+                    }
+
+                    // Chromium keeps its cookies encrypted under a key in the
+                    // login keychain, so reading them raises a prompt. It is
+                    // asked for rather than sprung: the browsers that need no
+                    // permission are tried first, and this row only appears
+                    // once they have turned up nothing.
+                    if !awaitingKeychain.isEmpty {
+                        SettingsRowDivider()
+
+                        SettingsRow(
+                            String.localized("Ask the keychain"),
+                            subtitle: String.localized("\(awaitingKeychain.map(\.name).joined(separator: ", ")) will ask permission first.")
+                        ) {
+                            Button(String.localized("Continue")) { readSession(for: account, mayPrompt: true) }
+                        }
                     }
                 }
             } else {

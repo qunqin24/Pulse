@@ -181,6 +181,15 @@
 "Uses the key you entered." = "使用你填入的 key。";
 "API key" = "API key";
 "Session cookie" = "登录 Cookie";
+"Read from browser" = "从浏览器读取";
+"Finds it in the browser you signed in with." = "在你登录用的那个浏览器里找。";
+"Read" = "读取";
+"Ask the keychain" = "询问钥匙串";
+"%@ will ask permission first." = "%@ 会先请求授权。";
+"Continue" = "继续";
+"No browser cookie store was found." = "没有找到任何浏览器的 Cookie 存储。";
+"Read from %@." = "已从 %@ 读取。";
+"No Ollama session found. Sign in at ollama.com first." = "没找到 Ollama 的登录信息,请先在 ollama.com 登录。";
 "Copied from your browser. Stored encrypted on this Mac." = "从浏览器复制。加密保存在本机。";
 "Add an Ollama session in Settings." = "请在设置中添加 Ollama 的登录信息。";
 "The Ollama session expired. Sign in again and add it." = "Ollama 的登录已过期,请重新登录后再添加。";
