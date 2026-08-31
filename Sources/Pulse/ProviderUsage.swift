@@ -58,7 +58,20 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         return scope.map { "\(base) · \($0)" } ?? base
     }
 
-    var percentText: String { "\(Int((usedFraction * 100).rounded()))%" }
+    /// Rounded to the nearest whole number, **except that anything used at
+    /// all never reads as 0%**.
+    ///
+    /// The mark says so whether the figure does or not: the ring's arc is
+    /// drawn with a round cap and the progress bar with a capsule, so the
+    /// smallest non-zero reading still puts a dot of colour on screen. A
+    /// figure of 0% beside it is the same number disagreeing with itself, and
+    /// the colour is the half that is right — you have started. It is also
+    /// what the providers do: Cursor reports 0.03% and its own page says 1%.
+    var percentText: String {
+        let percent = usedFraction * 100
+        let shown = percent > 0 ? max(percent.rounded(), 1) : percent.rounded()
+        return "\(Int(shown))%"
+    }
 
     /// "5h" / "7d" style description of the window's length.
     ///
