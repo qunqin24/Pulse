@@ -499,6 +499,35 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 ringWindowRow(for: account)
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Ring colour"),
+                    // Says what is being given up, in one line. The automatic
+                    // colours are the reading; a fixed one is only a label.
+                    subtitle: String.localized("Automatic colours by how much is left.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.ringTint(for: account) },
+                        set: { settings.setRingTint($0, for: account) }
+                    )) {
+                        Text(localized: "Automatic").tag(RingTint?.none)
+
+                        ForEach(RingTint.allCases) { tint in
+                            // The swatch beside the name, since the name of a
+                            // colour is a poor way to choose one.
+                            Label {
+                                Text(tint.title)
+                            } icon: {
+                                Circle().fill(tint.color)
+                            }
+                            .tag(RingTint?.some(tint))
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
             }
 
             connection(for: account)

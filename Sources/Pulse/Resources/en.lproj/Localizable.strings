@@ -83,6 +83,16 @@
 "Sign in to Claude Code to see usage." = "Sign in to Claude Code to see usage.";
 "A backup for when the saved login expires. Your own status line keeps working." = "A backup for when the saved login expires. Your own status line keeps working.";
 "Ring shows" = "Ring shows";
+"Ring colour" = "Ring colour";
+"Automatic colours by how much is left." = "Automatic colours by how much is left.";
+"Blue" = "Blue";
+"Purple" = "Purple";
+"Pink" = "Pink";
+"Red" = "Red";
+"Orange" = "Orange";
+"Yellow" = "Yellow";
+"Green" = "Green";
+"Teal" = "Teal";
 "Which limit the rail's ring tracks." = "Which limit the rail's ring tracks.";
 "Highest usage" = "Highest usage";
 "Automatic" = "Automatic";

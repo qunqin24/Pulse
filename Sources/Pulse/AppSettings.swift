@@ -140,6 +140,16 @@ final class AppSettings {
         }
     }
 
+    /// A colour chosen for an account's ring, keyed by account. A missing
+    /// entry means the ring is coloured by how much of its limit is gone,
+    /// which is the default and the one that means something.
+    var ringTints: [String: String] {
+        didSet {
+            guard ringTints != oldValue else { return }
+            UserDefaults.standard.set(ringTints, forKey: Key.ringTints)
+        }
+    }
+
     /// Which browser an account's session cookie is read from, keyed by
     /// account. A missing entry means "whichever, starting with the default
     /// one" — the same shape as `sources`, and for the same reason: naming one
@@ -289,6 +299,7 @@ final class AppSettings {
         pinnedWindows: [String: String] = [:],
         sources: [String: String] = [:],
         sessionBrowsers: [String: String] = [:],
+        ringTints: [String: String] = [:],
         refreshInterval: RefreshInterval = .default,
         autoCollapse: Bool = true,
         panelSize: PanelSize = .default,
@@ -306,6 +317,7 @@ final class AppSettings {
         self.pinnedWindows = pinnedWindows
         self.sources = sources
         self.sessionBrowsers = sessionBrowsers
+        self.ringTints = ringTints
         self.refreshInterval = refreshInterval
         self.autoCollapse = autoCollapse
         self.panelSize = panelSize
@@ -323,6 +335,17 @@ final class AppSettings {
         var updated = sources
         updated[account.id] = source == .automatic ? nil : source.rawValue
         sources = updated
+    }
+
+    /// The colour chosen for an account's ring, or nil to colour it by usage.
+    func ringTint(for account: AccountKey) -> RingTint? {
+        ringTints[account.id].flatMap(RingTint.init(rawValue:))
+    }
+
+    func setRingTint(_ tint: RingTint?, for account: AccountKey) {
+        var updated = ringTints
+        updated[account.id] = tint?.rawValue
+        ringTints = updated
     }
 
     /// The browser an account's session is read from, or nil for "whichever".
@@ -425,6 +448,7 @@ final class AppSettings {
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
             sessionBrowsers: defaults.dictionary(forKey: Key.sessionBrowsers) as? [String: String] ?? [:],
+            ringTints: defaults.dictionary(forKey: Key.ringTints) as? [String: String] ?? [:],
             refreshInterval: (defaults.object(forKey: Key.refreshInterval) as? Int)
                 .flatMap(RefreshInterval.init(rawValue:)) ?? .default,
             autoCollapse: defaults.object(forKey: Key.autoCollapse) as? Bool ?? true,
@@ -498,6 +522,7 @@ final class AppSettings {
         static let pinnedWindows = "settings.pinnedWindows"
         static let sources = "settings.sources"
         static let sessionBrowsers = "settings.sessionBrowsers"
+        static let ringTints = "settings.ringTints"
         // Bumped when `.automatic` arrived and became the default: the old
         // key holds a fixed number of seconds for anyone who ran an earlier
         // build, which would quietly keep them on the cadence the new default

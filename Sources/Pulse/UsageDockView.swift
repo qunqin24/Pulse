@@ -192,6 +192,8 @@ struct RailEntry: Identifiable, Equatable {
     var isRunning: Bool = false
     /// Whether Pulse is currently fetching a fresh reading for this provider.
     var isRefreshing: Bool = false
+    /// A colour chosen for this ring, or nil to colour it by usage.
+    var tint: Color?
 
     var id: String { usage.account.id }
 }
@@ -346,6 +348,7 @@ private struct UsageDockItem: View {
             UsageRingView(
                 provider: usage.provider,
                 usedFraction: headline?.usedFraction,
+                chosenTint: entry.tint,
                 diameter: DockLayout.ringDiameter,
                 lineWidth: DockLayout.ringLineWidth,
                 isBusy: entry.isRunning,

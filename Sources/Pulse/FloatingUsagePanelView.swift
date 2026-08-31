@@ -172,7 +172,8 @@ struct FloatingUsagePanelView: View {
                 // account it happens to be signed in to, and the transcripts do
                 // not say which. Every account of that provider shows the mark.
                 isRunning: store.isRunning(account.provider),
-                isRefreshing: store.isRefreshing(account)
+                isRefreshing: store.isRefreshing(account),
+                tint: settings.ringTint(for: account)?.color
             )
         }
     }

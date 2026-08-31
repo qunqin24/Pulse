@@ -6,6 +6,13 @@ struct UsageRingView: View {
     /// How much of the tightest limit is gone, or nil when there is no reading
     /// — an empty track then says "nothing known" rather than "nothing used".
     let usedFraction: Double?
+    /// A colour chosen for this account, or nil to colour by how much is gone.
+    ///
+    /// Nil is the default and the one that carries meaning — see `RingTint`.
+    /// A chosen colour is identity, which is a different thing from status, so
+    /// a **spent** limit still shows the spent colour: being blocked is not a
+    /// matter of taste, and it is the one reading the app exists to give.
+    var chosenTint: Color?
     let diameter: CGFloat
     let lineWidth: CGFloat
     /// Whether this provider's CLI is working right now. This drives the white
@@ -56,6 +63,15 @@ struct UsageRingView: View {
 
     /// Spread of the glow that marks the ring being pointed at.
     private static let haloRadius: CGFloat = 10
+
+    /// What the arc and the halo are drawn in.
+    private var arcColour: Color {
+        let automatic = UsageTint.color(for: usedFraction ?? 0)
+        guard let chosenTint else { return automatic }
+
+        // Spent is the one state a chosen colour does not get to hide.
+        return (usedFraction ?? 0) >= 1 ? automatic : chosenTint
+    }
 
     var body: some View {
         ZStack {
@@ -126,7 +142,7 @@ struct UsageRingView: View {
         Circle()
             .trim(from: 0, to: Self.refreshSweep)
             .stroke(
-                UsageTint.color(for: usedFraction ?? 0),
+                arcColour,
                 style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
             )
             .rotationEffect(.degrees(-90 + (refreshSpinning ? 360 : 0)))
@@ -150,7 +166,7 @@ struct UsageRingView: View {
             .stroke(
                 // Colour says how full the limit is, not which provider this
                 // is — the icon already says that.
-                UsageTint.color(for: usedFraction ?? 0),
+                arcColour,
                 style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
             )
             // The pointed-at halo belongs to the *arc*, not to the ring view as
@@ -160,7 +176,7 @@ struct UsageRingView: View {
             // happens to be. Measured at a green cast of +16 over neutral on a
             // 35% ring.
             .shadow(
-                color: UsageTint.color(for: usedFraction ?? 0).opacity(highlight ? 0.42 : 0),
+                color: arcColour.opacity(highlight ? 0.42 : 0),
                 radius: Self.haloRadius
             )
             .mask { haloMask }
