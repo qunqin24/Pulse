@@ -31,6 +31,11 @@ struct SettingsView: View {
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     @State private var devicePrompt: OAuthLogin.DevicePrompt?
+    /// Held so it can be called off. A device-code sign-in polls for fifteen
+    /// minutes, and a sign-in that failed in the browser gives this side no
+    /// sign at all — without a way out the button stays disabled for the whole
+    /// quarter of an hour.
+    @State private var signInTask: Task<Void, Never>?
 
     var body: some View {
         NavigationSplitView {
@@ -640,8 +645,16 @@ struct SettingsView: View {
                         // whose name is on the page that opens.
                         subtitle: String.localized("Opens the provider's own sign-in page.")
                     ) {
-                        Button(String.localized("Sign in…")) { signIn(to: account.provider) }
-                            .disabled(signingIn != nil)
+                        if signingIn == nil {
+                            Button(String.localized("Sign in…")) { signIn(to: account.provider) }
+                        } else {
+                            Button(String.localized("Cancel")) {
+                                signInTask?.cancel()
+                                signInTask = nil
+                                signingIn = nil
+                                devicePrompt = nil
+                            }
+                        }
                     }
 
                     // While a device-code sign-in is waiting, the code is the
@@ -701,10 +714,11 @@ struct SettingsView: View {
         signingIn = provider
         signInError = nil
 
-        Task {
+        signInTask = Task {
             defer {
                 signingIn = nil
                 devicePrompt = nil
+                signInTask = nil
             }
             do {
                 let credentials: AccountCredentials
@@ -731,6 +745,8 @@ struct SettingsView: View {
                 pane = .account(added)
             } catch let failure as OAuthLogin.Failure {
                 signInError = failure.message
+            } catch is CancellationError {
+                signInError = nil
             } catch {
                 signInError = String.localized("Sign-in was cancelled.")
             }

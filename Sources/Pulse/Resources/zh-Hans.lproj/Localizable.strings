@@ -203,6 +203,7 @@
 "Add another account" = "添加另一个账号";
 "Opens the provider's own sign-in page." = "会打开该服务自己的登录页面。";
 "Sign in…" = "登录…";
+"Cancel" = "取消";
 "Code" = "验证码";
 "Enter it on the page that opened." = "页面若要求登录,先登录再输入它。";
 "Open page" = "打开页面";

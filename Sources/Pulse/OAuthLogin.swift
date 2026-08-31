@@ -189,6 +189,7 @@ enum OAuthLogin {
         let url = base.appending(path: "deviceauth/token")
 
         while Date() < deadline {
+            try Task.checkCancellation()
             let body = ["device_auth_id": prompt.deviceAuthID, "user_code": prompt.userCode]
             if let granted = try await pollDevice(body, at: url) {
                 return try await post([
