@@ -1,72 +1,120 @@
-# Ollama Cloud (experimental)
+# Ollama Cloud
 
 This provider reads the two **account quota windows** shown on the signed-in
-[Ollama settings page](https://ollama.com/settings): Session usage (5 hours) and
-Weekly usage (7 days), including reset timestamps when present. It does not
-convert local token counts into subscription balances.
+[Ollama settings page](https://ollama.com/settings): session usage (5 hours) and
+weekly usage (7 days), with their reset times when the page carries them. It
+does not turn local token counts into a subscription balance.
+
+Ollama publishes no quota API. The official
+[usage API](https://docs.ollama.com/api/usage) reports token and duration
+metrics from individual model responses, and the
+[request for a quota endpoint](https://github.com/ollama/ollama/issues/12532)
+is still open — so a signed-in page is the only place these figures exist.
+Other tools read them the same way, including
+[CodexBar](https://github.com/steipete/CodexBar/blob/main/docs/ollama.md).
+
+Originally contributed by [@PcOffeeP](https://github.com/PcOffeeP)
+([#8](https://github.com/qunqin24/Pulse/pull/8)); the parser and the security
+notes below are theirs. Pulse reworked how the session is obtained and where it
+is kept — see below.
 
 ## Set up
 
-1. Sign in to Ollama in your own browser and open <https://ollama.com/settings>.
-2. Open the browser's developer tools, choose **Network**, and reload the page.
-3. Select the request to `https://ollama.com/settings`. Under **Request Headers**,
-   copy the value of **Cookie** (including `Cookie:` is also accepted).
-4. In Pulse, choose **Settings → Ollama Cloud**, enable **Show in panel**, paste
-   into **Session cookie**, and press **Save**. Refresh and compare both windows
-   and reset times with the web page.
-5. Use **Clear** to delete the saved cookie. After session expiry, sign in again
-   in your browser and replace it. Pulse does not refresh a browser login.
+Sign in to Ollama in your own browser, then in Pulse open **Settings → Ollama
+Cloud**, switch on **Show in panel**, and press **Read from browser**.
 
-A session cookie can grant access to your account. Treat it as a password: do not
-paste it into issues, PRs, chat, screenshots or repository files. Clear the
-clipboard after copying. A normal Ollama API key is **not** a replacement.
+That is the whole thing. **Pulse reads the session out of your browser for
+you** rather than asking you to copy a cookie out of the developer tools —
+which was the original flow, and is a step nobody performs correctly at two in
+the morning. What that costs you is stated on the row before you press it:
 
-## Security and privacy
+- **Your default browser is tried first**, whichever it is, and the row names
+  it. That is deliberate over trying the cheapest browsers first: the browser
+  you open links with is where you are actually signed in, and a session pulled
+  from some other browser may be months out of date. Pick a specific one under
+  **Browser** if you would rather — naming one means *only* that one is opened.
+- **Safari needs Full Disk Access**, because its cookie file lives inside its
+  container. Only the installed `Pulse.app` can be granted it; a `swift run`
+  build cannot.
+- **Chrome, Edge, Brave and Arc keep their key in the login keychain**, so
+  macOS will ask once — "Pulse wants to use your confidential information".
+  The row says so before you press it.
+- **Firefox** is plain SQLite and asks for nothing.
 
-- Only cookies explicitly provided in the field are used. There is no browser
-  database scan, automatic import, login automation or CLI credential discovery.
-- Only known session-cookie names are retained (`wos-session`, legacy
-  `__Secure-session`, NextAuth session-token names and numbered chunks). Unrelated
-  cookies are discarded. Malformed headers and control characters are refused.
-- Cookies live in a separate, non-synchronizing macOS Keychain item. They do not
-  enter preferences, the existing encrypted API-key file, tests or logs.
-- Reads use a fixed HTTPS URL on `ollama.com`; **all redirects are refused** so a
-  cookie cannot be forwarded to another host. Requests use an ephemeral session
-  without a shared cookie store or URL cache. No model inference is performed.
-- HTML stays in memory, is size-limited to 2 MiB, and is not saved or logged.
-  External XML entities are disabled and entity declarations rejected.
-- There is no persisted Ollama quota cache. Failed refreshes show an error; an
-  in-flight response from a replaced/cleared cookie must not restore old quota.
+**Clear** deletes the saved session. When it expires, sign in again in your
+browser and press **Read from browser** again — Pulse cannot renew a browser
+login.
 
-## Supported data and limitations
+A session cookie grants access to your account. Treat it as a password: do not
+paste it into issues, pull requests, chat, screenshots or repository files.
 
-This is **not a documented Ollama quota API**. The official
-[Usage API documentation](https://docs.ollama.com/api/usage) covers token/duration
-metrics from individual model responses. The upstream
-[quota API request](https://github.com/ollama/ollama/issues/12532) tracks the gap.
-Other tools, including [CodexBar's documented Ollama integration](https://github.com/steipete/CodexBar/blob/main/docs/ollama.md),
-use the same signed-in page approach. These references informed the data-source
-choice; this adapter uses its own Foundation XML document parser.
+## What is read, and what is not
 
-The parser accepts explicit `Session usage` and `Weekly usage` totals ending in
-`% used`. It does **not** use the first model-segment width as the total, infer a
-missing number, or treat a changed page as an empty balance. Both windows must be
-present; invalid percentages, ambiguous totals and malformed timestamps fail
-closed. Missing timestamps stay unknown. Local models, plan names, extra-usage
-balances, hourly variants, team billing, and per-model usage are out of scope.
+- **One host.** Firefox and Chromium are queried for `ollama.com`, its
+  dot-form, and its subdomains. Safari's file is a binary format with no query
+  language, so the same rule is applied by hand — a suffix match is *not* that
+  rule and would have returned `notollama.com` and `evil-ollama.com` alongside
+  the real host. Verified against a `binarycookies` file built for the purpose.
+- **Only the names that authenticate** survive the read: `wos-session`, the
+  legacy `__Secure-session`, NextAuth session-token names and their numbered
+  chunks. Everything else — analytics, preferences — is discarded inside the
+  call and never reaches storage. Malformed headers and control characters are
+  refused.
+- **A repeated name is kept, not rejected.** Browsers routinely hold both a
+  host-only and a domain row for the same session name, and the host rule
+  returns both on purpose; throwing on the duplicate discarded the whole
+  browser silently and moved to the next one, which then reported a session
+  read from a browser you had never signed in at.
+- Nothing else in the cookie store is read, copied, or kept. No login is
+  automated, no CLI credential is discovered, and no other domain is touched.
 
-Ollama may change labels, page structure, authentication or anti-bot requirements.
-A successful account login does not guarantee this integration will keep working.
+## Where the session is kept
 
-## Validation
+In `keys.dat`, Pulse's own encrypted store — AES-GCM boxes in its Application
+Support folder, owner-only, with the key derived from this Mac rather than
+stored ([`APIKeyStore.swift`](../Sources/Pulse/APIKeyStore.swift)).
 
-Run `./Scripts/test-ollama.sh`. It compiles the **production** client with Swift 6
-and warnings as errors and exercises synthetic HTML, zero/exhausted quota,
-missing/invalid/ambiguous data, reset association, sign-in pages, entity/size
-limits, cookie filtering/header injection and HTTP response classification.
-No private fixtures or real credentials are included.
+**Not the keychain**, which is what the original contribution used. Pulse holds
+no keychain item of its own anywhere; one encrypted store for every secret it
+keeps means one piece of crypto to be right about, and it is the same store the
+OpenCode Go and Kimi Code keys live in. Nothing is written to `UserDefaults`,
+which is a plist any process running as you can read.
 
-The full application still requires Xcode, not only Command Line Tools:
+## Reading the page
+
+- A fixed HTTPS URL on `ollama.com`, with **all redirects refused** so the
+  cookie cannot be forwarded to another host. An ephemeral session, with no
+  shared cookie store and no URL cache. No inference is performed.
+- The HTML stays in memory, is capped at 2 MiB, and is neither saved nor
+  logged. External XML entities are disabled and entity declarations rejected.
+- The parser accepts explicit `Session usage` and `Weekly usage` totals ending
+  in `% used`. It does **not** take the first model segment's width as the
+  total, infer a missing number, or read a changed page as an empty balance.
+  Both windows must be present; invalid percentages, ambiguous totals and
+  malformed timestamps fail closed, and a missing timestamp stays unknown.
+- Local models, plan names, extra-usage balances, hourly variants, team billing
+  and per-model usage are out of scope.
+
+**A successful reading is cached like every other provider's**
+([`UsageCache.swift`](../Sources/Pulse/UsageCache.swift)), so a later refusal
+shows the last good figures with the time they were taken rather than an error
+with nothing. Only `.live` readings are stored, they come back marked stale,
+and a window whose reset time has passed is dropped rather than aged. The
+original contribution deliberately cached nothing here; the cache's two rules
+are what make it safe, and they are not specific to this provider.
+
+Ollama may change its labels, page structure, authentication or anti-bot
+requirements at any time. Being able to sign in is no guarantee this keeps
+working.
+
+## Checking it
+
+There is no test target in this repository. The parser, the cookie filter and
+both cookie-store formats are driven from throwaway probe packages against data
+built on purpose — a `binarycookies` file assembled record by record, and
+Chromium values encrypted with the same PBKDF2/AES-128-CBC scheme — so none of
+it needs anybody's real credentials to verify. What that cannot cover is
+finding the files and reading them on a real machine.
 
 ```sh
 ./Scripts/check-localization.sh
@@ -74,13 +122,4 @@ swift build -Xswiftc -swift-version -Xswiftc 6
 ./Scripts/bundle.sh
 ```
 
-Before marking this integration ready for release, manually verify:
-
-- A real personal Cloud account's two percentages and reset times match the page.
-- Save, clear, relaunch, invalid-cookie and expired-cookie handling work.
-- Replacing a cookie during a refresh cannot restore the earlier account's data.
-- A disabled provider produces no automatic settings requests.
-- English/Chinese settings fit at supported display sizes; the rail icon renders.
-
-Initial validation uses synthetic pages; live-account and full settings-UI checks
-have **not** been completed. Never attach raw authenticated page HTML to a PR.
+Never attach raw authenticated page HTML to a pull request.

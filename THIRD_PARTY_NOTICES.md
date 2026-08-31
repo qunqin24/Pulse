@@ -4,6 +4,11 @@ Pulse bundles provider marks derived from [Lobe Icons](https://github.com/lobehu
 
 - `Sources/Pulse/Resources/claude.svg`
 - `Sources/Pulse/Resources/openai.svg`
+- `Sources/Pulse/Resources/antigravity.svg`
+- `Sources/Pulse/Resources/cursor.svg`
+- `Sources/Pulse/Resources/opencode.svg`
+- `Sources/Pulse/Resources/kimi.svg`
+- `Sources/Pulse/Resources/ollama.svg`
 
 Lobe Icons is distributed under the MIT License:
 
@@ -31,6 +36,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-The Claude and OpenAI names and marks remain the property of their respective
-owners. Their inclusion identifies compatible services and does not imply
-endorsement.
+Pulse also links against [Sparkle](https://sparkle-project.org), which handles
+updates and is distributed under the MIT License.
+
+The Claude, OpenAI, Antigravity, Cursor, OpenCode, Kimi and Ollama names and
+marks remain the property of their respective owners. Their inclusion
+identifies compatible services and does not imply endorsement.
