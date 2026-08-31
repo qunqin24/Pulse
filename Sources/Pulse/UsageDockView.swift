@@ -43,12 +43,81 @@ enum DockLayout {
     /// Height of one ring + its percent label.
     static var itemHeight: CGFloat { ringDiameter + ringToTextSpacing + percentTextHeight }
 
-    /// Rail height for a given number of providers: top/bottom padding + the
-    /// items + the gaps between them. Providers can be switched off in
+    /// Whether an item carries its percent label, which is a setting only
+    /// while the rail is lying across the top — see
+    /// `AppSettings.topRailShowsPercentages`.
+    static func showsPercentages(on axis: PanelEdge.Axis) -> Bool {
+        axis == .vertical || PanelMetrics.topRailShowsPercentages
+    }
+
+    /// One item's extent **along** the rail.
+    ///
+    /// Down a side that is the ring stacked over its label; across the top the
+    /// two are stacked the same way but the run is the other axis, so an item
+    /// is only as long as the ring. The label is narrower than the ring at
+    /// every size the rail is drawn at, so it never sets this.
+    static func itemLength(on axis: PanelEdge.Axis) -> CGFloat {
+        axis == .vertical ? itemHeight : ringDiameter
+    }
+
+    /// The rail's extent **across** its run: its width down a side, its height
+    /// across the top.
+    ///
+    /// `width` is deliberately more than a ring and its padding — the rail has
+    /// always been drawn wider than its contents — so a top rail without
+    /// labels keeps exactly the same proportion by using the same number. With
+    /// labels there is a second line to make room for.
+    static func thickness(on axis: PanelEdge.Axis) -> CGFloat {
+        guard axis == .horizontal, showsPercentages(on: .horizontal) else { return width }
+        return itemHeight + horizontalPadding * 2
+    }
+
+    /// Rail length for a given number of providers: the padding at each end +
+    /// the items + the gaps between them. Providers can be switched off in
     /// settings, so this is not a constant.
-    static func height(for itemCount: Int) -> CGFloat {
+    static func length(for itemCount: Int, on axis: PanelEdge.Axis) -> CGFloat {
         let count = CGFloat(max(itemCount, 1))
-        return verticalPadding * 2 + itemHeight * count + itemSpacing * (count - 1)
+        return verticalPadding * 2 + itemLength(on: axis) * count + itemSpacing * (count - 1)
+    }
+
+    /// The rail's full size, laid the way `edge` lays it.
+    static func size(for itemCount: Int, on axis: PanelEdge.Axis) -> CGSize {
+        let along = length(for: itemCount, on: axis)
+        let across = thickness(on: axis)
+        return axis == .vertical
+            ? CGSize(width: across, height: along)
+            : CGSize(width: along, height: across)
+    }
+
+    /// Where a ring's centre sits **across** the rail.
+    ///
+    /// The items are centred in the rail's thickness, and how thick an item is
+    /// depends on whether it carries a label — so this is not simply half the
+    /// rail. Down a side only the ring is ever as wide as this, the label being
+    /// narrower; across the top the label is stacked under the ring and counts.
+    static func ringCentreAcross(on axis: PanelEdge.Axis) -> CGFloat {
+        let item = axis == .vertical
+            ? ringDiameter
+            : (showsPercentages(on: axis) ? itemHeight : ringDiameter)
+        return (thickness(on: axis) - item) / 2 + ringDiameter / 2
+    }
+
+    /// How far along the rail the first ring's centre sits, and the step from
+    /// one to the next.
+    static var firstRingAlong: CGFloat { verticalPadding + ringDiameter / 2 }
+    static func ringStep(on axis: PanelEdge.Axis) -> CGFloat {
+        itemLength(on: axis) + itemSpacing
+    }
+
+    /// Rail length with every provider switched on, which is what the panel
+    /// has to leave room for.
+    static func maximumLength(on axis: PanelEdge.Axis) -> CGFloat {
+        length(for: Provider.allCases.count, on: axis)
+    }
+
+    /// Kept for the vertical rail, which is what every existing caller means.
+    static func height(for itemCount: Int) -> CGFloat {
+        length(for: itemCount, on: .vertical)
     }
 
     /// What the rail hides down to when the pointer is elsewhere: a sliver
@@ -62,6 +131,21 @@ enum DockLayout {
     static var collapsedWidth: CGFloat { 6 * PanelMetrics.scale }
     static var collapsedHeight: CGFloat { 96 * PanelMetrics.scale }
     static var collapsedHitWidth: CGFloat { 20 * PanelMetrics.scale }
+
+    /// The sliver, laid the way `axis` lays the rail: 6pt of it against the
+    /// screen edge and 96pt along it, whichever way round that falls.
+    static func collapsedSize(on axis: PanelEdge.Axis) -> CGSize {
+        axis == .vertical
+            ? CGSize(width: collapsedWidth, height: collapsedHeight)
+            : CGSize(width: collapsedHeight, height: collapsedWidth)
+    }
+
+    /// The same for the tracking area, which is wider than the drawing.
+    static func collapsedHitSize(on axis: PanelEdge.Axis) -> CGSize {
+        axis == .vertical
+            ? CGSize(width: collapsedHitWidth, height: collapsedHeight)
+            : CGSize(width: collapsedHeight, height: collapsedHitWidth)
+    }
 
     /// The tallest the rail ever gets. The panel window is kept at this height
     /// whatever is switched on, so turning a provider off never has to resize
@@ -117,9 +201,10 @@ struct UsageDockView: View {
     /// Called as the pointer arrives on the collapsed sliver.
     var onOpen: () -> Void = {}
 
-    private var railHeight: CGFloat { DockLayout.height(for: entries.count) }
-    private var currentWidth: CGFloat { isExpanded ? DockLayout.width : DockLayout.collapsedWidth }
-    private var currentHeight: CGFloat { isExpanded ? railHeight : DockLayout.collapsedHeight }
+    private var railSize: CGSize { DockLayout.size(for: entries.count, on: edge.axis) }
+    private var currentSize: CGSize {
+        isExpanded ? railSize : DockLayout.collapsedSize(on: edge.axis)
+    }
 
     var body: some View {
         // Laid out at full size whatever it is drawing, so nothing around it
@@ -140,7 +225,7 @@ struct UsageDockView: View {
                     value: isExpanded
                 )
         }
-        .frame(width: DockLayout.width, height: railHeight)
+        .frame(width: railSize.width, height: railSize.height)
         // No drag handle lives here any more. A press only reaches a view
         // inside `NSHostingView` if SwiftUI claims it first, and it would not
         // claim the empty black between the rings: the berth opts out of hit
@@ -166,14 +251,15 @@ struct UsageDockView: View {
             // already say which limit is where.
             tint: isExpanded ? nil : alert
         )
-            .frame(width: currentWidth, height: currentHeight)
+            .frame(width: currentSize.width, height: currentSize.height)
             .overlay(alignment: edge.stackAlignment) {
                 // Only while collapsed, and only over the sliver: a tracking
                 // area on the full band would open the panel from sixty points
                 // of empty air.
                 if !isExpanded {
+                    let hit = DockLayout.collapsedHitSize(on: edge.axis)
                     Color.clear
-                        .frame(width: DockLayout.collapsedHitWidth, height: DockLayout.collapsedHeight)
+                        .frame(width: hit.width, height: hit.height)
                         .contentShape(.rect)
                         .background(PointerEntryReporter(onEnter: onOpen))
                         .accessibilityElement()
@@ -183,20 +269,32 @@ struct UsageDockView: View {
     }
 
     private var rings: some View {
-        VStack(spacing: DockLayout.itemSpacing) {
+        // The same items, stacked whichever way the rail runs. `AnyLayout`
+        // keeps them one set of views across the change rather than two sets
+        // swapped, so a rail that is re-docked from a side to the top carries
+        // its rings round with it instead of rebuilding them.
+        let stack = edge.isVertical
+            ? AnyLayout(VStackLayout(spacing: DockLayout.itemSpacing))
+            : AnyLayout(HStackLayout(spacing: DockLayout.itemSpacing))
+
+        return stack {
             ForEach(entries) { entry in
                 UsageDockItem(
                     entry: entry,
                     isSelected: selectedProvider == entry.usage.provider,
                     isInteractive: isExpanded,
+                    showsPercentage: DockLayout.showsPercentages(on: edge.axis),
                     onEnter: { onEnter(entry.usage.provider) },
                     onRefresh: { onRefresh(entry.usage.provider) }
                 )
             }
         }
-        .padding(.vertical, DockLayout.verticalPadding)
-        .padding(.horizontal, DockLayout.horizontalPadding)
-        .frame(width: DockLayout.width, height: railHeight)
+        // The padding follows the run too: the generous end padding is what
+        // the flare needs room inside, and the flare is at the rail's ends
+        // whichever way it is lying.
+        .padding(edge.isVertical ? .vertical : .horizontal, DockLayout.verticalPadding)
+        .padding(edge.isVertical ? .horizontal : .vertical, DockLayout.horizontalPadding)
+        .frame(width: railSize.width, height: railSize.height)
     }
 }
 
@@ -207,6 +305,9 @@ private struct UsageDockItem: View {
     /// tree then, only invisible — and an invisible ring with a live tracking
     /// area would open a card for a provider nobody can see.
     let isInteractive: Bool
+    /// False for a rail lying across the top with the labels switched off,
+    /// which is the default there — see `AppSettings.topRailShowsPercentages`.
+    var showsPercentage: Bool = true
     let onEnter: () -> Void
     let onRefresh: () -> Void
 
@@ -228,24 +329,26 @@ private struct UsageDockItem: View {
 
             // An em dash rather than 0% when nothing is known: a zero would
             // read as "you've used nothing", which is a different claim.
-            Text(headline?.percentText ?? "—")
-                .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
-                // A spent limit colours the figure too. At ring size a fourth
-                // hue on the stroke alone would just read as the third one.
-                .foregroundStyle(
-                    UsageTint.isSpent(headline)
-                        ? Color.pulseExhausted
-                        : .primary.opacity(headline == nil ? 0.4 : 1)
-                )
-                .monospacedDigit()
-                // Dimmed with the arc, so the whole ring goes quiet together
-                // while its reading is being fetched and comes back with it.
-                .opacity(entry.isRefreshing ? 0.4 : 1)
-                .animation(.easeOut(duration: 0.2), value: entry.isRefreshing)
-                // Digits change places rather than cutting, so a figure that
-                // actually moved is visibly what moved.
-                .contentTransition(.numericText())
-                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
+            if showsPercentage {
+                Text(headline?.percentText ?? "—")
+                    .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
+                    // A spent limit colours the figure too. At ring size a
+                    // fourth hue on the stroke alone would read as the third.
+                    .foregroundStyle(
+                        UsageTint.isSpent(headline)
+                            ? Color.pulseExhausted
+                            : .primary.opacity(headline == nil ? 0.4 : 1)
+                    )
+                    .monospacedDigit()
+                    // Dimmed with the arc, so the whole ring goes quiet
+                    // together while its reading is fetched, and returns with it.
+                    .opacity(entry.isRefreshing ? 0.4 : 1)
+                    .animation(.easeOut(duration: 0.2), value: entry.isRefreshing)
+                    // Digits change places rather than cutting, so a figure
+                    // that actually moved is visibly what moved.
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
+            }
         }
         .contentShape(.rect)
         .background {
@@ -285,10 +388,12 @@ private struct UsageDockItem: View {
 /// out above the body's flat top would fall outside the shape and be
 /// clipped.
 struct DockBerthShape: Shape {
-    /// Which screen edge the rail is flush against. Drawn facing right, then
-    /// mirrored — the outline carries no text or asymmetric detail, so
-    /// flipping the finished path is exact and avoids a second copy of the
-    /// geometry that could drift from this one.
+    /// Which screen edge the rail is flush against.
+    ///
+    /// Drawn once, facing right, then moved into place: mirrored for the left
+    /// edge, turned a quarter for the top. The outline carries no text and no
+    /// asymmetric detail, so transforming the finished path is exact and
+    /// avoids a second copy of the geometry that could drift from this one.
     var edge: PanelEdge = .right
     /// Off the edge there is nothing to fuse with, so the flare gives way to a
     /// capsule with fully round ends. Drawing an edge-hugging silhouette in
@@ -323,12 +428,26 @@ struct DockBerthShape: Shape {
     func path(in rect: CGRect) -> Path {
         guard isDocked else { return floating(in: rect) }
 
-        let drawn = facingRight(in: rect)
-        guard edge.isLeft else { return drawn }
+        switch edge {
+        case .right:
+            return facingRight(in: rect)
 
-        return drawn.applying(
-            CGAffineTransform(translationX: rect.width, y: 0).scaledBy(x: -1, y: 1)
-        )
+        case .left:
+            return facingRight(in: rect).applying(
+                CGAffineTransform(translationX: rect.width, y: 0).scaledBy(x: -1, y: 1)
+            )
+
+        case .top:
+            // A quarter turn anticlockwise, which carries the flare from the
+            // right-hand edge to the top one. The canonical rect is this one
+            // laid on its side, so the drawing is unchanged and only its
+            // placement differs — and because it is a rotation rather than a
+            // reflection, the path's winding is preserved.
+            let canonical = CGRect(x: 0, y: 0, width: rect.height, height: rect.width)
+            return facingRight(in: canonical).applying(
+                CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: rect.height)
+            )
+        }
     }
 
     /// A true capsule: the ends are half circles, not rounded-off corners.

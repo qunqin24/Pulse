@@ -138,6 +138,25 @@ final class AppSettings {
         }
     }
 
+    /// Whether the rail keeps its percent labels while it lies along the top
+    /// of the screen.
+    ///
+    /// Off by default. Against a side of the screen the label sits under its
+    /// ring and costs nothing; along the top it is a second line of type
+    /// directly under the menu bar, which turns a compact pill into a banner.
+    /// The number is a hover away on the card either way.
+    var topRailShowsPercentages: Bool {
+        didSet {
+            guard topRailShowsPercentages != oldValue else { return }
+            // Before the change is announced, for the same reason `panelSize`
+            // does it: this changes the rail's thickness, and whoever reacts
+            // is about to measure the panel.
+            PanelMetrics.showTopPercentages(topRailShowsPercentages)
+            UserDefaults.standard.set(topRailShowsPercentages, forKey: Key.topRailShowsPercentages)
+            onChange?()
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -196,7 +215,8 @@ final class AppSettings {
         refreshInterval: RefreshInterval = .default,
         autoCollapse: Bool = true,
         panelSize: PanelSize = .default,
-        usesGlass: Bool = false
+        usesGlass: Bool = false,
+        topRailShowsPercentages: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -209,6 +229,7 @@ final class AppSettings {
         self.autoCollapse = autoCollapse
         self.panelSize = panelSize
         self.usesGlass = usesGlass
+        self.topRailShowsPercentages = topRailShowsPercentages
     }
 
     func source(for provider: Provider) -> UsageSource {
@@ -302,10 +323,12 @@ final class AppSettings {
             autoCollapse: defaults.object(forKey: Key.autoCollapse) as? Bool ?? true,
             panelSize: defaults.string(forKey: Key.panelSize)
                 .flatMap(PanelSize.init(rawValue:)) ?? .default,
-            usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false
+            usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
+            topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
+        PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
         return settings
     }
 
@@ -336,6 +359,7 @@ final class AppSettings {
         static let autoCollapse = "settings.autoCollapse"
         static let panelSize = "settings.panelSize"
         static let usesGlass = "settings.usesGlass"
+        static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

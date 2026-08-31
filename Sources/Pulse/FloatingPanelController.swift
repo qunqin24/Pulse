@@ -21,23 +21,47 @@ final class FloatingPanelController {
     /// nothing: it is transparent, and macOS routes clicks through the
     /// transparent parts of a non-opaque window.
     enum Layout {
-        /// Detail card + its pointer + the gap after it + the dock rail.
-        static var width: CGFloat {
-            DetailCardLayout.width
+        /// The panel's size for a given dock, which is the only thing about it
+        /// that ever changes — and it changes only when the rail is re-docked
+        /// onto the other axis, never while a card opens. That distinction is
+        /// the whole point: growing the window mid-animation moves the
+        /// coordinate space the rail is laid out in, so the rail lurches
+        /// sideways and slides back every time a card appears. Re-docking
+        /// happens under the pointer, with no card open, and has to resize.
+        static func size(for edge: PanelEdge) -> CGSize {
+            // Card + its pointer + the gap after it, which is the room the
+            // card unfolds into whichever way it unfolds.
+            let reach = DetailCardLayout.width
                 + DetailCardLayout.pointerWidth
                 + DetailCardLayout.horizontalGap
-                + DockLayout.width
+
+            switch edge.axis {
+            case .vertical:
+                return CGSize(
+                    width: reach + DockLayout.thickness(on: .vertical),
+                    // Tall enough for whichever is bigger: the rail with every
+                    // provider on, or the tallest card that might be shown
+                    // beside it. A card taller than the window gets sliced off
+                    // flat against its edge, which reads as a drawing bug
+                    // rather than as a card that didn't fit.
+                    height: max(DockLayout.maximumLength(on: .vertical), DetailCardLayout.maximumHeight)
+                )
+            case .horizontal:
+                return CGSize(
+                    // Wide enough for whichever is wider, for the same reason.
+                    width: max(DockLayout.maximumLength(on: .horizontal), DetailCardLayout.width),
+                    height: DockLayout.thickness(on: .horizontal)
+                        + DetailCardLayout.horizontalGap
+                        + DetailCardLayout.pointerWidth
+                        + DetailCardLayout.maximumHeight
+                )
+            }
         }
-        /// Tall enough for whichever is bigger: the rail with every provider
-        /// switched on, or the tallest card that might be shown beside it.
-        ///
-        /// Both matter. The rail obviously has to fit, but so does the card —
-        /// the panel's frame never changes, so a card taller than the window
-        /// gets sliced off flat against its edge, which reads as a drawing
-        /// bug rather than as a card that didn't fit. Spare height costs
-        /// nothing: it is transparent, and macOS routes clicks through the
-        /// transparent parts of a non-opaque window.
-        static var height: CGFloat { max(DockLayout.maximumHeight, DetailCardLayout.maximumHeight) }
+
+        /// The vertical dock's size, which is what the previews and anything
+        /// written before there was a second axis mean.
+        static var width: CGFloat { size(for: .right).width }
+        static var height: CGFloat { size(for: .right).height }
     }
 
     private let panel: FloatingPanel
@@ -53,12 +77,13 @@ final class FloatingPanelController {
         self.settings = settings
         self.placement = placement
 
+        let initialSize = Layout.size(for: placement.edge)
         panel = FloatingPanel(
             contentRect: NSRect(
                 x: 0,
                 y: 0,
-                width: Layout.width,
-                height: Layout.height
+                width: initialSize.width,
+                height: initialSize.height
             ),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
@@ -71,12 +96,7 @@ final class FloatingPanelController {
             rootView: FloatingUsagePanelView(store: store, settings: settings, placement: placement)
         )
         hostingView.sizingOptions = []
-        hostingView.frame = NSRect(
-            x: 0,
-            y: 0,
-            width: Layout.width,
-            height: Layout.height
-        )
+        hostingView.frame = NSRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height)
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
         self.hostingView = hostingView
@@ -98,15 +118,21 @@ final class FloatingPanelController {
         panel.railFrame = { [settings, placement] in
             PanelHitArea.rail(
                 edge: placement.edge,
-                railHeight: DockLayout.height(for: settings.enabledProviders.count),
-                railTop: placement.railTop
+                railSize: DockLayout.size(for: settings.enabledProviders.count, on: placement.edge.axis),
+                railTop: placement.railTop,
+                railLeading: placement.railLeading
             )
         }
+        // The rail's size for a dock it is not on yet, which the drag needs:
+        // crossing onto the other axis turns the rail as it goes.
+        panel.railSize = { [settings] edge in
+            DockLayout.size(for: settings.enabledProviders.count, on: edge.axis)
+        }
         panel.grabArea = { [settings, placement] in
-            let railHeight = DockLayout.height(for: settings.enabledProviders.count)
+            let size = DockLayout.size(for: settings.enabledProviders.count, on: placement.edge.axis)
             return placement.isRailExpanded
-                ? PanelHitArea.rail(edge: placement.edge, railHeight: railHeight, railTop: placement.railTop)
-                : PanelHitArea.strip(edge: placement.edge, railHeight: railHeight, railTop: placement.railTop)
+                ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
+                : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
         }
         panel.onClick = { [settings, placement, store] point in
             guard placement.isRailExpanded else { return }
@@ -119,7 +145,8 @@ final class FloatingPanelController {
                 at: point,
                 edge: placement.edge,
                 providers: providers,
-                railTop: placement.railTop
+                railTop: placement.railTop,
+                railLeading: placement.railLeading
             ) else { return }
             store.refresh(provider)
         }
@@ -158,7 +185,7 @@ final class FloatingPanelController {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
         panel.becomesKeyOnlyIfNeeded = true
-        panel.level = .floating
+        panel.applyLevel(for: placement.dock)
         applyCollectionBehavior()
     }
 
@@ -186,18 +213,17 @@ final class FloatingPanelController {
     private func placePanel() {
         guard let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens.first else { return }
 
+        let edge = placement.edge
         let layout = placement.layout(
             in: screen.visibleFrame,
-            panel: CGSize(width: Layout.width, height: Layout.height),
-            rail: CGSize(
-                width: DockLayout.width,
-                height: DockLayout.height(for: settings.enabledProviders.count)
-            )
+            topEdge: FloatingPanel.topEdge(of: screen),
+            panel: Layout.size(for: edge),
+            rail: DockLayout.size(for: settings.enabledProviders.count, on: edge.axis)
         )
 
+        panel.applyLevel(for: placement.dock)
         panel.setFrame(layout.frame, display: true)
-        placement.setRailTop(layout.railTop)
-
+        placement.setRailOffset(top: layout.railTop, leading: layout.railLeading)
     }
 }
 
@@ -237,6 +263,41 @@ private final class FloatingPanel: NSPanel {
     /// the rail's, and handing the placement a 20pt sliver where it expects a
     /// 64pt rail would throw the panel across the screen on the first drag.
     var railFrame: (() -> CGRect)?
+    /// The rail's size on a given edge, which the drag needs for an edge the
+    /// panel has not reached yet.
+    var railSize: ((PanelEdge) -> CGSize)?
+
+    /// Where a top-docked rail's top edge belongs: the display's physical top,
+    /// less whatever a notch takes out of it.
+    ///
+    /// Not `visibleFrame.maxY`, which is under the menu bar — a rail parked a
+    /// menu bar's height below the edge of the screen is not against the edge
+    /// of the screen, and looks it.
+    static func topEdge(of screen: NSScreen) -> CGFloat {
+        let notch = screen.safeAreaInsets.top
+        guard notch > 0 else { return screen.frame.maxY }
+
+        // With a notch there is a row of screen either side of it, but the
+        // rail is wider than either — centred, most of it would be behind the
+        // notch, where nothing is drawn at all. So it stops at the notch's own
+        // line, which is also where the menu bar ends. Taking the lower of the
+        // two rather than trusting them to be equal: the rail must never be
+        // asked to draw itself into a row it cannot be seen in, and only one
+        // of these two numbers is the notch's.
+        return min(screen.frame.maxY - notch, screen.visibleFrame.maxY)
+    }
+
+    /// Above the menu bar while docked to the top, and only then.
+    ///
+    /// `.floating` sits *below* the menu bar's own level, so a panel placed at
+    /// the display's edge would simply be drawn over by it. `.statusBar` is
+    /// one step above the menu bar and the same level the menu bar's own extras
+    /// use — high enough to reach the edge, not so high that it covers system
+    /// alerts. Nothing else about the panel changes, and off the top edge it
+    /// goes back to floating so it never sits over the menu bar for nothing.
+    func applyLevel(for dock: PanelDock) {
+        level = dock.edge == .top ? .statusBar : .floating
+    }
     /// A short press that ended without moving the panel. The controller maps
     /// it to a provider ring; empty rail space remains drag-only.
     var onClick: ((CGPoint) -> Void)?
@@ -305,7 +366,16 @@ private final class FloatingPanel: NSPanel {
 
         // Docking is decided *during* the drag, not on release: a snap that
         // waited for mouse-up would jump the panel out from under the pointer.
-        let dock: PanelDock = if wanted.x - visible.minX <= PanelPlacement.dockDistance {
+        //
+        // The top is tested against the **pointer**, not the rail. A rail
+        // standing on its end is most of the screen tall, so its top edge
+        // reaches the top of the display almost as soon as it is lifted at all
+        // — testing that would flip it on its side the moment it was picked
+        // up. Throwing the pointer at the top of the screen is the deliberate
+        // gesture, and it is the same one that reaches the menu bar.
+        let dock: PanelDock = if visible.maxY - pointer.y <= PanelPlacement.dockDistance {
+            .edge(.top)
+        } else if wanted.x - visible.minX <= PanelPlacement.dockDistance {
             .edge(.left)
         } else if visible.maxX - (wanted.x + rail.width) <= PanelPlacement.dockDistance {
             .edge(.right)
@@ -313,14 +383,36 @@ private final class FloatingPanel: NSPanel {
             .floating
         }
 
-        let ratios = PanelPlacement.ratios(forRailAt: wanted, in: visible, rail: rail)
+        // The rail turns as it crosses onto the other axis, so everything from
+        // here is measured in the orientation it is about to be in — not the
+        // one it is leaving. Measuring in the old one throws the panel across
+        // the screen on the frame the axis changes.
+        let landing = dock.edge ?? placement.edge
+        let landingRail = railSize?(landing) ?? rail
+        let landingPanel = FloatingPanelController.Layout.size(for: landing)
+
+        // Under the pointer, in the new orientation. Carrying the old grab
+        // offset across a quarter turn would put the rail somewhere the hand
+        // holding it never asked for.
+        let turned = landingRail != rail
+        let origin = turned
+            ? CGPoint(x: pointer.x - landingRail.width / 2, y: pointer.y - landingRail.height / 2)
+            : wanted
+
+        let ratios = PanelPlacement.ratios(forRailAt: origin, in: visible, rail: landingRail)
         placement.record(dock: dock, horizontalRatio: ratios.h, verticalRatio: ratios.v)
 
         // One source of truth for the geometry: ask the placement where that
         // puts things rather than working it out a second way here.
-        let layout = placement.layout(in: visible, panel: frame.size, rail: rail)
+        let layout = placement.layout(
+            in: visible,
+            topEdge: Self.topEdge(of: screen),
+            panel: landingPanel,
+            rail: landingRail
+        )
+        applyLevel(for: dock)
         setFrame(layout.frame, display: true)
-        placement.setRailTop(layout.railTop)
+        placement.setRailOffset(top: layout.railTop, leading: layout.railLeading)
         return true
     }
 

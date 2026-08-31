@@ -77,12 +77,13 @@ struct UsageDetailCard: View {
     /// Which screen edge the panel is docked against; the pointer goes on the
     /// side facing the rail.
     let edge: PanelEdge
-    /// Where the pointer's tip should sit, measured down from the card's
-    /// own top edge. The card gets pushed around by the panel's top and
-    /// bottom edges (see `FloatingUsagePanelView.cardTopPadding`), so the
-    /// pointer can't just ride at the card's vertical center — it has to be
-    /// placed independently to keep aiming at the selected ring.
-    let pointerCenterY: CGFloat
+    /// Where the pointer's tip should sit along the side facing the rail,
+    /// measured from the card's own top or leading edge. The card gets pushed
+    /// around by the panel's own edges (see
+    /// `FloatingUsagePanelView.cardPadding`), so the pointer can't just ride
+    /// at the card's centre — it has to be placed independently to keep aiming
+    /// at the selected ring.
+    let pointerCenter: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
@@ -118,14 +119,14 @@ struct UsageDetailCard: View {
         .frame(width: DetailCardLayout.width, alignment: .leading)
         // Room for the pointer on the side facing the rail. The shape below
         // covers the whole frame, body and pointer together.
-        .padding(edge.isLeft ? .leading : .trailing, DetailCardLayout.pointerWidth)
+        .padding(Self.pointerSide(for: edge), DetailCardLayout.pointerWidth)
         // The card follows the rail's surface: a glass capsule beside a solid
         // black card reads as two different components, not one panel.
         .background(
             {
                 let shape = UsageBubbleShape(
                     edge: edge,
-                    pointerCenterY: pointerCenterY,
+                    pointerCenter: pointerCenter,
                     cornerRadius: DetailCardLayout.cornerRadius,
                     pointerWidth: DetailCardLayout.pointerWidth,
                     pointerHeight: DetailCardLayout.pointerHeight
@@ -135,6 +136,15 @@ struct UsageDetailCard: View {
         )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String.localized("\(usage.provider.displayName) usage details"))
+    }
+
+    /// Which side of the card the tail leaves from: the one facing the rail.
+    private static func pointerSide(for edge: PanelEdge) -> Edge.Set {
+        switch edge {
+        case .left: .leading
+        case .right: .trailing
+        case .top: .top
+        }
     }
 
     /// A line under the limits saying how much to trust them: Claude Code's
@@ -251,7 +261,7 @@ private struct PulseProgressStyle: ProgressViewStyle {
     UsageDetailCard(
         usage: .unavailable(.claudeCode, reason: .loading),
         edge: .right,
-        pointerCenterY: DetailCardLayout.estimatedHeight / 2
+        pointerCenter: DetailCardLayout.estimatedHeight / 2
     )
     .padding(40)
     .background(.gray)

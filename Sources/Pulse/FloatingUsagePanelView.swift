@@ -75,7 +75,7 @@ struct FloatingUsagePanelView: View {
                             usesGlass: settings.usesGlass,
                             usage: selected,
                             edge: placement.edge,
-                            pointerCenterY: pointerCenterY(for: index)
+                            pointerCenter: pointerCentre(for: index)
                         )
                         .fixedSize()
                         .background(
@@ -85,18 +85,19 @@ struct FloatingUsagePanelView: View {
                                 }
                             }
                         )
-                        .padding(.top, cardTopPadding(for: index))
-                        .offset(x: Self.cardInset * placement.edge.cardDirection)
+                        .padding(alongEdge, cardPadding(for: index))
+                        .offset(cardOffset)
                         .transition(cardReveal(for: index))
                     }
                 }
-                // Lowers the rail to the height on screen the user dragged it
-                // to — **after** the card is hung off it, never before. The
-                // card is aligned to the top of whatever it is an overlay on,
-                // so padding first anchors it to the top of the *panel*
-                // instead of the top of the rail, and every card is drawn
-                // `railTop` too high and sliced off against the window's edge.
+                // Moves the rail to where on screen the user dragged it —
+                // **after** the card is hung off it, never before. The card is
+                // aligned to the corner of whatever it is an overlay on, so
+                // padding first anchors it to the corner of the *panel*
+                // instead, and every card is drawn `railTop` too high and
+                // sliced off flat against the window's edge.
                 .padding(.top, railTop)
+                .padding(.leading, railLeading)
             }
             .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedProvider)
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
@@ -125,9 +126,12 @@ struct FloatingUsagePanelView: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel(String.localized("Pulse floating usage panel"))
             // Strings and layout constants are both read through plain
-            // functions, so SwiftUI has nothing to observe for either;
-            // rebuild the tree when the language or the size changes.
-            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)")
+            // functions, so SwiftUI has nothing to observe for either; rebuild
+            // the tree when the language, the size, or the top rail's labels
+            // change. The last one is easy to forget and changes the rail's
+            // *thickness*, so leaving it out draws the rings at one size in a
+            // berth built for the other.
+            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)")
     }
 
     /// Whether the rail is drawn out in full.
@@ -171,11 +175,24 @@ struct FloatingUsagePanelView: View {
             }
     }
 
-    /// The rail's height for what is actually being shown. The panel window
-    /// stays at its maximum height regardless, so this is what the card's
-    /// placement and the pointer test have to measure against — not the
-    /// window.
-    private var railHeight: CGFloat { DockLayout.height(for: entries.count) }
+    /// The rail's size for what is actually being shown. The panel window
+    /// stays at its maximum regardless, so this is what the card's placement
+    /// and the pointer test have to measure against — not the window.
+    private var railSize: CGSize { DockLayout.size(for: entries.count, on: placement.edge.axis) }
+
+    /// Which way the rail runs, which is the axis the card slides along to
+    /// stay level with the ring it belongs to.
+    private var alongEdge: Edge.Set { placement.edge.isVertical ? .top : .leading }
+
+    /// The panel's own extent along that axis, which is what the card is
+    /// clamped inside.
+    private var panelAlong: CGFloat {
+        let panel = FloatingPanelController.Layout.size(for: placement.edge)
+        return placement.edge.isVertical ? panel.height : panel.width
+    }
+
+    /// How far the rail is offset along its own run inside the panel.
+    private var railAlong: CGFloat { placement.edge.isVertical ? railTop : railLeading }
 
     /// Where the rail's top edge sits inside the panel.
     ///
@@ -186,6 +203,10 @@ struct FloatingUsagePanelView: View {
     /// out and left it here.
     private var railTop: CGFloat { placement.railTop }
 
+    /// The same across the panel's other axis, which only a rail lying along
+    /// the top ever uses.
+    private var railLeading: CGFloat { placement.railLeading }
+
     private var selectedUsage: ProviderUsage? {
         entries.first { $0.usage.provider == selectedProvider }?.usage
     }
@@ -195,61 +216,66 @@ struct FloatingUsagePanelView: View {
         return entries.firstIndex { $0.usage.provider == selectedProvider }
     }
 
-    /// Vertical center of a ring in the dock rail, in the outer `HStack`'s
-    /// top-aligned coordinate space (which the card shares). Centers march
-    /// down the rail from `DockLayout.verticalPadding + ringRadius`,
-    /// advancing one item height plus one gap each time.
-    private func ringCenterY(for index: Int) -> CGFloat {
-        DockLayout.verticalPadding
-            + CGFloat(index) * (DockLayout.itemHeight + DockLayout.itemSpacing)
-            + DockLayout.ringDiameter / 2
+    /// Where a ring's centre sits **along** the rail, in the coordinate space
+    /// the rail and the card share. Centres march from the rail's first-ring
+    /// offset, advancing one item plus one gap each time.
+    private func ringCentre(for index: Int) -> CGFloat {
+        DockLayout.firstRingAlong
+            + CGFloat(index) * DockLayout.ringStep(on: placement.edge.axis)
     }
 
-    /// Top padding above the detail card. The card wants to be centered on
-    /// the selected ring, but is clamped so it never runs past the panel's
-    /// top or bottom edge — which is exactly why the pointer needs its own
-    /// placement below rather than riding at the card's center.
-    /// Top padding above the card, measured from the rail's top edge.
+    /// The card's own extent along that same axis: its height beside the rail,
+    /// its width below it.
+    private var cardAlong: CGFloat {
+        placement.edge.isVertical ? cardHeight : DetailCardLayout.width
+    }
+
+    /// How far along the rail the card starts, measured from the rail's own
+    /// leading corner.
     ///
-    /// Clamped against the *panel*, not the rail: the card can be taller than
-    /// the rail, and the panel has room above and below it, so the card is
-    /// allowed into that space — going negative to sit higher than the rail —
-    /// rather than being pushed past the window's edge and cut off square.
-    private func cardTopPadding(for index: Int) -> CGFloat {
-        let rawTop = ringCenterY(for: index) - cardHeight / 2
-        let highest = -railTop
-        let lowest = max(FloatingPanelController.Layout.height - railTop - cardHeight, highest)
-        return min(max(rawTop, highest), lowest)
+    /// Clamped against the *panel*, not the rail: the card can be longer than
+    /// the rail, and the panel has room past it at both ends, so the card is
+    /// allowed into that space — going negative to start before the rail does
+    /// — rather than being pushed past the window's edge and cut off square.
+    private func cardPadding(for index: Int) -> CGFloat {
+        let raw = ringCentre(for: index) - cardAlong / 2
+        let first = -railAlong
+        let last = max(panelAlong - railAlong - cardAlong, first)
+        return min(max(raw, first), last)
     }
 
-    /// Where the pointer sits inside the card: the ring's center expressed
-    /// relative to the card's own top edge, so the tip keeps aiming at the
-    /// ring even when the card above has been clamped away from center.
-    /// Kept clear of the card's rounded corners by one corner radius.
-    private func pointerCenterY(for index: Int) -> CGFloat {
-        let raw = ringCenterY(for: index) - cardTopPadding(for: index)
+    /// Where the pointer sits inside the card: the ring's centre expressed
+    /// relative to the card's own leading corner, so the tip keeps aiming at
+    /// the ring even when the card has been clamped away from centre. Kept
+    /// clear of the card's rounded corners by one corner radius.
+    private func pointerCentre(for index: Int) -> CGFloat {
+        let raw = ringCentre(for: index) - cardPadding(for: index)
         let inset = DetailCardLayout.cornerRadius + DetailCardLayout.pointerHeight / 2
-        let highest = min(inset, cardHeight / 2)
-        let lowest = max(cardHeight - inset, highest)
-        return min(max(raw, highest), lowest)
+        let first = min(inset, cardAlong / 2)
+        let last = max(cardAlong - inset, first)
+        return min(max(raw, first), last)
     }
 
-    /// How far left of the rail's leading edge the card sits: its own width,
-    /// its pointer, and the gap between the pointer's tip and the rail. Same
-    /// three pieces `FloatingPanelController.Layout.expandedWidth` adds to the
-    /// rail's width, which is why the card lands exactly inside the widened
-    /// panel.
+    /// How far the card sits clear of the rail: beside it, its own width plus
+    /// its pointer plus the gap; below it, the rail's thickness plus the gap,
+    /// since the pointer is already inside the card's own frame there.
     ///
-    /// A computed `var`, and it has to be: a `static let` is worked out once
-    /// per process and never again, so changing the panel's size afterwards
-    /// left the card offset by the *old* size's width — at Large that is 61pt
-    /// short, which parks the card squarely on top of the rail. Rebuilding the
-    /// view does not help; nothing rebuilds a `static let`. Every constant
-    /// derived from `PanelMetrics` has to be computed on each read.
-    private static var cardInset: CGFloat {
-        DetailCardLayout.width
-            + DetailCardLayout.pointerWidth
-            + DetailCardLayout.horizontalGap
+    /// Computed, and it has to be: a `static let` is worked out once per
+    /// process and never again, so changing the panel's size afterwards left
+    /// the card offset by the *old* size's width — at Large that is 61pt short,
+    /// which parks the card squarely on top of the rail. Rebuilding the view
+    /// does not help; nothing rebuilds a `static let`. Every constant derived
+    /// from `PanelMetrics` has to be computed on each read.
+    private var cardOffset: CGSize {
+        switch placement.edge.axis {
+        case .vertical:
+            let inset = DetailCardLayout.width
+                + DetailCardLayout.pointerWidth
+                + DetailCardLayout.horizontalGap
+            return CGSize(width: inset * placement.edge.cardDirection, height: 0)
+        case .horizontal:
+            return CGSize(width: 0, height: railSize.height + DetailCardLayout.horizontalGap)
+        }
     }
 
     /// How the card comes and goes: it grows out of the tip of its own
@@ -261,16 +287,16 @@ struct FloatingUsagePanelView: View {
     /// edge of this panel *is* the edge of the screen. Anchoring the growth on
     /// the pointer tip ties the motion to the ring it belongs to.
     private func cardReveal(for index: Int) -> AnyTransition {
-        let anchor = UnitPoint(
-            x: placement.edge.isLeft ? 0 : 1,
-            y: cardHeight > 0 ? pointerCenterY(for: index) / cardHeight : 0.5
-        )
-
-        let direction = placement.edge.cardDirection
+        // The tip of the card's own pointer, in the card's unit space.
+        let along = cardAlong > 0 ? pointerCentre(for: index) / cardAlong : 0.5
+        let across = placement.edge.cardRevealOrigin
+        let anchor = placement.edge.isVertical
+            ? UnitPoint(x: across, y: along)
+            : UnitPoint(x: along, y: across)
 
         return .modifier(
-            active: CardReveal(progress: 0, anchor: anchor, direction: direction),
-            identity: CardReveal(progress: 1, anchor: anchor, direction: direction)
+            active: CardReveal(progress: 0, anchor: anchor, axis: placement.edge.axis, direction: placement.edge.cardDirection),
+            identity: CardReveal(progress: 1, anchor: anchor, axis: placement.edge.axis, direction: placement.edge.cardDirection)
         )
     }
 
@@ -341,37 +367,35 @@ struct FloatingUsagePanelView: View {
     /// simply asking whether the pointer is inside the window would hold the
     /// card open across a large blank area well away from it.
     private func isOverContent(_ point: CGPoint) -> Bool {
-        let panelWidth = FloatingPanelController.Layout.width
+        let edge = placement.edge
 
         // Collapsed, only the sliver's own target counts. Testing the rail's
-        // full width would hold the panel open across sixty points of empty
+        // full extent would hold the panel open across sixty points of empty
         // space it isn't drawing in.
         if !isExpanded {
             return PanelHitArea
-                .strip(edge: placement.edge, railHeight: railHeight, railTop: railTop)
+                .strip(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
                 .contains(point)
         }
 
-        let rail = PanelHitArea.rail(edge: placement.edge, railHeight: railHeight, railTop: railTop)
+        let rail = PanelHitArea.rail(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
         if rail.contains(point) { return true }
 
         guard let index = selectedIndex else { return false }
 
-        // Runs the full width of the panel rather than stopping at the card's
-        // own edge, so the gap the pointer crosses between the rail and the
-        // card is covered too. The vertical slack keeps the boundary from
-        // feeling like a trip wire right at the card's edge.
-        let cardBand = CGRect(
-            x: 0,
-            // Card positions are rail-relative; the pointer's is panel-relative.
-            y: railTop + cardTopPadding(for: index) - PanelHitArea.slack,
-            width: panelWidth,
-            height: cardHeight + PanelHitArea.slack * 2
-        )
-        return cardBand.contains(point)
+        // Runs the full extent of the panel across the card rather than
+        // stopping at the card's own edge, so the gap the pointer crosses
+        // between the rail and the card is covered too. The slack along it
+        // keeps the boundary from feeling like a trip wire at the card's edge.
+        let panel = FloatingPanelController.Layout.size(for: edge)
+        let start = railAlong + cardPadding(for: index) - PanelHitArea.slack
+        let length = cardAlong + PanelHitArea.slack * 2
+
+        let band = edge.isVertical
+            ? CGRect(x: 0, y: start, width: panel.width, height: length)
+            : CGRect(x: start, y: 0, width: length, height: panel.height)
+        return band.contains(point)
     }
-
-
 
     /// Closes the details once the pointer is off the panel entirely.
     private func deselect() {
@@ -400,13 +424,15 @@ enum PanelHitArea {
     /// while `swift build` stayed happy.
     static let slack: CGFloat = 8
 
-    static func rail(edge: PanelEdge, railHeight: CGFloat, railTop: CGFloat) -> CGRect {
-        CGRect(
-            x: edge.isLeft ? 0 : FloatingPanelController.Layout.width - DockLayout.width,
-            y: railTop,
-            width: DockLayout.width,
-            height: railHeight
-        )
+    /// The rail's rectangle inside the panel, in the panel's top-left space.
+    static func rail(edge: PanelEdge, railSize: CGSize, railTop: CGFloat, railLeading: CGFloat) -> CGRect {
+        let panel = FloatingPanelController.Layout.size(for: edge)
+        let x: CGFloat = switch edge {
+        case .left, .top: edge == .top ? railLeading : 0
+        case .right: panel.width - railSize.width
+        }
+
+        return CGRect(x: x, y: railTop, width: railSize.width, height: railSize.height)
     }
 
     /// The provider ring under a point in the panel's top-left coordinate
@@ -416,27 +442,27 @@ enum PanelHitArea {
         at point: CGPoint,
         edge: PanelEdge,
         providers: [Provider],
-        railTop: CGFloat
+        railTop: CGFloat,
+        railLeading: CGFloat
     ) -> Provider? {
-        let rail = rail(
-            edge: edge,
-            railHeight: DockLayout.height(for: providers.count),
-            railTop: railTop
-        )
+        let size = DockLayout.size(for: providers.count, on: edge.axis)
+        let rail = rail(edge: edge, railSize: size, railTop: railTop, railLeading: railLeading)
         guard rail.contains(point) else { return nil }
 
-        let centerX = rail.midX
         // Includes the selected ring's 1.06 scale and a small amount of pointer
         // forgiveness without reaching the percentage label beneath it.
         let radius = DockLayout.ringDiameter / 2 * 1.08
+        let across = DockLayout.ringCentreAcross(on: edge.axis)
 
         for (index, provider) in providers.enumerated() {
-            let centerY = rail.minY
-                + DockLayout.verticalPadding
-                + CGFloat(index) * (DockLayout.itemHeight + DockLayout.itemSpacing)
-                + DockLayout.ringDiameter / 2
-            let dx = point.x - centerX
-            let dy = point.y - centerY
+            let along = DockLayout.firstRingAlong
+                + CGFloat(index) * DockLayout.ringStep(on: edge.axis)
+            let centre = edge.isVertical
+                ? CGPoint(x: rail.minX + across, y: rail.minY + along)
+                : CGPoint(x: rail.minX + along, y: rail.minY + across)
+
+            let dx = point.x - centre.x
+            let dy = point.y - centre.y
             if dx * dx + dy * dy <= radius * radius { return provider }
         }
 
@@ -445,30 +471,44 @@ enum PanelHitArea {
 
     /// The sliver only ever exists docked — off the edge the rail stays open —
     /// so this is always hard against the screen edge.
-    static func strip(edge: PanelEdge, railHeight: CGFloat, railTop: CGFloat) -> CGRect {
-        CGRect(
-            x: edge.isLeft ? 0 : FloatingPanelController.Layout.width - DockLayout.collapsedHitWidth,
-            // Centred on the rail's band, which is where it is drawn.
-            y: railTop + (railHeight - DockLayout.collapsedHeight) / 2,
-            width: DockLayout.collapsedHitWidth,
-            height: DockLayout.collapsedHeight
-        )
-        // The same forgiveness the card's band gets, so the sliver isn't a
-        // trip wire either.
-        .insetBy(dx: 0, dy: -slack)
+    static func strip(edge: PanelEdge, railSize: CGSize, railTop: CGFloat, railLeading: CGFloat) -> CGRect {
+        let rail = rail(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
+        let hit = DockLayout.collapsedHitSize(on: edge.axis)
+
+        // Centred along the rail's band, which is where it is drawn, and hard
+        // against the screen edge across it. The same forgiveness the card's
+        // band gets is added along the run, so the sliver isn't a trip wire.
+        switch edge {
+        case .left:
+            return CGRect(x: rail.minX, y: rail.midY - hit.height / 2, width: hit.width, height: hit.height)
+                .insetBy(dx: 0, dy: -slack)
+        case .right:
+            return CGRect(x: rail.maxX - hit.width, y: rail.midY - hit.height / 2, width: hit.width, height: hit.height)
+                .insetBy(dx: 0, dy: -slack)
+        case .top:
+            return CGRect(x: rail.midX - hit.width / 2, y: rail.minY, width: hit.width, height: hit.height)
+                .insetBy(dx: -slack, dy: 0)
+        }
     }
 
     /// Whether the sliver is reachable without leaving the rail's area, for
-    /// every rail height the app can produce.
+    /// every rail size the app can produce.
     static func stripIsContainedInRail() -> Bool {
-        for edge in [PanelEdge.left, .right] {
+        for edge in [PanelEdge.left, .right, .top] {
             for count in 1...Provider.allCases.count {
-                let height = DockLayout.height(for: count)
+                let size = DockLayout.size(for: count, on: edge.axis)
+                let panel = FloatingPanelController.Layout.size(for: edge)
                 // Every offset the rail can take inside the panel, since it is
                 // no longer pinned to the middle of it.
-                for top in stride(from: 0.0, through: max(FloatingPanelController.Layout.height - height, 0), by: 1) {
-                    guard rail(edge: edge, railHeight: height, railTop: top)
-                        .contains(strip(edge: edge, railHeight: height, railTop: top))
+                let travel = edge.isVertical
+                    ? max(panel.height - size.height, 0)
+                    : max(panel.width - size.width, 0)
+
+                for offset in stride(from: 0.0, through: travel, by: 1) {
+                    let top = edge.isVertical ? offset : 0
+                    let leading = edge.isVertical ? 0 : offset
+                    guard rail(edge: edge, railSize: size, railTop: top, railLeading: leading)
+                        .contains(strip(edge: edge, railSize: size, railTop: top, railLeading: leading))
                     else { return false }
                 }
             }
@@ -484,13 +524,18 @@ private struct CardReveal: ViewModifier {
     /// 0 while the card is absent, 1 once it is fully present.
     let progress: Double
     let anchor: UnitPoint
-    /// Which way the card eases out from the rail.
+    /// Which axis the card unfolds across, and which way along it.
+    let axis: PanelEdge.Axis
     let direction: CGFloat
 
     func body(content: Content) -> some View {
-        content
+        let slide = (1 - progress) * 10 * direction
+        return content
             .scaleEffect(0.88 + 0.12 * progress, anchor: anchor)
-            .offset(x: (1 - progress) * 10 * direction)
+            .offset(
+                x: axis == .vertical ? slide : 0,
+                y: axis == .vertical ? 0 : slide
+            )
             .opacity(progress)
     }
 }

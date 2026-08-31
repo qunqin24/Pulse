@@ -181,19 +181,34 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Position"),
-                    subtitle: String.localized("Drag it anywhere; near a side it snaps on.")
+                    subtitle: String.localized("Drag it anywhere; near an edge it snaps on.")
                 ) {
                     Picker("", selection: Binding(
                         get: { placement.dock },
                         set: { placement.update(dock: $0) }
                     )) {
                         Text(localized: "Left").tag(PanelDock.edge(.left))
+                        Text(localized: "Top").tag(PanelDock.edge(.top))
                         Text(localized: "Free").tag(PanelDock.floating)
                         Text(localized: "Right").tag(PanelDock.edge(.right))
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
                     .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Percentages on top"),
+                    subtitle: String.localized("Only when the panel is docked to the top.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.topRailShowsPercentages },
+                        set: { settings.topRailShowsPercentages = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
                 }
             }
 

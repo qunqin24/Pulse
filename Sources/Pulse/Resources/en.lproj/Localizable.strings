@@ -16,6 +16,10 @@
 "Hide in full screen" = "Hide in full screen";
 "Keep the floating panel out of full-screen apps." = "Keep the floating panel out of full-screen apps.";
 "Left" = "Left";
+"Top" = "Top";
+"Percentages on top" = "Percentages on top";
+"Only when the panel is docked to the top." = "Only when the panel is docked to the top.";
+"Drag it anywhere; near an edge it snaps on." = "Drag it anywhere; near an edge it snaps on.";
 "Right" = "Right";
 
 "Show in panel" = "Show in panel";
@@ -134,7 +138,6 @@
 /* Free placement */
 "Position" = "Position";
 "Free" = "Free";
-"Drag it anywhere; near a side it snaps on." = "Drag it anywhere; near a side it snaps on.";
 "Last 31 days" = "Last 31 days";
 
 /* Panel size */
@@ -149,13 +152,6 @@
 "Start Pulse automatically when you log in." = "Start Pulse automatically when you log in.";
 "Waiting for approval in System Settings › General › Login Items." = "Waiting for approval in System Settings › General › Login Items.";
 
-/* Cursor */
-"Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
-"Cursor's saved login was refused. Open Cursor to renew it." = "Cursor's saved login was refused. Open Cursor to renew it.";
-"Reads your account's limits with the login Cursor saved." = "Reads your account's limits with the login Cursor saved.";
-"Cursor's own login" = "Cursor's own login";
-"Uses the login Cursor already saved." = "Uses the login Cursor already saved.";
-
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
 "Frosted glass instead of solid black." = "Frosted glass instead of solid black.";
@@ -164,6 +160,13 @@
 "Asks the language server Antigravity runs while it is open." = "Asks the language server Antigravity runs while it is open.";
 "Only while Antigravity is open." = "Only while Antigravity is open.";
 "Antigravity's language server" = "Antigravity's language server";
+
+/* Cursor */
+"Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
+"Cursor's saved login was refused. Open Cursor to renew it." = "Cursor's saved login was refused. Open Cursor to renew it.";
+"Reads your account's limits with the login Cursor saved." = "Reads your account's limits with the login Cursor saved.";
+"Cursor's own login" = "Cursor's own login";
+"Uses the login Cursor already saved." = "Uses the login Cursor already saved.";
 "Refresh" = "Refresh";
 "Pulse %@ is available" = "Pulse %@ is available";
 "Check now" = "Check now";

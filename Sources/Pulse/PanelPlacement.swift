@@ -10,24 +10,73 @@ import SwiftUI
 enum PanelEdge: String, Sendable {
     case left
     case right
+    case top
 
+    /// Which way the rail runs.
+    ///
+    /// Everything that used to read the edge directly — the stack the rings
+    /// sit in, which way the card unfolds, which end the flare fuses into,
+    /// which of the two ratios is pinned — actually only cares about this. Two
+    /// vertical edges and one horizontal one is a coincidence of what is built
+    /// today; the axis is the thing.
+    enum Axis: Sendable {
+        case vertical
+        case horizontal
+    }
+
+    var axis: Axis { self == .top ? .horizontal : .vertical }
+    var isVertical: Bool { axis == .vertical }
     var isLeft: Bool { self == .left }
 
-    /// Where the rail's container is pinned inside the panel. Only the
-    /// horizontal half is meaningful — vertically the rail is positioned by
-    /// `PanelPlacement.railTop`, so this pins the container to the top and the
-    /// offset does the rest.
-    var railAlignment: Alignment { isLeft ? .topLeading : .topTrailing }
+    /// Where the rail's container is pinned inside the panel. The offset along
+    /// the panel is applied separately (`PanelPlacement.railTop` and
+    /// `railLeading`), so this pins the container to the corner those offsets
+    /// are measured from.
+    var railAlignment: Alignment {
+        switch self {
+        case .left, .top: .topLeading
+        case .right: .topTrailing
+        }
+    }
 
     /// How the rail and its collapsed sliver sit *within* that container,
-    /// which is exactly the rail's height — so this centres the sliver.
-    var stackAlignment: Alignment { isLeft ? .leading : .trailing }
+    /// which is exactly the rail's size — so this centres the sliver along the
+    /// rail and holds it against the screen edge across it.
+    var stackAlignment: Alignment {
+        switch self {
+        case .left: .leading
+        case .right: .trailing
+        case .top: .top
+        }
+    }
 
     /// Where the card hangs off the rail: away from the rail's back.
-    var cardAlignment: Alignment { isLeft ? .topTrailing : .topLeading }
+    var cardAlignment: Alignment {
+        switch self {
+        case .left: .topTrailing
+        case .right: .topLeading
+        case .top: .topLeading
+        }
+    }
 
-    /// Direction the card is offset in.
-    var cardDirection: CGFloat { isLeft ? 1 : -1 }
+    /// Which way, along the axis the card unfolds across, it moves clear of
+    /// the rail. Positive is right for a side dock and down for the top one,
+    /// which is SwiftUI's direction in both cases.
+    var cardDirection: CGFloat {
+        switch self {
+        case .left, .top: 1
+        case .right: -1
+        }
+    }
+
+    /// The corner of the card the reveal animation grows out of, along the
+    /// axis the card unfolds across.
+    var cardRevealOrigin: CGFloat {
+        switch self {
+        case .left, .top: 0
+        case .right: 1
+        }
+    }
 }
 
 /// Whether the panel is fused to a screen edge or standing free.
@@ -76,6 +125,11 @@ final class PanelPlacement {
     /// rail would stop dead a couple of hundred points short of either end of
     /// the screen.
     private(set) var railTop: CGFloat = 0
+
+    /// The same, along the panel's other axis. Only a rail lying across the
+    /// top of the screen ever moves in it; down a side the rail is pinned to
+    /// one edge of the panel and this stays zero.
+    private(set) var railLeading: CGFloat = 0
 
     /// True while the panel is being carried across the screen.
     ///
@@ -158,9 +212,9 @@ final class PanelPlacement {
         defaults.set(self.verticalRatio, forKey: Key.verticalRatio)
     }
 
-    func setRailTop(_ value: CGFloat) {
-        guard abs(railTop - value) > 0.5 else { return }
-        railTop = value
+    func setRailOffset(top: CGFloat, leading: CGFloat) {
+        if abs(railTop - top) > 0.5 { railTop = top }
+        if abs(railLeading - leading) > 0.5 { railLeading = leading }
     }
 
     // MARK: - Geometry
@@ -175,13 +229,47 @@ final class PanelPlacement {
     /// the rail's offset inside the window so the rail itself doesn't move.
     struct Layout {
         let frame: CGRect
+        /// Where the rail's top edge sits inside the panel, measured down from
+        /// the panel's own top.
         let railTop: CGFloat
+        /// The same along the other axis, for a rail lying across the top.
+        /// Zero for a rail down a side, which is pinned to one of them.
+        let railLeading: CGFloat
     }
 
-    func layout(in visible: CGRect, panel: CGSize, rail: CGSize) -> Layout {
+    /// `topEdge` is where a top-docked rail's own top edge belongs, which is
+    /// **not** the top of `visible`: the panel is drawn above the menu bar, so
+    /// it goes to the display's physical edge. On a Mac with a notch that is
+    /// as far as the notch allows and no further — nothing can be drawn under
+    /// it — which lands back on the menu bar's own line.
+    func layout(in visible: CGRect, topEdge: CGFloat, panel: CGSize, rail: CGSize) -> Layout {
+        // Along the top the free coordinate is the horizontal one, and the
+        // panel hangs *down* from the rail instead of being centred on it,
+        // because that is the only direction the card can unfold into.
+        if case .edge(.top) = dock {
+            let railX = min(
+                max(visible.minX + CGFloat(horizontalRatio) * max(visible.width - rail.width, 0), visible.minX),
+                max(visible.maxX - rail.width, visible.minX)
+            )
+            let railTopY = topEdge
+
+            let windowX = min(
+                max(railX + rail.width / 2 - panel.width / 2, visible.minX),
+                max(visible.maxX - panel.width, visible.minX)
+            )
+            let windowY = max(railTopY - panel.height, visible.minY)
+
+            return Layout(
+                frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),
+                railTop: min(max(windowY + panel.height - railTopY, 0), max(panel.height - rail.height, 0)),
+                railLeading: min(max(railX - windowX, 0), max(panel.width - rail.width, 0))
+            )
+        }
+
         let railX: CGFloat = switch dock {
         case .edge(.left): visible.minX
         case .edge(.right): visible.maxX - rail.width
+        case .edge(.top): visible.minX  // handled above; never reached
         case .floating:
             // Floating means *not touching*. Without this, switching to free
             // placement while the stored position is still the docked one
@@ -209,7 +297,8 @@ final class PanelPlacement {
 
         return Layout(
             frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),
-            railTop: min(max(windowY + panel.height - railY - rail.height, 0), max(panel.height - rail.height, 0))
+            railTop: min(max(windowY + panel.height - railY - rail.height, 0), max(panel.height - rail.height, 0)),
+            railLeading: 0
         )
     }
 

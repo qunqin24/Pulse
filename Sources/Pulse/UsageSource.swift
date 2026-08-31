@@ -147,9 +147,24 @@ enum PanelMetrics {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var stored: CGFloat = PanelSize.default.scale
 
+    /// Whether the rail keeps its percent labels when it is lying along the
+    /// top of the screen. Off by default: a horizontal rail is under the menu
+    /// bar, where a second line of type turns a compact pill into a banner.
+    ///
+    /// Kept here beside the scale rather than passed down because it changes
+    /// the rail's *thickness*, which the AppKit window frame is worked out
+    /// from before SwiftUI has laid anything out — the same reason `scale`
+    /// lives here. `AppSettings` writes both.
+    nonisolated(unsafe) private static var storedTopPercentages = false
+
     static var scale: CGFloat { lock.withLock { stored } }
+    static var topRailShowsPercentages: Bool { lock.withLock { storedTopPercentages } }
 
     static func use(_ size: PanelSize) {
         lock.withLock { stored = size.scale }
+    }
+
+    static func showTopPercentages(_ shows: Bool) {
+        lock.withLock { storedTopPercentages = shows }
     }
 }

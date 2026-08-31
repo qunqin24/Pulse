@@ -11,8 +11,10 @@ import SwiftUI
 struct UsageBubbleShape: Shape {
     /// Which side the pointer leaves from — the side facing the rail.
     let edge: PanelEdge
-    /// Centre of the pointer, measured down from the shape's top edge.
-    var pointerCenterY: CGFloat
+    /// Centre of the pointer along the side it leaves from: measured down from
+    /// the shape's top edge for a card beside the rail, and in from its
+    /// leading edge for one hanging below it.
+    var pointerCenter: CGFloat
     let cornerRadius: CGFloat
     let pointerWidth: CGFloat
     let pointerHeight: CGFloat
@@ -20,11 +22,28 @@ struct UsageBubbleShape: Shape {
     /// Lets the pointer slide as part of the shape rather than as a separate
     /// animation that could run on its own curve.
     var animatableData: CGFloat {
-        get { pointerCenterY }
-        set { pointerCenterY = newValue }
+        get { pointerCenter }
+        set { pointerCenter = newValue }
     }
 
     func path(in rect: CGRect) -> Path {
+        // A card below the rail is the same silhouette given a quarter turn.
+        // Drawn in this rect laid on its side and rotated back, so there is
+        // one copy of the geometry — and because a rotation is not a
+        // reflection, the winding the body and the tail have to share survives
+        // it. Mirroring would reverse the tail and punch a gap between them,
+        // which is exactly what the left edge did once.
+        guard edge.isVertical else {
+            let canonical = CGRect(x: 0, y: 0, width: rect.height, height: rect.width)
+            return facingSideways(in: canonical).applying(
+                CGAffineTransform(a: 0, b: -1, c: 1, d: 0, tx: 0, ty: rect.height)
+            )
+        }
+
+        return facingSideways(in: rect)
+    }
+
+    private func facingSideways(in rect: CGRect) -> Path {
         // The pointer lives in a strip along the rail-facing side; the body
         // fills what's left.
         let body = CGRect(
@@ -51,7 +70,7 @@ struct UsageBubbleShape: Shape {
         // Keep the tail clear of the rounded corners, and inside the card even
         // when the caller asks for something out of range.
         let centre = min(
-            max(pointerCenterY, cornerRadius + half),
+            max(pointerCenter, cornerRadius + half),
             max(rect.height - cornerRadius - half, cornerRadius + half)
         )
 
