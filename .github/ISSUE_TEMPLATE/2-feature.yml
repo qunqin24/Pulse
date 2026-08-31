@@ -1,0 +1,19 @@
+name: Feature request
+description: Something you would like Pulse to do.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What would you like?
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What you do about it today.
+    validations:
+      required: false

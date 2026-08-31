@@ -1,11 +1,5 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
-  - name: 🔒 Report a security problem privately
+  - name: Report a security problem
     url: https://github.com/qunqin24/Pulse/security/advisories/new
-    about: Never open a public issue for this. Pulse reads OAuth logins, API keys and browser sessions — a report here stays private until there is a fix.
-  - name: macOS refuses to open Pulse
-    url: https://github.com/qunqin24/Pulse/releases/latest
-    about: Expected, and not a bug. Pulse has no Apple Developer ID, so the first launch is blocked — System Settings › Privacy & Security › Open Anyway. The Releases page has the steps.
-  - name: Setting up Ollama Cloud
-    url: https://github.com/qunqin24/Pulse/blob/main/Docs/ollama-cloud.md
-    about: Which browsers work, what Full Disk Access is for, and what is read.
+    about: Privately, not as an issue.

@@ -1,0 +1,10 @@
+name: Question or problem
+description: Anything else — a question, or a problem you can't pin down.
+labels: ["question"]
+body:
+  - type: textarea
+    id: detail
+    attributes:
+      label: What's going on?
+    validations:
+      required: true

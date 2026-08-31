@@ -1,0 +1,47 @@
+name: Bug report
+description: Something is broken or behaving wrongly.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: And what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Pulse version
+      description: Settings › About.
+      placeholder: "1.0.2"
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "macOS 26.1"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: secrets
+    attributes:
+      label: Before posting
+      options:
+        - label: My report and screenshots contain no API key, token, cookie or account id.
+          required: true
