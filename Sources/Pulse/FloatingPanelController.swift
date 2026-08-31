@@ -77,6 +77,15 @@ final class FloatingPanelController {
         self.settings = settings
         self.placement = placement
 
+        // The sliver has to be reachable without leaving the rail, or hiding
+        // and showing chase each other forever. It is geometry, so it can be
+        // asserted rather than watched for — and it is asserted here because
+        // this is where the metrics it depends on are finally settled.
+        assert(
+            PanelHitArea.stripIsContainedInRail(),
+            "the collapsed sliver escapes the rail's hit area — see PanelHitArea"
+        )
+
         let initialSize = Layout.size(for: placement.edge)
         panel = FloatingPanel(
             contentRect: NSRect(
@@ -392,17 +401,59 @@ private final class FloatingPanel: NSPanel {
         // here is measured in the orientation it is about to be in — not the
         // one it is leaving. Measuring in the old one throws the panel across
         // the screen on the frame the axis changes.
-        let landing = dock.edge ?? placement.edge
+        //
+        // Coming off the top, `placement.edge` is a frame behind — it still
+        // says `.top` until `record` below, which would size the window for
+        // the horizontal axis while the content has already redrawn as a
+        // vertical rail: 52pt of it sliced off, and the hit rect a hundred
+        // points from where the rail is. So a floating landing picks its side
+        // the same way the placement picks it, from the half it stands in.
+        let landing: PanelEdge = if let docked = dock.edge {
+            docked
+        } else if placement.edge.axis == .horizontal {
+            pointer.x < visible.midX ? .left : .right
+        } else {
+            placement.edge
+        }
         let landingRail = railSize?(landing, dock.isDocked) ?? rail
         let landingPanel = FloatingPanelController.Layout.size(for: landing)
 
         // Under the pointer, in the new orientation. Carrying the old grab
         // offset across a quarter turn would put the rail somewhere the hand
         // holding it never asked for.
-        let turned = landingRail != rail
-        let origin = turned
-            ? CGPoint(x: pointer.x - landingRail.width / 2, y: pointer.y - landingRail.height / 2)
-            : wanted
+        //
+        // A turn is a change of **axis**, and must not be inferred from the
+        // rail's size: the ends lose the flare's padding when the rail floats,
+        // so the same rail is 48pt shorter off an edge — which made every
+        // dock↔float transition re-centre itself under the pointer for one
+        // frame and snap back on the next. The grab is re-measured whenever
+        // that does happen, or the frame after a turn would undo it.
+        let turned = landing.axis != placement.edge.axis
+
+        let origin: CGPoint
+        if turned {
+            origin = CGPoint(x: pointer.x - landingRail.width / 2, y: pointer.y - landingRail.height / 2)
+            self.grab = CGSize(width: landingRail.width / 2, height: landingRail.height / 2)
+        } else if landingRail != rail {
+            // Same axis, different length: the ends lose the flare's padding
+            // as the rail comes off an edge, so it is 48pt shorter floating.
+            // Half of that goes from each end, which means the **rings do not
+            // move** — as long as the rail's centre is what stays put. Holding
+            // the grab offset instead pins the far end and slides all of them
+            // 48pt through the hand that is carrying them.
+            let shrink = CGSize(
+                width: (rail.width - landingRail.width) / 2,
+                height: (rail.height - landingRail.height) / 2
+            )
+            let recentred = CGSize(width: grab.width - shrink.width, height: grab.height - shrink.height)
+            self.grab = recentred
+            origin = CGPoint(
+                x: min(max(pointer.x - recentred.width, visible.minX), visible.maxX - landingRail.width),
+                y: min(max(pointer.y - recentred.height, visible.minY), visible.maxY - landingRail.height)
+            )
+        } else {
+            origin = wanted
+        }
 
         let ratios = PanelPlacement.ratios(forRailAt: origin, in: visible, rail: landingRail)
         placement.record(dock: dock, horizontalRatio: ratios.h, verticalRatio: ratios.v)
