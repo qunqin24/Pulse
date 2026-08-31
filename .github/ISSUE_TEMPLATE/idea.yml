@@ -1,0 +1,31 @@
+name: Idea, or a question
+description: Something you'd like Pulse to do, or anything that doesn't fit the other three.
+title: ""
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or 中文, whichever you'd rather.
+
+        Pulse is deliberately small — a rail of rings and what's behind them.
+        Several of the settings it does have came from people asking here, so
+        do ask; the answer is just as often "that belongs in a different app".
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: |
+        What you're trying to do is more useful than the control you have in
+        mind — there's often a way to get there that fits the panel better.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: What do you do about it today?
+      placeholder: "I open Cursor's account page in a tab and check it by hand."
+    validations:
+      required: false

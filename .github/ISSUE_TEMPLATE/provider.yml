@@ -1,0 +1,85 @@
+name: Support another agent
+description: Ask for a coding agent Pulse doesn't read yet.
+title: "[Provider] "
+labels: ["enhancement", "provider"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        English or 中文, whichever you'd rather.
+
+        **The one rule that decides this:** Pulse never works a percentage out
+        from local token counts. The budgets behind these limits aren't
+        published, so anything derived that way would be a guess presented as a
+        fact. An agent can only be added if there is somewhere that states the
+        real figure — so the questions below aren't paperwork, they're the
+        whole answer.
+
+        You don't need to know all of them. Whatever you can find helps.
+
+  - type: input
+    id: agent
+    attributes:
+      label: Which agent, and a link
+      placeholder: "Windsurf — https://windsurf.com"
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: Where does it state what's left?
+      description: |
+        Any one of these is enough to start:
+
+        - a documented usage or quota API
+        - an undocumented endpoint its own client calls (the network tab
+          while its account page loads will show you)
+        - a signed-in web page that shows the percentages
+        - a local server the app runs, the way Antigravity does
+      placeholder: |
+        Its account page at example.com/settings shows "38% of the weekly
+        limit used". The page calls GET /api/usage, which returns JSON.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: login
+    attributes:
+      label: Does it leave a login on the Mac that Pulse could borrow?
+      description: |
+        This is what keeps Pulse from asking you for a credential. Six of the
+        seven providers are read with a login their own tool already stored.
+      options:
+        - "Yes — its CLI or app stores one (say where, if you know)"
+        - "No — it would need an API key pasted into Settings"
+        - "Only a browser session on its website"
+        - "I don't know"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transcripts
+    attributes:
+      label: Does it leave session transcripts on disk?
+      description: |
+        Not required. It is what makes the spending history and the "working
+        right now" mark possible — without it those are simply left out, as
+        they are for Antigravity.
+      options:
+        - "Yes"
+        - "No"
+        - "I don't know"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: using
+    attributes:
+      label: Do you use it?
+      description: |
+        Honest answer, either way. A route can't be verified against an account
+        nobody has, so this changes how it gets built rather than whether.
+      options:
+        - label: I have an account and can check the figures against my own
+          required: false
