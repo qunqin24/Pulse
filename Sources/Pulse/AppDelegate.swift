@@ -17,6 +17,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.setActivationPolicy(.accessory)
 
+        // **Writing to a pipe whose far end has closed raises SIGPIPE, whose
+        // default is to kill the process.** Pulse writes to one: the Codex
+        // helper's standard input. So that helper exiting — crashing, being
+        // killed with the terminal it was started from, the user quitting
+        // Codex — took Pulse down with it, with nothing in the log but
+        // "Terminated due to signal 13". Ignored here rather than in
+        // `CodexAppServer` because it is a property of the whole process, and
+        // because the failure it prevents is not local to the caller that
+        // happened to trigger it. The write then returns an error, which
+        // `CodexAppServer.write(_:to:)` reads as the helper being gone.
+        signal(SIGPIPE, SIG_IGN)
+
         // Keep the registered status line path pointing at wherever this
         // build actually lives, since rebuilding can move it.
         StatusLineHook.repairPathIfNeeded()

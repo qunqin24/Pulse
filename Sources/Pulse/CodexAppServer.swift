@@ -151,8 +151,11 @@ actor CodexAppServer {
             }
 
             pending[id] = continuation
-            stdin.write(data)
-            stdin.write(Data("\n".utf8))
+            guard write(data, to: stdin) else {
+                pending[id] = nil
+                continuation.resume(throwing: Failure.startFailed)
+                return
+            }
 
             // Strongly held, deliberately. Weakly, this server going away
             // before the timeout fires leaves every request it was carrying
@@ -169,9 +172,36 @@ actor CodexAppServer {
 
     private func notify(method: String, params: [String: Any] = [:]) {
         let message: [String: Any] = ["jsonrpc": "2.0", "method": method, "params": params]
-        guard let data = try? JSONSerialization.data(withJSONObject: message) else { return }
-        stdin?.write(data)
-        stdin?.write(Data("\n".utf8))
+        guard
+            let data = try? JSONSerialization.data(withJSONObject: message),
+            let stdin
+        else { return }
+
+        _ = write(data, to: stdin)
+    }
+
+    /// One line to the helper's standard input, or false if it has gone.
+    ///
+    /// **Writing to a pipe whose far end has closed raises SIGPIPE, and the
+    /// default for SIGPIPE is to kill the process.** The helper exiting — it
+    /// crashed, it was killed with the terminal it was started from, the user
+    /// quit Codex — would take Pulse down with it, and from the outside that
+    /// looks like the app crashing at random. `SIGPIPE` is ignored process-wide
+    /// (see `AppDelegate`) so the write returns an error instead; this is the
+    /// half that then treats the error as "the helper is gone" rather than
+    /// carrying on writing into a dead pipe.
+    private func write(_ data: Data, to handle: FileHandle) -> Bool {
+        do {
+            try handle.write(contentsOf: data)
+            try handle.write(contentsOf: Data("\n".utf8))
+            return true
+        } catch {
+            // Whatever is left of it is not usable, and the next call will
+            // start a fresh one.
+            process = nil
+            stdin = nil
+            return false
+        }
     }
 
     private func timeOut(_ id: Int) {
