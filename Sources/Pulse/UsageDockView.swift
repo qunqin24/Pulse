@@ -166,7 +166,7 @@ struct RailEntry: Identifiable, Equatable {
     /// Whether Pulse is currently fetching a fresh reading for this provider.
     var isRefreshing: Bool = false
 
-    var id: Provider { usage.provider }
+    var id: String { usage.account.id }
 }
 
 /// The rail, in whatever state it is currently in — full, collapsed to a
@@ -178,7 +178,7 @@ struct RailEntry: Identifiable, Equatable {
 /// animated, with the rings fading in once it has opened enough to hold them.
 struct UsageDockView: View {
     let entries: [RailEntry]
-    let selectedProvider: Provider?
+    let selectedAccount: AccountKey?
     let edge: PanelEdge
     /// Fused to a screen edge, or standing free on the desktop. Only the
     /// silhouette changes: docked it flares into the edge, floating it closes
@@ -194,10 +194,10 @@ struct UsageDockView: View {
     /// Called as the pointer arrives on a provider's ring. The details flyout
     /// follows the pointer rather than a click, so this is what drives
     /// selection. Leaving is handled by `PanelPointerWatcher`, not here.
-    let onEnter: (Provider) -> Void
+    let onEnter: (AccountKey) -> Void
     /// The accessibility/default action for a provider ring. Physical clicks
     /// are resolved by `FloatingPanel`, which owns mouse input ahead of SwiftUI.
-    var onRefresh: (Provider) -> Void = { _ in }
+    var onRefresh: (AccountKey) -> Void = { _ in }
     /// Called as the pointer arrives on the collapsed sliver.
     var onOpen: () -> Void = {}
 
@@ -281,11 +281,11 @@ struct UsageDockView: View {
             ForEach(entries) { entry in
                 UsageDockItem(
                     entry: entry,
-                    isSelected: selectedProvider == entry.usage.provider,
+                    isSelected: selectedAccount == entry.usage.account,
                     isInteractive: isExpanded,
                     showsPercentage: DockLayout.showsPercentages(on: edge.axis),
-                    onEnter: { onEnter(entry.usage.provider) },
-                    onRefresh: { onRefresh(entry.usage.provider) }
+                    onEnter: { onEnter(entry.usage.account) },
+                    onRefresh: { onRefresh(entry.usage.account) }
                 )
             }
         }
@@ -585,7 +585,7 @@ struct DockBerthShape: Shape {
         entries: Provider.allCases.map {
             RailEntry(usage: .unavailable($0, reason: .loading), headline: nil)
         },
-        selectedProvider: .claudeCode,
+        selectedAccount: AccountKey(.claudeCode),
         edge: .right,
         onEnter: { _ in }
     )

@@ -148,7 +148,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case unavailable(Unavailability)
     }
 
-    let provider: Provider
+    /// Which account this reading belongs to. The provider alone stopped
+    /// being enough once one of them could be signed in to twice.
+    let account: AccountKey
     /// Ordered as the provider reports them; the first one drives the ring.
     let windows: [UsageWindow]
     let observedAt: Date?
@@ -158,7 +160,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// Remaining credit, when the provider reports it.
     let creditBalance: String?
 
-    var id: Provider { provider }
+    var provider: Provider { account.provider }
+    var id: String { account.id }
 
     /// The window the rail's ring shows.
     ///
@@ -173,8 +176,12 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     }
 
     static func unavailable(_ provider: Provider, reason: Unavailability) -> ProviderUsage {
+        unavailable(AccountKey(provider), reason: reason)
+    }
+
+    static func unavailable(_ account: AccountKey, reason: Unavailability) -> ProviderUsage {
         ProviderUsage(
-            provider: provider,
+            account: account,
             windows: [],
             observedAt: nil,
             state: .unavailable(reason),

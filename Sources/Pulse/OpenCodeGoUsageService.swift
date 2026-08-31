@@ -55,7 +55,7 @@ struct OpenCodeGoUsageService: Sendable {
         }
 
         return ProviderUsage(
-            provider: .openCodeGo,
+            account: AccountKey(.openCodeGo),
             windows: windows,
             observedAt: Date(),
             state: .live,

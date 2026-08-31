@@ -229,7 +229,7 @@ struct ClaudeCodeUsageService: Sendable {
         }
 
         return ProviderUsage(
-            provider: .claudeCode,
+            account: AccountKey(.claudeCode),
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,
@@ -311,7 +311,7 @@ struct ClaudeCodeUsageService: Sendable {
         let age = captured.map { Date().timeIntervalSince($0) } ?? .infinity
 
         return ProviderUsage(
-            provider: .claudeCode,
+            account: AccountKey(.claudeCode),
             windows: windows,
             observedAt: captured,
             state: age <= freshFor ? .live : .stale,

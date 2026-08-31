@@ -28,12 +28,14 @@ final class AppSettings {
         }
     }
 
-    /// The order the rail draws them in, as raw values.
+    /// The order the rail draws them in, as account ids.
     ///
     /// Stored rather than derived so it survives a launch, and resolved through
-    /// `orderedProviders` rather than trusted as-is: a provider added in a
-    /// later version is missing from every list stored before it existed, and
-    /// one removed would still be named in lists stored while it did.
+    /// `orderedAccounts` rather than trusted as-is: an account added later is
+    /// missing from every list stored before it existed, and one removed would
+    /// still be named in lists stored while it did. The stored values are
+    /// unchanged from when this was a list of providers — a provider's first
+    /// account has the provider's own raw value as its id.
     var providerOrder: [String] {
         didSet {
             guard providerOrder != oldValue else { return }
@@ -46,41 +48,70 @@ final class AppSettings {
         }
     }
 
-    /// Every provider, in the user's order. Anything the stored order doesn't
-    /// mention goes last, in the order the enum declares — so a new one appears
-    /// at the bottom of the rail rather than in the middle of it.
-    var orderedProviders: [Provider] {
-        let stored = providerOrder.compactMap(Provider.init(rawValue:))
-        return stored + Provider.allCases.filter { !stored.contains($0) }
+    /// Accounts Pulse knows about beyond each provider's first, which exist
+    /// only because Pulse was signed in to them.
+    var extraAccounts: [ExtraAccount] {
+        didSet {
+            guard extraAccounts != oldValue else { return }
+            let data = try? JSONEncoder().encode(extraAccounts)
+            UserDefaults.standard.set(data, forKey: Key.extraAccounts)
+            onChange?()
+        }
     }
 
-    /// Moves a provider one place up or down. Silently does nothing at the
+    /// Every account there is: each provider's first, plus whatever has been
+    /// added to the two that allow it. Declaration order, before the user's
+    /// own order is applied.
+    var allAccounts: [AccountKey] {
+        Provider.allCases.flatMap { provider in
+            [AccountKey(provider)] + extraAccounts.filter { $0.provider == provider }.map(\.key)
+        }
+    }
+
+    /// Every account, in the user's order. Anything the stored order doesn't
+    /// mention goes last, in declaration order — so a new one appears at the
+    /// bottom of the rail rather than in the middle of it.
+    var orderedAccounts: [AccountKey] {
+        let known = allAccounts
+        let stored = providerOrder.compactMap(AccountKey.init(id:)).filter(known.contains)
+        return stored + known.filter { !stored.contains($0) }
+    }
+
+    /// Moves an account one place up or down. Silently does nothing at the
     /// ends, so the buttons can simply be disabled there.
-    func move(_ provider: Provider, by offset: Int) {
-        var order = orderedProviders
+    func move(_ account: AccountKey, by offset: Int) {
+        var order = orderedAccounts
         guard
-            let from = order.firstIndex(of: provider),
+            let from = order.firstIndex(of: account),
             order.indices.contains(from + offset)
         else { return }
 
         order.swapAt(from, from + offset)
-        providerOrder = order.map(\.rawValue)
+        providerOrder = order.map(\.id)
     }
 
-    /// Which providers appear in the rail. Never empty — the last one left
-    /// can't be switched off, since an empty rail would leave nothing to
+    /// What to call an account. A provider's first one is just the provider;
+    /// the rest carry a label so two subscriptions can be told apart.
+    func label(for account: AccountKey) -> String {
+        extraAccounts.first { $0.key == account }?.label ?? account.provider.displayName
+    }
+
+    /// Which accounts appear in the rail, as ids. Never empty — the last one
+    /// left can't be switched off, since an empty rail would leave nothing to
     /// hover, and nothing to grab to drag the panel.
-    var enabledProviders: Set<Provider> {
+    ///
+    /// Ids rather than providers, and stored under the same key with the same
+    /// values as when it was providers: a first account's id *is* its
+    /// provider's raw value, so nothing written by an older version stops
+    /// matching.
+    var enabledAccounts: Set<String> {
         didSet {
-            guard enabledProviders != oldValue else { return }
-            if enabledProviders.isEmpty {
-                enabledProviders = oldValue
+            guard enabledAccounts != oldValue else { return }
+            if enabledAccounts.isEmpty {
+                enabledAccounts = oldValue
                 return
             }
-            UserDefaults.standard.set(
-                enabledProviders.map(\.rawValue),
-                forKey: Key.enabledProviders
-            )
+            UserDefaults.standard.set(Array(enabledAccounts), forKey: Key.enabledProviders)
             onChange?()
         }
     }
@@ -207,7 +238,8 @@ final class AppSettings {
     init(
         isPanelVisible: Bool = true,
         hidesInFullScreen: Bool = true,
-        enabledProviders: Set<Provider> = Set(Provider.allCases),
+        enabledAccounts: Set<String> = Set(Provider.allCases.map(\.rawValue)),
+        extraAccounts: [ExtraAccount] = [],
         providerOrder: [String] = [],
         language: AppLanguage = .system,
         pinnedWindows: [String: String] = [:],
@@ -220,7 +252,8 @@ final class AppSettings {
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
-        self.enabledProviders = enabledProviders
+        self.enabledAccounts = enabledAccounts
+        self.extraAccounts = extraAccounts
         self.providerOrder = providerOrder
         self.language = language
         self.pinnedWindows = pinnedWindows
@@ -232,24 +265,24 @@ final class AppSettings {
         self.topRailShowsPercentages = topRailShowsPercentages
     }
 
-    func source(for provider: Provider) -> UsageSource {
-        sources[provider.rawValue].flatMap(UsageSource.init(rawValue:)) ?? .automatic
+    func source(for account: AccountKey) -> UsageSource {
+        sources[account.id].flatMap(UsageSource.init(rawValue:)) ?? .automatic
     }
 
-    func setSource(_ source: UsageSource, for provider: Provider) {
+    func setSource(_ source: UsageSource, for account: AccountKey) {
         var updated = sources
-        updated[provider.rawValue] = source == .automatic ? nil : source.rawValue
+        updated[account.id] = source == .automatic ? nil : source.rawValue
         sources = updated
     }
 
-    /// The window pinned for a provider, if any.
-    func pinnedWindow(for provider: Provider) -> String? {
-        pinnedWindows[provider.rawValue]
+    /// The window pinned for an account, if any.
+    func pinnedWindow(for account: AccountKey) -> String? {
+        pinnedWindows[account.id]
     }
 
-    func setPinnedWindow(_ id: String?, for provider: Provider) {
+    func setPinnedWindow(_ id: String?, for account: AccountKey) {
         var updated = pinnedWindows
-        updated[provider.rawValue] = id
+        updated[account.id] = id
         pinnedWindows = updated
     }
 
@@ -267,6 +300,16 @@ final class AppSettings {
 
         let stored = defaults.stringArray(forKey: Key.enabledProviders) ?? []
         let previouslyOffered = defaults.stringArray(forKey: Key.offeredProviders)
+
+        let extras = (defaults.data(forKey: Key.extraAccounts))
+            .flatMap { try? JSONDecoder().decode([ExtraAccount].self, from: $0) } ?? []
+        // Whichever added accounts were switched on stays switched on. The
+        // rules below decide only which providers' *first* accounts appear,
+        // which is all they ever decided.
+        let enabledExtras = Set(stored).intersection(Set(extras.map(\.id)))
+
+        // A provider's first account has the provider's own raw value as its
+        // id, so a list written before accounts existed parses here unchanged.
         var providers = Set(stored.compactMap(Provider.init(rawValue:)))
 
         // "Has Pulse ever run here" cannot be read off the enabled set: 1.0.0
@@ -305,7 +348,8 @@ final class AppSettings {
         // hover and nothing to grab.
         if providers.isEmpty { providers = Set(Provider.allCases) }
 
-        defaults.set(providers.map(\.rawValue), forKey: Key.enabledProviders)
+        let accounts = Set(providers.map { AccountKey($0).id }).union(enabledExtras)
+        defaults.set(Array(accounts), forKey: Key.enabledProviders)
 
         let language = defaults.string(forKey: Key.language)
             .flatMap(AppLanguage.init(rawValue:)) ?? .system
@@ -313,7 +357,8 @@ final class AppSettings {
         let settings = AppSettings(
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
-            enabledProviders: providers,
+            enabledAccounts: accounts,
+            extraAccounts: extras,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
@@ -332,20 +377,53 @@ final class AppSettings {
         return settings
     }
 
-    func isEnabled(_ provider: Provider) -> Bool {
-        enabledProviders.contains(provider)
+    func isEnabled(_ account: AccountKey) -> Bool {
+        enabledAccounts.contains(account.id)
     }
 
-    func setEnabled(_ isEnabled: Bool, for provider: Provider) {
+    func setEnabled(_ isEnabled: Bool, for account: AccountKey) {
         if isEnabled {
-            enabledProviders.insert(provider)
+            enabledAccounts.insert(account.id)
         } else {
-            enabledProviders.remove(provider)
+            enabledAccounts.remove(account.id)
         }
+    }
+
+    /// The accounts the rail is actually showing, in the user's order — which
+    /// is what everything measuring or hit-testing the rail has to agree on.
+    var shownAccounts: [AccountKey] { orderedAccounts.filter(isEnabled) }
+
+    /// Adds an account Pulse has just signed in to, switched on and last in
+    /// the rail. The slot is generated here so it can never collide with one
+    /// that has been removed.
+    @discardableResult
+    func addAccount(_ provider: Provider, label: String, slot: String = UUID().uuidString) -> AccountKey {
+        let account = ExtraAccount(provider: provider, slot: slot, label: label)
+        extraAccounts.append(account)
+        enabledAccounts.insert(account.id)
+        return account.key
+    }
+
+    /// Forgets an account, and everything stored against it — a later account
+    /// must never inherit a removed one's pinned window or route.
+    func removeAccount(_ account: AccountKey) {
+        guard !account.isPrimary else { return }
+
+        extraAccounts.removeAll { $0.key == account }
+        enabledAccounts.remove(account.id)
+        providerOrder.removeAll { $0 == account.id }
+        pinnedWindows[account.id] = nil
+        sources[account.id] = nil
+    }
+
+    func rename(_ account: AccountKey, to label: String) {
+        guard let index = extraAccounts.firstIndex(where: { $0.key == account }) else { return }
+        extraAccounts[index].label = label
     }
 
     private enum Key {
         static let panelVisible = "settings.panelVisible"
+        static let extraAccounts = "settings.extraAccounts"
         static let hidesInFullScreen = "settings.hidesInFullScreen"
         static let enabledProviders = "settings.enabledProviders"
         static let language = "settings.language"

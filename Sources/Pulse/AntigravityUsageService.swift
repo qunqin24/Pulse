@@ -42,7 +42,7 @@ struct AntigravityUsageService: Sendable {
             switch await Self.ask(port: port, token: server.token) {
             case .success(let windows) where !windows.isEmpty:
                 return ProviderUsage(
-                    provider: .antigravity,
+                    account: AccountKey(.antigravity),
                     windows: windows,
                     observedAt: Date(),
                     state: .live,

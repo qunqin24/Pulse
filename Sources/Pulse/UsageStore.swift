@@ -14,11 +14,13 @@ import Observation
 @MainActor
 @Observable
 final class UsageStore {
-    private(set) var usage: [Provider: ProviderUsage] = [:]
+    /// Keyed by account id rather than by provider: one of them can be signed
+    /// in to more than once, and a reading belongs to the account it came from.
+    private(set) var usage: [String: ProviderUsage] = [:]
     private(set) var isRefreshing = false
     /// Nil while an automatic refresh is fetching every provider; otherwise
     /// the one provider the user explicitly asked to refresh from its ring.
-    private var refreshingProvider: Provider?
+    private var refreshingAccount: AccountKey?
 
     /// What the automatic interval currently works out to, so settings can
     /// show it rather than leaving it a black box.
@@ -45,7 +47,7 @@ final class UsageStore {
     /// anything else was running, did nothing at all — and the pass already
     /// running had read the old key before it started, so it published the
     /// missing-key answer and slept for up to half an hour.
-    private var queued: Set<Provider> = []
+    private var queued: Set<AccountKey> = []
     /// A whole pass asked for while one was running.
     private var queuedFullPass = false
 
@@ -60,8 +62,8 @@ final class UsageStore {
         self.settings = settings
         codex = CodexUsageService(server: appServer)
 
-        for provider in Provider.allCases {
-            usage[provider] = .unavailable(provider, reason: .loading)
+        for account in settings.allAccounts {
+            usage[account.id] = .unavailable(account, reason: .loading)
         }
     }
 
@@ -76,7 +78,7 @@ final class UsageStore {
     func loadAPIKeys() {
         apiKeys = Dictionary(
             uniqueKeysWithValues: Provider.allCases
-                .filter { $0.usesAPIKey && settings.isEnabled($0) }
+                .filter { $0.usesAPIKey && settings.isEnabled(AccountKey($0)) }
                 .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
         )
     }
@@ -86,8 +88,8 @@ final class UsageStore {
 
     /// Whether this provider is being refreshed explicitly from its ring.
     /// Automatic background passes stay silent on the rail.
-    func isRefreshing(_ provider: Provider) -> Bool {
-        isRefreshing && refreshingProvider == provider
+    func isRefreshing(_ account: AccountKey) -> Bool {
+        isRefreshing && refreshingAccount == account
     }
 
     func start() {
@@ -153,10 +155,10 @@ final class UsageStore {
             return
         }
         isRefreshing = true
-        refreshingProvider = nil
+        refreshingAccount = nil
 
-        let codexSource = settings.source(for: .codex)
-        let claudeSource = settings.source(for: .claudeCode)
+        let codexSource = settings.source(for: AccountKey(.codex))
+        let claudeSource = settings.source(for: AccountKey(.claudeCode))
         let previous = usage
 
         // Read here rather than inside the services, which stay free of
@@ -166,7 +168,7 @@ final class UsageStore {
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
-        let wanted = settings.enabledProviders
+        let wanted = Set(settings.shownAccounts.filter(\.isPrimary).map(\.provider))
 
         Task { [codex, claudeCode, antigravity, cursor] in
             // Independent, so they run side by side rather than one waiting on
@@ -205,25 +207,25 @@ final class UsageStore {
             let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
             let fetchedCursor = await UsageCache.shared.reconciled(rawCursor)
 
-            self.usage[.codex] = fetchedCodex
-            self.usage[.claudeCode] = fetchedClaude
-            self.usage[.antigravity] = fetchedAntigravity
-            self.usage[.openCodeGo] = fetchedOpenCode
-            self.usage[.kimiCode] = fetchedKimi
-            self.usage[.cursor] = fetchedCursor
+            self.usage[AccountKey(.codex).id] = fetchedCodex
+            self.usage[AccountKey(.claudeCode).id] = fetchedClaude
+            self.usage[AccountKey(.antigravity).id] = fetchedAntigravity
+            self.usage[AccountKey(.openCodeGo).id] = fetchedOpenCode
+            self.usage[AccountKey(.kimiCode).id] = fetchedKimi
+            self.usage[AccountKey(.cursor).id] = fetchedCursor
             self.isRefreshing = false
-            self.refreshingProvider = nil
+            self.refreshingAccount = nil
             self.runQueued()
 
             // Compare the windows only. `observedAt` moves on every successful
             // fetch, so including it would report a change every single time
             // and the loop would never slow down.
-            let moved = previous[.codex]?.windows != fetchedCodex.windows
-                || previous[.claudeCode]?.windows != fetchedClaude.windows
-                || previous[.antigravity]?.windows != fetchedAntigravity.windows
-                || previous[.openCodeGo]?.windows != fetchedOpenCode.windows
-                || previous[.kimiCode]?.windows != fetchedKimi.windows
-                || previous[.cursor]?.windows != fetchedCursor.windows
+            let moved = previous[AccountKey(.codex).id]?.windows != fetchedCodex.windows
+                || previous[AccountKey(.claudeCode).id]?.windows != fetchedClaude.windows
+                || previous[AccountKey(.antigravity).id]?.windows != fetchedAntigravity.windows
+                || previous[AccountKey(.openCodeGo).id]?.windows != fetchedOpenCode.windows
+                || previous[AccountKey(.kimiCode).id]?.windows != fetchedKimi.windows
+                || previous[AccountKey(.cursor).id]?.windows != fetchedCursor.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -236,16 +238,17 @@ final class UsageStore {
     /// independent requests stay aligned on one clock. A manual refresh is
     /// narrower: it should not start the other provider's helper or spend a
     /// second endpoint request when the user asked about one ring.
-    func refresh(_ provider: Provider) {
+    func refresh(_ account: AccountKey) {
         guard !isRefreshing else {
-            queued.insert(provider)
+            queued.insert(account)
             return
         }
         isRefreshing = true
-        refreshingProvider = provider
+        refreshingAccount = account
 
-        let source = settings.source(for: provider)
-        let previous = usage[provider]
+        let provider = account.provider
+        let source = settings.source(for: account)
+        let previous = usage[account.id]
         let startedAt = ContinuousClock.now
         // A provider's own pane in Settings is reachable while it is switched
         // off, so its key will not be in the launch-time cache.
@@ -271,7 +274,7 @@ final class UsageStore {
             }
 
             let fetched = await UsageCache.shared.reconciled(raw)
-            self.usage[provider] = fetched
+            self.usage[account.id] = fetched
 
             if previous?.windows != fetched.windows {
                 self.signals.lastChange = Date()
@@ -287,7 +290,7 @@ final class UsageStore {
             }
 
             self.isRefreshing = false
-            self.refreshingProvider = nil
+            self.refreshingAccount = nil
             self.scheduleNext()
             self.runQueued()
         }
@@ -302,13 +305,13 @@ final class UsageStore {
             return
         }
 
-        guard let provider = queued.first else { return }
-        queued.remove(provider)
-        refresh(provider)
+        guard let account = queued.first else { return }
+        queued.remove(account)
+        refresh(account)
     }
 
-    func usage(for provider: Provider) -> ProviderUsage {
-        usage[provider] ?? .unavailable(provider, reason: .loading)
+    func usage(for account: AccountKey) -> ProviderUsage {
+        usage[account.id] ?? .unavailable(account, reason: .loading)
     }
 
     // MARK: - The loop

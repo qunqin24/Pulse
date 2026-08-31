@@ -5,7 +5,7 @@ import Foundation
 /// Each reports its own usage, by routes that have almost nothing in common —
 /// see `ClaudeCodeUsageService`, `CodexUsageService`, `AntigravityUsageService`,
 /// `CursorUsageService` and the two key-based ones.
-enum Provider: String, CaseIterable, Identifiable, Sendable {
+enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case claudeCode
     case codex
     case antigravity

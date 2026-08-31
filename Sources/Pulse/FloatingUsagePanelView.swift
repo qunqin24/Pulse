@@ -7,7 +7,7 @@ struct FloatingUsagePanelView: View {
     /// written by the drag handle, so the content mirrors as the panel moves.
     let placement: PanelPlacement
 
-    @State private var selectedProvider: Provider?
+    @State private var selectedAccount: AccountKey?
     /// The card's real laid-out height. Providers report different numbers of
     /// limits, so the card's height isn't knowable up front — and both the
     /// card's placement and the pointer's aim depend on it.
@@ -58,7 +58,7 @@ struct FloatingUsagePanelView: View {
                 // vanishing while another appears in its place.
                 UsageDockView(
                     entries: entries,
-                    selectedProvider: selectedProvider,
+                    selectedAccount: selectedAccount,
                     edge: placement.edge,
                     isDocked: placement.isDocked,
                     isExpanded: isExpanded,
@@ -99,7 +99,7 @@ struct FloatingUsagePanelView: View {
                 .padding(.top, railTop)
                 .padding(.leading, railLeading)
             }
-            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedProvider)
+            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedAccount)
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
             // The window owns the drag, so this is where the content hears
             // about it: how much of the panel can be grabbed depends on
@@ -162,17 +162,18 @@ struct FloatingUsagePanelView: View {
     /// Only the providers switched on in settings, so the rail shrinks when
     /// one is turned off.
     private var entries: [RailEntry] {
-        settings.orderedProviders
-            .filter(settings.isEnabled)
-            .map { provider in
-                let usage = store.usage(for: provider)
-                return RailEntry(
-                    usage: usage,
-                    headline: usage.headlineWindow(preferring: settings.pinnedWindow(for: provider)),
-                    isRunning: store.isRunning(provider),
-                    isRefreshing: store.isRefreshing(provider)
-                )
-            }
+        settings.shownAccounts.map { account in
+            let usage = store.usage(for: account)
+            return RailEntry(
+                usage: usage,
+                headline: usage.headlineWindow(preferring: settings.pinnedWindow(for: account)),
+                // Activity is per *provider*: a running CLI belongs to whichever
+                // account it happens to be signed in to, and the transcripts do
+                // not say which. Every account of that provider shows the mark.
+                isRunning: store.isRunning(account.provider),
+                isRefreshing: store.isRefreshing(account)
+            )
+        }
     }
 
     /// The rail's size for what is actually being shown. The panel window
@@ -208,12 +209,12 @@ struct FloatingUsagePanelView: View {
     private var railLeading: CGFloat { placement.railLeading }
 
     private var selectedUsage: ProviderUsage? {
-        entries.first { $0.usage.provider == selectedProvider }?.usage
+        entries.first { $0.usage.account == selectedAccount }?.usage
     }
 
     private var selectedIndex: Int? {
-        guard let selectedProvider else { return nil }
-        return entries.firstIndex { $0.usage.provider == selectedProvider }
+        guard let selectedAccount else { return nil }
+        return entries.firstIndex { $0.usage.account == selectedAccount }
     }
 
     /// Where a ring's centre sits **along** the rail, in the coordinate space
@@ -301,9 +302,9 @@ struct FloatingUsagePanelView: View {
     }
 
     /// Opens a provider's details when the pointer arrives on its ring.
-    private func select(_ provider: Provider) {
-        guard !placement.isDragging, selectedProvider != provider else { return }
-        selectedProvider = provider
+    private func select(_ account: AccountKey) {
+        guard !placement.isDragging, selectedAccount != account else { return }
+        selectedAccount = account
 
         // Opening a card is the clearest sign these numbers are being read,
         // which is what the automatic refresh interval paces itself against.
@@ -399,8 +400,8 @@ struct FloatingUsagePanelView: View {
 
     /// Closes the details once the pointer is off the panel entirely.
     private func deselect() {
-        guard selectedProvider != nil else { return }
-        selectedProvider = nil
+        guard selectedAccount != nil else { return }
+        selectedAccount = nil
     }
 }
 
@@ -438,14 +439,14 @@ enum PanelHitArea {
     /// The provider ring under a point in the panel's top-left coordinate
     /// space. Only the circle is clickable: the label and the empty berth keep
     /// their existing meaning as drag surface.
-    static func provider(
+    static func account(
         at point: CGPoint,
         edge: PanelEdge,
-        providers: [Provider],
+        accounts: [AccountKey],
         railTop: CGFloat,
         railLeading: CGFloat
-    ) -> Provider? {
-        let size = DockLayout.size(for: providers.count, on: edge.axis)
+    ) -> AccountKey? {
+        let size = DockLayout.size(for: accounts.count, on: edge.axis)
         let rail = rail(edge: edge, railSize: size, railTop: railTop, railLeading: railLeading)
         guard rail.contains(point) else { return nil }
 
@@ -454,7 +455,7 @@ enum PanelHitArea {
         let radius = DockLayout.ringDiameter / 2 * 1.08
         let across = DockLayout.ringCentreAcross(on: edge.axis)
 
-        for (index, provider) in providers.enumerated() {
+        for (index, account) in accounts.enumerated() {
             let along = DockLayout.firstRingAlong
                 + CGFloat(index) * DockLayout.ringStep(on: edge.axis)
             let centre = edge.isVertical
@@ -463,7 +464,7 @@ enum PanelHitArea {
 
             let dx = point.x - centre.x
             let dy = point.y - centre.y
-            if dx * dx + dy * dy <= radius * radius { return provider }
+            if dx * dx + dy * dy <= radius * radius { return account }
         }
 
         return nil

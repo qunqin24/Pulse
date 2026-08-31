@@ -53,7 +53,7 @@ struct KimiCodeUsageService: Sendable {
         }
 
         return ProviderUsage(
-            provider: .kimiCode,
+            account: AccountKey(.kimiCode),
             windows: windows,
             observedAt: Date(),
             state: .live,

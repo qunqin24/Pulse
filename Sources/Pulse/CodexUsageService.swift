@@ -163,7 +163,7 @@ struct CodexUsageService: Sendable {
         let credits = root["credits"] as? [String: Any]
 
         return ProviderUsage(
-            provider: .codex,
+            account: AccountKey(.codex),
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,
@@ -285,7 +285,7 @@ struct CodexUsageService: Sendable {
         }
 
         return ProviderUsage(
-            provider: .codex,
+            account: AccountKey(.codex),
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,

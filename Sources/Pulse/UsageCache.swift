@@ -29,7 +29,11 @@ actor UsageCache {
     /// Injectable so the rules can be exercised against a scratch file rather
     /// than the one the running app depends on.
     private let file: URL
-    private var readings: [Provider: Stored]?
+    /// Keyed by account id. On disk that is unchanged for the accounts every
+    /// installation already has — a provider's first account's id is the
+    /// provider's own raw value — so nothing written by an older version is
+    /// lost when this file is next read.
+    private var readings: [String: Stored]?
 
     init(file: URL = PulseStorage.directory.appending(path: "last-readings.json")) {
         self.file = file
@@ -51,7 +55,7 @@ actor UsageCache {
             return fetched
         }
 
-        guard let cached = reading(for: fetched.provider) else { return fetched }
+        guard let cached = reading(for: fetched.account) else { return fetched }
 
         // A fetch that came back with something no older than the cache wins;
         // this only fills gaps, it never overrules a real answer.
@@ -67,7 +71,7 @@ actor UsageCache {
 
     private func store(_ usage: ProviderUsage) {
         var all = load()
-        all[usage.provider] = Stored(
+        all[usage.account.id] = Stored(
             windows: usage.windows,
             observedAt: usage.observedAt ?? Date(),
             plan: usage.plan,
@@ -77,8 +81,8 @@ actor UsageCache {
         write(all)
     }
 
-    private func reading(for provider: Provider) -> ProviderUsage? {
-        guard let stored = load()[provider] else { return nil }
+    private func reading(for account: AccountKey) -> ProviderUsage? {
+        guard let stored = load()[account.id] else { return nil }
 
         let now = Date()
         guard now.timeIntervalSince(stored.observedAt) <= Self.maximumAge else { return nil }
@@ -88,7 +92,7 @@ actor UsageCache {
         guard !windows.isEmpty else { return nil }
 
         return ProviderUsage(
-            provider: provider,
+            account: account,
             windows: windows,
             observedAt: stored.observedAt,
             state: .stale,
@@ -99,7 +103,7 @@ actor UsageCache {
 
     // MARK: - Disk
 
-    private func load() -> [Provider: Stored] {
+    private func load() -> [String: Stored] {
         if let readings { return readings }
 
         guard
@@ -110,18 +114,14 @@ actor UsageCache {
             return [:]
         }
 
-        var all: [Provider: Stored] = [:]
-        for (key, value) in decoded {
-            if let provider = Provider(rawValue: key) { all[provider] = value }
-        }
-        readings = all
-        return all
+        // Entries for accounts that no longer exist are simply never asked for.
+        readings = decoded
+        return decoded
     }
 
-    private func write(_ all: [Provider: Stored]) {
+    private func write(_ all: [String: Stored]) {
         PulseStorage.prepare()
-        let keyed = Dictionary(uniqueKeysWithValues: all.map { ($0.key.rawValue, $0.value) })
-        guard let data = try? JSONEncoder().encode(keyed) else { return }
+        guard let data = try? JSONEncoder().encode(all) else { return }
         try? data.write(to: file, options: .atomic)
     }
 }

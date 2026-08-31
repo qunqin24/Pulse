@@ -50,7 +50,7 @@ struct CursorUsageService: Sendable {
         }
 
         return ProviderUsage(
-            provider: .cursor,
+            account: AccountKey(.cursor),
             windows: windows,
             observedAt: Date(),
             state: .live,

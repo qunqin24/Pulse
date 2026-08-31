@@ -34,8 +34,8 @@ struct SettingsView: View {
                 Section(String.localized("Providers")) {
                     // Same order as the rail: a sidebar that disagreed with
                     // the thing it configures is its own small confusion.
-                    ForEach(settings.orderedProviders) { provider in
-                        row(.provider(provider))
+                    ForEach(settings.orderedAccounts) { account in
+                        row(.account(account))
                     }
                 }
 
@@ -52,7 +52,7 @@ struct SettingsView: View {
 
                     switch pane {
                     case .general: general
-                    case .provider(let provider): providerPane(provider)
+                    case .account(let account): accountPane(account)
                     case .about: about
                     }
                 }
@@ -72,22 +72,30 @@ struct SettingsView: View {
 
     private var heading: some View {
         HStack(spacing: 9) {
-            if case .provider(let provider) = pane {
-                LobeIconView(provider: provider, size: 19)
+            if case .account(let account) = pane {
+                LobeIconView(provider: account.provider, size: 19)
             }
 
-            Text(pane.title)
+            Text(title(pane))
                 .font(.system(size: 17, weight: .semibold))
         }
     }
 
+    /// The pane's name. An account's is the user's own label, which the pane
+    /// itself cannot reach — two subscriptions to the same plan are told apart
+    /// by nothing else.
+    private func title(_ pane: SettingsPane) -> String {
+        if case .account(let account) = pane { return settings.label(for: account) }
+        return pane.title
+    }
+
     private func row(_ pane: SettingsPane) -> some View {
         Label {
-            Text(pane.title)
+            Text(title(pane))
         } icon: {
             switch pane {
-            case .provider(let provider):
-                LobeIconView(provider: provider, size: 14)
+            case .account(let account):
+                LobeIconView(provider: account.provider, size: 14)
             case .general, .about:
                 Image(systemName: pane.symbol)
             }
@@ -216,33 +224,33 @@ struct SettingsView: View {
                 // Arrows rather than dragging. Four rows is not enough to make
                 // a drag worth learning, and a drag that misses does something
                 // — an arrow that misses does nothing.
-                ForEach(Array(settings.orderedProviders.enumerated()), id: \.element) { index, provider in
+                ForEach(Array(settings.orderedAccounts.enumerated()), id: \.element) { index, account in
                     if index > 0 { SettingsRowDivider() }
 
                     SettingsRow(
-                        provider.displayName,
+                        settings.label(for: account),
                         // Moving something the rail isn't drawing looks like
                         // the arrow did nothing; saying so is kinder than
                         // hiding the row and renumbering everything.
-                        subtitle: settings.isEnabled(provider) ? nil : String.localized("Not shown"),
-                        icon: provider
+                        subtitle: settings.isEnabled(account) ? nil : String.localized("Not shown"),
+                        icon: account.provider
                     ) {
                         HStack(spacing: 4) {
                             Button {
-                                settings.move(provider, by: -1)
+                                settings.move(account, by: -1)
                             } label: {
                                 Image(systemName: "chevron.up")
                             }
                             .disabled(index == 0)
-                            .accessibilityLabel(String.localized("Move \(provider.displayName) up"))
+                            .accessibilityLabel(String.localized("Move \(settings.label(for: account)) up"))
 
                             Button {
-                                settings.move(provider, by: 1)
+                                settings.move(account, by: 1)
                             } label: {
                                 Image(systemName: "chevron.down")
                             }
-                            .disabled(index == settings.orderedProviders.count - 1)
-                            .accessibilityLabel(String.localized("Move \(provider.displayName) down"))
+                            .disabled(index == settings.orderedAccounts.count - 1)
+                            .accessibilityLabel(String.localized("Move \(settings.label(for: account)) down"))
                         }
                         .buttonStyle(.borderless)
                     }
@@ -342,49 +350,54 @@ struct SettingsView: View {
         return .localized("2 to 30 minutes as needed. Now: \("\(minutes)") minutes.")
     }
 
-    private func saveKey(for provider: Provider) {
+    private func saveKey(for account: AccountKey) {
         // Only call it saved if it was. Otherwise the Save button greys out
         // over a key that never reached disk.
-        guard APIKeyStore.setKey(apiKey, for: provider) else { return }
+        guard APIKeyStore.setKey(apiKey, for: account.provider) else { return }
         savedKey = apiKey
         // The store keeps keys for the life of the launch, so it has to be
         // told; otherwise the key is saved and nothing uses it until restart.
         store.loadAPIKeys()
         // And a key is only worth entering if something tries it now.
-        store.refresh(provider)
+        store.refresh(account)
     }
 
-    private func providerPane(_ provider: Provider) -> some View {
+    private func accountPane(_ account: AccountKey) -> some View {
+        let provider = account.provider
+        return accountPaneBody(account, provider)
+    }
+
+    private func accountPaneBody(_ account: AccountKey, _ provider: Provider) -> some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup(String.localized("Panel")) {
                 SettingsRow(String.localized("Show in panel")) {
                     Toggle("", isOn: Binding(
-                        get: { settings.isEnabled(provider) },
-                        set: { settings.setEnabled($0, for: provider) }
+                        get: { settings.isEnabled(account) },
+                        set: { settings.setEnabled($0, for: account) }
                     ))
                     .labelsHidden()
                     .toggleStyle(.switch)
                     // The last one standing can't be switched off: an empty
                     // rail has nothing to hover and nothing to drag.
-                    .disabled(settings.isEnabled(provider) && settings.enabledProviders.count == 1)
+                    .disabled(settings.isEnabled(account) && settings.enabledAccounts.count == 1)
                 }
 
                 SettingsRowDivider()
 
-                ringWindowRow(for: provider)
+                ringWindowRow(for: account)
             }
 
-            connection(for: provider)
+            connection(for: account)
 
-            liveUsage(for: provider)
+            liveUsage(for: account)
 
             // Both are built from the transcripts the CLIs leave behind, so
             // for a provider that keeps none they would be a column of zeroes
             // claiming nothing had been spent.
             if provider.keepsLocalTranscripts {
-                estimatedValue(for: provider)
+                estimatedValue(for: account)
 
-                history(for: provider)
+                history(for: account)
             }
         }
         .onChange(of: provider, initial: true) { _, shown in
@@ -400,9 +413,9 @@ struct SettingsView: View {
     /// plainly where it came from — rather than sitting beside the reported
     /// percentages as though it were one of them.
     @ViewBuilder
-    private func estimatedValue(for provider: Provider) -> some View {
-        let ledger = ledgers[provider] ?? .empty
-        let estimates = store.usage(for: provider).windows.compactMap { window in
+    private func estimatedValue(for account: AccountKey) -> some View {
+        let ledger = ledgers[account.provider] ?? .empty
+        let estimates = store.usage(for: account).windows.compactMap { window in
             BudgetEstimator.estimate(for: window, ledger: ledger).map { (window, $0) }
         }
 
@@ -428,7 +441,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Text(localized: "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.")
+                Text(localized: "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the account.provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.")
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -449,24 +462,24 @@ struct SettingsView: View {
     /// What has actually been spent over time, as opposed to how much of the
     /// current limit is left.
     @ViewBuilder
-    private func history(for provider: Provider) -> some View {
-        if let ledger = ledgers[provider], !ledger.days.isEmpty {
+    private func history(for account: AccountKey) -> some View {
+        if let ledger = ledgers[account.provider], !ledger.days.isEmpty {
             AccountUsageCard(
-                provider: provider,
+                provider: account.provider,
                 ledger: ledger,
-                credits: provider == .codex ? codexAccount : nil
+                credits: account.provider == .codex ? codexAccount : nil
             )
         } else {
             SettingsGroup(String.localized("Usage history")) {
                 SettingsRow(
-                    loadingHistory == provider
+                    loadingHistory == account.provider
                         ? String.localized("Reading logs")
                         : String.localized("No history yet"),
-                    subtitle: loadingHistory == provider
+                    subtitle: loadingHistory == account.provider
                         ? nil
                         : String.localized("Nothing has been logged on this Mac yet, so there is no history to add up.")
                 ) {
-                    if loadingHistory == provider {
+                    if loadingHistory == account.provider {
                         ProgressView().controlSize(.small)
                     }
                 }
@@ -475,7 +488,10 @@ struct SettingsView: View {
     }
 
     private func loadHistory() async {
-        guard case .provider(let provider) = pane else { return }
+        // History is per provider — it is read from that CLI's transcripts,
+        // which do not say which account was signed in at the time.
+        guard case .account(let account) = pane else { return }
+        let provider = account.provider
 
         loadingHistory = provider
         defer { loadingHistory = nil }
@@ -495,8 +511,8 @@ struct SettingsView: View {
     /// list changes as limits come and go — a per-model window appears only
     /// once that model has one. A pin that stops matching falls back to the
     /// automatic choice rather than leaving the ring blank.
-    private func ringWindowRow(for provider: Provider) -> some View {
-        let usage = store.usage(for: provider)
+    private func ringWindowRow(for account: AccountKey) -> some View {
+        let usage = store.usage(for: account)
 
         return SettingsRow(
             String.localized("Ring shows"),
@@ -504,11 +520,11 @@ struct SettingsView: View {
         ) {
             Picker("", selection: Binding(
                 get: {
-                    let pinned = settings.pinnedWindow(for: provider)
+                    let pinned = settings.pinnedWindow(for: account)
                     // Show "automatic" when the pin no longer matches anything.
                     return usage.windows.contains { $0.id == pinned } ? pinned : nil
                 },
-                set: { settings.setPinnedWindow($0, for: provider) }
+                set: { settings.setPinnedWindow($0, for: account) }
             )) {
                 Text(localized: "Highest usage").tag(String?.none)
 
@@ -524,20 +540,20 @@ struct SettingsView: View {
 
     /// Where a provider's figures come from, plus anything that route needs
     /// setting up.
-    private func connection(for provider: Provider) -> some View {
-        let source = settings.source(for: provider)
+    private func connection(for account: AccountKey) -> some View {
+        let source = settings.source(for: account)
 
         return SettingsGroup(String.localized("Connection")) {
-            // A provider with a single route gets told, not asked. A picker
+            // A account.provider with a single route gets told, not asked. A picker
             // with one entry is a control that cannot do anything.
-            if provider.hasSourceChoice {
+            if account.provider.hasSourceChoice {
                 SettingsRow(
                     String.localized("Read usage from"),
-                    subtitle: source.detail(for: provider)
+                    subtitle: source.detail(for: account.provider)
                 ) {
                     Picker("", selection: Binding(
-                        get: { settings.source(for: provider) },
-                        set: { settings.setSource($0, for: provider) }
+                        get: { settings.source(for: account) },
+                        set: { settings.setSource($0, for: account) }
                     )) {
                         ForEach(UsageSource.allCases) { option in
                             Text(option.title).tag(option)
@@ -546,7 +562,7 @@ struct SettingsView: View {
                     .labelsHidden()
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
-            } else if provider.usesAPIKey {
+            } else if account.provider.usesAPIKey {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
                 SettingsRow(
@@ -557,9 +573,9 @@ struct SettingsView: View {
                         SecureField("", text: $apiKey)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: SettingsLayout.controlWidth)
-                            .onSubmit { saveKey(for: provider) }
+                            .onSubmit { saveKey(for: account) }
 
-                        Button(String.localized("Save")) { saveKey(for: provider) }
+                        Button(String.localized("Save")) { saveKey(for: account) }
                             .disabled(apiKey == savedKey)
                     }
                 }
@@ -567,7 +583,7 @@ struct SettingsView: View {
                 // One route, so it is stated rather than offered — but what
                 // that route is differs: a server one of them runs while it is
                 // open, a login the other one already saved.
-                let route = provider == .cursor
+                let route = account.provider == .cursor
                     ? (name: String.localized("Cursor's own login"),
                        note: String.localized("Uses the login Cursor already saved."))
                     : (name: String.localized("Antigravity's language server"),
@@ -585,7 +601,7 @@ struct SettingsView: View {
             // The status line has to be registered before it can report
             // anything, so the control for that follows the choice that needs
             // it.
-            if provider == .claudeCode, source != .endpoint {
+            if account.provider == .claudeCode, source != .endpoint {
                 SettingsRowDivider()
                 claudeCodeStatusLine
             }
@@ -617,8 +633,8 @@ struct SettingsView: View {
         }
     }
 
-    private func liveUsage(for provider: Provider) -> some View {
-        let usage = store.usage(for: provider)
+    private func liveUsage(for account: AccountKey) -> some View {
+        let usage = store.usage(for: account)
 
         return SettingsGroup(String.localized("Current usage")) {
             // Says how current these figures are, and offers to make them
@@ -645,8 +661,8 @@ struct SettingsView: View {
                             .foregroundStyle(.secondary)
                     }
 
-                    Button(String.localized("Refresh")) { store.refresh(provider) }
-                        // Any pass, not just this provider's: during a
+                    Button(String.localized("Refresh")) { store.refresh(account) }
+                        // Any pass, not just this account.provider's: during a
                         // background one the press would only queue, with
                         // nothing on screen to say so.
                         .disabled(store.isRefreshing)
@@ -807,14 +823,15 @@ struct SettingsView: View {
 
 enum SettingsPane: Hashable {
     case general
-    case provider(Provider)
+    case account(AccountKey)
     case about
 
     var title: String {
         switch self {
         case .general: .localized("General")
         // Brand names, left as they are in every language.
-        case .provider(let provider): provider.displayName
+        // A fallback: the view titles these from the account's own label.
+        case .account(let account): account.provider.displayName
         case .about: .localized("About")
         }
     }
@@ -824,7 +841,7 @@ enum SettingsPane: Hashable {
     var symbol: String {
         switch self {
         case .general: "slider.horizontal.3"
-        case .provider: "square.stack.3d.up"
+        case .account: "square.stack.3d.up"
         case .about: "info.circle"
         }
     }

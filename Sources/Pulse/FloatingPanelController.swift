@@ -118,7 +118,7 @@ final class FloatingPanelController {
         panel.railFrame = { [settings, placement] in
             PanelHitArea.rail(
                 edge: placement.edge,
-                railSize: DockLayout.size(for: settings.enabledProviders.count, on: placement.edge.axis),
+                railSize: DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis),
                 railTop: placement.railTop,
                 railLeading: placement.railLeading
             )
@@ -126,10 +126,10 @@ final class FloatingPanelController {
         // The rail's size for a dock it is not on yet, which the drag needs:
         // crossing onto the other axis turns the rail as it goes.
         panel.railSize = { [settings] edge in
-            DockLayout.size(for: settings.enabledProviders.count, on: edge.axis)
+            DockLayout.size(for: settings.shownAccounts.count, on: edge.axis)
         }
         panel.grabArea = { [settings, placement] in
-            let size = DockLayout.size(for: settings.enabledProviders.count, on: placement.edge.axis)
+            let size = DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis)
             return placement.isRailExpanded
                 ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
                 : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
@@ -140,15 +140,15 @@ final class FloatingPanelController {
             // matched against that order — `PanelHitArea.provider` maps a
             // position to an index, and the enum's order is not what is on
             // screen once anything has been moved.
-            let providers = settings.orderedProviders.filter(settings.isEnabled)
-            guard let provider = PanelHitArea.provider(
+            let accounts = settings.shownAccounts
+            guard let account = PanelHitArea.account(
                 at: point,
                 edge: placement.edge,
-                providers: providers,
+                accounts: accounts,
                 railTop: placement.railTop,
                 railLeading: placement.railLeading
             ) else { return }
-            store.refresh(provider)
+            store.refresh(account)
         }
     }
 
@@ -218,7 +218,7 @@ final class FloatingPanelController {
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
             panel: Layout.size(for: edge),
-            rail: DockLayout.size(for: settings.enabledProviders.count, on: edge.axis)
+            rail: DockLayout.size(for: settings.shownAccounts.count, on: edge.axis)
         )
 
         panel.applyLevel(for: placement.dock)
