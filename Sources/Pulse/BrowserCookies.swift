@@ -30,7 +30,9 @@ import SQLite3
 /// a session that is months stale, and finding *that* is worse than a prompt.
 /// Each browser is independent: one failing tells the next nothing.
 enum BrowserCookies {
-    enum Browser: String, CaseIterable, Sendable {
+    enum Browser: String, CaseIterable, Identifiable, Sendable {
+        var id: String { rawValue }
+
         case firefox
         case safari
         case chrome

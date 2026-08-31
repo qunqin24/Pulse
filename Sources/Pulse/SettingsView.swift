@@ -375,7 +375,16 @@ struct SettingsView: View {
     /// the way is discarded unseen.
     /// Names the browser about to be opened, and warns when opening it will
     /// ask for the keychain.
-    private static func browserHint() -> String {
+    private static func browserHint(_ chosen: BrowserCookies.Browser?) -> String {
+        // Named, it is the only one opened — the rest are not tried, so a
+        // failure is reported rather than answered from a browser the user
+        // never signed in to. That is the same bargain `UsageSource` makes.
+        if let chosen {
+            return chosen.promptsForKeychain
+                ? String.localized("Only \(chosen.name). It will ask for the keychain.")
+                : String.localized("Only \(chosen.name).")
+        }
+
         guard let first = BrowserCookies.present().first else {
             return String.localized("Finds it in the browser you signed in with.")
         }
@@ -389,7 +398,9 @@ struct SettingsView: View {
     }
 
     private func readSession(for account: AccountKey) {
-        let browsers = BrowserCookies.present()
+        // Named, that one and no other. Left automatic, the default browser
+        // leads and the rest follow.
+        let browsers = settings.sessionBrowser(for: account).map { [$0] } ?? BrowserCookies.present()
 
         guard !browsers.isEmpty else {
             sessionMessage = String.localized("No browser cookie store was found.")
@@ -674,9 +685,30 @@ struct SettingsView: View {
                         // Chromium keeps its cookies under a key in the login
                         // keychain, and being told a second before the dialog
                         // appears is the difference between a step and a scare.
-                        subtitle: sessionMessage ?? Self.browserHint()
+                        subtitle: sessionMessage ?? Self.browserHint(settings.sessionBrowser(for: account))
                     ) {
-                        Button(String.localized("Read")) { readSession(for: account) }
+                        HStack(spacing: 8) {
+                            Picker("", selection: Binding(
+                                get: { settings.sessionBrowser(for: account) },
+                                set: {
+                                    settings.setSessionBrowser($0, for: account)
+                                    sessionMessage = nil
+                                }
+                            )) {
+                                Text(localized: "Automatic").tag(BrowserCookies.Browser?.none)
+
+                                // Only what is actually installed. A browser
+                                // that isn't there is a choice that can only
+                                // fail.
+                                ForEach(BrowserCookies.present()) { browser in
+                                    Text(browser.name).tag(BrowserCookies.Browser?.some(browser))
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+
+                            Button(String.localized("Read")) { readSession(for: account) }
+                        }
                     }
                 }
             } else {

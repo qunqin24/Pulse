@@ -182,6 +182,8 @@
 "API key" = "API key";
 "Session cookie" = "登录 Cookie";
 "Read from browser" = "从浏览器读取";
+"Only %@." = "只从 %@ 读取。";
+"Only %@. It will ask for the keychain." = "只从 %@ 读取,会请求钥匙串授权。";
 "Starts with %@." = "先从 %@ 找起。";
 "Starts with %@. It will ask for the keychain." = "先从 %@ 找起,会请求钥匙串授权。";
 "Finds it in the browser you signed in with." = "在你登录用的那个浏览器里找。";

@@ -140,6 +140,18 @@ final class AppSettings {
         }
     }
 
+    /// Which browser an account's session cookie is read from, keyed by
+    /// account. A missing entry means "whichever, starting with the default
+    /// one" — the same shape as `sources`, and for the same reason: naming one
+    /// means a failure is *reported* rather than quietly answered from
+    /// somewhere the user never signed in.
+    var sessionBrowsers: [String: String] {
+        didSet {
+            guard sessionBrowsers != oldValue else { return }
+            UserDefaults.standard.set(sessionBrowsers, forKey: Key.sessionBrowsers)
+        }
+    }
+
     /// Which route each provider's figures are read by, keyed by provider. A
     /// missing entry means `.automatic`.
     var sources: [String: String] {
@@ -247,6 +259,7 @@ final class AppSettings {
         language: AppLanguage = .system,
         pinnedWindows: [String: String] = [:],
         sources: [String: String] = [:],
+        sessionBrowsers: [String: String] = [:],
         refreshInterval: RefreshInterval = .default,
         autoCollapse: Bool = true,
         panelSize: PanelSize = .default,
@@ -261,6 +274,7 @@ final class AppSettings {
         self.language = language
         self.pinnedWindows = pinnedWindows
         self.sources = sources
+        self.sessionBrowsers = sessionBrowsers
         self.refreshInterval = refreshInterval
         self.autoCollapse = autoCollapse
         self.panelSize = panelSize
@@ -276,6 +290,17 @@ final class AppSettings {
         var updated = sources
         updated[account.id] = source == .automatic ? nil : source.rawValue
         sources = updated
+    }
+
+    /// The browser an account's session is read from, or nil for "whichever".
+    func sessionBrowser(for account: AccountKey) -> BrowserCookies.Browser? {
+        sessionBrowsers[account.id].flatMap(BrowserCookies.Browser.init(rawValue:))
+    }
+
+    func setSessionBrowser(_ browser: BrowserCookies.Browser?, for account: AccountKey) {
+        var updated = sessionBrowsers
+        updated[account.id] = browser?.rawValue
+        sessionBrowsers = updated
     }
 
     /// The window pinned for an account, if any.
@@ -366,6 +391,7 @@ final class AppSettings {
             language: language,
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
+            sessionBrowsers: defaults.dictionary(forKey: Key.sessionBrowsers) as? [String: String] ?? [:],
             refreshInterval: (defaults.object(forKey: Key.refreshInterval) as? Int)
                 .flatMap(RefreshInterval.init(rawValue:)) ?? .default,
             autoCollapse: defaults.object(forKey: Key.autoCollapse) as? Bool ?? true,
@@ -433,6 +459,7 @@ final class AppSettings {
         static let language = "settings.language"
         static let pinnedWindows = "settings.pinnedWindows"
         static let sources = "settings.sources"
+        static let sessionBrowsers = "settings.sessionBrowsers"
         // Bumped when `.automatic` arrived and became the default: the old
         // key holds a fixed number of seconds for anyone who ran an earlier
         // build, which would quietly keep them on the cadence the new default

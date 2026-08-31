@@ -182,6 +182,8 @@
 "API key" = "API key";
 "Session cookie" = "Session cookie";
 "Read from browser" = "Read from browser";
+"Only %@." = "Only %@.";
+"Only %@. It will ask for the keychain." = "Only %@. It will ask for the keychain.";
 "Starts with %@." = "Starts with %@.";
 "Starts with %@. It will ask for the keychain." = "Starts with %@. It will ask for the keychain.";
 "Finds it in the browser you signed in with." = "Finds it in the browser you signed in with.";
