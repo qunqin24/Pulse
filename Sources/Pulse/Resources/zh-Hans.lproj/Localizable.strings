@@ -168,8 +168,8 @@
 "Waiting for approval in System Settings › General › Login Items." = "等待在「系统设置 › 通用 › 登录项」中允许。";
 
 /* Liquid Glass */
-"Liquid Glass" = "液态玻璃";
-"Frosted glass instead of solid black." = "用毛玻璃代替纯黑。";
+"Liquid Glass" = "毛玻璃";
+"Frosted glass instead of solid black." = "用半透明代替纯黑。";
 "Drag it by a ring while this is on." = "开启后只能按住圆环拖动。";
 "Open Antigravity to see its usage." = "打开 Antigravity 才能读到它的用量。";
 "Asks the language server Antigravity runs while it is open." = "向 Antigravity 打开时运行的语言服务器读取。";
