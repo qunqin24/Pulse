@@ -43,54 +43,51 @@ After that it launches normally, and later versions install themselves.
 <img src="Docs/rail.png" width="150" align="right" alt="The rail, three rings">
 
 **Seven agents, one rail.** Claude Code, Codex, Antigravity, Cursor, OpenCode
-Go, Kimi Code and Ollama Cloud, each a ring. The colour says how close you are
-— green, amber, red — before you read a number. Click a ring to refresh just
-that one. A first run starts with the ones you actually have installed.
+Go, Kimi Code and Ollama Cloud, each a ring. Colour (green, amber, red) shows
+how close you are before you read the number. Click a ring to refresh just that
+one. A first run shows the agents you actually have installed.
 
-**Real limits, not guesses.** Every figure comes from the provider's own
-account. Pulse never works a percentage out from local token counts, and when
-a provider won't answer it says so rather than showing something plausible.
-Most are read with a login your own CLI or app already stored; the two that
-have none to borrow are reached with an API key you paste into Settings, and
-Ollama Cloud with a session Pulse reads out of your browser for you.
+**Straight from each provider's own account.** Pulse never derives a percentage
+from local token counts, and it says so when a provider won't answer. Most are
+read with a login your own CLI or app already stored; the two with none to
+borrow take an API key you paste into Settings, and Ollama Cloud one that Pulse
+reads out of your browser.
 
 **More than one account.** Sign in to a second Claude Code or Codex
 subscription from that provider's pane and watch both at once, each with its
 own name and its own ring. Pulse runs its own sign-in rather than copying what
-the CLI stored — a borrowed token goes stale within hours on whichever account
+the CLI stored: a borrowed token goes stale within hours on whichever account
 you aren't using, and renewing it could sign you out of your own CLI. The
-consent page names the CLI, because Pulse can't register an OAuth client of its
+consent page names the CLI because Pulse can't register an OAuth client of its
 own with either provider; this isn't an official integration, and Settings says
 so.
 
-**It knows when you're working.** A mark turns inside a ring while that CLI is
-mid-turn — read from the transcript's actual turn boundaries, not from "wrote
-to a file recently", so a slow tool call doesn't look like a finished turn.
-Claude Code and Codex only — the rest don't keep a transcript on disk for Pulse
-to read.
+**It knows when you're working.** While a CLI is mid-turn, a mark turns inside
+its ring. That comes from the transcript's actual turn boundaries, not from
+"wrote to a file recently", so a slow tool call doesn't look like a finished
+turn. Claude Code and Codex only; the rest keep no transcript on disk.
 
-**Out of the way.** Docks to either side of the screen or along the top, above
-the menu bar, or floats anywhere on the desktop. Hides down to a 6pt sliver
-when you're not near it, and stays out of other apps' full-screen Spaces. The
-sliver still turns red when a limit is nearly gone — a monitor that hides
-itself has to keep one way of saying *look at me*.
+**Out of the way.** Docks to either side of the screen, along the top above the
+menu bar, or floats anywhere on the desktop. Hides to a 6pt sliver when you're
+not near it, and stays out of other apps' full-screen Spaces. The sliver still
+turns red once a limit is nearly gone.
 
 **What it costs.** Settings reconstructs a spending history from Claude Code's
-and Codex's own session logs, priced at each provider's published API rates —
-plus a clearly labelled estimate of what a rate-limit window is worth, since
-no provider reports one. The other providers keep no local log for this to be
-built from.
+and Codex's own session logs, priced at each provider's published API rates,
+plus a clearly labelled estimate of what a rate-limit window is worth. No
+provider reports one, and the other providers keep no local log to build this
+from.
 
 **Adaptive refresh.** Between 2 and 30 minutes, backing off when nothing is
-moving instead of polling on a fixed schedule around the clock. The rail opens
-with the last reading, marked with when it was taken, rather than sitting blank
-until the slowest provider answers.
+moving instead of polling on a fixed schedule. The rail opens with the last
+reading, marked with when it was taken, rather than sitting blank until the
+slowest provider answers.
 
 **Yours to arrange.** Put the rings in your own order, set the gap between them,
-switch the percentages off on either rail, and give an account a fixed colour if
-you'd rather — though the default stays the usage colours, since a fixed hue is
-a reading you've chosen to give up. A limit the provider says is *spent* shows
-the spent red whatever you picked.
+switch the percentages off on either rail, and give an account a fixed colour
+if you'd rather. The default stays the usage colours: a fixed hue is a reading
+you've chosen to give up. A limit the provider says is *spent* stays red
+whatever you picked.
 
 English and Simplified Chinese, switchable without a relaunch. Three sizes. An
 optional Liquid Glass surface on macOS 26.
@@ -119,8 +116,8 @@ its CLI uses, and keeps its own refresh token — nothing the CLI owns is
 touched.
 
 A reading that fails falls back to the last good one, shown with the time it
-was taken rather than passed off as current. A window whose reset has passed is
-dropped rather than aged: it hasn't gone stale, it has reset.
+was taken. A window whose reset has passed is dropped rather than aged — it
+hasn't gone stale, it has reset.
 
 ## Privacy
 
