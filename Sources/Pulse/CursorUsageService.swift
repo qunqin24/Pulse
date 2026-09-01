@@ -175,8 +175,12 @@ struct CursorUsageService: Sendable {
             kind: .monthly,
             scope: scope,
             usedFraction: min(max(percent / 100, 0), 1),
+            // A billing cycle, which runs 28 to 31 days. Thirty is what orders
+            // the rows; it is not a length Cursor reported, so it is not one to
+            // divide by either.
             windowSeconds: 30 * 86_400,
             resetsAt: resets,
+            reportsLength: false,
             isExhausted: percent >= 100
         )
     }
@@ -209,9 +213,11 @@ struct CursorUsageService: Sendable {
             scope: nil,
             usedFraction: min(max(used / limit, 0), 1),
             // The billing cycle. Only the reset stamp is ever displayed; this
-            // is what orders the two rows.
+            // is what orders the two rows — and, being chosen rather than
+            // reported, is not something to divide by.
             windowSeconds: 30 * 86_400,
             resetsAt: resets,
+            reportsLength: false,
             isExhausted: used >= limit
         )
     }

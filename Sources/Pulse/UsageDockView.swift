@@ -21,10 +21,23 @@ enum DockLayout {
     /// Gap between a ring and the percent label beneath it.
     static var ringToTextSpacing: CGFloat { 6 * PanelMetrics.scale }
     static var percentFontSize: CGFloat { 13 * PanelMetrics.scale }
-    /// Approximate rendered line height of the percent label. Used only to
-    /// compute `height` up front, since the AppKit panel needs a concrete
-    /// frame before SwiftUI ever lays anything out.
-    static var percentTextHeight: CGFloat { 15 * PanelMetrics.scale }
+    /// Rendered line height of the percent label, and its width at "100%".
+    ///
+    /// The panel's AppKit frame is worked out from these before SwiftUI lays
+    /// anything out, so they are budgets rather than measurements — and a
+    /// budget that is **short** is not an approximation, it is a squeeze. The
+    /// height was 15 and the line renders at 15.6–16.0 per unit of scale, so
+    /// every item overflowed its own frame by a fraction; centred, that put
+    /// ring *i* half an item's worth of error from where the hit testing
+    /// looked for it, reaching 6pt down a full rail.
+    ///
+    /// Measured with the real font — `.system(size:weight:.medium,
+    /// design:.rounded)`, `.monospacedDigit()` — at all three sizes, and
+    /// rounded **up**: 15.6/16.0/15.6 for the height, 36.9/37.0/37.8 for the
+    /// width. Anything drawn on the panel that needs a budget gets it this
+    /// way, never by eye.
+    static var percentTextHeight: CGFloat { 16 * PanelMetrics.scale }
+    static var percentTextWidth: CGFloat { 38 * PanelMetrics.scale }
     /// Gap between the ring+label items, along the rail.
     ///
     /// The only measurement `RailSpacing` touches: the rings keep their size
@@ -87,10 +100,16 @@ enum DockLayout {
     ///
     /// Down a side that is the ring stacked over its label; across the top the
     /// two are stacked the same way but the run is the other axis, so an item
-    /// is only as long as the ring. The label is narrower than the ring at
-    /// every size the rail is drawn at, so it never sets this.
+    /// is as wide as the **wider of the two**.
+    ///
+    /// It used to be the ring alone, on the stated premise that the label is
+    /// narrower at every size. Measured, "100%" is *wider* — by 1.5 / 1.0 /
+    /// 1.1pt at small / standard / large — so a top rail was built about a
+    /// point short per ring, the stack was squeezed, and the only thing in an
+    /// item that can compress is the text: every label rendered as "10…".
     static func itemLength(on axis: PanelEdge.Axis) -> CGFloat {
-        showsPercentages(on: axis) && axis == .vertical ? itemHeight : ringDiameter
+        guard showsPercentages(on: axis) else { return ringDiameter }
+        return axis == .vertical ? itemHeight : max(ringDiameter, percentTextWidth)
     }
 
     /// The rail's extent **across** its run: its width down a side, its height
@@ -143,8 +162,17 @@ enum DockLayout {
     /// How far along the rail the first ring's centre sits, and the step from
     /// one to the next.
     static func firstRingAlong(docked: Bool = true, on axis: PanelEdge.Axis = .vertical) -> CGFloat {
-        let lead = axis == .vertical ? ringOffsetInItem(on: axis) : 0
-        return endPadding(docked: docked) + lead + ringDiameter / 2
+        // How far into its item the ring's centre sits, **along the rail**.
+        //
+        // Down a side the item is the ring stacked over its label, so this is
+        // the label's share when it leads plus half a ring. Across the top the
+        // stack runs the other way and the ring is simply centred in the
+        // item's width — which is *not* half a ring once the item is as wide
+        // as the label, and the label is the wider of the two.
+        let intoItem = axis == .vertical
+            ? ringOffsetInItem(on: axis) + ringDiameter / 2
+            : itemLength(on: axis) / 2
+        return endPadding(docked: docked) + intoItem
     }
     static func ringStep(on axis: PanelEdge.Axis) -> CGFloat {
         itemLength(on: axis) + itemSpacing
@@ -334,6 +362,18 @@ struct UsageDockView: View {
                     showsPercentage: DockLayout.showsPercentages(on: edge.axis),
                     onEnter: { onEnter(entry.usage.account) },
                     onRefresh: { onRefresh(entry.usage.account) }
+                )
+                // **Every item takes exactly the length it was budgeted.**
+                // `DockLayout` decides the rail's size before SwiftUI lays
+                // anything out, and the hit testing steps along it in those
+                // same units — so an item allowed to take its natural size
+                // instead puts every ring after it a little further out than
+                // the hit test looks, and the error accumulates down the rail.
+                // It reached 12.6pt at eleven rings, which is a third of a
+                // ring, purely from a label rendering narrower than its budget.
+                .frame(
+                    width: edge.isVertical ? nil : DockLayout.itemLength(on: .horizontal),
+                    height: edge.isVertical ? DockLayout.itemLength(on: .vertical) : nil
                 )
             }
         }

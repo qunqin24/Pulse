@@ -147,6 +147,9 @@ struct KimiCodeUsageService: Sendable {
             usedFraction: min(max(used / limit, 0), 1),
             windowSeconds: seconds,
             resetsAt: detail.resetTime.flatMap(Self.date(from:)),
+            // The weekly allowance states a reset and no length, and it rolls —
+            // so `seconds` is what sorts it, not something to divide by.
+            reportsLength: kind != .weekly,
             isExhausted: used >= limit
         )
     }

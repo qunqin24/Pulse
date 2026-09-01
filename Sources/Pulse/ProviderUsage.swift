@@ -35,6 +35,18 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     let windowSeconds: Int
     let resetsAt: Date?
 
+    /// Whether `windowSeconds` is a length the provider actually **stated**,
+    /// or one chosen so the row sorts.
+    ///
+    /// They are not the same thing and only one of them can be divided by.
+    /// Kimi's weekly allowance reports a reset and no length — the window
+    /// rolls, so the reset lands anywhere inside the week — and its seconds
+    /// exist to put it after the shorter windows; Cursor's pools reset with a
+    /// billing cycle that is 28 to 31 days and are stored as a flat 30. Both
+    /// are fine to sort by and fine to leave undisplayed, and both would make
+    /// `elapsedFraction` draw an arc nobody reported.
+    var reportsLength: Bool = true
+
     /// Whether the provider says this limit is spent.
     ///
     /// Taken from the provider rather than inferred, because they are the ones
@@ -57,7 +69,11 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// out for it — the same rule that drops a window whose length can't be
     /// read rather than inventing one.
     func elapsedFraction(at now: Date = Date()) -> Double? {
-        guard let resetsAt, windowSeconds > 0 else { return nil }
+        // `windowSeconds > 0` is not evidence that a length was reported — a
+        // sort key is also a positive number. Dividing by one draws a fraction
+        // the provider never gave, which is the one thing this app does not do
+        // outside the labelled money estimate.
+        guard reportsLength, let resetsAt, windowSeconds > 0 else { return nil }
         let remaining = resetsAt.timeIntervalSince(now)
         return min(max(1 - remaining / Double(windowSeconds), 0), 1)
     }

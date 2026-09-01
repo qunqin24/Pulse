@@ -63,9 +63,22 @@ def as_html(markdown: str) -> str:
         # Only the bullet marker, never `lstrip("-* ")` — that also eats the
         # leading asterisks of a line that begins **bold**.
         escaped = html.escape(re.sub(r"^[-*]\s+", "", line))
+        # Links first, with the address parked behind a placeholder. All three
+        # of these rewrite the whole line, so whichever runs second would
+        # otherwise reach *inside* the href the first one produced: a URL
+        # containing `**` came out as `<a href="…<strong>a</strong>b">`.
+        # Malformed rather than unsafe — every quote is already an entity by
+        # here — but wrong, and the label still wants its own formatting.
+        addresses: list[str] = []
+
+        def park(match: re.Match[str]) -> str:
+            addresses.append(match.group(2))
+            return f'<a href="\x00{len(addresses) - 1}\x00">{match.group(1)}</a>'
+
+        escaped = re.sub(r"\[(.+?)\]\((https?://[^)\s]+)\)", park, escaped)
         escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
         escaped = re.sub(r"`(.+?)`", r"<code>\1</code>", escaped)
-        escaped = re.sub(r"\[(.+?)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', escaped)
+        escaped = re.sub(r"\x00(\d+)\x00", lambda m: addresses[int(m.group(1))], escaped)
 
         lines.append(f"<li>{escaped}</li>" if line.startswith(("- ", "* ")) else f"<p>{escaped}</p>")
 
