@@ -93,7 +93,7 @@ enum OAuthLogin {
                     exchangeCarriesState: false,
                     deviceCodeBase: URL(string: "https://auth.openai.com/api/accounts")!
                 )
-            case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud:
+            case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding:
                 nil
             }
         }

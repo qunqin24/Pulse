@@ -223,6 +223,8 @@
 "Order" = "顺序";
 "Add an API key in Settings." = "在设置里填入 API key。";
 "Stored encrypted on this Mac." = "加密保存在本机。";
+"From z.ai. Stored encrypted on this Mac." = "在 z.ai 获取。加密保存在本机。";
+"From bigmodel.cn. Stored encrypted on this Mac." = "在 bigmodel.cn 获取。加密保存在本机。";
 "Couldn't connect the status line" = "没能连接状态栏";
 "~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json 读不出来，Pulse 不会覆盖一个它看不懂的文件。检查一下，然后在设置里连接。";
 "Move %@ up" = "把 %@ 上移";

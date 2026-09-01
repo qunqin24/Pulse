@@ -94,7 +94,9 @@ than showing something plausible. The routes differ, and so do their costs:
 | **Antigravity** | The language server the editor runs on the loopback interface | Reports only while Antigravity is open — the figures live in that process |
 | **Cursor** | The account's usage summary, authenticated with a cookie built from the login the editor already stored | Not public API. Reported as the two pools Cursor's own account page shows, not one combined figure |
 | **OpenCode Go** | An API key you paste into Settings — or the login OpenCode's own CLI already stored, if you're signed in there | Not public API; it can change without notice. The one credential Pulse holds for itself |
-| **Kimi Code** | An API key you paste into Settings | The one documented endpoint of the seven — still no promise it won't change |
+| **Kimi Code** | An API key you paste into Settings | The one documented endpoint of the nine — still no promise it won't change |
+| **Z.ai** | An API key you paste into Settings | Not public API. The international storefront — a BigModel key is refused here |
+| **GLM Coding Plan** | An API key you paste into Settings, or one the GLM tooling already saved on this Mac | Not public API. The mainland storefront (`open.bigmodel.cn`) |
 | **Ollama Cloud** | The signed-in settings page, with a session Pulse reads out of your browser | No quota API at all, so a page is the only source. See [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
 An added account signs in through Pulse, using the same public client its CLI

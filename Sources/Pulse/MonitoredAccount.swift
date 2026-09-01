@@ -67,7 +67,7 @@ extension Provider {
     var supportsMultipleAccounts: Bool {
         switch self {
         case .claudeCode, .codex: true
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud: false
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding: false
         }
     }
 }

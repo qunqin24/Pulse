@@ -57,7 +57,9 @@ Pulse 尚未使用 Apple 开发者签名，所以首次启动会被 macOS 拦下
 | **Antigravity** | 编辑器在本机回环地址上跑的 language server | 只在 Antigravity 打开时才有数据——额度就存在那个进程里 |
 | **Cursor** | 账号的用量摘要接口，用编辑器已保存的登录信息拼出所需的 cookie | 不是公开 API。按 Cursor 自己账号页的口径分成两个额度池，而不是合成一个数 |
 | **OpenCode Go** | 在设置里粘贴一个 API key——如果你已经在 OpenCode 自己的 CLI 里登录过，也会用它保存的登录信息 | 不是公开 API，随时可能变。这是 Pulse 唯一替自己持有的凭据 |
-| **Kimi Code** | 在设置里粘贴一个 API key | 七家里唯一一个有公开文档的接口——但也不保证永远不变 |
+| **Kimi Code** | 在设置里粘贴一个 API key | 九家里唯一一个有公开文档的接口——但也不保证永远不变 |
+| **Z.ai** | 在设置里粘贴一个 API key | 不是公开 API。国际站，用国内 BigModel 的 key 会被拒绝 |
+| **GLM 编码套餐** | 在设置里粘贴一个 API key，或读取 GLM 工具已经存在本机的那个 | 不是公开 API。国内站（`open.bigmodel.cn`） |
 | **Ollama Cloud** | 登录后的设置页，会话由 Pulse 从浏览器里读出 | 根本没有额度 API，网页是唯一来源。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
 自己添加的账号是通过 Pulse 走一遍登录的，用的是对应 CLI 那个公开客户端，并持有自己的刷新令牌——不碰 CLI 自己的任何东西。
@@ -76,7 +78,7 @@ Pulse 没有后端。多数供应商用的是你自己的 CLI 或客户端已经
 
 ## 代码结构
 
-源码都在 `Sources/Pulse`，一个 SwiftUI 视图一个文件，供应商图标在 `Sources/Pulse/Resources`。[CLAUDE.md](CLAUDE.md) 是更深入的说明——AppKit 浮窗与 SwiftUI 的分界、为什么拖拽归窗口管、七家各自的读取路径实际付出了什么代价。其中一家单独有一页：[Docs/ollama-cloud.md](Docs/ollama-cloud.md)，因为从浏览器里读会话这件事值得完整写下来。
+源码都在 `Sources/Pulse`，一个 SwiftUI 视图一个文件，供应商图标在 `Sources/Pulse/Resources`。[CLAUDE.md](CLAUDE.md) 是更深入的说明——AppKit 浮窗与 SwiftUI 的分界、为什么拖拽归窗口管、九家各自的读取路径实际付出了什么代价。其中一家单独有一页：[Docs/ollama-cloud.md](Docs/ollama-cloud.md)，因为从浏览器里读会话这件事值得完整写下来。
 
 ## 设计来源
 

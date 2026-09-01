@@ -744,6 +744,25 @@ struct SettingsView: View {
         }
     }
 
+    /// What to say under the key field.
+    ///
+    /// Usually just where it is kept — but z.ai and GLM are one company's two
+    /// storefronts, and a key from the wrong console is refused with no hint
+    /// as to why, so those two name the site instead of leaving the user to
+    /// guess which of the two they signed up for.
+    private static func keySubtitle(for provider: Provider) -> String {
+        switch provider {
+        case _ where provider.usesSessionCookie:
+            .localized("Copied from your browser. Stored encrypted on this Mac.")
+        case .zai:
+            .localized("From z.ai. Stored encrypted on this Mac.")
+        case .glmCoding:
+            .localized("From bigmodel.cn. Stored encrypted on this Mac.")
+        default:
+            .localized("Stored encrypted on this Mac.")
+        }
+    }
+
     /// Where a provider's figures come from, plus anything that route needs
     /// setting up.
     private func connection(for account: AccountKey) -> some View {
@@ -780,9 +799,7 @@ struct SettingsView: View {
                     account.provider.usesSessionCookie
                         ? String.localized("Session cookie")
                         : String.localized("API key"),
-                    subtitle: account.provider.usesSessionCookie
-                        ? String.localized("Copied from your browser. Stored encrypted on this Mac.")
-                        : String.localized("Stored encrypted on this Mac.")
+                    subtitle: Self.keySubtitle(for: account.provider)
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)

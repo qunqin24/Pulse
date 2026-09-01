@@ -13,6 +13,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case openCodeGo
     case kimiCode
     case ollamaCloud
+    case zai
+    case glmCoding
 
     var id: String { rawValue }
 
@@ -26,6 +28,11 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .openCodeGo: "OpenCode Go"
         case .kimiCode: "Kimi Code"
         case .ollamaCloud: "Ollama Cloud"
+        // Two entries rather than one with a region switch, because they are
+        // two accounts on two services: a key for one is refused by the other,
+        // and plenty of people have only one of them.
+        case .zai: "Z.ai"
+        case .glmCoding: "GLM Coding Plan"
         }
     }
 
@@ -40,6 +47,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .openCodeGo: "opencode"
         case .kimiCode: "kimi"
         case .ollamaCloud: "ollama"
+        case .zai: "zai"
+        // The parent brand's mark, which is also what tells the two apart on
+        // the rail — they are one company's two storefronts.
+        case .glmCoding: "zhipu"
         }
     }
 
@@ -60,7 +71,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud: false
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding: false
         }
     }
 
@@ -77,7 +88,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// The others borrow a login their own CLI stored. OpenCode stores one too,
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
-    var usesAPIKey: Bool { self == .openCodeGo || self == .kimiCode || self == .ollamaCloud }
+    var usesAPIKey: Bool {
+        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding].contains(self)
+    }
 
     /// Whether what the user pastes is a browser session rather than an API
     /// key. Ollama has no quota API at all — the figures are read from its
@@ -128,6 +141,13 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // gets the everything-on fallback.
         if OpenCodeGoUsageService.storedKey() != nil {
             found.insert(.openCodeGo)
+        }
+
+        // The same evidence for the mainland GLM plan: its relay and console
+        // tools leave the key in a one-line file. z.ai's international route
+        // has no such file, so it is never detected — nothing to find.
+        if ZaiUsageService.storedKey(for: .glmCoding) != nil {
+            found.insert(.glmCoding)
         }
 
         return found

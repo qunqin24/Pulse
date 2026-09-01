@@ -183,6 +183,8 @@ final class UsageStore {
         let openCode = OpenCodeGoUsageService(enteredKey: apiKeys[.openCodeGo])
         let kimi = KimiCodeUsageService(enteredKey: apiKeys[.kimiCode])
         let ollama = OllamaCloudUsageService(cookie: apiKeys[.ollamaCloud])
+        let zai = ZaiUsageService(provider: .zai, enteredKey: apiKeys[.zai])
+        let glm = ZaiUsageService(provider: .glmCoding, enteredKey: apiKeys[.glmCoding])
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
@@ -213,10 +215,17 @@ final class UsageStore {
             async let kimiUsage = wanted.contains(.kimiCode)
                 ? await kimi.fetch()
                 : ProviderUsage.unavailable(.kimiCode, reason: .loading)
+            async let zaiUsage = wanted.contains(.zai)
+                ? await zai.fetch()
+                : ProviderUsage.unavailable(.zai, reason: .loading)
+            async let glmUsage = wanted.contains(.glmCoding)
+                ? await glm.fetch()
+                : ProviderUsage.unavailable(.glmCoding, reason: .loading)
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
             let (rawKimi, rawCursor, rawOllama) = await (kimiUsage, cursorUsage, ollamaUsage)
+            let (rawZai, rawGLM) = await (zaiUsage, glmUsage)
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -229,6 +238,8 @@ final class UsageStore {
             let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
             let fetchedCursor = await UsageCache.shared.reconciled(rawCursor)
             let fetchedOllama = await UsageCache.shared.reconciled(rawOllama)
+            let fetchedZai = await UsageCache.shared.reconciled(rawZai)
+            let fetchedGLM = await UsageCache.shared.reconciled(rawGLM)
 
             // Accounts Pulse signed in to itself, read one at a time: each
             // may have to renew its token first, and they are few.
@@ -250,6 +261,8 @@ final class UsageStore {
                 (.kimiCode, fetchedKimi),
                 (.cursor, fetchedCursor),
                 (.ollamaCloud, fetchedOllama),
+                (.zai, fetchedZai),
+                (.glmCoding, fetchedGLM),
             ] where wanted.contains(provider) {
                 self.usage[AccountKey(provider).id] = fetched
             }
@@ -267,6 +280,8 @@ final class UsageStore {
                 || previous[AccountKey(.kimiCode).id]?.windows != fetchedKimi.windows
                 || previous[AccountKey(.cursor).id]?.windows != fetchedCursor.windows
                 || previous[AccountKey(.ollamaCloud).id]?.windows != fetchedOllama.windows
+                || previous[AccountKey(.zai).id]?.windows != fetchedZai.windows
+                || previous[AccountKey(.glmCoding).id]?.windows != fetchedGLM.windows
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()
@@ -297,6 +312,7 @@ final class UsageStore {
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)
         let ollama = OllamaCloudUsageService(cookie: key)
+        let zai = ZaiUsageService(provider: provider, enteredKey: key)
 
         Task { [codex, claudeCode, antigravity, cursor] in
             let raw: ProviderUsage
@@ -318,6 +334,8 @@ final class UsageStore {
                 raw = await kimi.fetch()
             case .ollamaCloud:
                 raw = await ollama.fetch()
+            case .zai, .glmCoding:
+                raw = await zai.fetch()
             }
             }
 
@@ -372,7 +390,8 @@ final class UsageStore {
         case .claudeCode: await claudeCode.fetch(account: account, token: credentials.accessToken)
         case .codex: await codex.fetch(account: account, credentials: credentials)
         // Nothing else can be signed in to, so nothing else gets here.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud: .unavailable(account, reason: .loading)
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding:
+            .unavailable(account, reason: .loading)
         }
     }
 
