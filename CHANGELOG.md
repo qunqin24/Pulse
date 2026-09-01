@@ -7,6 +7,17 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.0.3
+
+- **The panel can go on a second display.** Drag it across; it remembers which screen you left it on, and comes home if that screen is unplugged.
+- **Four more providers**: the GLM Coding Plan and MiniMax, each with a separate entry for the international and the mainland service, since they are separate accounts with separate keys.
+- **A second arc can show how far through the window the clock is**, so "80% used" can be read against how much of the window is left. Off by default, in Settings.
+- **The figure can sit above the ring** instead of below it. Also in Settings.
+- A provider that needs an API key is no longer switched on by itself — it waits in Settings rather than taking a place on the rail to ask for a key.
+- One that has no key says so, instead of saying "Reading…" for ever.
+- Claude Code no longer shows a limit that has already reset. If its saved login has expired and no session has run for a while, the stale window is dropped rather than shown with an old reset time.
+- The update window now shows the release notes itself, rather than loading the GitHub page inside it.
+
 ## 1.0.2
 
 - **Multiple accounts.** Sign in to a second Claude Code or Codex subscription and watch both at once, each with its own ring.
