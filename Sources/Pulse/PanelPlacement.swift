@@ -131,6 +131,18 @@ final class PanelPlacement {
     /// one edge of the panel and this stays zero.
     private(set) var railLeading: CGFloat = 0
 
+    /// Which display the rail was left on, as `PanelScreen` names them.
+    ///
+    /// The two ratios are fractions of one screen's usable area, so they say
+    /// *where* on a display the rail sits and nothing about *which*. Without
+    /// this the panel came home to whichever screen was main at every launch,
+    /// every settings change and every re-place — so it could be dragged onto
+    /// a second monitor and would not stay there.
+    ///
+    /// Nil means "wherever is main", which is what a first run wants and what
+    /// a stored display that is no longer attached falls back to.
+    private(set) var display: String?
+
     /// True while the panel is being carried across the screen.
     ///
     /// The drag belongs to the window now, not to a view inside it, so this is
@@ -149,11 +161,13 @@ final class PanelPlacement {
     init(
         dock: PanelDock = .edge(.right),
         horizontalRatio: Double = 1,
-        verticalRatio: Double = 0.5
+        verticalRatio: Double = 0.5,
+        display: String? = nil
     ) {
         self.dock = dock
         self.horizontalRatio = horizontalRatio.clampedToUnitRange
         self.verticalRatio = verticalRatio.clampedToUnitRange
+        self.display = display
     }
 
     /// Which way the card opens. Docked, the edge it is fused to; floating,
@@ -176,7 +190,8 @@ final class PanelPlacement {
         return PanelPlacement(
             dock: dock,
             horizontalRatio: defaults.object(forKey: Key.horizontalRatio) as? Double ?? 1,
-            verticalRatio: defaults.object(forKey: Key.verticalRatio) as? Double ?? 0.5
+            verticalRatio: defaults.object(forKey: Key.verticalRatio) as? Double ?? 0.5,
+            display: defaults.string(forKey: Key.display)
         )
     }
 
@@ -190,7 +205,8 @@ final class PanelPlacement {
         record(
             dock: dock,
             horizontalRatio: horizontalRatio ?? self.horizontalRatio,
-            verticalRatio: verticalRatio ?? self.verticalRatio
+            verticalRatio: verticalRatio ?? self.verticalRatio,
+            display: display
         )
         onChange?()
     }
@@ -200,16 +216,18 @@ final class PanelPlacement {
     /// Used by the drag handle, which moves the window itself as the pointer
     /// goes: asking for it to be moved again would fight the drag over the
     /// same frame.
-    func record(dock: PanelDock, horizontalRatio: Double, verticalRatio: Double) {
+    func record(dock: PanelDock, horizontalRatio: Double, verticalRatio: Double, display: String?) {
         self.dock = dock
         self.horizontalRatio = horizontalRatio.clampedToUnitRange
         self.verticalRatio = verticalRatio.clampedToUnitRange
+        self.display = display
 
         let defaults = UserDefaults.standard
         defaults.set(!dock.isDocked, forKey: Key.floating)
         if let edge = dock.edge { defaults.set(edge.rawValue, forKey: Key.edge) }
         defaults.set(self.horizontalRatio, forKey: Key.horizontalRatio)
         defaults.set(self.verticalRatio, forKey: Key.verticalRatio)
+        defaults.set(display, forKey: Key.display)
     }
 
     func setRailOffset(top: CGFloat, leading: CGFloat) {
@@ -322,6 +340,7 @@ final class PanelPlacement {
         static let floating = "panel.floating"
         static let horizontalRatio = "panel.horizontalRatio"
         static let verticalRatio = "panel.verticalRatio"
+        static let display = "panel.display"
     }
 }
 

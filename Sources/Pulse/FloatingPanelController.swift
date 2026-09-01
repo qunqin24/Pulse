@@ -66,6 +66,9 @@ final class FloatingPanelController {
 
     private let panel: FloatingPanel
     private var hostingView: NSHostingView<FloatingUsagePanelView>?
+    /// Written once in `init` and read once in `deinit`, which is nonisolated
+    /// and so cannot reach a main-actor property. Nothing else touches it.
+    nonisolated(unsafe) private var screenObserver: (any NSObjectProtocol)?
     private let store: UsageStore
     private let settings: AppSettings
     /// Where the panel is parked. The drag handle writes to this and moves the
@@ -117,6 +120,23 @@ final class FloatingPanelController {
             self?.placePanel()
         }
 
+        // Displays come and go: a monitor is unplugged, a laptop is docked,
+        // the arrangement is rearranged in System Settings. Any of those can
+        // leave the panel parked in a space that no longer exists, with no
+        // way to get it back — so it is re-placed whenever the screens change.
+        // Not during a drag, which is already moving the window itself and
+        // would be fought over the same frame.
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, !self.placement.isDragging else { return }
+                self.placePanel()
+            }
+        }
+
         // What the panel can be picked up by. Collapsed there is no rail on
         // screen to grab, only the sliver — a press in the sixty points of
         // empty air where the rail *would* be must go to whatever is behind
@@ -164,6 +184,10 @@ final class FloatingPanelController {
             ) else { return }
             store.refresh(account)
         }
+    }
+
+    deinit {
+        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
     }
 
     var isVisible: Bool { panel.isVisible }
@@ -225,7 +249,12 @@ final class FloatingPanelController {
     /// the window — the window is mostly the empty space the card unfolds
     /// into, and the user has never positioned that.
     private func placePanel() {
-        guard let screen = panel.screen ?? NSScreen.main ?? NSScreen.screens.first else { return }
+        // The display it was left on, if that display is still here. A monitor
+        // that has been unplugged falls back to one that exists rather than
+        // parking the panel in a space nobody can see.
+        guard let screen = PanelScreen.screen(withIdentifier: placement.display)
+            ?? panel.screen ?? NSScreen.main ?? NSScreen.screens.first
+        else { return }
 
         let edge = placement.edge
         let layout = placement.layout(
@@ -359,12 +388,20 @@ private final class FloatingPanel: NSPanel {
         guard
             let grab,
             let placement,
-            let screen = screen ?? NSScreen.main,
             let railFrame = railFrame?()
         else { return false }
 
-        let visible = screen.visibleFrame
         let pointer = NSEvent.mouseLocation
+
+        // **The screen the pointer is on, not the one the window is on.** The
+        // rail is clamped to the usable area every frame, so measuring that
+        // against the window's own screen is what pinned the panel to one
+        // display: a drag towards a second monitor was put back where it came
+        // from on every frame, and nothing ever crossed.
+        guard let screen = PanelScreen.containing(pointer) ?? self.screen ?? NSScreen.main
+        else { return false }
+
+        let visible = screen.visibleFrame
         let rail = railFrame.size
 
         if !didDrag {
@@ -456,7 +493,12 @@ private final class FloatingPanel: NSPanel {
         }
 
         let ratios = PanelPlacement.ratios(forRailAt: origin, in: visible, rail: landingRail)
-        placement.record(dock: dock, horizontalRatio: ratios.h, verticalRatio: ratios.v)
+        placement.record(
+            dock: dock,
+            horizontalRatio: ratios.h,
+            verticalRatio: ratios.v,
+            display: PanelScreen.identifier(of: screen)
+        )
 
         // One source of truth for the geometry: ask the placement where that
         // puts things rather than working it out a second way here.
