@@ -47,6 +47,19 @@ enum DockLayout {
     /// Height of one ring + its percent label.
     static var itemHeight: CGFloat { ringDiameter + ringToTextSpacing + percentTextHeight }
 
+    /// Whether the label is drawn above its ring rather than below it.
+    static var labelLeads: Bool { PanelMetrics.labelAboveRing }
+
+    /// How far into its item a ring starts, which is nothing at all unless the
+    /// label is above it — then the ring is pushed down past the whole label
+    /// block. **Everything that locates a ring has to add this**, the drawing
+    /// and the hit testing alike, or a click lands on the number instead of on
+    /// the ring it appears to be aimed at.
+    static func ringOffsetInItem(on axis: PanelEdge.Axis) -> CGFloat {
+        guard labelLeads, showsPercentages(on: axis) else { return 0 }
+        return percentTextHeight + ringToTextSpacing
+    }
+
     /// Whether an item carries its percent label. A setting on both axes, with
     /// opposite defaults: down a side the label sits under its ring and costs
     /// nothing, while across the top it is a second line of type directly under
@@ -123,13 +136,15 @@ enum DockLayout {
         let item = axis == .vertical
             ? ringDiameter
             : (showsPercentages(on: axis) ? itemHeight : ringDiameter)
-        return (thickness(on: axis) - item) / 2 + ringDiameter / 2
+        let lead = axis == .horizontal ? ringOffsetInItem(on: axis) : 0
+        return (thickness(on: axis) - item) / 2 + lead + ringDiameter / 2
     }
 
     /// How far along the rail the first ring's centre sits, and the step from
     /// one to the next.
-    static func firstRingAlong(docked: Bool = true) -> CGFloat {
-        endPadding(docked: docked) + ringDiameter / 2
+    static func firstRingAlong(docked: Bool = true, on axis: PanelEdge.Axis = .vertical) -> CGFloat {
+        let lead = axis == .vertical ? ringOffsetInItem(on: axis) : 0
+        return endPadding(docked: docked) + lead + ringDiameter / 2
     }
     static func ringStep(on axis: PanelEdge.Axis) -> CGFloat {
         itemLength(on: axis) + itemSpacing
@@ -344,7 +359,12 @@ private struct UsageDockItem: View {
     private var headline: UsageWindow? { entry.headline }
 
     var body: some View {
+        // The label goes above or below on a setting. `ringOffsetInItem` is
+        // the same swap expressed as a number, and the hit testing runs on
+        // that — the two must not be allowed to disagree.
         VStack(spacing: DockLayout.ringToTextSpacing) {
+            if DockLayout.labelLeads { percentLabel }
+
             UsageRingView(
                 provider: usage.provider,
                 usedFraction: headline?.usedFraction,
@@ -358,28 +378,7 @@ private struct UsageDockItem: View {
             )
             .scaleEffect(isSelected ? 1.06 : 1)
 
-            // An em dash rather than 0% when nothing is known: a zero would
-            // read as "you've used nothing", which is a different claim.
-            if showsPercentage {
-                Text(headline?.percentText ?? "—")
-                    .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
-                    // A spent limit colours the figure too. At ring size a
-                    // fourth hue on the stroke alone would read as the third.
-                    .foregroundStyle(
-                        UsageTint.isSpent(headline)
-                            ? Color.pulseExhausted
-                            : .primary.opacity(headline == nil ? 0.4 : 1)
-                    )
-                    .monospacedDigit()
-                    // Dimmed with the arc, so the whole ring goes quiet
-                    // together while its reading is fetched, and returns with it.
-                    .opacity(entry.isRefreshing ? 0.4 : 1)
-                    .animation(.easeOut(duration: 0.2), value: entry.isRefreshing)
-                    // Digits change places rather than cutting, so a figure
-                    // that actually moved is visibly what moved.
-                    .contentTransition(.numericText())
-                    .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
-            }
+            if !DockLayout.labelLeads { percentLabel }
         }
         .contentShape(.rect)
         .background {
@@ -391,6 +390,32 @@ private struct UsageDockItem: View {
         .accessibilityHint(String.localized("Activate to refresh usage."))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: Text(String.localized("Refresh usage")), onRefresh)
+    }
+
+    /// An em dash rather than 0% when nothing is known: a zero would read as
+    /// "you've used nothing", which is a different claim.
+    @ViewBuilder
+    private var percentLabel: some View {
+        if showsPercentage {
+            Text(headline?.percentText ?? "—")
+                .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
+                // A spent limit colours the figure too. At ring size a fourth
+                // hue on the stroke alone would read as the third.
+                .foregroundStyle(
+                    UsageTint.isSpent(headline)
+                        ? Color.pulseExhausted
+                        : .primary.opacity(headline == nil ? 0.4 : 1)
+                )
+                .monospacedDigit()
+                // Dimmed with the arc, so the whole ring goes quiet together
+                // while its reading is fetched, and returns with it.
+                .opacity(entry.isRefreshing ? 0.4 : 1)
+                .animation(.easeOut(duration: 0.2), value: entry.isRefreshing)
+                // Digits change places rather than cutting, so a figure that
+                // actually moved is visibly what moved.
+                .contentTransition(.numericText())
+                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
+        }
     }
 
     private var accessibilityValue: String {

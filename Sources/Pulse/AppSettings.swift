@@ -243,6 +243,26 @@ final class AppSettings {
         }
     }
 
+    /// Whether the percent label sits above its ring rather than below it.
+    ///
+    /// Below by default: the ring is what the rail is for and reads first,
+    /// with the figure confirming it underneath. Above suits anyone who reads
+    /// the number first — and against the top of the screen it puts the ring
+    /// nearer the desktop rather than the number.
+    ///
+    /// This moves where a ring's centre sits inside its item, so like the
+    /// other rail metrics it is set on `PanelMetrics` before the change is
+    /// announced: whoever reacts is about to measure the panel, and the hit
+    /// testing has to agree with the drawing.
+    var labelAboveRing: Bool {
+        didSet {
+            guard labelAboveRing != oldValue else { return }
+            PanelMetrics.putLabelAboveRing(labelAboveRing)
+            UserDefaults.standard.set(labelAboveRing, forKey: Key.labelAboveRing)
+            onChange?()
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -307,7 +327,8 @@ final class AppSettings {
         railSpacing: RailSpacing = .default,
         usesGlass: Bool = false,
         topRailShowsPercentages: Bool = false,
-        sideRailShowsPercentages: Bool = true
+        sideRailShowsPercentages: Bool = true,
+        labelAboveRing: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -326,6 +347,7 @@ final class AppSettings {
         self.usesGlass = usesGlass
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
+        self.labelAboveRing = labelAboveRing
     }
 
     func source(for account: AccountKey) -> UsageSource {
@@ -479,13 +501,15 @@ final class AppSettings {
                 .flatMap(RailSpacing.init(rawValue:)) ?? .default,
             usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
-            sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true
+            sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
+            labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
         PanelMetrics.use(settings.railSpacing)
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
+        PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }
@@ -557,6 +581,7 @@ final class AppSettings {
         static let usesGlass = "settings.usesGlass"
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
+        static let labelAboveRing = "settings.labelAboveRing"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

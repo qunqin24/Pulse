@@ -132,7 +132,7 @@ struct FloatingUsagePanelView: View {
             // change. The last one is easy to forget and changes the rail's
             // *thickness*, so leaving it out draws the rings at one size in a
             // berth built for the other.
-            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)")
+            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)")
     }
 
     /// Whether the rail is drawn out in full.
@@ -223,7 +223,7 @@ struct FloatingUsagePanelView: View {
     /// the rail and the card share. Centres march from the rail's first-ring
     /// offset, advancing one item plus one gap each time.
     private func ringCentre(for index: Int) -> CGFloat {
-        DockLayout.firstRingAlong(docked: placement.isDocked)
+        DockLayout.firstRingAlong(docked: placement.isDocked, on: placement.edge.axis)
             + CGFloat(index) * DockLayout.ringStep(on: placement.edge.axis)
     }
 
@@ -460,7 +460,7 @@ enum PanelHitArea {
         let across = DockLayout.ringCentreAcross(on: edge.axis)
 
         for (index, account) in accounts.enumerated() {
-            let along = DockLayout.firstRingAlong(docked: docked)
+            let along = DockLayout.firstRingAlong(docked: docked, on: edge.axis)
                 + CGFloat(index) * DockLayout.ringStep(on: edge.axis)
             let centre = edge.isVertical
                 ? CGPoint(x: rail.minX + across, y: rail.minY + along)

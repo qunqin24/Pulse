@@ -20,6 +20,8 @@
 "Percentages on top" = "Percentages on top";
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
+"Figure above the ring" = "Figure above the ring";
+"Swaps the two, wherever the panel is." = "Swaps the two, wherever the panel is.";
 "Only when the panel is docked to the top." = "Only when the panel is docked to the top.";
 "Drag it anywhere; near an edge it snaps on." = "Drag it anywhere; near an edge it snaps on.";
 "Right" = "Right";

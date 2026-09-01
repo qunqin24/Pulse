@@ -258,6 +258,25 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Figure above the ring"),
+                    subtitle: String.localized("Swaps the two, wherever the panel is.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.labelAboveRing },
+                        set: { settings.labelAboveRing = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(
+                        !settings.isPanelVisible
+                            // Nothing to swap when neither rail shows a figure.
+                            || (!settings.sideRailShowsPercentages && !settings.topRailShowsPercentages)
+                    )
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Percentages on top"),
                     subtitle: String.localized("Only when the panel is docked to the top.")
                 ) {

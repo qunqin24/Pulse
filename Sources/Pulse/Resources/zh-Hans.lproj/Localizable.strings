@@ -20,6 +20,8 @@
 "Percentages on top" = "顶部显示百分比";
 "Percentages at the side" = "侧边显示百分比";
 "The figure under each ring, docked left or right." = "吸附左右两侧时,圆环下面的数字。";
+"Figure above the ring" = "数字显示在圆环上方";
+"Swaps the two, wherever the panel is." = "把数字和圆环的上下位置对调,两种吸附方式都生效。";
 "Only when the panel is docked to the top." = "仅在面板吸附到顶部时生效。";
 "Drag it anywhere; near an edge it snaps on." = "可以拖到任意位置,靠近边缘会自动吸附。";
 "Right" = "右侧";

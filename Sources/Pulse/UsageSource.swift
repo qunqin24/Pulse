@@ -202,6 +202,13 @@ enum PanelMetrics {
     /// round: the label sits under its ring and costs nothing there.
     nonisolated(unsafe) private static var storedSidePercentages = true
 
+    /// Whether the percent label is drawn *above* its ring rather than below.
+    ///
+    /// Here beside the others because it moves where a ring's centre sits
+    /// inside its item, and the hit testing has to agree with the drawing to
+    /// within a point or a click lands beside the ring it appears to be on.
+    nonisolated(unsafe) private static var storedLabelAboveRing = false
+
     /// How many rings the panel has to leave room for.
     ///
     /// Not `Provider.allCases.count` any more: one provider can be signed in
@@ -216,6 +223,7 @@ enum PanelMetrics {
     static var spacing: CGFloat { lock.withLock { storedSpacing } }
     static var topRailShowsPercentages: Bool { lock.withLock { storedTopPercentages } }
     static var sideRailShowsPercentages: Bool { lock.withLock { storedSidePercentages } }
+    static var labelAboveRing: Bool { lock.withLock { storedLabelAboveRing } }
     static var railCapacity: Int { lock.withLock { storedCapacity } }
 
     static func use(_ size: PanelSize) {
@@ -232,6 +240,10 @@ enum PanelMetrics {
 
     static func showSidePercentages(_ shows: Bool) {
         lock.withLock { storedSidePercentages = shows }
+    }
+
+    static func putLabelAboveRing(_ above: Bool) {
+        lock.withLock { storedLabelAboveRing = above }
     }
 
     static func makeRoom(for accounts: Int) {
