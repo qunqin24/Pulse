@@ -49,17 +49,25 @@ struct MiniMaxUsageService: Sendable {
             return .unavailable(provider, reason: .apiKeyMissing)
         }
 
-        var lastProblem = ProviderUsage.Unavailability.unreachable
+        // **Both paths are tried on any failure**, which is what the reference
+        // does — an account on the older plan answers 401 on the current path,
+        // not 404, so stopping at the first refusal would strand it. The
+        // comment here used to claim only a 404 continued, which the code has
+        // never done; it is load-bearing enough that someone would have
+        // "fixed" the code to match and broken that fallback.
+        //
+        // The **first** reason is kept, not the last: a `.apiKeyRefused` from
+        // the current path is what the user can act on, and it should not be
+        // masked by a `.serverError` from a path their plan does not use.
+        var firstProblem: ProviderUsage.Unavailability?
         for endpoint in endpoints {
             switch await attempt(endpoint, key: key) {
             case .success(let usage): return usage
-            // Only a 404 is worth trying the other path for: anything else is
-            // an answer about this account rather than about this URL.
             case .notFound: continue
-            case .failed(let reason): lastProblem = reason
+            case .failed(let reason): firstProblem = firstProblem ?? reason
             }
         }
-        return .unavailable(provider, reason: lastProblem)
+        return .unavailable(provider, reason: firstProblem ?? .unreachable)
     }
 
     private enum Attempt {
@@ -92,10 +100,24 @@ struct MiniMaxUsageService: Sendable {
 
         // The service's own verdict, which is not the HTTP status: a refused
         // key comes back as a perfectly good 200 with a non-zero status here.
-        let status = Self.number((root["base_resp"] as? [String: Any])?["status_code"]) ?? 0
-        guard status == 0 else { return .failed(.apiKeyRefused) }
+        //
+        // **Not every non-zero status is a bad key**, and saying so sends the
+        // user to check a credential that is fine. 1004 is the credential one;
+        // the rest are the service having a bad day.
+        let base = root["base_resp"] as? [String: Any]
+        let status = Self.number(base?["status_code"]) ?? 0
+        if status != 0 {
+            let said = (base?["status_msg"] as? String)?.lowercased() ?? ""
+            let credential = status == 1004
+                || ["token", "auth", "login", "cookie", "credential"].contains(where: said.contains)
+            return .failed(credential ? .apiKeyRefused : .serverError)
+        }
 
-        let payload = root["data"] as? [String: Any]
+        // **The payload is not always wrapped.** Some replies put `data` at the
+        // root instead, and the reference decoder takes either — most of its own
+        // captured replies are the unwrapped shape. Reading only `data` reported
+        // a perfectly good account as "no limits reported".
+        let payload = (root["data"] as? [String: Any]) ?? root
         let windows = Self.windows(from: payload, provider: provider)
         guard !windows.isEmpty else { return .failed(.noLimitsReported) }
 
@@ -104,10 +126,12 @@ struct MiniMaxUsageService: Sendable {
             windows: windows,
             observedAt: Date(),
             state: .live,
-            plan: (payload?["current_subscribe_title"] as? String)?
-                .trimmingCharacters(in: .whitespaces)
-                .nilWhenEmpty,
-            creditBalance: Self.balance(payload?["points_balance"])
+            plan: Self.first(payload, of: [
+                "current_subscribe_title", "plan_name", "combo_title", "current_plan_title",
+            ]),
+            creditBalance: Self.balance(payload, of: [
+                "points_balance", "point_balance", "credits_balance", "credit_balance", "balance",
+            ])
         ))
     }
 
@@ -119,15 +143,22 @@ struct MiniMaxUsageService: Sendable {
     static func windows(from payload: [String: Any]?, provider: Provider) -> [UsageWindow] {
         let models = (payload?["model_remains"] as? [[String: Any]]) ?? []
 
-        return models.flatMap { model -> [UsageWindow] in
-            let name = (model["model_name"] as? String)?.trimmingCharacters(in: .whitespaces)
+        return models.enumerated().flatMap { index, model -> [UsageWindow] in
+            let name = (model["model_name"] as? String)?
+                .trimmingCharacters(in: .whitespaces).nilWhenEmpty
             // "general" is the plan itself rather than a model, so it is left
             // unscoped — a row reading "5-hour limit · general" says nothing.
             let scope = (name?.lowercased() == "general" ? nil : name)?.nilWhenEmpty
 
+            // **The id has to be unique within one reading.** It is the identity
+            // three `ForEach`es use and what a pinned window is matched on, so a
+            // second nameless lane sharing "general" leaves rows undefined and a
+            // pin unresolvable. The position settles it when the name cannot.
+            let key = name ?? "lane\(index)"
+
             return [
-                interval(model, scope: scope, name: name, provider: provider),
-                weekly(model, scope: scope, name: name, provider: provider),
+                interval(model, scope: scope, key: key, provider: provider),
+                weekly(model, scope: scope, key: key, provider: provider),
             ].compactMap { $0 }
         }
         .sorted { $0.windowSeconds < $1.windowSeconds }
@@ -140,7 +171,7 @@ struct MiniMaxUsageService: Sendable {
     private static func interval(
         _ model: [String: Any],
         scope: String?,
-        name: String?,
+        key: String,
         provider: Provider
     ) -> UsageWindow? {
         guard !isUnavailable(
@@ -149,18 +180,24 @@ struct MiniMaxUsageService: Sendable {
             remainingPercent: number(model["current_interval_remaining_percent"])
         ) else { return nil }
 
-        guard let remaining = number(model["current_interval_remaining_percent"]),
+        guard let used = spent(
+                  percentRemaining: number(model["current_interval_remaining_percent"]),
+                  total: number(model["current_interval_total_count"]),
+                  left: number(model["current_interval_usage_count"])
+              ),
               let start = number(model["start_time"]),
               let end = number(model["end_time"]),
               end > start
         else { return nil }
 
+        // Sub-second intervals would floor to zero and read as "0-hour limit".
         let seconds = Int((end - start) / 1000)
+        guard seconds > 0 else { return nil }
         return UsageWindow(
-            id: "\(provider.rawValue).\(name ?? "general").interval",
+            id: "\(provider.rawValue).\(key).interval",
             kind: kind(forSeconds: seconds),
             scope: scope,
-            usedFraction: spent(remaining) / 100,
+            usedFraction: used / 100,
             windowSeconds: seconds,
             resetsAt: Date(timeIntervalSince1970: end / 1000)
         )
@@ -171,7 +208,7 @@ struct MiniMaxUsageService: Sendable {
     private static func weekly(
         _ model: [String: Any],
         scope: String?,
-        name: String?,
+        key: String,
         provider: Provider
     ) -> UsageWindow? {
         guard !isUnavailable(
@@ -180,13 +217,17 @@ struct MiniMaxUsageService: Sendable {
             remainingPercent: number(model["current_weekly_remaining_percent"])
         ) else { return nil }
 
-        guard let remaining = number(model["current_weekly_remaining_percent"]) else { return nil }
+        guard let used = spent(
+            percentRemaining: number(model["current_weekly_remaining_percent"]),
+            total: number(model["current_weekly_total_count"]),
+            left: number(model["current_weekly_usage_count"])
+        ) else { return nil }
 
         return UsageWindow(
-            id: "\(provider.rawValue).\(name ?? "general").weekly",
+            id: "\(provider.rawValue).\(key).weekly",
             kind: .weekly,
             scope: scope,
-            usedFraction: spent(remaining) / 100,
+            usedFraction: used / 100,
             windowSeconds: 7 * 86_400,
             resetsAt: number(model["weekly_end_time"]).map { Date(timeIntervalSince1970: $0 / 1000) }
         )
@@ -203,10 +244,22 @@ struct MiniMaxUsageService: Sendable {
         status == 3 && (total ?? 0) == 0 && (remainingPercent ?? 0) >= 100
     }
 
-    /// **The reply says what is left; everything downstream is in terms of
-    /// what is gone.** 96 remaining is 4 spent.
-    private static func spent(_ remaining: Double) -> Double {
-        min(max(100 - remaining, 0), 100)
+    /// How much of the lane is gone, 0...100, or nil when the reply says
+    /// nothing usable about it.
+    ///
+    /// **Everything here is stated as what is *left*.** A percentage of 96 is
+    /// 4 spent — and the counts are the same way round despite their name:
+    /// `current_interval_usage_count` is the **remaining** quota, not the used
+    /// one. The reference implementation says so in as many words, and reading
+    /// it as a spend inverts every figure on the card.
+    ///
+    /// The percentage is preferred because it is what the service intends to
+    /// be read; the counts are the fallback, and are the only thing the older
+    /// endpoint returns.
+    private static func spent(percentRemaining: Double?, total: Double?, left: Double?) -> Double? {
+        if let percentRemaining { return min(max(100 - percentRemaining, 0), 100) }
+        guard let total, total > 0, let left else { return nil }
+        return min(max((total - left) / total * 100, 0), 100)
     }
 
     private static func kind(forSeconds seconds: Int) -> UsageWindow.Kind {
@@ -218,8 +271,20 @@ struct MiniMaxUsageService: Sendable {
         }
     }
 
-    private static func balance(_ value: Any?) -> String? {
-        guard let points = number(value), points > 0 else { return nil }
+    /// The first of several names that carries a usable string. Which one a
+    /// reply uses varies by account, and reading only one leaves the card
+    /// blank for everybody else.
+    private static func first(_ payload: [String: Any]?, of keys: [String]) -> String? {
+        for key in keys {
+            if let text = (payload?[key] as? String)?.trimmingCharacters(in: .whitespaces),
+               !text.isEmpty { return text }
+        }
+        return nil
+    }
+
+    private static func balance(_ payload: [String: Any]?, of keys: [String]) -> String? {
+        guard let points = keys.lazy.compactMap({ number(payload?[$0]) }).first(where: { $0 > 0 })
+        else { return nil }
         let count = Int(points).formatted(.number.locale(LocalizationSource.locale))
         return .localized("\("\(count)") points")
     }

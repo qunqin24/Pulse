@@ -55,6 +55,18 @@ actor UsageCache {
             return fetched
         }
 
+        // **A missing credential is not a stumble to be papered over.** The
+        // cache exists because the endpoints refuse sometimes — rate limits,
+        // expired tokens, a VPN dropping a connection — and a number from an
+        // hour ago beats an error. But when the key has been deleted there is
+        // nothing to come back to: showing yesterday's percentages for up to a
+        // day, while Settings holds an empty field, hides the one thing the
+        // user needs told. Reported as it is.
+        if case .unavailable(let reason) = fetched.state,
+           [.apiKeyMissing, .ollamaSessionMissing, .signedOut].contains(reason) {
+            return fetched
+        }
+
         guard let cached = reading(for: fetched.account) else { return fetched }
 
         // A fetch that came back with something no older than the cache wins;

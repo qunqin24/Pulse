@@ -107,7 +107,7 @@ final class UsageStore {
         for provider in Provider.allCases where provider.usesAPIKey {
             let account = AccountKey(provider)
             guard case .unavailable(let reason) = usage[account.id]?.state,
-                  [.loading, .apiKeyMissing, .ollamaSessionMissing].contains(reason)
+                  [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused].contains(reason)
             else { continue }
             usage[account.id] = Self.initialState(for: account)
         }
@@ -316,17 +316,26 @@ final class UsageStore {
             // Compare the windows only. `observedAt` moves on every successful
             // fetch, so including it would report a change every single time
             // and the loop would never slow down.
-            let moved = previous[AccountKey(.codex).id]?.windows != fetchedCodex.windows
-                || previous[AccountKey(.claudeCode).id]?.windows != fetchedClaude.windows
-                || previous[AccountKey(.antigravity).id]?.windows != fetchedAntigravity.windows
-                || previous[AccountKey(.openCodeGo).id]?.windows != fetchedOpenCode.windows
-                || previous[AccountKey(.kimiCode).id]?.windows != fetchedKimi.windows
-                || previous[AccountKey(.cursor).id]?.windows != fetchedCursor.windows
-                || previous[AccountKey(.ollamaCloud).id]?.windows != fetchedOllama.windows
-                || previous[AccountKey(.zai).id]?.windows != fetchedZai.windows
-                || previous[AccountKey(.glmCoding).id]?.windows != fetchedGLM.windows
-                || previous[AccountKey(.minimax).id]?.windows != fetchedMiniMax.windows
-                || previous[AccountKey(.minimaxCN).id]?.windows != fetchedMiniMaxCN.windows
+            // Only what was actually fetched. A provider that is switched off
+            // is still reconciled — which hands back its cached windows — while
+            // its slot here was never written, so it compared as "moved" on
+            // every single pass and pinned the adaptive interval at its floor.
+            let moved = [
+                (Provider.codex, fetchedCodex),
+                (.claudeCode, fetchedClaude),
+                (.antigravity, fetchedAntigravity),
+                (.openCodeGo, fetchedOpenCode),
+                (.kimiCode, fetchedKimi),
+                (.cursor, fetchedCursor),
+                (.ollamaCloud, fetchedOllama),
+                (.zai, fetchedZai),
+                (.glmCoding, fetchedGLM),
+                (.minimax, fetchedMiniMax),
+                (.minimaxCN, fetchedMiniMaxCN),
+            ].contains { provider, fetched in
+                wanted.contains(provider)
+                    && previous[AccountKey(provider).id]?.windows != fetched.windows
+            }
             if moved { self.signals.lastChange = Date() }
 
             self.scheduleNext()

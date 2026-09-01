@@ -43,9 +43,15 @@ struct ZaiUsageService: Sendable {
     /// and quietly sending a BigModel key to `api.z.ai` would report a refused
     /// key for a plan the user does not have.
     ///
-    /// Only the first readable line is taken — these files are written by
-    /// scripts, and a trailing newline in a bearer token is a header the
-    /// service rejects for reasons nobody could guess from the message.
+    /// Only the first readable line is taken, and it is taken **carefully**.
+    /// `split(separator: "\n")` does not cut a CRLF file at all — Swift treats
+    /// `\r\n` as one Character — and `CharacterSet.whitespaces` holds neither
+    /// CR nor LF, so a file written on Windows yielded the whole thing as the
+    /// "key". `URLRequest.setValue` then silently *discards* a header value
+    /// containing a newline, so the request went out with no `Authorization`
+    /// at all, came back 401, and was reported as a refused key — about a key
+    /// that was correct, in a Settings field that was empty because it came
+    /// from a file.
     static func storedKey(for provider: Provider) -> String? {
         guard provider == .glmCoding else { return nil }
         let home = URL(fileURLWithPath: NSHomeDirectory())
@@ -57,7 +63,9 @@ struct ZaiUsageService: Sendable {
         for path in candidates {
             guard let text = try? String(contentsOf: home.appending(path: path), encoding: .utf8)
             else { continue }
-            let key = text.split(separator: "\n").first?.trimmingCharacters(in: .whitespaces) ?? ""
+            let key = text
+                .split(whereSeparator: \.isNewline).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if !key.isEmpty { return key }
         }
         return nil
@@ -93,8 +101,13 @@ struct ZaiUsageService: Sendable {
 
         // The envelope's own verdict. A key the service refuses arrives here as
         // a perfectly good HTTP 200, so this is the only place it can be seen.
+        //
+        // **But not every refusal is about the key.** A 500 or a rate limit
+        // arrives the same way, and reporting those as a bad key sends the user
+        // to check a credential that is fine. The envelope's own code says
+        // which, so it is read rather than assumed.
         guard reply.success == true, reply.code == 200 else {
-            return .unavailable(provider, reason: .apiKeyRefused)
+            return .unavailable(provider, reason: Self.problem(reply))
         }
 
         let windows = Self.windows(from: reply.data?.limits ?? [], provider: provider)
@@ -112,17 +125,30 @@ struct ZaiUsageService: Sendable {
         )
     }
 
+    /// What the envelope's refusal actually was.
+    private static func problem(_ reply: Reply) -> ProviderUsage.Unavailability {
+        let said = (reply.msg ?? "").lowercased()
+        if ["token", "auth", "key", "unauthor", "forbidden", "credential"].contains(where: said.contains) {
+            return .apiKeyRefused
+        }
+        return switch reply.code {
+        case 401, 403: .apiKeyRefused
+        case 429: .rateLimited
+        default: .serverError
+        }
+    }
+
     // MARK: - The reply
 
     /// Internal so the mapping can be driven against captured JSON: the field
     /// names are undocumented and the arithmetic below is the whole feature.
     static func windows(from limits: [Reply.Limit], provider: Provider) -> [UsageWindow] {
-        limits.compactMap { window(from: $0, provider: provider) }
+        limits.enumerated().compactMap { window(from: $1, at: $0, provider: provider) }
             // Shortest first, so a five-hour limit is read before a weekly one.
             .sorted { $0.windowSeconds < $1.windowSeconds }
     }
 
-    private static func window(from limit: Reply.Limit, provider: Provider) -> UsageWindow? {
+    private static func window(from limit: Reply.Limit, at index: Int, provider: Provider) -> UsageWindow? {
         // Only these three carry a quota. Anything else the service starts
         // reporting is left out rather than shown under a heading guessed at.
         guard let type = limit.type,
@@ -131,15 +157,21 @@ struct ZaiUsageService: Sendable {
               let number = limit.number
         else { return nil }
 
-        guard let minutes = Self.minutes(unit: unit, number: number, type: type) else { return nil }
+        guard let minutes = Self.minutes(unit: unit, number: number, type: type),
+              let used = Self.usedFraction(limit)
+        else { return nil }
 
         return UsageWindow(
-            id: "\(provider.rawValue).\(type).\(unit)-\(number)",
+            // The position is in the id because two limits can share a type and
+            // a duration. Ids are what a pinned window is matched on and the
+            // identity three `ForEach`es use, so a collision leaves rows
+            // undefined and a pin unresolvable.
+            id: "\(provider.rawValue).\(type).\(unit)-\(number).\(index)",
             kind: Self.kind(forMinutes: minutes),
             // The MCP lane is a different allowance from the coding quota, and
             // saying so is the only way two rows of the same length tell apart.
             scope: type == "TIME_LIMIT" ? "MCP" : nil,
-            usedFraction: Self.usedFraction(limit) / 100,
+            usedFraction: used / 100,
             windowSeconds: minutes * 60,
             resetsAt: limit.nextResetTime.map { Date(timeIntervalSince1970: $0 / 1000) }
         )
@@ -178,9 +210,11 @@ struct ZaiUsageService: Sendable {
     /// instead, which is finer. `remaining` is what is *left*, so the spend is
     /// the difference; `currentValue` is the spend directly and wins when both
     /// are present, since it is the one the service is counting up.
-    private static func usedFraction(_ limit: Reply.Limit) -> Double {
-        var percent = limit.percentage ?? 0
-
+    private static func usedFraction(_ limit: Reply.Limit) -> Double? {
+        // The counts first when they are there: `percentage` is a whole number
+        // and these are finer. `remaining` is what is *left*, so the spend is
+        // the difference; `currentValue` is the spend directly and wins when
+        // both are present, being the one the service counts up.
         if let usage = limit.usage, usage > 0 {
             var used: Double?
             if let remaining = limit.remaining {
@@ -188,10 +222,15 @@ struct ZaiUsageService: Sendable {
             } else if let current = limit.currentValue {
                 used = current
             }
-            if let used { percent = min(max(used, 0), usage) / usage * 100 }
+            if let used { return min(max(min(used, usage) / usage * 100, 0), 100) }
         }
 
-        return min(max(percent, 0), 100)
+        // **Nil rather than zero.** A limit that arrives with no figure at all
+        // is not a limit at 0% — it is a limit whose reading is missing, and
+        // drawing a full green ring for an account that may be out of quota is
+        // the one thing this app is not allowed to do.
+        guard let percentage = limit.percentage else { return nil }
+        return min(max(percentage, 0), 100)
     }
 
     struct Reply: Decodable, Sendable {
