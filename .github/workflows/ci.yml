@@ -1,12 +1,26 @@
 name: Build
 
-# Every push and every pull request. The package has no test target, so the
-# build itself — under Swift 6's strict rules, with warnings treated as
-# failures — is the check.
+# Every push and every pull request that touches something the build can see.
+# The package has no test target, so the build itself — under Swift 6's strict
+# rules, with warnings treated as failures — is the check.
+#
+# Prose and pictures are skipped: a macOS runner bills at ten times the rate of
+# a Linux one and takes several minutes to assemble the bundle, which is a lot
+# to spend proving that a README still compiles. Note this is safe only while
+# `main` has no required status checks — a skipped workflow reports nothing at
+# all rather than success, so a documentation-only pull request would sit
+# unmergeable forever waiting for a check that is never going to run.
 on:
   push:
     branches: [main]
+    paths-ignore: &prose
+      - '**/*.md'
+      - 'Docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/FUNDING.yml'
+      - 'LICENSE'
   pull_request:
+    paths-ignore: *prose
   workflow_dispatch:
 
 concurrency:
