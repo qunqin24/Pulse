@@ -72,20 +72,7 @@ Pulse 没有后端。多数供应商用的是你自己的 CLI 或客户端已经
 
 ## 从源码构建
 
-```bash
-swift run Pulse              # 构建并运行
-swift build                  # 全量类型检查，含 preview
-./Scripts/bundle.sh          # → build.noindex/Pulse.app
-./Scripts/dmg.sh             # → build.noindex/Pulse-<版本>.dmg
-```
-
-`xcode-select` 必须指向 Xcode 而不是 CommandLineTools——`#Preview` 宏是由 Xcode 自带的插件展开的。如果构建报 `PreviewsMacros plugin not found`：
-
-```bash
-sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-```
-
-Swift tools 6.0；用 `Package.swift` 可以直接在 Xcode 里打开。没有测试目标，也没有配 linter。
+见 [Docs/build-from-source.md](Docs/build-from-source.md)（英文）。
 
 ## 代码结构
 
