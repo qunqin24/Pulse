@@ -44,7 +44,8 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             .localized("Uses whatever Claude Code last reported to its status line.")
         case (.tooling, .codex):
             .localized("Asks the Codex app server, which signs in on its own.")
-        case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding):
+        case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
+             (_, .minimax), (_, .minimaxCN):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
         case (_, .ollamaCloud):

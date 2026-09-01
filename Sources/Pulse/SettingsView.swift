@@ -758,6 +758,10 @@ struct SettingsView: View {
             .localized("From z.ai. Stored encrypted on this Mac.")
         case .glmCoding:
             .localized("From bigmodel.cn. Stored encrypted on this Mac.")
+        case .minimax:
+            .localized("From platform.minimax.io. Stored encrypted on this Mac.")
+        case .minimaxCN:
+            .localized("From platform.minimaxi.com. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }

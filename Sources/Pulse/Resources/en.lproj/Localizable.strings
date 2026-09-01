@@ -224,7 +224,10 @@
 "Add an API key in Settings." = "Add an API key in Settings.";
 "Stored encrypted on this Mac." = "Stored encrypted on this Mac.";
 "From z.ai. Stored encrypted on this Mac." = "From z.ai. Stored encrypted on this Mac.";
+"%@ points" = "%@ points";
 "From bigmodel.cn. Stored encrypted on this Mac." = "From bigmodel.cn. Stored encrypted on this Mac.";
+"From platform.minimax.io. Stored encrypted on this Mac." = "From platform.minimax.io. Stored encrypted on this Mac.";
+"From platform.minimaxi.com. Stored encrypted on this Mac." = "From platform.minimaxi.com. Stored encrypted on this Mac.";
 "Couldn't connect the status line" = "Couldn't connect the status line";
 "~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings.";
 "Move %@ up" = "Move %@ up";

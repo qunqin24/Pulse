@@ -15,6 +15,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case ollamaCloud
     case zai
     case glmCoding
+    case minimax
+    case minimaxCN
 
     var id: String { rawValue }
 
@@ -33,6 +35,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // and plenty of people have only one of them.
         case .zai: "Z.ai"
         case .glmCoding: "GLM Coding Plan"
+        // Same product, two storefronts and two accounts. There is no separate
+        // brand name for the mainland one, so the region is the distinction.
+        case .minimax: "MiniMax"
+        case .minimaxCN: "MiniMax CN"
         }
     }
 
@@ -51,6 +57,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // The parent brand's mark, which is also what tells the two apart on
         // the rail — they are one company's two storefronts.
         case .glmCoding: "zhipu"
+        // One mark for both, since there is only one brand. Two accounts of one
+        // provider already share a mark on the rail; this is the same case.
+        case .minimax, .minimaxCN: "minimax"
         }
     }
 
@@ -71,7 +80,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // its own store rather than the JSONL both CLIs above write, so the
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding: false
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+             .zai, .glmCoding, .minimax, .minimaxCN: false
         }
     }
 
@@ -89,7 +99,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool {
-        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding].contains(self)
+        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN].contains(self)
     }
 
     /// Whether what the user pastes is a browser session rather than an API
@@ -98,6 +108,30 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and calling it an API key in Settings would send people looking for one
     /// that does not exist.
     var usesSessionCookie: Bool { self == .ollamaCloud }
+
+    /// Whether this provider can report anything at all without being set up.
+    ///
+    /// The key-based ones cannot: with no key they draw a ring that says
+    /// "enter an API key in Settings" and nothing else, for a service the
+    /// person may well not have an account with. Switching those on
+    /// uninvited — which is what the offer-once rule did — spends a slot on
+    /// the rail to advertise a plan, and with eleven providers that is most
+    /// of the rail.
+    ///
+    /// So a new provider appears by itself only when it has something to say.
+    /// The rest wait in Settings, where they can be switched on deliberately.
+    var canReportWithoutSetup: Bool {
+        guard usesAPIKey else { return true }
+        if APIKeyStore.key(for: self) != nil { return true }
+
+        // Two of them can find a credential another tool already saved, which
+        // counts: nothing has to be pasted for those to work.
+        return switch self {
+        case .openCodeGo: OpenCodeGoUsageService.storedKey() != nil
+        case .glmCoding: ZaiUsageService.storedKey(for: .glmCoding) != nil
+        default: false
+        }
+    }
 
     /// Whether this agent looks installed, for the **first run only**.
     ///

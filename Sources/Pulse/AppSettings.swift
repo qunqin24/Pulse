@@ -471,8 +471,17 @@ final class AppSettings {
             // Then a provider added since is switched on once. This has to run
             // *before* the offered list is stamped, or the very providers it
             // exists for are marked offered without ever appearing.
+            //
+            // **Only if it can actually report something.** One that needs a
+            // key Pulse hasn't got would take a place on the rail to say
+            // "enter an API key in Settings" about a service the person may
+            // not even have an account with. It is still marked offered, so
+            // this stays a decision taken once: it appears when it is switched
+            // on in Settings, not the next time the app happens to launch.
             let offered = Set(previouslyOffered ?? [])
-            providers.formUnion(Provider.allCases.filter { !offered.contains($0.rawValue) })
+            providers.formUnion(Provider.allCases.filter {
+                !offered.contains($0.rawValue) && $0.canReportWithoutSetup
+            })
         } else {
             // A genuinely new Mac starts with what is installed. Nothing found
             // at all falls back to everything: the user should still see what
