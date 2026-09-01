@@ -63,8 +63,26 @@ final class UsageStore {
         codex = CodexUsageService(server: appServer)
 
         for account in settings.allAccounts {
-            usage[account.id] = .unavailable(account, reason: .loading)
+            usage[account.id] = Self.initialState(for: account)
         }
+    }
+
+    /// What an account shows before anything has been fetched for it.
+    ///
+    /// **Not always "loading".** A provider that needs a credential Pulse
+    /// hasn't got is not loading and never will be: nothing is queued for it,
+    /// and if it is switched off nothing ever will be. Seeded as `.loading` it
+    /// sat in its own settings pane reading "Reading…" for ever, which is both
+    /// untrue and the opposite of the one instruction that would help.
+    private static func initialState(for account: AccountKey) -> ProviderUsage {
+        guard account.isPrimary, account.provider.usesAPIKey,
+              !account.provider.canReportWithoutSetup
+        else { return .unavailable(account, reason: .loading) }
+
+        return .unavailable(
+            account,
+            reason: account.provider.usesSessionCookie ? .ollamaSessionMissing : .apiKeyMissing
+        )
     }
 
     /// Codex's reset credits and account totals, which only its app server
@@ -81,6 +99,18 @@ final class UsageStore {
                 .filter { $0.usesAPIKey && settings.isEnabled(AccountKey($0)) }
                 .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
         )
+
+        // Entering or clearing a key changes what a provider *can* report, and
+        // one that still has nothing to show should say which of the two it is
+        // rather than going on claiming to be loading. Only a placeholder is
+        // rewritten — a reading that has actually been taken is left alone.
+        for provider in Provider.allCases where provider.usesAPIKey {
+            let account = AccountKey(provider)
+            guard case .unavailable(let reason) = usage[account.id]?.state,
+                  [.loading, .apiKeyMissing, .ollamaSessionMissing].contains(reason)
+            else { continue }
+            usage[account.id] = Self.initialState(for: account)
+        }
     }
 
     /// Whether a provider's CLI is working at this moment.
