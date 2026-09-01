@@ -16,11 +16,18 @@ the same thing about them again, and an entry that has been served once should
 not change afterwards.
 """
 
+from __future__ import annotations
+
 import email.utils
+import html
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import changelog  # noqa: E402  — a sibling script, not a package
 
 ROOT = Path(__file__).resolve().parent.parent
 FEED = ROOT / "appcast.xml"
@@ -78,6 +85,80 @@ def sign(archive: Path) -> tuple[str, str]:
     return signature, length
 
 
+REPO = "https://github.com/qunqin24/Pulse"
+
+# Bookkeeping, not news: the version bump itself and the commit this script's
+# own output produces.
+BORING = re.compile(r"^(Pulse \d|Offer \d[\d.]* to Sparkle$)")
+
+# Spacing only — **no colours and no fonts.** Sparkle injects a stylesheet of
+# its own (`ReleaseNotesColorStyle.css`) that turns the text white under
+# `prefers-color-scheme: dark` and leaves the background transparent so the
+# update window shows through, and it sets the font to match the dialog. A feed
+# that brings its own palette is fighting that, and loses in whichever
+# appearance it guessed wrong about.
+STYLE = """<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style>"""
+
+
+def previous_version(feed: str) -> str | None:
+    """The newest version already in the feed, which is the one being replaced."""
+    match = re.search(r"<sparkle:shortVersionString>([^<]+)</sparkle:shortVersionString>", feed)
+    return match.group(1) if match else None
+
+
+def changes(version: str, previous: str | None) -> list[str]:
+    """The commit subjects, as a **fallback** when the changelog has no entry.
+
+    Not the first choice, and it was: this repository takes direct commits, so
+    the range runs to forty subjects a release and half of them say things like
+    "Update README" — true, and meaningless to somebody deciding whether to
+    install an update. A forgotten changelog entry should still ship something
+    rather than an empty dialog, which is all this is for.
+    """
+    if not previous:
+        return []
+
+    result = subprocess.run(
+        ["git", "log", f"v{previous}..v{version}", "--format=%s", "--reverse"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
+    if result.returncode != 0:
+        return []
+
+    return [line for line in result.stdout.splitlines() if line and not BORING.match(line)]
+
+
+def description(version: str, previous: str | None) -> str:
+    """The release notes Sparkle shows, carried **in the feed**.
+
+    Not a `sparkle:releaseNotesLink`, which is what this used to be: that is
+    not a link the user clicks, it is a page Sparkle loads into the update
+    window — so the whole GitHub release page, navigation bars and all, was
+    rendered inside a small panel, and showed nothing at all without a network.
+    """
+    written = changelog.entry(version)
+    if written:
+        listing = changelog.as_html(written)
+    else:
+        items = changes(version, previous)
+        body = "".join(f"<li>{html.escape(line)}</li>" for line in items)
+        listing = f"<ul>{body}</ul>" if body else ""
+
+    link = f'<p><a href="{REPO}/releases/tag/v{version}">Release notes on GitHub</a></p>'
+    inner = f"{STYLE}<h2>Pulse {html.escape(version)}</h2>{listing}{link}"
+
+    # A CDATA section cannot contain its own terminator; nothing here should
+    # produce one, but a commit subject is user-written text.
+    return inner.replace("]]>", "]]&gt;")
+
+
 def main() -> None:
     if len(sys.argv) != 4:
         sys.exit(__doc__)
@@ -85,22 +166,23 @@ def main() -> None:
     version, archive, url = sys.argv[1], Path(sys.argv[2]), sys.argv[3]
     signature, length = sign(archive)
 
+    feed = FEED.read_text() if FEED.exists() else SKELETON
+    notes = description(version, previous_version(feed))
+
     item = f"""        <item>
             <title>{version}</title>
             <pubDate>{email.utils.formatdate(localtime=False, usegmt=False)}</pubDate>
             <sparkle:version>{version}</sparkle:version>
             <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <link>https://github.com/qunqin24/Pulse/releases/tag/v{version}</link>
-            <sparkle:releaseNotesLink>https://github.com/qunqin24/Pulse/releases/tag/v{version}</sparkle:releaseNotesLink>
+            <link>{REPO}/releases/tag/v{version}</link>
+            <description><![CDATA[{notes}]]></description>
             <enclosure url="{url}"
                        length="{length}"
                        type="application/octet-stream"
                        sparkle:edSignature="{signature}" />
         </item>
 """
-
-    feed = FEED.read_text() if FEED.exists() else SKELETON
 
     if f"<sparkle:version>{version}</sparkle:version>" in feed:
         print(f"appcast.xml already carries {version} — leaving it alone.")

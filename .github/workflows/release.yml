@@ -86,7 +86,17 @@ jobs:
             -f tag_name="v$VERSION" \
             --jq .body > generated.md || echo "" > generated.md
 
+          # The same words the update window shows, so the two cannot drift
+          # apart. A version with no entry falls back to what GitHub generates.
+          if Scripts/changelog.py "$VERSION" > changes.md 2>/dev/null; then
+            { cat changes.md; echo; } > body.md
+          else
+            echo "::warning::CHANGELOG.md has no entry for $VERSION"
+            : > body.md
+          fi
+
           {
+            cat body.md
             echo "### Install"
             echo
             echo "Download **Pulse-$VERSION.dmg**, open it and drag Pulse into Applications."
