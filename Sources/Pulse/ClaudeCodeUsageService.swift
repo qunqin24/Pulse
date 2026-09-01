@@ -346,7 +346,16 @@ struct ClaudeCodeUsageService: Sendable {
     /// The windows Claude Code hands to the status line. Each can be absent on
     /// its own, and Claude Code drops one once it has reset, so a missing
     /// entry is normal rather than an error.
-    private static func capturedWindows(from limits: [String: Any]) -> [UsageWindow] {
+    ///
+    /// **A window whose reset time has passed is dropped, not aged.** This is
+    /// a push, not a pull: the figures only move while a session runs, so a
+    /// Mac that hasn't run Claude Code since yesterday is still holding
+    /// yesterday's blob — and a five-hour window in it reset long ago. Shown
+    /// with an "as of" line it still reads as a limit you are inside, when in
+    /// truth it is a number about a window that no longer exists. `UsageCache`
+    /// has had this rule from the start; this route is the other place an old
+    /// reading can come from, and it went without.
+    private static func capturedWindows(from limits: [String: Any], now: Date = Date()) -> [UsageWindow] {
         let known: [(key: String, kind: UsageWindow.Kind, seconds: Int)] = [
             ("five_hour", .fiveHour, 5 * 3600),
             ("seven_day", .weekly, 7 * 86_400),
@@ -361,6 +370,8 @@ struct ClaudeCodeUsageService: Sendable {
 
             let resets = (node["resets_at"] as? Double).map { Date(timeIntervalSince1970: $0) }
                 ?? (node["resets_at"] as? Int).map { Date(timeIntervalSince1970: Double($0)) }
+
+            guard resets ?? .distantFuture > now else { return nil }
 
             return UsageWindow(
                 id: "claudeCode.\(entry.key)",
