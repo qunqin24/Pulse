@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.3</title>
+            <pubDate>Tue, 01 Sep 2026 16:07:09 -0000</pubDate>
+            <sparkle:version>1.0.3</sparkle:version>
+            <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.3</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.3</h2><ul><li><strong>The panel can go on a second display.</strong> Drag it across; it remembers which screen you left it on, and comes home if that screen is unplugged.</li><li><strong>Four more providers</strong>: the GLM Coding Plan and MiniMax, each with a separate entry for the international and the mainland service, since they are separate accounts with separate keys.</li><li><strong>A second arc can show how far through the window the clock is</strong>, so &quot;80% used&quot; can be read against how much of the window is left. Off by default, in Settings.</li><li><strong>The figure can sit above the ring</strong> instead of below it. Also in Settings.</li><li>A provider that needs an API key is no longer switched on by itself — it waits in Settings rather than taking a place on the rail to ask for a key.</li><li>One that has no key says so, instead of saying &quot;Reading…&quot; for ever.</li><li>Claude Code no longer shows a limit that has already reset. If its saved login has expired and no session has run for a while, the stale window is dropped rather than shown with an old reset time.</li><li>The update window now shows the release notes itself, rather than loading the GitHub page inside it.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.0.3">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.3/Pulse-1.0.3.zip"
+                       length="3925162"
+                       type="application/octet-stream"
+                       sparkle:edSignature="MQAKL6GWWEJBDqPqfmcOtUPNCMcj6W7c4/n4PWarMSEZDawp2ihzfhGggh3JFPcuLQO7O4MX1AQpHWlmShh0BQ==" />
+        </item>
+        <item>
             <title>1.0.2</title>
             <pubDate>Mon, 31 Aug 2026 12:00:46 -0000</pubDate>
             <sparkle:version>1.0.2</sparkle:version>
