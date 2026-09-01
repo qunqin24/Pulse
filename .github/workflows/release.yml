@@ -46,6 +46,17 @@ jobs:
           fi
           echo "VERSION=$FILE" >> "$GITHUB_ENV"
 
+      # Before anything is built or published, so a missing entry costs a
+      # re-tag rather than a release whose notes went out wrong. These words
+      # reach the update window of every installed copy; the fallback in
+      # Scripts/appcast.py is for older versions and hand runs, not for this.
+      - name: The changelog has an entry for this version
+        run: |
+          if ! Scripts/changelog.py "$VERSION" > /dev/null 2>&1; then
+            echo "::error::CHANGELOG.md has no '## $VERSION' entry. Write it, commit, then re-tag."
+            exit 1
+          fi
+
       - name: Check the SDK is new enough
         run: |
           SDK="$(xcrun --sdk macosx --show-sdk-version | cut -d. -f1)"
@@ -87,16 +98,12 @@ jobs:
             --jq .body > generated.md || echo "" > generated.md
 
           # The same words the update window shows, so the two cannot drift
-          # apart. A version with no entry falls back to what GitHub generates.
-          if Scripts/changelog.py "$VERSION" > changes.md 2>/dev/null; then
-            { cat changes.md; echo; } > body.md
-          else
-            echo "::warning::CHANGELOG.md has no entry for $VERSION"
-            : > body.md
-          fi
+          # apart. Its presence was checked before anything was built.
+          Scripts/changelog.py "$VERSION" > body.md
 
           {
             cat body.md
+            echo
             echo "### Install"
             echo
             echo "Download **Pulse-$VERSION.dmg**, open it and drag Pulse into Applications."

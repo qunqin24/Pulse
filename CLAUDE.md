@@ -59,9 +59,19 @@ hand anyone but a build folder.
 - **Pushing a tag is the whole release.**
 
   ```bash
+  # CHANGELOG.md first — see below. Then:
   echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
   git tag v1.0.1 && git push && git push origin v1.0.1
   ```
+
+  **[CHANGELOG.md](CHANGELOG.md) needs a `## 1.0.1` section before the tag
+  goes up**, and the run stops without one — *before* it builds or publishes,
+  so a forgotten entry costs a re-tag rather than a release whose notes went
+  out wrong. They are not decoration: the same words are the top of the GitHub
+  release *and* the text Sparkle shows in the update window of every installed
+  copy, so this is the one part of a release nobody else can write for you. The
+  fallback to commit subjects in [Scripts/appcast.py](Scripts/appcast.py) is
+  for older versions and hand runs, not for this.
 
   [`.github/workflows/release.yml`](.github/workflows/release.yml) builds,
   packages and publishes, then signs the archive and commits the Sparkle feed;
