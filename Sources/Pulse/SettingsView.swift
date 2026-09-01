@@ -258,6 +258,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Time until reset"),
+                    subtitle: String.localized("A second arc outside each ring, for how much of the window has passed.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsWindowClock },
+                        set: { settings.showsWindowClock = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Figure above the ring"),
                     subtitle: String.localized("Swaps the two, wherever the panel is.")
                 ) {

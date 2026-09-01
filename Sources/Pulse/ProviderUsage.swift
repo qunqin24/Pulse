@@ -44,6 +44,24 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// only this can say so.
     var isExhausted: Bool = false
 
+    /// How much of this window has gone by, 0...1 — the other half of the
+    /// reading the rail can show.
+    ///
+    /// "80% used" says nothing on its own about whether that is a problem: 80%
+    /// spent a fifth of the way into the window means running out, and 80%
+    /// spent with minutes left on the clock means it was budgeted about right.
+    /// The two are only comparable when both are on screen.
+    ///
+    /// **Nil rather than a guess.** It needs a reset time *and* a length, and
+    /// a provider that reports one without the other cannot have this worked
+    /// out for it — the same rule that drops a window whose length can't be
+    /// read rather than inventing one.
+    func elapsedFraction(at now: Date = Date()) -> Double? {
+        guard let resetsAt, windowSeconds > 0 else { return nil }
+        let remaining = resetsAt.timeIntervalSince(now)
+        return min(max(1 - remaining / Double(windowSeconds), 0), 1)
+    }
+
     var name: String {
         let base: String = switch kind {
         case .fiveHour: .localized("5-hour limit")

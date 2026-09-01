@@ -20,6 +20,8 @@
 "Percentages on top" = "Percentages on top";
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
+"Time until reset" = "Time until reset";
+"A second arc outside each ring, for how much of the window has passed." = "A second arc outside each ring, for how much of the window has passed.";
 "Figure above the ring" = "Figure above the ring";
 "Swaps the two, wherever the panel is." = "Swaps the two, wherever the panel is.";
 "Only when the panel is docked to the top." = "Only when the panel is docked to the top.";

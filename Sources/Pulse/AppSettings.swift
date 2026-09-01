@@ -263,6 +263,24 @@ final class AppSettings {
         }
     }
 
+    /// Whether each ring also shows how far through its window the clock is.
+    ///
+    /// Off by default. It is a genuinely useful second reading — 80% spent a
+    /// fifth of the way in means running out, 80% spent with minutes left
+    /// means it was budgeted about right — but it is a second thing to read
+    /// on a mark that is 36pt across, and the rail's whole case is that one
+    /// glance is enough. Asked for, so it is offered; not assumed.
+    ///
+    /// Unlike the other panel settings this changes nothing about the layout —
+    /// the arc is drawn in the margin the rail already has around a ring — so
+    /// it needs no `PanelMetrics` entry and nothing has to be re-measured.
+    var showsWindowClock: Bool {
+        didSet {
+            guard showsWindowClock != oldValue else { return }
+            UserDefaults.standard.set(showsWindowClock, forKey: Key.showsWindowClock)
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -328,7 +346,8 @@ final class AppSettings {
         usesGlass: Bool = false,
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true,
-        labelAboveRing: Bool = false
+        labelAboveRing: Bool = false,
+        showsWindowClock: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -348,6 +367,7 @@ final class AppSettings {
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
         self.labelAboveRing = labelAboveRing
+        self.showsWindowClock = showsWindowClock
     }
 
     func source(for account: AccountKey) -> UsageSource {
@@ -502,7 +522,8 @@ final class AppSettings {
             usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
-            labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false
+            labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
+            showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -582,6 +603,7 @@ final class AppSettings {
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let labelAboveRing = "settings.labelAboveRing"
+        static let showsWindowClock = "settings.showsWindowClock"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

@@ -29,6 +29,16 @@ struct UsageRingView: View {
     var isRefreshing: Bool = false
     /// Whether this ring is the one being pointed at.
     var highlight: Bool = false
+    /// How much of the window has gone by, 0...1, or nil to leave it out.
+    ///
+    /// Drawn as a thin arc **outside** the usage ring. Outside because the
+    /// circle inside is spoken for — the CLI-activity mark rides there — and
+    /// thin, in a neutral, because colour on this ring already means one
+    /// thing. A second hue would be a second colour language to learn; a
+    /// hairline at a different radius reads as a different measurement
+    /// without claiming a status of its own, and cannot clash with a colour
+    /// somebody chose for the ring.
+    var elapsedFraction: Double?
 
     @State private var spinning = false
     @State private var refreshSpinning = false
@@ -69,6 +79,17 @@ struct UsageRingView: View {
 
     /// Spread of the glow that marks the ring being pointed at.
     private static let haloRadius: CGFloat = 10
+
+    /// The clock arc's own geometry, measured out from the usage ring's outer
+    /// edge. The rail is far wider than a ring — 64pt against 36 at standard
+    /// scale — so this costs the layout nothing; the rail's length, its width
+    /// and the ring centres are all unchanged.
+    private static let clockGap: CGFloat = 3
+    private static let clockLineWidth: CGFloat = 2
+    /// The circle the clock arc is stroked along.
+    private var clockDiameter: CGFloat {
+        diameter + lineWidth + (Self.clockGap + Self.clockLineWidth / 2) * 2 * PanelMetrics.scale
+    }
 
     /// What the arc and the halo are drawn in.
     private var arcColour: Color {
@@ -130,8 +151,44 @@ struct UsageRingView: View {
             }
         }
         .frame(width: diameter, height: diameter)
+        // **An overlay, after the frame — never a child of the stack.** A
+        // fixed-size child sets a `ZStack`'s size, and this circle is wider
+        // than the ring by design: inside the stack it grew the usage ring
+        // itself from 36pt to 52pt, which moves every ring centre the hit
+        // testing is measured against. An overlay draws outside its host
+        // without being measured into it.
+        .overlay { windowClock }
         .animation(.easeOut(duration: 0.2), value: isRefreshing)
         .accessibilityHidden(true)
+    }
+
+    /// How far through the window the clock has run: a hairline outside the
+    /// usage ring, in a neutral rather than a second hue.
+    @ViewBuilder
+    private var windowClock: some View {
+        if let elapsedFraction {
+            ZStack {
+                // Its own faint track, so an arc a tenth of the way round
+                // still reads as a proportion of something rather than as a
+                // stray tick.
+                Circle()
+                    .stroke(Color.primary.opacity(0.16), lineWidth: Self.clockLineWidth * PanelMetrics.scale)
+
+                Circle()
+                    .trim(from: 0, to: elapsedFraction)
+                    .stroke(
+                        Color.primary.opacity(0.7),
+                        style: StrokeStyle(lineWidth: Self.clockLineWidth * PanelMetrics.scale, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    // It moves in minutes, so it is never worth animating from
+                    // one reading to the next — but a window that has just
+                    // reset drops from full to nothing, and that should not
+                    // look like a glitch.
+                    .animation(.easeOut(duration: 0.35), value: elapsedFraction)
+            }
+            .frame(width: clockDiameter, height: clockDiameter)
+        }
     }
 
     /// The mark that says a fresh reading is being fetched: a short segment of

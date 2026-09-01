@@ -209,6 +209,10 @@ struct RailEntry: Identifiable, Equatable {
     var isRefreshing: Bool = false
     /// A colour chosen for this ring, or nil to colour it by usage.
     var tint: Color?
+    /// How much of the headline window's clock has run, or nil to leave the
+    /// outer arc off — either because the setting is off, or because this
+    /// window doesn't report enough to work it out.
+    var elapsed: Double?
 
     var id: String { usage.account.id }
 }
@@ -365,18 +369,7 @@ private struct UsageDockItem: View {
         VStack(spacing: DockLayout.ringToTextSpacing) {
             if DockLayout.labelLeads { percentLabel }
 
-            UsageRingView(
-                provider: usage.provider,
-                usedFraction: headline?.usedFraction,
-                chosenTint: entry.tint,
-                isSpent: UsageTint.isSpent(headline),
-                diameter: DockLayout.ringDiameter,
-                lineWidth: DockLayout.ringLineWidth,
-                isBusy: entry.isRunning,
-                isRefreshing: entry.isRefreshing,
-                highlight: isSelected
-            )
-            .scaleEffect(isSelected ? 1.06 : 1)
+            ring
 
             if !DockLayout.labelLeads { percentLabel }
         }
@@ -390,6 +383,24 @@ private struct UsageDockItem: View {
         .accessibilityHint(String.localized("Activate to refresh usage."))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction(named: Text(String.localized("Refresh usage")), onRefresh)
+    }
+
+    /// Lifted out of `body` because the initializer has enough arguments that
+    /// type-checking it inline exceeded the compiler's budget.
+    private var ring: some View {
+        UsageRingView(
+            provider: usage.provider,
+            usedFraction: headline?.usedFraction,
+            chosenTint: entry.tint,
+            isSpent: UsageTint.isSpent(headline),
+            diameter: DockLayout.ringDiameter,
+            lineWidth: DockLayout.ringLineWidth,
+            isBusy: entry.isRunning,
+            isRefreshing: entry.isRefreshing,
+            highlight: isSelected,
+            elapsedFraction: entry.elapsed
+        )
+        .scaleEffect(isSelected ? 1.06 : 1)
     }
 
     /// An em dash rather than 0% when nothing is known: a zero would read as

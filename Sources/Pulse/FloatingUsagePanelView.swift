@@ -18,6 +18,15 @@ struct FloatingUsagePanelView: View {
     /// A moment's grace before hiding, so clipping a corner of the panel on
     /// the way somewhere else doesn't make it flinch.
     @State private var hideAfterDelay: Task<Void, Never>?
+
+    /// Now, to the minute, and only read when the window clock is switched on.
+    ///
+    /// The clock arc is worked out from a reset time, so it moves whether or
+    /// not a reading is refetched — and the usage loop backs off to half an
+    /// hour when nothing is happening, which on a five-hour window would step
+    /// the arc a tenth of the way round at a time. A minute is far finer than
+    /// anything visible on a 48pt circle and costs one view invalidation.
+    @State private var minute = Date()
     /// What the system is set to, so glass can follow it instead of being
     /// pinned to the panel's own dark.
     @Environment(\.colorScheme) private var colorScheme
@@ -113,6 +122,17 @@ struct FloatingUsagePanelView: View {
             .onChange(of: placement.isDragging) { _, dragging in
                 if dragging { deselect() }
             }
+            // Only while the clock arc is actually being drawn. Started and
+            // stopped by `.task(id:)` on the setting, so switching it off
+            // takes the timer with it rather than leaving a minute hand
+            // turning for a thing nobody is looking at.
+            .task(id: settings.showsWindowClock) {
+                guard settings.showsWindowClock else { return }
+                while !Task.isCancelled {
+                    minute = Date()
+                    try? await Task.sleep(for: .seconds(60))
+                }
+            }
             // Pinned dark only on the black panel, and pinned through the
             // *environment* rather than `preferredColorScheme` — the latter is
             // a window-wide preference, not a view-level override, so it can't
@@ -173,7 +193,13 @@ struct FloatingUsagePanelView: View {
                 // not say which. Every account of that provider shows the mark.
                 isRunning: store.isRunning(account.provider),
                 isRefreshing: store.isRefreshing(account),
-                tint: settings.ringTint(for: account)
+                tint: settings.ringTint(for: account),
+                // Nil unless it is switched on *and* the window says enough to
+                // work it out — a reset time on its own is not enough.
+                elapsed: settings.showsWindowClock
+                    ? usage.headlineWindow(preferring: settings.pinnedWindow(for: account))?
+                        .elapsedFraction(at: minute)
+                    : nil
             )
         }
     }
