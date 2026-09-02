@@ -120,7 +120,8 @@ struct ClaudeCodeUsageService: Sendable {
                     guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         return .failed(.unreadableReply)
                     }
-                    return .success(Self.parse(root, for: account))
+                    let plan = await ClaudePlan.shared.name(for: account, token: token)
+                    return .success(Self.parse(root, for: account, plan: plan))
                 case 401, 403:
                     return .needsFreshCredentials
                 case 429:
@@ -213,9 +214,107 @@ struct ClaudeCodeUsageService: Sendable {
         return token
     }
 
+    // MARK: - The plan
+
+    /// The plan's name, which the usage reply does not carry.
+    ///
+    /// **A second endpoint, and so a second request** — `GET /api/oauth/profile`,
+    /// the same one the CLI uses to know whose account it is on. It is asked
+    /// rarely rather than every pass: a subscription changes about as often as
+    /// a person changes their mind about paying for one, while the refresh loop
+    /// comes round every few minutes.
+    ///
+    /// Only the plan-shaped fields are read. The same reply carries the
+    /// account's name, its email address and its organisation's identifiers,
+    /// which are the user's and no use to Pulse — the same rule Antigravity's
+    /// `GetUserStatus` call follows.
+    actor ClaudePlan {
+        static let shared = ClaudePlan()
+
+        /// Long enough that this is a handful of requests a day, short enough
+        /// that an upgrade shows up the same session.
+        private static let freshFor: TimeInterval = 6 * 3600
+
+        private var known: [String: (name: String?, at: Date)] = [:]
+
+        func name(for account: AccountKey, token: String) async -> String? {
+            if let seen = known[account.id], Date().timeIntervalSince(seen.at) < Self.freshFor {
+                return seen.name
+            }
+
+            let fetched = await fetch(token: token)
+            // A failure is remembered too, briefly — the plan is a nicety and
+            // must never cost the usage reading a retry every pass.
+            known[account.id] = (fetched, Date())
+            return fetched
+        }
+
+        private func fetch(token: String) async -> String? {
+            var request = URLRequest(url: URL(string: "https://api.anthropic.com/api/oauth/profile")!)
+            request.timeoutInterval = 15
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            request.setValue("oauth-2025-04-20", forHTTPHeaderField: "anthropic-beta")
+            request.setValue("claude-cli (external, cli)", forHTTPHeaderField: "User-Agent")
+            request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                  (response as? HTTPURLResponse)?.statusCode == 200,
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            else { return nil }
+
+            return planName(from: root)
+        }
+
+        /// The name on the plan, from the tier the account is rate limited at.
+        ///
+        /// `subscription_type` first where a reply carries it; otherwise
+        /// `rate_limit_tier`, which is where the multiplier lives — a Max plan
+        /// is sold as 5× or 20× and the two are different products, so the
+        /// figure belongs in the name. Anything unfamiliar is passed through
+        /// tidied rather than blanked: an unknown name still beats none, and
+        /// it is the only clue left when a new tier appears.
+        func planName(from root: [String: Any]) -> String? {
+            let organization = root["organization"] as? [String: Any]
+
+            if let stated = (organization?["subscription_type"] as? String)
+                ?? (root["subscription_type"] as? String) {
+                return tidy(stated)
+            }
+
+            guard let tier = (organization?["rate_limit_tier"] as? String)?.lowercased() else {
+                return (organization?["organization_type"] as? String).map(tidy)
+            }
+
+            let multiplier = ["20x", "5x"].first { tier.hasSuffix("_" + $0) }
+            let base: String = if tier.contains("max") {
+                "Max"
+            } else if tier.contains("team") {
+                "Team"
+            } else if tier.contains("enterprise") {
+                "Enterprise"
+            } else if tier.contains("pro") {
+                "Pro"
+            } else {
+                tidy(tier)
+            }
+            return multiplier.map { "\(base) \($0)" } ?? base
+        }
+
+        /// `claude_max` reads as a field name; "Claude Max" reads as a plan.
+        private func tidy(_ raw: String) -> String {
+            raw.split(whereSeparator: { $0 == "_" || $0 == "-" })
+                .map { $0.prefix(1).uppercased() + $0.dropFirst() }
+                .joined(separator: " ")
+        }
+    }
+
     // MARK: - Parsing
 
-    private static func parse(_ root: [String: Any], for account: AccountKey) -> ProviderUsage {
+    private static func parse(
+        _ root: [String: Any],
+        for account: AccountKey,
+        plan: String? = nil
+    ) -> ProviderUsage {
         // `limits` is the fuller answer: it carries per-model windows too,
         // which the top-level `five_hour`/`seven_day` fields don't.
         var windows = (root["limits"] as? [[String: Any]] ?? []).compactMap(window(fromLimit:))
@@ -245,7 +344,7 @@ struct ClaudeCodeUsageService: Sendable {
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,
-            plan: nil,
+            plan: plan,
             creditBalance: nil
         )
     }

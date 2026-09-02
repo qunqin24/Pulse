@@ -9,6 +9,8 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.4
 
+- **Claude Code's card names the plan**, as every other provider's already did — "Max 5x", "Pro", "Team". The multiplier is part of it, since a Max 5x and a Max 20x are different products.
+
 - **The panel could quietly stop refreshing** after running for a long time, and only come back when you started Claude Code in a terminal. It now notices when its own readings have gone stale and asks again, recovers from a fetch that never returned, and refreshes when the Mac wakes as well as when the display does.
 
 - **Whether you are ahead of an even burn, and whether it will last.** Claude Code and Codex cards now say "9% ahead of pace" or "43% in hand" under each limit, and either "lasts the window" or roughly when it runs out. The time only appears when it falls before the reset — the rest of the time there is nothing to predict — and it is rounded, because usage comes in bursts and a figure to the minute would be made up.
