@@ -101,11 +101,37 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// figure of 0% beside it is the same number disagreeing with itself, and
     /// the colour is the half that is right — you have started. It is also
     /// what the providers do: Cursor reports 0.03% and its own page says 1%.
-    var percentText: String {
-        let percent = usedFraction * 100
-        let shown = percent > 0 ? max(percent.rounded(), 1) : percent.rounded()
-        return "\(Int(shown))%"
+    var percentText: String { percentText(remaining: false) }
+
+    /// The same reading counted from the other end, when the user has asked to
+    /// see what is **left**.
+    ///
+    /// **Both ends get the rule, not just one.** Subtracting the figure above
+    /// from 100 looks tidier and is wrong at the extremes: a window 99.6%
+    /// spent would read "0% left" while there is still something there, which
+    /// is the same lie the rule above exists to prevent, told backwards. And a
+    /// window 0.4% spent would read "100% left" when it isn't.
+    ///
+    /// So the figure shown is the one being displayed, held off both ends:
+    /// nothing left reads 0%, anything left reads at least 1%, and nothing
+    /// used reads 100% while anything used reads at most 99%. The two views
+    /// need not sum to 100 — only one of them is ever on screen.
+    func percentText(remaining: Bool) -> String {
+        guard remaining else { return Self.figure(usedFraction) }
+        return Self.figure(remainingFraction)
     }
+
+    /// A fraction as a whole percentage that never rounds away the fact that
+    /// there is *some*, or that there is *not all*.
+    private static func figure(_ fraction: Double) -> String {
+        let percent = min(max(fraction, 0), 1) * 100
+        if percent <= 0 { return "0%" }
+        if percent >= 100 { return "100%" }
+        return "\(Int(min(max(percent.rounded(), 1), 99)))%"
+    }
+
+    /// What is left of the window, 0...1 — the arc when the figure is flipped.
+    var remainingFraction: Double { min(max(1 - usedFraction, 0), 1) }
 
     /// "5h" / "7d" style description of the window's length.
     ///

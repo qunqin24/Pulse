@@ -273,6 +273,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Show what's left"),
+                    subtitle: String.localized("Counts down instead of up, figure and ring together.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsRemaining },
+                        set: { settings.showsRemaining = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Figure above the ring"),
                     subtitle: String.localized("Swaps the two, wherever the panel is.")
                 ) {
@@ -1111,7 +1126,7 @@ struct SettingsView: View {
                     if index > 0 { SettingsRowDivider() }
 
                     SettingsRow(window.name, subtitle: resetText(window)) {
-                        Text(window.percentText)
+                        Text(window.percentText(remaining: settings.showsRemaining))
                             .font(.system(size: 13, weight: .medium))
                             .monospacedDigit()
                     }

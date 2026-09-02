@@ -23,6 +23,8 @@
 "Time until reset" = "距离重置的时间";
 "A second arc outside each ring, for how much of the window has passed." = "在圆环外侧加一条弧,显示这个额度窗口过去了多少。";
 "Figure above the ring" = "数字显示在圆环上方";
+"Show what's left" = "显示剩余额度";
+"Counts down instead of up, figure and ring together." = "改为倒着数，数字和圆环一起。";
 "Swaps the two, wherever the panel is." = "把数字和圆环的上下位置对调,两种吸附方式都生效。";
 "Only when the panel is docked to the top." = "仅在面板吸附到顶部时生效。";
 "Drag it anywhere; near an edge it snaps on." = "可以拖到任意位置,靠近边缘会自动吸附。";
@@ -53,6 +55,7 @@
 "%@ usage" = "%@ 用量";
 "%@ usage details" = "%@ 用量详情";
 "%@ used, %@" = "已用 %@，%@";
+"%@ left, %@" = "剩余 %@，%@";
 "%@ used. %@" = "已用 %@。%@";
 
 /* Usage data */

@@ -281,6 +281,30 @@ final class AppSettings {
         }
     }
 
+    /// Show what is **left** rather than what is gone.
+    ///
+    /// The same reading either way — 12% used and 88% left are one fact — but
+    /// which of the two a person wants at a glance is genuinely a matter of
+    /// how they think about a budget, so it is offered rather than argued
+    /// about. Spent is the default because that is what the providers
+    /// themselves report and what every limit is expressed in.
+    ///
+    /// **The ring turns over with the figure, and its colour does not.** A
+    /// number reading 88% beside an arc drawn at 12% is the same reading
+    /// disagreeing with itself, so the arc shows what is left too — but colour
+    /// on these rings means how close the limit is, and that does not change
+    /// because the number was flipped. So a nearly empty ring is still red.
+    ///
+    /// Like `showsWindowClock` this changes nothing about the layout: "100%"
+    /// is the widest either way round, so no `PanelMetrics` entry and nothing
+    /// to re-measure.
+    var showsRemaining: Bool {
+        didSet {
+            guard showsRemaining != oldValue else { return }
+            UserDefaults.standard.set(showsRemaining, forKey: Key.showsRemaining)
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -347,7 +371,8 @@ final class AppSettings {
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true,
         labelAboveRing: Bool = false,
-        showsWindowClock: Bool = false
+        showsWindowClock: Bool = false,
+        showsRemaining: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -368,6 +393,7 @@ final class AppSettings {
         self.sideRailShowsPercentages = sideRailShowsPercentages
         self.labelAboveRing = labelAboveRing
         self.showsWindowClock = showsWindowClock
+        self.showsRemaining = showsRemaining
     }
 
     func source(for account: AccountKey) -> UsageSource {
@@ -532,7 +558,8 @@ final class AppSettings {
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
-            showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false
+            showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
+            showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -613,6 +640,7 @@ final class AppSettings {
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let labelAboveRing = "settings.labelAboveRing"
         static let showsWindowClock = "settings.showsWindowClock"
+        static let showsRemaining = "settings.showsRemaining"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

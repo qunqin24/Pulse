@@ -85,6 +85,7 @@ struct FloatingUsagePanelView: View {
                             usage: selected,
                             title: settings.label(for: selected.account),
                             edge: placement.edge,
+                            showsRemaining: settings.showsRemaining,
                             pointerCenter: pointerCentre(for: index)
                         )
                         .fixedSize()
@@ -199,7 +200,8 @@ struct FloatingUsagePanelView: View {
                 elapsed: settings.showsWindowClock
                     ? usage.headlineWindow(preferring: settings.pinnedWindow(for: account))?
                         .elapsedFraction(at: minute)
-                    : nil
+                    : nil,
+                showsRemaining: settings.showsRemaining
             )
         }
     }

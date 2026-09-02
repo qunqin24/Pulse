@@ -82,6 +82,8 @@ struct UsageDetailCard: View {
     /// Which screen edge the panel is docked against; the pointer goes on the
     /// side facing the rail.
     let edge: PanelEdge
+    /// Show what is left rather than what is gone, matching the rail.
+    var showsRemaining: Bool = false
     /// Where the pointer's tip should sit along the side facing the rail,
     /// measured from the card's own top or leading edge. The card gets pushed
     /// around by the panel's own edges (see
@@ -100,9 +102,9 @@ struct UsageDetailCard: View {
                 ProgressMetricRow(
                     title: window.name,
                     resetDescription: Self.resetText(window),
-                    progress: window.usedFraction,
+                    progress: showsRemaining ? window.remainingFraction : window.usedFraction,
                     accent: window.tint,
-                    percentageText: window.percentText,
+                    percentageText: window.percentText(remaining: showsRemaining),
                     isSpent: UsageTint.isSpent(window)
                 )
             }

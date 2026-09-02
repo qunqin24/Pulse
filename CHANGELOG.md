@@ -7,6 +7,10 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.0.4
+
+- **Show what's left instead of what's spent.** A switch in Settings turns the figure and the ring over together, so a limit reads "88% left" rather than "12% used". The colour still means how close you are, so a nearly empty ring is still red.
+
 ## 1.0.3
 
 - **The panel can go on a second display.** Drag it across; it remembers which screen you left it on, and comes home if that screen is unplugged.

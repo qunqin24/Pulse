@@ -23,6 +23,8 @@
 "Time until reset" = "Time until reset";
 "A second arc outside each ring, for how much of the window has passed." = "A second arc outside each ring, for how much of the window has passed.";
 "Figure above the ring" = "Figure above the ring";
+"Show what's left" = "Show what's left";
+"Counts down instead of up, figure and ring together." = "Counts down instead of up, figure and ring together.";
 "Swaps the two, wherever the panel is." = "Swaps the two, wherever the panel is.";
 "Only when the panel is docked to the top." = "Only when the panel is docked to the top.";
 "Drag it anywhere; near an edge it snaps on." = "Drag it anywhere; near an edge it snaps on.";
@@ -53,6 +55,7 @@
 "%@ usage" = "%@ usage";
 "%@ usage details" = "%@ usage details";
 "%@ used, %@" = "%@ used, %@";
+"%@ left, %@" = "%@ left, %@";
 "%@ used. %@" = "%@ used. %@";
 
 /* Usage data */

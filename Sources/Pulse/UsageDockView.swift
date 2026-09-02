@@ -241,6 +241,10 @@ struct RailEntry: Identifiable, Equatable {
     /// outer arc off — either because the setting is off, or because this
     /// window doesn't report enough to work it out.
     var elapsed: Double?
+    /// Show what is left rather than what is gone — the figure and the arc
+    /// together. Carried on the entry like the tint, because the item is built
+    /// from this and doesn't otherwise see the settings.
+    var showsRemaining: Bool = false
 
     var id: String { usage.account.id }
 }
@@ -433,6 +437,7 @@ private struct UsageDockItem: View {
             usedFraction: headline?.usedFraction,
             chosenTint: entry.tint,
             isSpent: UsageTint.isSpent(headline),
+            showsRemaining: entry.showsRemaining,
             diameter: DockLayout.ringDiameter,
             lineWidth: DockLayout.ringLineWidth,
             isBusy: entry.isRunning,
@@ -444,11 +449,12 @@ private struct UsageDockItem: View {
     }
 
     /// An em dash rather than 0% when nothing is known: a zero would read as
-    /// "you've used nothing", which is a different claim.
+    /// "you've used nothing" — or, flipped, as "you have nothing left", which
+    /// is a worse claim still.
     @ViewBuilder
     private var percentLabel: some View {
         if showsPercentage {
-            Text(headline?.percentText ?? "—")
+            Text(headline?.percentText(remaining: entry.showsRemaining) ?? "—")
                 .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
                 // A spent limit colours the figure too. At ring size a fourth
                 // hue on the stroke alone would read as the third.
@@ -465,13 +471,19 @@ private struct UsageDockItem: View {
                 // Digits change places rather than cutting, so a figure that
                 // actually moved is visibly what moved.
                 .contentTransition(.numericText())
-                .animation(.spring(response: 0.5, dampingFraction: 0.85), value: headline?.percentText)
+                .animation(
+                    .spring(response: 0.5, dampingFraction: 0.85),
+                    value: headline?.percentText(remaining: entry.showsRemaining)
+                )
         }
     }
 
     private var accessibilityValue: String {
-        let reading = headline.map { String.localized("\($0.percentText) used, \($0.name)") }
-            ?? String.localized("No reading")
+        let reading = headline.map { window in
+            entry.showsRemaining
+                ? String.localized("\(window.percentText(remaining: true)) left, \(window.name)")
+                : String.localized("\(window.percentText) used, \(window.name)")
+        } ?? String.localized("No reading")
         return entry.isRefreshing
             ? "\(reading). \(String.localized("Refreshing…"))"
             : reading

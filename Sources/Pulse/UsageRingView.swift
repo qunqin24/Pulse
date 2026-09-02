@@ -19,6 +19,13 @@ struct UsageRingView: View {
     /// instead is how the spent colour came to be shown only at 100%, and how
     /// a chosen colour came to survive a limit the user is blocked on.
     var isSpent: Bool = false
+    /// Draw the arc as what is **left** rather than what is gone.
+    ///
+    /// Only the arc. The colour is worked out from `usedFraction` either way,
+    /// because what it means — how close this limit is — does not change
+    /// because the figure beside it was counted from the other end. So a ring
+    /// with a sliver left is a small red arc, not a large one.
+    var showsRemaining: Bool = false
     let diameter: CGFloat
     let lineWidth: CGFloat
     /// Whether this provider's CLI is working right now. This drives the white
@@ -99,6 +106,12 @@ struct UsageRingView: View {
         // Spent is the one state a chosen colour does not get to hide.
         guard let chosenTint, !spent else { return automatic }
         return chosenTint
+    }
+
+    /// How much of the circle the coloured arc covers.
+    private var arcFraction: CGFloat {
+        let used = min(max(usedFraction ?? 0, 0), 1)
+        return showsRemaining ? 1 - used : used
     }
 
     var body: some View {
@@ -226,7 +239,7 @@ struct UsageRingView: View {
         Circle()
             // Never let a full ring mean "over limit": clamp the arc, and let
             // the number next to it carry any overage.
-            .trim(from: 0, to: min(max(usedFraction ?? 0, 0), 1))
+            .trim(from: 0, to: arcFraction)
             .stroke(
                 // Colour says how full the limit is, not which provider this
                 // is — the icon already says that.
@@ -247,7 +260,7 @@ struct UsageRingView: View {
             // A new reading slides into place rather than cutting to it. This
             // is what a manual refresh is *for*: if the figure moved, the
             // movement is the answer.
-            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: usedFraction)
+            .animation(.spring(response: 0.5, dampingFraction: 0.85), value: arcFraction)
     }
 
     /// Keeps the halo out of the ring's centre.
