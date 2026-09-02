@@ -269,3 +269,10 @@
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
 "Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
 "Open" = "打开";
+"under 15 minutes" = "不到 15 分钟";
+"about an hour" = "约 1 小时";
+"about %@ minutes" = "约 %@ 分钟";
+"about %@ hours" = "约 %@ 小时";
+"%@ an hour" = "每小时 %@";
+"· runs out in %@" = "· %@后耗尽";
+"· lasts the window" = "· 撑得到重置";

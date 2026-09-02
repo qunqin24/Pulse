@@ -9,6 +9,8 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.4
 
+- **How fast a limit is going, and whether it will last.** Claude Code and Codex cards now say "12% an hour" under each limit, and either "lasts the window" or roughly when it runs out. The time is only shown when it falls before the reset — the rest of the time there is nothing to predict — and it is rounded, because usage comes in bursts and a figure to the minute would be made up.
+
 - **GitHub Copilot.** Signs in with a device code — Pulse asks GitHub for `read:user` and nothing else, so no token to paste and no access to your repositories. Shows the completions, chat and premium-request allowances your plan actually has.
 
 - **Show what's left instead of what's spent.** A switch in Settings turns the figure and the ring over together, so a limit reads "88% left" rather than "12% used". The colour still means how close you are, so a nearly empty ring is still red.

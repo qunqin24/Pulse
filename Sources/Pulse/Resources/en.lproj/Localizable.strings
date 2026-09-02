@@ -269,3 +269,10 @@
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.";
 "Pulse is built from a design he posted on X." = "Pulse is built from a design he posted on X.";
 "Open" = "Open";
+"under 15 minutes" = "under 15 minutes";
+"about an hour" = "about an hour";
+"about %@ minutes" = "about %@ minutes";
+"about %@ hours" = "about %@ hours";
+"%@ an hour" = "%@ an hour";
+"· runs out in %@" = "· runs out in %@";
+"· lasts the window" = "· lasts the window";
