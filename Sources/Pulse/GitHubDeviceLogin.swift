@@ -37,6 +37,14 @@ enum GitHubDeviceLogin {
 
     struct Prompt: Sendable, Equatable {
         let userCode: String
+        /// Where to send the browser, **with the code already in it** where
+        /// that is possible.
+        ///
+        /// RFC 8628 has a field for exactly this — `verification_uri_complete`
+        /// — and GitHub does not send it, so the address is built here from the
+        /// plain one. An unrecognised query parameter on that page is harmless,
+        /// and the code is put on the clipboard as well, so the person is one
+        /// paste away from done whether the field arrives filled or empty.
         let verificationURL: URL
         let deviceCode: String
         let interval: Duration
@@ -72,7 +80,8 @@ enum GitHubDeviceLogin {
         let seconds = (reply["interval"] as? Int) ?? 5
         return Prompt(
             userCode: userCode,
-            verificationURL: verification,
+            verificationURL: (reply["verification_uri_complete"] as? String).flatMap(URL.init(string:))
+                ?? carrying(userCode, to: verification),
             deviceCode: deviceCode,
             interval: .seconds(max(seconds, 1))
         )
@@ -118,6 +127,18 @@ enum GitHubDeviceLogin {
         }
 
         throw Failure.timedOut
+    }
+
+    /// The verification address with the code in its query.
+    ///
+    /// GitHub carries `user_code` through its own sign-in redirect — visible in
+    /// the `return_to` it builds — which is the page's own parameter name. It
+    /// is not documented, so this is written to lose nothing if it is ignored:
+    /// the code is still shown, and still on the clipboard.
+    private static func carrying(_ code: String, to url: URL) -> URL {
+        guard var parts = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
+        parts.queryItems = (parts.queryItems ?? []) + [URLQueryItem(name: "user_code", value: code)]
+        return parts.url ?? url
     }
 
     // MARK: - Requests

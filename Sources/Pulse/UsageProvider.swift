@@ -62,7 +62,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // One mark for both, since there is only one brand. Two accounts of one
         // provider already share a mark on the rail; this is the same case.
         case .minimax, .minimaxCN: "minimax"
-        case .copilot: "copilot"
+        case .copilot: "github"
         }
     }
 
@@ -123,11 +123,18 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     ///
     /// So a new provider appears by itself only when it has something to say.
     /// The rest wait in Settings, where they can be switched on deliberately.
+    /// Whether Pulse holds a credential of its own for this provider.
+    ///
+    /// **Not the same question as `usesAPIKey`**, which asks whether the user
+    /// pastes one and so decides what Settings draws. Copilot is signed in to
+    /// rather than pasted, but its token lives in the same encrypted store —
+    /// and reading `usesAPIKey` where the *storage* was meant is what left a
+    /// signed-in account reporting "sign in again": the token was saved and
+    /// then never loaded back for the fetch.
+    var keepsOwnCredential: Bool { usesAPIKey || self == .copilot }
+
     var canReportWithoutSetup: Bool {
-        // Copilot takes a sign-in rather than a pasted key, but it is just as
-        // unable to say anything without one.
-        if self == .copilot { return APIKeyStore.key(for: .copilot) != nil }
-        guard usesAPIKey else { return true }
+        guard keepsOwnCredential else { return true }
         if APIKeyStore.key(for: self) != nil { return true }
 
         // Two of them can find a credential another tool already saved, which

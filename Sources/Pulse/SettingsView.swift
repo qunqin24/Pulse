@@ -848,12 +848,14 @@ struct SettingsView: View {
 
                     SettingsRow(
                         String.localized("Code"),
-                        subtitle: String.localized("Enter it on the page that opened.")
+                        subtitle: String.localized("Copied, and in the link. Paste it if the page asks.")
                     ) {
                         HStack(spacing: 10) {
                             Text(githubPrompt.userCode)
                                 .font(.system(size: 13, weight: .semibold, design: .monospaced))
                                 .textSelection(.enabled)
+
+                            Button(String.localized("Copy")) { copy(githubPrompt.userCode) }
 
                             Button(String.localized("Open page")) {
                                 NSWorkspace.shared.open(githubPrompt.verificationURL)
@@ -1050,6 +1052,11 @@ struct SettingsView: View {
             do {
                 let prompt = try await GitHubDeviceLogin.start()
                 githubPrompt = prompt
+                // On the clipboard as well as in the address. GitHub does not
+                // document whether its page fills the field from the query, so
+                // this makes the difference one paste rather than typing eight
+                // characters out of a panel.
+                copy(prompt.userCode)
                 NSWorkspace.shared.open(prompt.verificationURL)
 
                 let token = try await GitHubDeviceLogin.awaitToken(prompt)
@@ -1070,6 +1077,11 @@ struct SettingsView: View {
                 if !Task.isCancelled { githubError = String.localized("Sign-in was cancelled.") }
             }
         }
+    }
+
+    private func copy(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
     }
 
     private func endGitHubSignIn() {

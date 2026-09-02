@@ -96,7 +96,7 @@ final class UsageStore {
     func loadAPIKeys() {
         apiKeys = Dictionary(
             uniqueKeysWithValues: Provider.allCases
-                .filter { $0.usesAPIKey && settings.isEnabled(AccountKey($0)) }
+                .filter { $0.keepsOwnCredential && settings.isEnabled(AccountKey($0)) }
                 .compactMap { provider in APIKeyStore.key(for: provider).map { (provider, $0) } }
         )
 
@@ -104,7 +104,7 @@ final class UsageStore {
         // one that still has nothing to show should say which of the two it is
         // rather than going on claiming to be loading. Only a placeholder is
         // rewritten — a reading that has actually been taken is left alone.
-        for provider in Provider.allCases where provider.usesAPIKey {
+        for provider in Provider.allCases where provider.keepsOwnCredential {
             let account = AccountKey(provider)
             guard case .unavailable(let reason) = usage[account.id]?.state,
                   [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused].contains(reason)
@@ -370,7 +370,7 @@ final class UsageStore {
         let startedAt = ContinuousClock.now
         // A provider's own pane in Settings is reachable while it is switched
         // off, so its key will not be in the launch-time cache.
-        let key = provider.usesAPIKey ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
+        let key = provider.keepsOwnCredential ? (apiKeys[provider] ?? APIKeyStore.key(for: provider)) : nil
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)
         let ollama = OllamaCloudUsageService(cookie: key)

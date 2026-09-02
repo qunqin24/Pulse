@@ -12,7 +12,7 @@ Pulse bundles provider marks derived from [Lobe Icons](https://github.com/lobehu
 - `Sources/Pulse/Resources/zai.svg`
 - `Sources/Pulse/Resources/zhipu.svg`
 - `Sources/Pulse/Resources/minimax.svg`
-- `Sources/Pulse/Resources/copilot.svg`
+- `Sources/Pulse/Resources/github.svg`
 
 Lobe Icons is distributed under the MIT License:
 
