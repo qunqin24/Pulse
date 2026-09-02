@@ -9,6 +9,8 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.4
 
+- **The panel could quietly stop refreshing** after running for a long time, and only come back when you started Claude Code in a terminal. It now notices when its own readings have gone stale and asks again, recovers from a fetch that never returned, and refreshes when the Mac wakes as well as when the display does.
+
 - **How fast a limit is going, and whether it will last.** Claude Code and Codex cards now say "12% an hour" under each limit, and either "lasts the window" or roughly when it runs out. The time is only shown when it falls before the reset — the rest of the time there is nothing to predict — and it is rounded, because usage comes in bursts and a figure to the minute would be made up.
 
 - **GitHub Copilot.** Signs in with a device code — Pulse asks GitHub for `read:user` and nothing else, so no token to paste and no access to your repositories. Shows the completions, chat and premium-request allowances your plan actually has.

@@ -50,6 +50,9 @@ final class UsageStore {
     private var queued: Set<AccountKey> = []
     /// A whole pass asked for while one was running.
     private var queuedFullPass = false
+    /// When the pass in flight began, so one that never returns can be
+    /// noticed rather than blocking every later attempt for ever.
+    private var refreshStartedAt: Date?
 
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
@@ -185,7 +188,24 @@ final class UsageStore {
         // Reading a stale card is the moment a slow cadence is most obviously
         // wrong, so this asks straight away rather than tightening the loop
         // and waiting for it.
-        if currentInterval > AdaptiveRefresh.floor { refresh() } else { scheduleNext() }
+        //
+        // **Or when the loop has plainly stopped.** The timer is the only
+        // thing that keeps it going, and a background app's timer is not a
+        // promise — the system can nap it, and a pass that never returned
+        // takes the schedule with it. Whatever the cause, a reading far older
+        // than the cadence that was chosen for it is the evidence, and the
+        // pointer arriving is the cheapest place to act on it.
+        if currentInterval > AdaptiveRefresh.floor || isOverdue { refresh() } else { scheduleNext() }
+    }
+
+    /// Whether the newest reading is older than the loop's own cadence allows.
+    ///
+    /// Twice the interval plus a minute: one missed tick is a slow network,
+    /// two is a loop that has stopped.
+    private var isOverdue: Bool {
+        let newest = usage.values.compactMap(\.observedAt).max()
+        guard let newest else { return true }
+        return Date().timeIntervalSince(newest) > currentInterval * 2 + 60
     }
 
     /// Re-reads settings that affect the loop itself, then refreshes.
@@ -214,7 +234,21 @@ final class UsageStore {
         Task { [appServer] in await appServer.shutDown() }
     }
 
+    /// Longer than any pass can honestly take: every request in one carries a
+    /// timeout of its own, and the whole set runs side by side. Past this the
+    /// pass is not slow, it is gone — and since `scheduleNext` only runs when a
+    /// pass *finishes*, a lost one takes the whole loop with it and nothing
+    /// ever asks again.
+    private static let passCeiling: TimeInterval = 180
+
     func refresh() {
+        if isRefreshing, let started = refreshStartedAt,
+           Date().timeIntervalSince(started) > Self.passCeiling {
+            // Whatever it was waiting for is not coming. Letting the next pass
+            // through is the only thing that can restart the loop.
+            isRefreshing = false
+        }
+
         guard !isRefreshing else {
             // Dropped, this used to be — and `settingsChanged()` is its main
             // caller, so switching a provider on mid-pass left it on `.loading`
@@ -223,6 +257,7 @@ final class UsageStore {
             return
         }
         isRefreshing = true
+        refreshStartedAt = Date()
         refreshingAccount = nil
 
         let codexSource = settings.source(for: AccountKey(.codex))
@@ -343,6 +378,7 @@ final class UsageStore {
                 self.usage[AccountKey(provider).id] = fetched
             }
             self.isRefreshing = false
+            self.refreshStartedAt = nil
             self.refreshingAccount = nil
             self.runQueued()
 
@@ -383,11 +419,20 @@ final class UsageStore {
     /// narrower: it should not start the other provider's helper or spend a
     /// second endpoint request when the user asked about one ring.
     func refresh(_ account: AccountKey) {
+        // The same ceiling as the full pass, and for the same reason: this
+        // path sets the flag too, so a ring click that never came back would
+        // block every refresh after it.
+        if isRefreshing, let started = refreshStartedAt,
+           Date().timeIntervalSince(started) > Self.passCeiling {
+            isRefreshing = false
+        }
+
         guard !isRefreshing else {
             queued.insert(account)
             return
         }
         isRefreshing = true
+        refreshStartedAt = Date()
         refreshingAccount = account
 
         let provider = account.provider
@@ -450,6 +495,7 @@ final class UsageStore {
             }
 
             self.isRefreshing = false
+            self.refreshStartedAt = nil
             self.refreshingAccount = nil
             self.scheduleNext()
             self.runQueued()
@@ -548,6 +594,14 @@ final class UsageStore {
                 store.updateActivityMonitor()
                 // Whatever happened while the display was off, the numbers on
                 // screen are now the oldest they will ever be.
+                store.refresh()
+            },
+            // The *system* waking, which is a different notification from the
+            // screen waking and does not always come with it — a Mac woken
+            // with its lid shut, on an external display, gets one and not the
+            // other. A timer's fire date passed while asleep is exactly the
+            // case that needs asking again.
+            observe(NSWorkspace.didWakeNotification, on: workspace) { store in
                 store.refresh()
             },
             observe(ProcessInfo.thermalStateDidChangeNotification) { $0.scheduleNext() },
