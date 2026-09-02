@@ -53,6 +53,20 @@ final class UsageStore {
     /// When the pass in flight began, so one that never returns can be
     /// noticed rather than blocking every later attempt for ever.
     private var refreshStartedAt: Date?
+    /// Which pass is the current one.
+    ///
+    /// **Releasing the guard is not the same as ending the pass.** A pass given
+    /// up on is never told so: it is still awaiting its requests, and when they
+    /// finally answer it writes its readings into `usage` and clears the flags
+    /// — which by then belong to a *different* pass. Measured: a ring clicked
+    /// during a stall showed 90%, and six seconds later the abandoned pass put
+    /// 5% back, undoing the one refresh the user asked for by hand. Every write
+    /// checks this first, so a ghost finishes silently.
+    private var generation = 0
+    private var currentPass = 0
+    /// When hovering last forced a refresh, and how long before it may again.
+    private var lastLookRefresh: Date?
+    private static let lookCooldown: TimeInterval = 30
 
     private var signals = AdaptiveRefresh.Signals()
     private var screensAsleep = false
@@ -78,14 +92,23 @@ final class UsageStore {
     /// sat in its own settings pane reading "Reading…" for ever, which is both
     /// untrue and the opposite of the one instruction that would help.
     private static func initialState(for account: AccountKey) -> ProviderUsage {
-        guard account.isPrimary, account.provider.usesAPIKey,
+        // `keepsOwnCredential`, not `usesAPIKey`: the question is whether Pulse
+        // holds something for this provider, not whether the user pastes it.
+        // Asked the other way, Copilot's own pane read "Reading…" for ever —
+        // which is the exact behaviour this function exists to prevent.
+        guard account.isPrimary, account.provider.keepsOwnCredential,
               !account.provider.canReportWithoutSetup
         else { return .unavailable(account, reason: .loading) }
 
-        return .unavailable(
-            account,
-            reason: account.provider.usesSessionCookie ? .ollamaSessionMissing : .apiKeyMissing
-        )
+        // And the remedy differs: a sign-in is not a key to paste.
+        let reason: ProviderUsage.Unavailability = if account.provider == .copilot {
+            .notSignedIn
+        } else if account.provider.usesSessionCookie {
+            .ollamaSessionMissing
+        } else {
+            .apiKeyMissing
+        }
+        return .unavailable(account, reason: reason)
     }
 
     /// Codex's reset credits and account totals, which only its app server
@@ -110,7 +133,9 @@ final class UsageStore {
         for provider in Provider.allCases where provider.keepsOwnCredential {
             let account = AccountKey(provider)
             guard case .unavailable(let reason) = usage[account.id]?.state,
-                  [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused].contains(reason)
+                  [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused,
+                   .signedOut, .notSignedIn]
+                    .contains(reason)
             else { continue }
             usage[account.id] = Self.initialState(for: account)
         }
@@ -164,6 +189,10 @@ final class UsageStore {
     func noteLooked() {
         signals.lastLooked = Date()
 
+        // A rail is crossed ring by ring, so this is called several times a
+        // second. Asking once is the point; asking once per ring is a storm.
+        let asked = lastLookRefresh.map { Date().timeIntervalSince($0) < Self.lookCooldown } ?? false
+
         // Reading a stale card is the moment a slow cadence is most obviously
         // wrong, so this asks straight away rather than tightening the loop
         // and waiting for it.
@@ -174,7 +203,12 @@ final class UsageStore {
         // takes the schedule with it. Whatever the cause, a reading far older
         // than the cadence that was chosen for it is the evidence, and the
         // pointer arriving is the cheapest place to act on it.
-        if currentInterval > AdaptiveRefresh.floor || isOverdue { refresh() } else { scheduleNext() }
+        if !asked, currentInterval > AdaptiveRefresh.floor || isOverdue {
+            lastLookRefresh = Date()
+            refresh()
+        } else {
+            scheduleNext()
+        }
     }
 
     /// Whether the newest reading is older than the loop's own cadence allows.
@@ -182,8 +216,14 @@ final class UsageStore {
     /// Twice the interval plus a minute: one missed tick is a slow network,
     /// two is a loop that has stopped.
     private var isOverdue: Bool {
-        let newest = usage.values.compactMap(\.observedAt).max()
-        guard let newest else { return true }
+        // **Never read is not overdue.** An unavailable reading carries no
+        // `observedAt`, so a Mac where nothing is configured — or where every
+        // enabled provider is refusing, which includes one refusing *because*
+        // it is rate limiting — answered yes for ever. `noteLooked` runs on
+        // every ring the pointer crosses, so sweeping the rail sent one request
+        // per ring: measured, thirteen calls for twelve rings. Every signal in
+        // this loop may only make it wait *longer*.
+        guard let newest = usage.values.compactMap(\.observedAt).max() else { return false }
         return Date().timeIntervalSince(newest) > currentInterval * 2 + 60
     }
 
@@ -224,8 +264,11 @@ final class UsageStore {
         if isRefreshing, let started = refreshStartedAt,
            Date().timeIntervalSince(started) > Self.passCeiling {
             // Whatever it was waiting for is not coming. Letting the next pass
-            // through is the only thing that can restart the loop.
+            // through is the only thing that can restart the loop — and the
+            // abandoned one is disowned here rather than merely unblocked, or
+            // it comes back later and overwrites whatever has happened since.
             isRefreshing = false
+            generation += 1
         }
 
         guard !isRefreshing else {
@@ -238,6 +281,9 @@ final class UsageStore {
         isRefreshing = true
         refreshStartedAt = Date()
         refreshingAccount = nil
+        generation += 1
+        currentPass = generation
+        let pass = generation
 
         let codexSource = settings.source(for: AccountKey(.codex))
         let claudeSource = settings.source(for: AccountKey(.claudeCode))
@@ -331,6 +377,11 @@ final class UsageStore {
             }
 
 
+            // **A disowned pass writes nothing.** It was given up on, another
+            // has run since, and everything below would put its stale readings
+            // over newer ones and clear flags that now belong elsewhere.
+            guard pass == self.currentPass else { return }
+
             // Only what was actually fetched is written back. A provider that
             // is off the rail was never asked, so its slot here would be
             // overwritten with a stale cache entry every automatic pass —
@@ -409,6 +460,9 @@ final class UsageStore {
         isRefreshing = true
         refreshStartedAt = Date()
         refreshingAccount = account
+        generation += 1
+        currentPass = generation
+        let pass = generation
 
         let provider = account.provider
         let source = settings.source(for: account)
@@ -451,6 +505,8 @@ final class UsageStore {
                 raw = await CopilotUsageService(token: key).fetch()
             }
             }
+
+            guard pass == self.currentPass else { return }
 
             let fetched = await UsageCache.shared.reconciled(raw)
             self.usage[account.id] = fetched

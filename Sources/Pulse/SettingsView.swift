@@ -1007,7 +1007,12 @@ struct SettingsView: View {
                         SettingsRowDivider()
                         SettingsRow(
                             String.localized("Code"),
-                            subtitle: String.localized("Copied — paste it on the page that opened.")
+                            // The sign-in half is not decoration: OpenAI's own
+                            // hand-off to a Google account fails with
+                            // `token_exchange_failed` when the browser has no
+                            // session, and this row is the only place that
+                            // says so.
+                            subtitle: String.localized("Copied. Sign in there first if asked, then paste it.")
                         ) {
                             HStack(spacing: 10) {
                                 Text(devicePrompt.userCode)

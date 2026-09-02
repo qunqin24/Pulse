@@ -86,7 +86,7 @@ enum GitHubDeviceLogin {
         else { throw Failure.refused(described(reply, step: "login/device/code")) }
 
         // Their floor, not ours: polling faster than this earns a `slow_down`.
-        let seconds = (reply["interval"] as? Int) ?? 5
+        let seconds = min(max((reply["interval"] as? Int) ?? 5, 1), 60)
         return Prompt(
             userCode: userCode,
             // Only if the service offers one itself. Building it here is the
@@ -95,7 +95,7 @@ enum GitHubDeviceLogin {
             verificationURL: (reply["verification_uri_complete"] as? String).flatMap(URL.init(string:))
                 ?? verification,
             deviceCode: deviceCode,
-            interval: .seconds(max(seconds, 1))
+            interval: .seconds(seconds)
         )
     }
 
@@ -128,7 +128,11 @@ enum GitHubDeviceLogin {
                 continue
             case "slow_down":
                 // Their instruction, and ignoring it gets the attempt refused.
-                wait = .seconds((reply["interval"] as? Int).map { max($0, 1) } ?? 10)
+                // Their instruction, within reason: the deadline is only
+                // tested at the top of the loop, so an interval taken on trust
+                // could park this in a single sleep for longer than the code
+                // it is waiting on will live.
+                wait = .seconds(min(max((reply["interval"] as? Int) ?? 10, 1), 60))
             case "access_denied":
                 throw Failure.declined
             case "expired_token":

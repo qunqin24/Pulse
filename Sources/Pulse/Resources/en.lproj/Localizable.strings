@@ -252,6 +252,7 @@
 "Cancel" = "Cancel";
 "Code" = "Code";
 "Copied — paste it on the page that opened." = "Copied — paste it on the page that opened.";
+"Copied. Sign in there first if asked, then paste it." = "Copied. Sign in there first if asked, then paste it.";
 "Copy" = "Copy";
 "Open page" = "Open page";
 "Sign-in" = "Sign-in";
@@ -261,6 +262,7 @@
 "Remove" = "Remove";
 "Couldn't save the login on this Mac." = "Couldn't save the login on this Mac.";
 "Sign in to this account again in Settings." = "Sign in to this account again in Settings.";
+"Sign in from Settings to see usage." = "Sign in from Settings to see usage.";
 "This provider can't be signed in to from Pulse." = "This provider can't be signed in to from Pulse.";
 "Finish or close the sign-in already running, then try again." = "Finish or close the sign-in already running, then try again.";
 "Sign-in was cancelled." = "Sign-in was cancelled.";

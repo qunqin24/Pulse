@@ -252,6 +252,7 @@
 "Cancel" = "取消";
 "Code" = "验证码";
 "Copied — paste it on the page that opened." = "已复制，在打开的页面里粘贴即可。";
+"Copied. Sign in there first if asked, then paste it." = "已复制。页面若要求登录，先登录再粘贴。";
 "Copy" = "复制";
 "Open page" = "打开页面";
 "Sign-in" = "登录";
@@ -261,6 +262,7 @@
 "Remove" = "移除";
 "Couldn't save the login on this Mac." = "无法在本机保存登录信息。";
 "Sign in to this account again in Settings." = "请在设置中重新登录这个账号。";
+"Sign in from Settings to see usage." = "在设置中登录后即可看到用量。";
 "This provider can't be signed in to from Pulse." = "这个服务无法从 Pulse 登录。";
 "Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录,然后重试。";
 "Sign-in was cancelled." = "登录已取消。";

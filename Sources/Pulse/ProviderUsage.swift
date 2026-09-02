@@ -184,6 +184,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// reach this, and a message naming one is the trap the rest of this
         /// enum was fixed for once already.
         case signedOut
+        /// Never signed in here, as against a login that has since gone bad.
+        /// The difference is one word, and it is the difference between an
+        /// instruction and a puzzle.
+        case notSignedIn
         /// Ollama has no quota API: the figures come from its signed-in
         /// settings page, so what it needs is a browser session rather than a
         /// key, and the three ways that can fail are worth telling apart.
@@ -217,6 +221,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
             case .signedOut: .localized("Sign in to this account again in Settings.")
+            case .notSignedIn: .localized("Sign in from Settings to see usage.")
             case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")
             case .ollamaSessionExpired: .localized("The Ollama session expired. Sign in again and add it.")
             case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")

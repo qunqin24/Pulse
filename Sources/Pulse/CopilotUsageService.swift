@@ -109,7 +109,15 @@ struct CopilotUsageService: Sendable {
         // the zero entitlement is checked too, since older replies omit it.
         let hasQuota = snapshot["has_quota"] as? Bool
         if hasQuota == false { return nil }
-        if !unlimited, entitlement <= 0, (number(snapshot["remaining"]) ?? 0) <= 0 { return nil }
+
+        // Without that flag, an older reply is told apart by the *percentage*:
+        // a lane the plan excludes reads 100% remaining with nothing issued,
+        // while a lane you have **run out of** also has nothing left — and
+        // dropping that one hides the alarm at the moment it matters. So the
+        // zero counts alone are not enough to call it a placeholder.
+        if hasQuota == nil, !unlimited, entitlement <= 0,
+           (number(snapshot["remaining"]) ?? 0) <= 0,
+           (number(snapshot["percent_remaining"]) ?? 0) >= 100 { return nil }
 
         // An unlimited lane has no share to show, so there is no ring to draw
         // for it — the same rule the other providers' unlimited lanes follow.

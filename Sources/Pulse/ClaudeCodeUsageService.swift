@@ -120,7 +120,15 @@ struct ClaudeCodeUsageService: Sendable {
                     guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                         return .failed(.unreadableReply)
                     }
-                    let plan = await ClaudePlan.shared.name(for: account, token: token)
+                    // **Whatever is already known, and no waiting.** Awaiting
+                    // the profile call held the usage reading for as long as
+                    // that request took — measured at 3.2s against a slow
+                    // reply, on every launch and once per account every six
+                    // hours. The figures had already arrived and parsed. So
+                    // the plan is taken from the cache, and a miss is filled
+                    // in for the next pass rather than paid for on this one.
+                    let plan = await ClaudePlan.shared.cached(for: account)
+                    await ClaudePlan.shared.refreshIfStale(for: account, token: token)
                     return .success(Self.parse(root, for: account, plan: plan))
                 case 401, 403:
                     return .needsFreshCredentials
@@ -236,17 +244,35 @@ struct ClaudeCodeUsageService: Sendable {
         private static let freshFor: TimeInterval = 6 * 3600
 
         private var known: [String: (name: String?, at: Date)] = [:]
+        /// Accounts with a request already out, so two passes cannot send two.
+        private var asking: Set<String> = []
 
-        func name(for account: AccountKey, token: String) async -> String? {
+        /// What is known now. Never waits, never asks.
+        func cached(for account: AccountKey) -> String? { known[account.id]?.name }
+
+        /// Asks again when what is known has aged out, without anyone waiting
+        /// for the answer.
+        func refreshIfStale(for account: AccountKey, token: String) {
             if let seen = known[account.id], Date().timeIntervalSince(seen.at) < Self.freshFor {
-                return seen.name
+                return
             }
+            // Claimed before the request goes out, so a second pass arriving
+            // while this one is in flight does not send another.
+            guard !asking.contains(account.id) else { return }
+            asking.insert(account.id)
 
-            let fetched = await fetch(token: token)
-            // A failure is remembered too, briefly — the plan is a nicety and
-            // must never cost the usage reading a retry every pass.
-            known[account.id] = (fetched, Date())
-            return fetched
+            Task { [weak self] in
+                guard let self else { return }
+                let fetched = await self.fetch(token: token)
+                await self.remember(fetched, for: account)
+            }
+        }
+
+        private func remember(_ name: String?, for account: AccountKey) {
+            // A failure is remembered too — the plan is a nicety and must never
+            // cost the usage reading a retry every pass.
+            known[account.id] = (name, Date())
+            asking.remove(account.id)
         }
 
         private func fetch(token: String) async -> String? {
@@ -276,16 +302,22 @@ struct ClaudeCodeUsageService: Sendable {
         func planName(from root: [String: Any]) -> String? {
             let organization = root["organization"] as? [String: Any]
 
+            let tier = (organization?["rate_limit_tier"] as? String)?.lowercased()
+            // The multiplier only ever lives on the tier, so it is read first
+            // and kept whichever name wins: a Max 5x and a Max 20x are
+            // different products, and a stated "max" that dropped the figure
+            // would be the less useful of the two answers.
+            let multiplier = tier.flatMap { t in ["20x", "5x"].first { t.hasSuffix("_" + $0) } }
+
             if let stated = (organization?["subscription_type"] as? String)
                 ?? (root["subscription_type"] as? String) {
-                return tidy(stated)
+                let name = tidy(stated)
+                return multiplier.map { "\(name) \($0)" } ?? name
             }
 
-            guard let tier = (organization?["rate_limit_tier"] as? String)?.lowercased() else {
+            guard let tier else {
                 return (organization?["organization_type"] as? String).map(tidy)
             }
-
-            let multiplier = ["20x", "5x"].first { tier.hasSuffix("_" + $0) }
             let base: String = if tier.contains("max") {
                 "Max"
             } else if tier.contains("team") {
@@ -294,6 +326,8 @@ struct ClaudeCodeUsageService: Sendable {
                 "Enterprise"
             } else if tier.contains("pro") {
                 "Pro"
+            } else if tier.contains("free") {
+                "Free"
             } else {
                 tidy(tier)
             }
