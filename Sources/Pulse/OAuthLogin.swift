@@ -94,7 +94,7 @@ enum OAuthLogin {
                     deviceCodeBase: URL(string: "https://auth.openai.com/api/accounts")!
                 )
             case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot:
                 nil
             }
         }

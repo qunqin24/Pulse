@@ -242,6 +242,11 @@
 "Add another account" = "Add another account";
 "Opens the provider's own sign-in page." = "Opens the provider's own sign-in page.";
 "Sign in…" = "Sign in…";
+"Sign out" = "Sign out";
+"GitHub account" = "GitHub account";
+"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Opens GitHub's own page. Pulse asks to read your profile, nothing else.";
+"Signed in. Pulse holds a read-only token for this Mac." = "Signed in. Pulse holds a read-only token for this Mac.";
+"The browser didn't come back." = "The browser didn't come back.";
 "Cancel" = "Cancel";
 "Code" = "Code";
 "Enter it on the page that opened." = "Sign in there first if asked, then enter it.";

@@ -242,6 +242,11 @@
 "Add another account" = "添加另一个账号";
 "Opens the provider's own sign-in page." = "会打开该服务自己的登录页面。";
 "Sign in…" = "登录…";
+"Sign out" = "退出登录";
+"GitHub account" = "GitHub 账号";
+"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "会打开 GitHub 自己的页面。Pulse 只申请读取你的资料，别的都不要。";
+"Signed in. Pulse holds a read-only token for this Mac." = "已登录。Pulse 在本机保存了一个只读令牌。";
+"The browser didn't come back." = "浏览器没有回来。";
 "Cancel" = "取消";
 "Code" = "验证码";
 "Enter it on the page that opened." = "页面若要求登录,先登录再输入它。";

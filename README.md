@@ -5,7 +5,7 @@
 <h1 align="center">Pulse</h1>
 
 <p align="center">
-  <b>How much Claude Code, Codex, Antigravity, Cursor, OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM or MiniMax you have left.</b>
+  <b>How much Claude Code, Codex, Antigravity, Cursor, OpenCode Go, Kimi Code, Ollama Cloud,<br>Z.ai, GLM, MiniMax or GitHub Copilot you have left.</b>
 </p>
 
 <p align="center">
@@ -67,6 +67,7 @@ the warning, then go to **System Settings → Privacy & Security** and click
 | **Z.ai** | An API key from Settings | International storefront; a mainland BigModel key won't work here |
 | **GLM Coding Plan** | An API key from Settings, or one the GLM tooling already saved | Mainland storefront (`open.bigmodel.cn`) |
 | **MiniMax** / **MiniMax CN** | An API key from Settings | `api.minimax.io` and `api.minimaxi.com` |
+| **GitHub Copilot** | A sign-in, by device code | Asks for `read:user` and nothing else — not a pasted token |
 | **Ollama Cloud** | The signed-in settings page, with a session read from your browser | No quota API exists. See [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
 Every figure is what the provider reports; Pulse never estimates a percentage

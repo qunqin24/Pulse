@@ -217,6 +217,7 @@ final class UsageStore {
         let glm = ZaiUsageService(provider: .glmCoding, enteredKey: apiKeys[.glmCoding])
         let minimax = MiniMaxUsageService(provider: .minimax, enteredKey: apiKeys[.minimax])
         let minimaxCN = MiniMaxUsageService(provider: .minimaxCN, enteredKey: apiKeys[.minimaxCN])
+        let copilot = CopilotUsageService(token: apiKeys[.copilot])
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
@@ -259,12 +260,16 @@ final class UsageStore {
             async let minimaxCNUsage = wanted.contains(.minimaxCN)
                 ? await minimaxCN.fetch()
                 : ProviderUsage.unavailable(.minimaxCN, reason: .loading)
+            async let copilotUsage = wanted.contains(.copilot)
+                ? await copilot.fetch()
+                : ProviderUsage.unavailable(.copilot, reason: .loading)
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
             let (rawKimi, rawCursor, rawOllama) = await (kimiUsage, cursorUsage, ollamaUsage)
             let (rawZai, rawGLM) = await (zaiUsage, glmUsage)
             let (rawMiniMax, rawMiniMaxCN) = await (minimaxUsage, minimaxCNUsage)
+            let rawCopilot = await copilotUsage
 
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
@@ -281,6 +286,7 @@ final class UsageStore {
             let fetchedGLM = await UsageCache.shared.reconciled(rawGLM)
             let fetchedMiniMax = await UsageCache.shared.reconciled(rawMiniMax)
             let fetchedMiniMaxCN = await UsageCache.shared.reconciled(rawMiniMaxCN)
+            let fetchedCopilot = await UsageCache.shared.reconciled(rawCopilot)
 
             // Accounts Pulse signed in to itself, read one at a time: each
             // may have to renew its token first, and they are few.
@@ -306,6 +312,7 @@ final class UsageStore {
                 (.glmCoding, fetchedGLM),
                 (.minimax, fetchedMiniMax),
                 (.minimaxCN, fetchedMiniMaxCN),
+                (.copilot, fetchedCopilot),
             ] where wanted.contains(provider) {
                 self.usage[AccountKey(provider).id] = fetched
             }
@@ -332,6 +339,7 @@ final class UsageStore {
                 (.glmCoding, fetchedGLM),
                 (.minimax, fetchedMiniMax),
                 (.minimaxCN, fetchedMiniMaxCN),
+                (.copilot, fetchedCopilot),
             ].contains { provider, fetched in
                 wanted.contains(provider)
                     && previous[AccountKey(provider).id]?.windows != fetched.windows
@@ -393,6 +401,8 @@ final class UsageStore {
                 raw = await zai.fetch()
             case .minimax, .minimaxCN:
                 raw = await minimax.fetch()
+            case .copilot:
+                raw = await CopilotUsageService(token: key).fetch()
             }
             }
 
@@ -448,7 +458,7 @@ final class UsageStore {
         case .codex: await codex.fetch(account: account, credentials: credentials)
         // Nothing else can be signed in to, so nothing else gets here.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot:
             .unavailable(account, reason: .loading)
         }
     }

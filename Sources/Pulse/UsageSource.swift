@@ -45,7 +45,7 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
         case (.tooling, .codex):
             .localized("Asks the Codex app server, which signs in on its own.")
         case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
-             (_, .minimax), (_, .minimaxCN):
+             (_, .minimax), (_, .minimaxCN), (_, .copilot):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
         case (_, .ollamaCloud):

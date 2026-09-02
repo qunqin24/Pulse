@@ -5,7 +5,7 @@
 <h1 align="center">Pulse</h1>
 
 <p align="center">
-  <b>Claude Code、Codex、Antigravity、Cursor、OpenCode Go、Kimi Code、Ollama Cloud、Z.ai、GLM 或 MiniMax 还剩多少额度。</b>
+  <b>Claude Code、Codex、Antigravity、Cursor、OpenCode Go、Kimi Code、Ollama Cloud、<br>Z.ai、GLM、MiniMax 或 GitHub Copilot 还剩多少额度。</b>
 </p>
 
 <p align="center">
@@ -48,6 +48,7 @@ Pulse 未经 Apple 公证，macOS 会阻止首次启动。先打开 Pulse 并关
 | **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
 | **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
 | **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
+| **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
 | **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
 每个数字都是服务商上报的；Pulse 不根据本地 token 数估算百分比，服务商不回答时会直接说明。读取失败时退回上一次成功的读数并标注时间；已过重置时间的窗口会被丢弃。

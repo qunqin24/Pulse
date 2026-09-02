@@ -17,6 +17,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case glmCoding
     case minimax
     case minimaxCN
+    case copilot
 
     var id: String { rawValue }
 
@@ -39,6 +40,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // brand name for the mainland one, so the region is the distinction.
         case .minimax: "MiniMax"
         case .minimaxCN: "MiniMax CN"
+        case .copilot: "GitHub Copilot"
         }
     }
 
@@ -60,6 +62,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // One mark for both, since there is only one brand. Two accounts of one
         // provider already share a mark on the rail; this is the same case.
         case .minimax, .minimaxCN: "minimax"
+        case .copilot: "copilot"
         }
     }
 
@@ -81,7 +84,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: false
         }
     }
 
@@ -121,6 +124,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// So a new provider appears by itself only when it has something to say.
     /// The rest wait in Settings, where they can be switched on deliberately.
     var canReportWithoutSetup: Bool {
+        // Copilot takes a sign-in rather than a pasted key, but it is just as
+        // unable to say anything without one.
+        if self == .copilot { return APIKeyStore.key(for: .copilot) != nil }
         guard usesAPIKey else { return true }
         if APIKeyStore.key(for: self) != nil { return true }
 

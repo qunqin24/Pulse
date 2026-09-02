@@ -31,6 +31,11 @@ struct SettingsView: View {
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     @State private var devicePrompt: OAuthLogin.DevicePrompt?
+    /// Copilot's own sign-in, which is GitHub's device flow rather than the
+    /// one the added-account button drives.
+    @State private var githubPrompt: GitHubDeviceLogin.Prompt?
+    @State private var githubTask: Task<Void, Never>?
+    @State private var githubError: String?
     /// What the last look through the browsers found.
     @State private var sessionMessage: String?
     /// Held so it can be called off. A device-code sign-in polls for fifteen
@@ -622,7 +627,9 @@ struct SettingsView: View {
             }
         }
         .onChange(of: provider, initial: true) { _, shown in
-            guard shown.usesAPIKey else { return }
+            // Copilot has no key field, but its token lives in the same store
+            // and the pane needs to know whether there is one.
+            guard shown.usesAPIKey || shown == .copilot else { return }
             apiKey = APIKeyStore.key(for: shown) ?? ""
             savedKey = apiKey
         }
@@ -806,6 +813,54 @@ struct SettingsView: View {
                     .labelsHidden()
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                 }
+            } else if account.provider == .copilot {
+                // A sign-in, not a pasted token. The endpoint would accept the
+                // one `gh` holds, but that carries `repo` and `workflow` — the
+                // run of someone's source code, handed over to draw a
+                // percentage. This asks for `read:user`.
+                SettingsRow(
+                    String.localized("GitHub account"),
+                    subtitle: githubError
+                        ?? (savedKey.isEmpty
+                            ? String.localized("Opens GitHub's own page. Pulse asks to read your profile, nothing else.")
+                            : String.localized("Signed in. Pulse holds a read-only token for this Mac."))
+                ) {
+                    if githubTask != nil {
+                        Button(String.localized("Cancel")) { endGitHubSignIn() }
+                    } else if savedKey.isEmpty {
+                        Button(String.localized("Sign in…")) { startGitHubSignIn() }
+                    } else {
+                        Button(String.localized("Sign out")) {
+                            _ = APIKeyStore.setKey(nil, for: .copilot)
+                            apiKey = ""
+                            savedKey = ""
+                            githubError = nil
+                            store.loadAPIKeys()
+                            store.refresh(account)
+                        }
+                    }
+                }
+
+                // While it waits, the code is the whole interaction: it is
+                // typed on GitHub's page, not here.
+                if let githubPrompt {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Code"),
+                        subtitle: String.localized("Enter it on the page that opened.")
+                    ) {
+                        HStack(spacing: 10) {
+                            Text(githubPrompt.userCode)
+                                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                                .textSelection(.enabled)
+
+                            Button(String.localized("Open page")) {
+                                NSWorkspace.shared.open(githubPrompt.verificationURL)
+                            }
+                        }
+                    }
+                }
             } else if account.provider.usesAPIKey {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
@@ -978,6 +1033,50 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    /// GitHub's device flow, for Copilot's quota.
+    private func startGitHubSignIn() {
+        githubError = nil
+        githubTask = Task {
+            defer {
+                // Only the attempt still on screen clears the pane; a cancelled
+                // one has already had its state cleared by the button.
+                if !Task.isCancelled {
+                    githubTask = nil
+                    githubPrompt = nil
+                }
+            }
+            do {
+                let prompt = try await GitHubDeviceLogin.start()
+                githubPrompt = prompt
+                NSWorkspace.shared.open(prompt.verificationURL)
+
+                let token = try await GitHubDeviceLogin.awaitToken(prompt)
+                guard APIKeyStore.setKey(token, for: .copilot) else {
+                    githubError = String.localized("Couldn't save the login on this Mac.")
+                    return
+                }
+                apiKey = token
+                savedKey = token
+                store.loadAPIKeys()
+                store.refresh(AccountKey(.copilot))
+            } catch let failure as GitHubDeviceLogin.Failure {
+                if !Task.isCancelled { githubError = failure.message }
+            } catch is CancellationError {
+                // Cancelling is not a failure, and nothing about it belongs in
+                // a pane that may already be showing the next attempt.
+            } catch {
+                if !Task.isCancelled { githubError = String.localized("Sign-in was cancelled.") }
+            }
+        }
+    }
+
+    private func endGitHubSignIn() {
+        githubTask?.cancel()
+        githubTask = nil
+        githubPrompt = nil
+        githubError = nil
     }
 
     /// Runs the browser sign-in, then keeps whatever came back.

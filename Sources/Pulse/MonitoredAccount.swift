@@ -68,7 +68,7 @@ extension Provider {
         switch self {
         case .claudeCode, .codex: true
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: false
         }
     }
 }
