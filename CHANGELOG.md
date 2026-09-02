@@ -9,15 +9,11 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.4
 
-- **Claude Code's card names the plan**, as every other provider's already did — "Max 5x", "Pro", "Team". The multiplier is part of it, since a Max 5x and a Max 20x are different products.
-
-- **The panel could quietly stop refreshing** after running for a long time, and only come back when you started Claude Code in a terminal. It now notices when its own readings have gone stale and asks again, recovers from a fetch that never returned, and refreshes when the Mac wakes as well as when the display does.
-
-- **Whether a limit will last.** Switched on in Settings, every provider's card says whether each limit will last its window, and roughly when it runs out if it won't. The time only appears when it falls before the reset — the rest of the time there is nothing to predict — and it is rounded, because usage comes in bursts and a figure to the minute would be made up.
-
-- **GitHub Copilot.** Signs in with a device code — Pulse asks GitHub for `read:user` and nothing else, so no token to paste and no access to your repositories. Shows the completions, chat and premium-request allowances your plan actually has.
-
-- **Show what's left instead of what's spent.** A switch in Settings turns the figure and the ring over together, so a limit reads "88% left" rather than "12% used". The colour still means how close you are, so a nearly empty ring is still red.
+- **GitHub Copilot**, bringing it to twelve. Signs in with a device code, so there is no token to paste — Pulse asks GitHub for permission to read your profile and nothing else, and never for access to your repositories. Shows the completions, chat and premium-request allowances your plan actually has.
+- **Whether a limit will last.** A switch in Settings puts one line under each limit on the card: whether it is on course to outlast its window, and roughly when it runs out if it isn't. Off by default, and it stays quiet when the figures can't carry it — the time only appears when it falls before the reset, and it is rounded, because usage comes in bursts and a figure to the minute would be made up.
+- **Show what's left instead of what's spent.** Another switch, which turns the figure and the ring over together so a limit reads "88% left" rather than "12% used". The colour still means how close you are, so a nearly empty ring is still red.
+- **Claude Code's card names the plan** — "Max 5x", "Pro", "Team" — as every other provider's already did. The multiplier is part of it, since a Max 5x and a Max 20x are different products.
+- **The panel could quietly stop refreshing** after running a long time, and only come back when you next started Claude Code in a terminal. It notices when its own readings have gone stale and asks again, recovers from a fetch that never returned, and refreshes when the Mac wakes as well as when the display does.
 
 ## 1.0.3
 
