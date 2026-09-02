@@ -311,10 +311,17 @@ final class AppSettings {
     /// it is the one line on that card the provider did not report, and a
     /// projection nobody asked for sitting under a reported figure invites
     /// being read as one. Someone who wants it turns it on knowing what it is.
+    /// **A `PanelMetrics` entry, unlike the other two card settings**: this one
+    /// adds a fourth line under every limit, and the panel's frame is worked
+    /// out from `DetailCardLayout` before SwiftUI lays anything out. The
+    /// metric is set before the change is announced, so whoever re-places the
+    /// panel measures the size it is about to be.
     var showsForecast: Bool {
         didSet {
             guard showsForecast != oldValue else { return }
+            PanelMetrics.showForecast(showsForecast)
             UserDefaults.standard.set(showsForecast, forKey: Key.showsForecast)
+            onChange?()
         }
     }
 
@@ -583,6 +590,7 @@ final class AppSettings {
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
+        PanelMetrics.showForecast(settings.showsForecast)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }

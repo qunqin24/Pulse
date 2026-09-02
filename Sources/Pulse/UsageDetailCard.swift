@@ -42,6 +42,11 @@ enum DetailCardLayout {
 
     static var rowHeight: CGFloat {
         rowTextLineHeight + rowInternalSpacing + progressBarHeight + rowInternalSpacing + rowTextLineHeight
+            // The forecast is a fourth line under every limit, and the panel's
+            // frame is worked out from this before SwiftUI lays anything out.
+            // Left out, a top-docked card with five limits ran 84pt past the
+            // window and was sliced flat against its edge.
+            + (PanelMetrics.showsForecast ? rowInternalSpacing + rowTextLineHeight : 0)
     }
 
     /// Starting guess for the card's height, used for the very first layout
@@ -108,6 +113,7 @@ struct UsageDetailCard: View {
                     accent: window.tint,
                     percentageText: window.percentText(remaining: showsRemaining),
                     isSpent: UsageTint.isSpent(window),
+                    showsRemaining: showsRemaining,
                     // Every provider, not a chosen few: what this needs is a
                     // percentage, a reset and a length the provider actually
                     // stated, and `BurnRate` refuses the windows that lack one
@@ -218,8 +224,18 @@ private struct ProgressMetricRow: View {
     let accent: Color
     let percentageText: String
     let isSpent: Bool
+    /// Which way the figure beside the bar is counted, so the word next to it
+    /// can agree with it.
+    let showsRemaining: Bool
     /// What the rate says about this window, or nil when nothing may be said.
     var burn: BurnRate.Reading?
+
+    /// "88% Used", or "12% Left" when the figure is counted the other way.
+    private var figureLabel: String {
+        showsRemaining
+            ? .localized("\(percentageText) Left")
+            : .localized("\(percentageText) Used")
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: DetailCardLayout.rowInternalSpacing) {
@@ -241,7 +257,15 @@ private struct ProgressMetricRow: View {
             // The two short facts pair off on the line below instead: what is
             // gone, and when it comes back.
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(localized: "\(percentageText) Used")
+                // **The word has to follow the figure.** `percentageText` is
+                // what is *left* when the setting is on, and this said "Used"
+                // regardless — so a limit 88% gone read "12% Used" on the card
+                // while the rail an inch away said "12% left".
+                // Built outside the call rather than as a ternary inside it:
+                // `Scripts/localization-keys.py` reads a conditional there as
+                // the bare tail — "Left" — which matched an unrelated key and
+                // let a missing one through the check that exists to catch it.
+                Text(figureLabel)
                     .font(.system(size: DetailCardLayout.rowFontSize, weight: .medium, design: .rounded))
                     .foregroundStyle(isSpent ? Color.pulseExhausted : .primary.opacity(0.9))
 
@@ -258,7 +282,11 @@ private struct ProgressMetricRow: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
-        .accessibilityValue(String.localized("\(percentageText) used. \(resetDescription)"))
+        .accessibilityValue(
+            showsRemaining
+                ? String.localized("\(percentageText) left. \(resetDescription)")
+                : String.localized("\(percentageText) used. \(resetDescription)")
+        )
     }
 }
 

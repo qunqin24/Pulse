@@ -110,7 +110,21 @@ struct UsageRingView: View {
 
     /// How much of the circle the coloured arc covers.
     private var arcFraction: CGFloat {
-        let used = min(max(usedFraction ?? 0, 0), 1)
+        // **No reading draws nothing, either way round.** `?? 0` inverted to a
+        // full circle, so a provider that had not answered — the first seconds
+        // after launch, one signed out, one waiting on a key, one being rate
+        // limited — drew a complete *green* ring reading "all fine". Measured
+        // by sampling the rendered circumference: 7,200 of 7,200 points
+        // coloured. The empty track is what "nothing known" looks like.
+        guard let usedFraction else { return 0 }
+        let used = min(max(usedFraction, 0), 1)
+
+        // **Spent fills the ring whichever way it counts.** Counting down,
+        // nothing left is no arc at all — so the most urgent state had the
+        // least ink on screen, and on a top rail the figure beside it is off
+        // by default. The colour is already right; this gives it something to
+        // colour.
+        if isSpent || used >= 1 { return 1 }
         return showsRemaining ? 1 - used : used
     }
 

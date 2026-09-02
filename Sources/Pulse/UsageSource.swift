@@ -209,6 +209,7 @@ enum PanelMetrics {
     /// inside its item, and the hit testing has to agree with the drawing to
     /// within a point or a click lands beside the ring it appears to be on.
     nonisolated(unsafe) private static var storedLabelAboveRing = false
+    nonisolated(unsafe) private static var storedForecast = false
 
     /// How many rings the panel has to leave room for.
     ///
@@ -246,6 +247,18 @@ enum PanelMetrics {
     static func putLabelAboveRing(_ above: Bool) {
         lock.withLock { storedLabelAboveRing = above }
     }
+
+    /// Whether the card carries a forecast line under every limit.
+    ///
+    /// It rides here with the rail's flags, and for the same reason: the
+    /// panel's frame is worked out from `DetailCardLayout` before SwiftUI lays
+    /// anything out, and a fourth line per limit that the budget did not know
+    /// about is a card sliced flat against the window's edge. Measured on a
+    /// top-docked panel with five limits: 84pt over.
+    static func showForecast(_ shows: Bool) {
+        lock.withLock { storedForecast = shows }
+    }
+    static var showsForecast: Bool { lock.withLock { storedForecast } }
 
     static func makeRoom(for accounts: Int) {
         lock.withLock { storedCapacity = max(accounts, 1) }

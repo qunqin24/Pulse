@@ -94,14 +94,24 @@ enum BurnRate {
     static func approximate(_ seconds: TimeInterval) -> String {
         let minutes = Int((seconds / 60).rounded())
         if minutes < 15 { return .localized("under 15 minutes") }
-        if minutes < 75 {
+        // Under an hour in quarters; past that in halves of an hour. The cut
+        // is at 68 rather than 75 because five quarters *is* an hour and a
+        // quarter — printing "about 75 minutes" between "about an hour" and
+        // "about 1.5 hours" reads as a different scale for one step.
+        if minutes < 68 {
             let quarters = max(Int((Double(minutes) / 15).rounded()), 1)
             return quarters == 4
                 ? .localized("about an hour")
                 : .localized("about \("\(quarters * 15)") minutes")
         }
         let hours = (Double(minutes) / 60 * 2).rounded() / 2
-        return .localized("about \("\(hours.formatted(.number.precision(.fractionLength(0...1))))") hours")
+        // The reader's chosen language, not the machine's: every other
+        // formatted number in the app goes through this, and a comma-decimal
+        // system locale otherwise prints "about 1,5 hours" in English.
+        let text = hours.formatted(
+            .number.precision(.fractionLength(0...1)).locale(LocalizationSource.locale)
+        )
+        return .localized("about \("\(text)") hours")
     }
 
 }

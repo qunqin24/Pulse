@@ -116,7 +116,8 @@ struct KimiCodeUsageService: Sendable {
         // Then the weekly allowance, which the reply carries separately and
         // does not put a length on. Only its reset time is ever displayed; the
         // seconds are what sort it after the shorter windows.
-        if let weekly = window(from: reply.usage, id: "weekly", kind: .weekly, seconds: 7 * 86_400) {
+        if let weekly = window(from: reply.usage, id: "weekly", kind: .weekly,
+                               seconds: 7 * 86_400, reportsLength: false) {
             found.append(weekly)
         }
 
@@ -127,7 +128,8 @@ struct KimiCodeUsageService: Sendable {
         from detail: Reply.Detail?,
         id: String,
         kind: UsageWindow.Kind,
-        seconds: Int
+        seconds: Int,
+        reportsLength: Bool = true
     ) -> UsageWindow? {
         guard
             let detail,
@@ -147,9 +149,12 @@ struct KimiCodeUsageService: Sendable {
             usedFraction: min(max(used / limit, 0), 1),
             windowSeconds: seconds,
             resetsAt: detail.resetTime.flatMap(Self.date(from:)),
-            // The weekly allowance states a reset and no length, and it rolls —
-            // so `seconds` is what sorts it, not something to divide by.
-            reportsLength: kind != .weekly,
+            // The rolling allowance states a reset and no length, so `seconds`
+            // is what sorts it rather than something to divide by. It is the
+            // *caller* that knows which one this is: testing the kind instead
+            // would also catch a limit that genuinely states seven days, and
+            // silently take away its forecast and its clock arc.
+            reportsLength: reportsLength,
             isExhausted: used >= limit
         )
     }

@@ -59,6 +59,7 @@
 "%@ used, %@" = "%@ used, %@";
 "%@ left, %@" = "%@ left, %@";
 "%@ used. %@" = "%@ used. %@";
+"%@ left. %@" = "%@ left. %@";
 
 /* Usage data */
 "5-hour limit" = "5-hour limit";
@@ -87,6 +88,7 @@
 "As of %@" = "As of %@";
 "Reading may be out of date" = "Reading may be out of date";
 "%@ Used" = "%@ Used";
+"%@ Left" = "%@ Left";
 "Codex isn't installed." = "Codex isn't installed.";
 "Couldn't start the Codex helper." = "Couldn't start the Codex helper.";
 "Sign in to Claude Code to see usage." = "Sign in to Claude Code to see usage.";

@@ -59,6 +59,7 @@
 "%@ used, %@" = "已用 %@，%@";
 "%@ left, %@" = "剩余 %@，%@";
 "%@ used. %@" = "已用 %@。%@";
+"%@ left. %@" = "剩余 %@。%@";
 
 /* Usage data */
 "5-hour limit" = "5 小时限额";
@@ -87,6 +88,7 @@
 "As of %@" = "数据时间：%@";
 "Reading may be out of date" = "数据可能不是最新的";
 "%@ Used" = "已用 %@";
+"%@ Left" = "剩余 %@";
 "Codex isn't installed." = "未检测到 Codex。";
 "Couldn't start the Codex helper." = "无法启动 Codex 辅助进程。";
 "Sign in to Claude Code to see usage." = "登录 Claude Code 后才能查看用量。";
