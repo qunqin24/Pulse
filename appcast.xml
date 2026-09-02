@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.4</title>
+            <pubDate>Wed, 02 Sep 2026 14:39:29 -0000</pubDate>
+            <sparkle:version>1.0.4</sparkle:version>
+            <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.4</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.4</h2><ul><li><strong>GitHub Copilot</strong>, bringing it to twelve. Signs in with a device code, so there is no token to paste — Pulse asks GitHub for permission to read your profile and nothing else, and never for access to your repositories. Shows the completions, chat and premium-request allowances your plan actually has.</li><li><strong>Whether a limit will last.</strong> A switch in Settings puts one line under each limit on the card: whether it is on course to outlast its window, and roughly when it runs out if it isn&#x27;t. Off by default, and it stays quiet when the figures can&#x27;t carry it — the time only appears when it falls before the reset, and it is rounded, because usage comes in bursts and a figure to the minute would be made up.</li><li><strong>Show what&#x27;s left instead of what&#x27;s spent.</strong> Another switch, which turns the figure and the ring over together so a limit reads &quot;88% left&quot; rather than &quot;12% used&quot;. The colour still means how close you are, so a nearly empty ring is still red.</li><li><strong>Claude Code&#x27;s card names the plan</strong> — &quot;Max 5x&quot;, &quot;Pro&quot;, &quot;Team&quot; — as every other provider&#x27;s already did. The multiplier is part of it, since a Max 5x and a Max 20x are different products.</li><li><strong>The panel could quietly stop refreshing</strong> after running a long time, and only come back when you next started Claude Code in a terminal. It notices when its own readings have gone stale and asks again, recovers from a fetch that never returned, and refreshes when the Mac wakes as well as when the display does.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.0.4">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.4/Pulse-1.0.4.zip"
+                       length="4034080"
+                       type="application/octet-stream"
+                       sparkle:edSignature="KRv7c4NUniMijfXb+YSoL40COcqAGdAP6neZG89iPMCM/ClM2DEs6Xkzrkcy/WXd++MRnbE7Q0xNu1w622yrDg==" />
+        </item>
+        <item>
             <title>1.0.3</title>
             <pubDate>Tue, 01 Sep 2026 16:07:09 -0000</pubDate>
             <sparkle:version>1.0.3</sparkle:version>
