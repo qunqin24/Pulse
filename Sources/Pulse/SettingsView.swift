@@ -992,12 +992,14 @@ struct SettingsView: View {
                         SettingsRowDivider()
                         SettingsRow(
                             String.localized("Code"),
-                            subtitle: String.localized("Enter it on the page that opened.")
+                            subtitle: String.localized("Copied — paste it on the page that opened.")
                         ) {
                             HStack(spacing: 10) {
                                 Text(devicePrompt.userCode)
                                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                                     .textSelection(.enabled)
+
+                                Button(String.localized("Copy")) { copy(devicePrompt.userCode) }
 
                                 Button(String.localized("Open page")) {
                                     NSWorkspace.shared.open(devicePrompt.verificationURL)
@@ -1118,6 +1120,10 @@ struct SettingsView: View {
                     // nothing redirected back to this Mac.
                     let prompt = try await OAuthLogin.startDevice(provider)
                     devicePrompt = prompt
+                    // On the clipboard the moment it exists, like GitHub's. The
+                    // same reason applies here: neither page will pre-fill from
+                    // a link, so a paste is the shortest honest route.
+                    copy(prompt.userCode)
                     NSWorkspace.shared.open(prompt.verificationURL)
                     credentials = try await OAuthLogin.awaitDevice(prompt, for: provider)
                 } else {
