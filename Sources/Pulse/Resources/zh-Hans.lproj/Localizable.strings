@@ -250,7 +250,7 @@
 "Cancel" = "取消";
 "Code" = "验证码";
 "Enter it on the page that opened." = "页面若要求登录,先登录再输入它。";
-"Copied, and in the link. Paste it if the page asks." = "已复制，链接里也带了。页面若要求，粘贴即可。";
+"Copied — paste it on the page that opened." = "已复制，在打开的页面里粘贴即可。";
 "Copy" = "复制";
 "Open page" = "打开页面";
 "Sign-in" = "登录";

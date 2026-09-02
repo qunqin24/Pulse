@@ -37,14 +37,23 @@ enum GitHubDeviceLogin {
 
     struct Prompt: Sendable, Equatable {
         let userCode: String
-        /// Where to send the browser, **with the code already in it** where
-        /// that is possible.
+        /// Where to send the browser. **The code is not in it, and must not be.**
         ///
-        /// RFC 8628 has a field for exactly this — `verification_uri_complete`
-        /// — and GitHub does not send it, so the address is built here from the
-        /// plain one. An unrecognised query parameter on that page is harmless,
-        /// and the code is put on the clipboard as well, so the person is one
-        /// paste away from done whether the field arrives filled or empty.
+        /// RFC 8628 has a field for a pre-filled address —
+        /// `verification_uri_complete` — and GitHub deliberately does not send
+        /// one. Its page says why, in as many words: *"Never use a code sent by
+        /// someone else"*, and *"GitHub staff will never give you a code to
+        /// enter on this page."* Pre-filling is the device-code phishing
+        /// attack — an attacker sends a link carrying **their** code, the
+        /// victim approves it, and the attacker holds an authorised token for
+        /// the victim's account. Typing the code is what makes the person
+        /// consent to *this* device rather than to a link they were handed.
+        ///
+        /// A `user_code` query parameter was tried and is ignored, which is the
+        /// right behaviour. It is not put back: it would do nothing except make
+        /// Pulse's link the same shape as the attack. The clipboard is the
+        /// answer instead — one paste, and the consent still happens where it
+        /// should.
         let verificationURL: URL
         let deviceCode: String
         let interval: Duration
@@ -80,8 +89,11 @@ enum GitHubDeviceLogin {
         let seconds = (reply["interval"] as? Int) ?? 5
         return Prompt(
             userCode: userCode,
+            // Only if the service offers one itself. Building it here is the
+            // thing the page warns about; being handed one is the service's own
+            // decision to make.
             verificationURL: (reply["verification_uri_complete"] as? String).flatMap(URL.init(string:))
-                ?? carrying(userCode, to: verification),
+                ?? verification,
             deviceCode: deviceCode,
             interval: .seconds(max(seconds, 1))
         )
@@ -127,18 +139,6 @@ enum GitHubDeviceLogin {
         }
 
         throw Failure.timedOut
-    }
-
-    /// The verification address with the code in its query.
-    ///
-    /// GitHub carries `user_code` through its own sign-in redirect — visible in
-    /// the `return_to` it builds — which is the page's own parameter name. It
-    /// is not documented, so this is written to lose nothing if it is ignored:
-    /// the code is still shown, and still on the clipboard.
-    private static func carrying(_ code: String, to url: URL) -> URL {
-        guard var parts = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
-        parts.queryItems = (parts.queryItems ?? []) + [URLQueryItem(name: "user_code", value: code)]
-        return parts.url ?? url
     }
 
     // MARK: - Requests

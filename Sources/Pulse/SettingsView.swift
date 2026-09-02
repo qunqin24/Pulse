@@ -848,7 +848,7 @@ struct SettingsView: View {
 
                     SettingsRow(
                         String.localized("Code"),
-                        subtitle: String.localized("Copied, and in the link. Paste it if the page asks.")
+                        subtitle: String.localized("Copied — paste it on the page that opened.")
                     ) {
                         HStack(spacing: 10) {
                             Text(githubPrompt.userCode)
@@ -1052,10 +1052,10 @@ struct SettingsView: View {
             do {
                 let prompt = try await GitHubDeviceLogin.start()
                 githubPrompt = prompt
-                // On the clipboard as well as in the address. GitHub does not
-                // document whether its page fills the field from the query, so
-                // this makes the difference one paste rather than typing eight
-                // characters out of a panel.
+                // The clipboard is the whole convenience here: GitHub will not
+                // pre-fill its field from a link, deliberately, because that is
+                // the device-code phishing attack. A paste still leaves the
+                // consent where it belongs.
                 copy(prompt.userCode)
                 NSWorkspace.shared.open(prompt.verificationURL)
 
