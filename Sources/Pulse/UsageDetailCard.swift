@@ -276,7 +276,7 @@ extension ProgressMetricRow {
                     Text(localized: "· runs out in \(BurnRate.approximate(seconds))")
                         .foregroundStyle(Color.pulseWarning.opacity(0.9))
                 } else if !burn.exhaustsBeforeReset {
-                    Text(localized: "· lasts the window")
+                    Text(localized: "· expected to last")
                 }
             }
             .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))

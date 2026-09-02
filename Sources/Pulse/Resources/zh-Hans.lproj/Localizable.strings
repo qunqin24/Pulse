@@ -274,6 +274,6 @@
 "about %@ minutes" = "约 %@ 分钟";
 "about %@ hours" = "约 %@ 小时";
 "· runs out in %@" = "· %@后耗尽";
-"· lasts the window" = "· 撑得到重置";
-"%@ ahead of pace" = "超出匀速 %@";
-"%@ in hand" = "结余 %@";
+"· expected to last" = "· 预计可用至重置";
+"%@ in deficit" = "超支 %@";
+"%@ in reserve" = "结余 %@";

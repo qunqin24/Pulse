@@ -115,17 +115,21 @@ enum BurnRate {
         return .localized("about \("\(hours.formatted(.number.precision(.fractionLength(0...1))))") hours")
     }
 
-    /// "9% ahead" / "9% in hand" — which way round matters more than the size.
+    /// "9% in deficit" / "9% in reserve" — which way round matters more than
+    /// the size.
     ///
-    /// Below a point either way there is nothing to report: an even burn is
-    /// the expected case, and a line that says so on every window is noise.
+    /// A matched pair out of plain accounting, rather than two phrases that
+    /// only rhyme: a reader who understands one has understood the other, and
+    /// neither needs the word "pace" explained. Below a point either way there
+    /// is nothing to report — an even burn is the expected case, and a line
+    /// saying so on every window is noise.
     static func paceText(_ delta: Double) -> String? {
         let points = Int(abs(delta).rounded())
         guard points >= 1 else { return nil }
         // The sign goes **into** the value: a `%` beside a placeholder is a
         // malformed printf conversion and the lookup silently misses.
         return delta > 0
-            ? .localized("\("\(points)%") ahead of pace")
-            : .localized("\("\(points)%") in hand")
+            ? .localized("\("\(points)%") in deficit")
+            : .localized("\("\(points)%") in reserve")
     }
 }

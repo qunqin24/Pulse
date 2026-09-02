@@ -274,6 +274,6 @@
 "about %@ minutes" = "about %@ minutes";
 "about %@ hours" = "about %@ hours";
 "· runs out in %@" = "· runs out in %@";
-"· lasts the window" = "· lasts the window";
-"%@ ahead of pace" = "%@ ahead of pace";
-"%@ in hand" = "%@ in hand";
+"· expected to last" = "· expected to last";
+"%@ in deficit" = "%@ in deficit";
+"%@ in reserve" = "%@ in reserve";
