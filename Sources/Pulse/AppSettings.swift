@@ -305,6 +305,19 @@ final class AppSettings {
         }
     }
 
+    /// Say on the card whether each limit will last its window.
+    ///
+    /// Off by default, and that is the same judgement the window clock gets:
+    /// it is the one line on that card the provider did not report, and a
+    /// projection nobody asked for sitting under a reported figure invites
+    /// being read as one. Someone who wants it turns it on knowing what it is.
+    var showsForecast: Bool {
+        didSet {
+            guard showsForecast != oldValue else { return }
+            UserDefaults.standard.set(showsForecast, forKey: Key.showsForecast)
+        }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
@@ -372,7 +385,8 @@ final class AppSettings {
         sideRailShowsPercentages: Bool = true,
         labelAboveRing: Bool = false,
         showsWindowClock: Bool = false,
-        showsRemaining: Bool = false
+        showsRemaining: Bool = false,
+        showsForecast: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -394,6 +408,7 @@ final class AppSettings {
         self.labelAboveRing = labelAboveRing
         self.showsWindowClock = showsWindowClock
         self.showsRemaining = showsRemaining
+        self.showsForecast = showsForecast
     }
 
     func source(for account: AccountKey) -> UsageSource {
@@ -559,7 +574,8 @@ final class AppSettings {
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
             showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
-            showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false
+            showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
+            showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -641,6 +657,7 @@ final class AppSettings {
         static let labelAboveRing = "settings.labelAboveRing"
         static let showsWindowClock = "settings.showsWindowClock"
         static let showsRemaining = "settings.showsRemaining"
+        static let showsForecast = "settings.showsForecast"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

@@ -84,6 +84,8 @@ struct UsageDetailCard: View {
     let edge: PanelEdge
     /// Show what is left rather than what is gone, matching the rail.
     var showsRemaining: Bool = false
+    /// Say whether each limit will last its window.
+    var showsForecast: Bool = false
     /// Where the pointer's tip should sit along the side facing the rail,
     /// measured from the card's own top or leading edge. The card gets pushed
     /// around by the panel's own edges (see
@@ -106,7 +108,8 @@ struct UsageDetailCard: View {
                     accent: window.tint,
                     percentageText: window.percentText(remaining: showsRemaining),
                     isSpent: UsageTint.isSpent(window),
-                    burn: usage.account.provider.showsBurnRate ? BurnRate.reading(for: window) : nil
+                    burn: showsForecast && usage.account.provider.showsBurnRate
+                        ? BurnRate.reading(for: window) : nil
                 )
             }
 

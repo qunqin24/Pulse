@@ -278,6 +278,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Forecast"),
+                    subtitle: String.localized("Whether each limit lasts its window, on the card.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsForecast },
+                        set: { settings.showsForecast = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Show what's left"),
                     subtitle: String.localized("Counts down instead of up, figure and ring together.")
                 ) {
