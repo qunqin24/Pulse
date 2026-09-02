@@ -116,27 +116,6 @@ final class UsageStore {
         }
     }
 
-    /// What each window's burn rate says, keyed by `UsageWindow.id`.
-    ///
-    /// Worked out here rather than in the view: the samples live in an actor,
-    /// and a SwiftUI body cannot wait for one. Recomputed after every reading
-    /// that moves, which is also the only time it can have changed.
-    private(set) var burn: [String: BurnRate.Reading] = [:]
-
-    /// Records a reading's windows and re-measures them.
-    ///
-    /// Only for the providers that show it, so nothing is written for a
-    /// provider whose card would never read it back.
-    private func trail(_ usage: ProviderUsage) async {
-        guard usage.account.provider.showsBurnRate else { return }
-        await UsageTrail.shared.record(usage)
-
-        for window in usage.windows {
-            let samples = await UsageTrail.shared.samples(for: window)
-            burn[window.id] = BurnRate.reading(for: window, from: samples)
-        }
-    }
-
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
@@ -348,13 +327,9 @@ final class UsageStore {
             // may have to renew its token first, and they are few.
             for account in extras {
                 let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
-                let reconciled = await UsageCache.shared.reconciled(raw)
-                self.usage[account.id] = reconciled
-                await self.trail(reconciled)
+                self.usage[account.id] = await UsageCache.shared.reconciled(raw)
             }
 
-            await self.trail(fetchedCodex)
-            await self.trail(fetchedClaude)
 
             // Only what was actually fetched is written back. A provider that
             // is off the rail was never asked, so its slot here would be
@@ -479,7 +454,6 @@ final class UsageStore {
 
             let fetched = await UsageCache.shared.reconciled(raw)
             self.usage[account.id] = fetched
-            await self.trail(fetched)
 
             if previous?.windows != fetched.windows {
                 self.signals.lastChange = Date()

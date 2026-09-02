@@ -273,6 +273,7 @@
 "about an hour" = "about an hour";
 "about %@ minutes" = "about %@ minutes";
 "about %@ hours" = "about %@ hours";
-"%@ an hour" = "%@ an hour";
 "· runs out in %@" = "· runs out in %@";
 "· lasts the window" = "· lasts the window";
+"%@ ahead of pace" = "%@ ahead of pace";
+"%@ in hand" = "%@ in hand";

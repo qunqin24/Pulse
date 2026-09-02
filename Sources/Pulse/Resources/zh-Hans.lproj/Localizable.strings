@@ -273,6 +273,7 @@
 "about an hour" = "约 1 小时";
 "about %@ minutes" = "约 %@ 分钟";
 "about %@ hours" = "约 %@ 小时";
-"%@ an hour" = "每小时 %@";
 "· runs out in %@" = "· %@后耗尽";
 "· lasts the window" = "· 撑得到重置";
+"%@ ahead of pace" = "超出匀速 %@";
+"%@ in hand" = "结余 %@";

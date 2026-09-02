@@ -84,8 +84,6 @@ struct UsageDetailCard: View {
     let edge: PanelEdge
     /// Show what is left rather than what is gone, matching the rail.
     var showsRemaining: Bool = false
-    /// What each window's rate says, keyed by `UsageWindow.id`.
-    var burn: [String: BurnRate.Reading] = [:]
     /// Where the pointer's tip should sit along the side facing the rail,
     /// measured from the card's own top or leading edge. The card gets pushed
     /// around by the panel's own edges (see
@@ -108,7 +106,7 @@ struct UsageDetailCard: View {
                     accent: window.tint,
                     percentageText: window.percentText(remaining: showsRemaining),
                     isSpent: UsageTint.isSpent(window),
-                    burn: burn[window.id]
+                    burn: usage.account.provider.showsBurnRate ? BurnRate.reading(for: window) : nil
                 )
             }
 
@@ -263,20 +261,21 @@ extension ProgressMetricRow {
     /// runs out.
     ///
     /// One line, dimmer than the figures above it, because it is the one thing
-    /// on this card the provider did not say. It is absent far more often than
+    /// on this card the provider did not say — though both halves of it are
+    /// figures the provider *did* say, subtracted. It is absent far more often than
     /// present, and that is the design rather than a gap: a rate is only
     /// measurable while a limit is actually moving, and the prediction is only
     /// offered when it lands before the reset.
     @ViewBuilder
     var burnLine: some View {
-        if let burn, !isSpent {
+        if let burn, !isSpent, let pace = BurnRate.paceText(burn.paceDelta) {
             HStack(spacing: 5) {
-                Text(BurnRate.rateText(burn.perHour))
+                Text(pace)
 
                 if let seconds = burn.timeToExhaustion {
                     Text(localized: "· runs out in \(BurnRate.approximate(seconds))")
                         .foregroundStyle(Color.pulseWarning.opacity(0.9))
-                } else if burn.exhaustsBeforeReset == false {
+                } else if !burn.exhaustsBeforeReset {
                     Text(localized: "· lasts the window")
                 }
             }
