@@ -123,15 +123,6 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     ///
     /// So a new provider appears by itself only when it has something to say.
     /// The rest wait in Settings, where they can be switched on deliberately.
-    /// Whether this provider's limits get a burn rate on the card.
-    ///
-    /// **Not a technical limit.** The measurement needs only a percentage, a
-    /// timestamp and a reset time, which every provider here reports — nothing
-    /// is read from a transcript. It starts with the two agents that are used
-    /// hardest and whose five-hour windows are the ones people actually run
-    /// out of; widening it is this line.
-    var showsBurnRate: Bool { self == .claudeCode || self == .codex }
-
     /// Whether Pulse holds a credential of its own for this provider.
     ///
     /// **Not the same question as `usesAPIKey`**, which asks whether the user

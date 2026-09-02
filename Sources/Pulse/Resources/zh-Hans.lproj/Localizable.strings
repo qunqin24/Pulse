@@ -277,3 +277,4 @@
 "about %@ hours" = "约 %@ 小时";
 "Runs out in %@" = "%@后耗尽";
 "Expected to last the window" = "预计可用至本轮重置";
+"Won't last the window" = "预计撑不到本轮重置";

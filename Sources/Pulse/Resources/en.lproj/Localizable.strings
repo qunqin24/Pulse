@@ -277,3 +277,4 @@
 "about %@ hours" = "about %@ hours";
 "Runs out in %@" = "Runs out in %@";
 "Expected to last the window" = "Expected to last the window";
+"Won't last the window" = "Won't last the window";

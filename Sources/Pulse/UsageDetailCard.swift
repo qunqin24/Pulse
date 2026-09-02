@@ -108,8 +108,11 @@ struct UsageDetailCard: View {
                     accent: window.tint,
                     percentageText: window.percentText(remaining: showsRemaining),
                     isSpent: UsageTint.isSpent(window),
-                    burn: showsForecast && usage.account.provider.showsBurnRate
-                        ? BurnRate.reading(for: window) : nil
+                    // Every provider, not a chosen few: what this needs is a
+                    // percentage, a reset and a length the provider actually
+                    // stated, and `BurnRate` refuses the windows that lack one
+                    // rather than being told in advance which they are.
+                    burn: showsForecast ? BurnRate.reading(for: window) : nil
                 )
             }
 
@@ -276,7 +279,16 @@ extension ProgressMetricRow {
                 if let seconds = burn.timeToExhaustion {
                     Text(localized: "Runs out in \(BurnRate.approximate(seconds))")
                         .foregroundStyle(Color.pulseWarning.opacity(0.9))
-                } else if !burn.exhaustsBeforeReset {
+                } else if burn.exhaustsBeforeReset {
+                    // **The verdict without the time.** Beyond the horizon the
+                    // hours are not worth stating, but the answer still is —
+                    // and this was silent here once, which showed the good news
+                    // and hid the bad. A weekly window's exhaustion is nearly
+                    // always further out than two hours, so that was most of
+                    // the warnings there are.
+                    Text(localized: "Won't last the window")
+                        .foregroundStyle(Color.pulseWarning.opacity(0.9))
+                } else {
                     Text(localized: "Expected to last the window")
                         .foregroundStyle(.primary.opacity(0.45))
                 }
