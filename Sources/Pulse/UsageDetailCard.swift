@@ -268,19 +268,17 @@ extension ProgressMetricRow {
     /// offered when it lands before the reset.
     @ViewBuilder
     var burnLine: some View {
-        if let burn, !isSpent, let pace = BurnRate.paceText(burn.paceDelta) {
-            HStack(spacing: 5) {
-                Text(pace)
-
+        if let burn, !isSpent {
+            Group {
                 if let seconds = burn.timeToExhaustion {
-                    Text(localized: "· runs out in \(BurnRate.approximate(seconds))")
+                    Text(localized: "Runs out in \(BurnRate.approximate(seconds))")
                         .foregroundStyle(Color.pulseWarning.opacity(0.9))
                 } else if !burn.exhaustsBeforeReset {
-                    Text(localized: "· expected to last")
+                    Text(localized: "Expected to last the window")
+                        .foregroundStyle(.primary.opacity(0.45))
                 }
             }
             .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
-            .foregroundStyle(.primary.opacity(0.45))
             .lineLimit(1)
         }
     }

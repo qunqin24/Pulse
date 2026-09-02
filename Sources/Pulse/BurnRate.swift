@@ -20,16 +20,19 @@ import Foundation
 /// free. The idea is CodexBar's; the arithmetic was checked against this
 /// machine's own transcripts before it was adopted.
 ///
-/// Three statements, and they are **not** equally trustworthy. Each is offered
+/// Two statements, and they are **not** equally trustworthy. Each is offered
 /// only when the evidence carries it:
 ///
-/// 1. **The pace** — "12% ahead of an even burn". Two reported figures
-///    subtracted. Nothing is extrapolated, so this is the one that can always
-///    be said.
-/// 2. **The verdict** — "this will run out before it resets". An
-///    extrapolation, but of the coarsest kind: a yes or a no, which survives
-///    bursty usage far better than any number does.
-/// 3. **When** — "in about an hour". A prediction, and the fragile one.
+/// 1. **The verdict** — "expected to last". An extrapolation, but of the
+///    coarsest kind: a yes or a no, which survives bursty usage far better
+///    than any number does.
+/// 2. **When** — "in about an hour". A prediction, and the fragile one.
+///
+/// A third was tried and taken out: the pace itself, as a signed figure
+/// against an even burn. It read as a balance — "8% in reserve" under a line
+/// saying "20% used" is read as *8% left*, when 80% is left — and the verdict
+/// already answers the question it was supporting. A number nobody can read
+/// without being taught it first is worse than no number.
 enum BurnRate {
     /// Nothing is said about a window barely open. Early on, the elapsed share
     /// is so small that dividing by it turns a single burst into a rate that
@@ -43,11 +46,6 @@ enum BurnRate {
     static let horizon: TimeInterval = 2 * 3600
 
     struct Reading: Equatable, Sendable {
-        /// How far ahead of an even burn this is, in points of the limit.
-        /// Positive is spending faster than the window is passing.
-        let paceDelta: Double
-        /// Fraction of the limit per hour, averaged over the window so far.
-        let perHour: Double
         /// Whether it is on course to run out before the window resets.
         let exhaustsBeforeReset: Bool
         /// How long until it runs out — **only** when that is before the reset
@@ -74,23 +72,14 @@ enum BurnRate {
         guard elapsedSeconds > 0 else { return nil }
 
         let perHour = used / elapsedSeconds * 3600
-        let paceDelta = (used - elapsed) * 100
-
         guard used < 1, perHour > 0 else {
-            return Reading(
-                paceDelta: paceDelta,
-                perHour: perHour,
-                exhaustsBeforeReset: used >= 1,
-                timeToExhaustion: used >= 1 ? 0 : nil
-            )
+            return Reading(exhaustsBeforeReset: used >= 1, timeToExhaustion: used >= 1 ? 0 : nil)
         }
 
         let untilEmpty = (1 - used) / perHour * 3600
         let first = untilEmpty < untilReset
 
         return Reading(
-            paceDelta: paceDelta,
-            perHour: perHour,
             exhaustsBeforeReset: first,
             // Both filters, and they are the difference between a figure and a
             // guess: if the window resets first there is no exhaustion to
@@ -115,21 +104,4 @@ enum BurnRate {
         return .localized("about \("\(hours.formatted(.number.precision(.fractionLength(0...1))))") hours")
     }
 
-    /// "9% in deficit" / "9% in reserve" — which way round matters more than
-    /// the size.
-    ///
-    /// A matched pair out of plain accounting, rather than two phrases that
-    /// only rhyme: a reader who understands one has understood the other, and
-    /// neither needs the word "pace" explained. Below a point either way there
-    /// is nothing to report — an even burn is the expected case, and a line
-    /// saying so on every window is noise.
-    static func paceText(_ delta: Double) -> String? {
-        let points = Int(abs(delta).rounded())
-        guard points >= 1 else { return nil }
-        // The sign goes **into** the value: a `%` beside a placeholder is a
-        // malformed printf conversion and the lookup silently misses.
-        return delta > 0
-            ? .localized("\("\(points)%") in deficit")
-            : .localized("\("\(points)%") in reserve")
-    }
 }

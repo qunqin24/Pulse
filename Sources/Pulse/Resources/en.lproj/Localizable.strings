@@ -273,7 +273,5 @@
 "about an hour" = "about an hour";
 "about %@ minutes" = "about %@ minutes";
 "about %@ hours" = "about %@ hours";
-"· runs out in %@" = "· runs out in %@";
-"· expected to last" = "· expected to last";
-"%@ in deficit" = "%@ in deficit";
-"%@ in reserve" = "%@ in reserve";
+"Runs out in %@" = "Runs out in %@";
+"Expected to last the window" = "Expected to last the window";

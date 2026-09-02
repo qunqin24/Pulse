@@ -273,7 +273,5 @@
 "about an hour" = "约 1 小时";
 "about %@ minutes" = "约 %@ 分钟";
 "about %@ hours" = "约 %@ 小时";
-"· runs out in %@" = "· %@后耗尽";
-"· expected to last" = "· 预计可用至重置";
-"%@ in deficit" = "超支 %@";
-"%@ in reserve" = "结余 %@";
+"Runs out in %@" = "%@后耗尽";
+"Expected to last the window" = "预计可用至本轮重置";
