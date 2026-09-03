@@ -282,3 +282,10 @@
 "Runs out in %@" = "Runs out in %@";
 "Expected to last the window" = "Expected to last the window";
 "Won't last the window" = "Won't last the window";
+
+/* The Claude desktop app as a usage route */
+"Desktop app" = "Desktop app";
+"Uses the session the Claude desktop app is signed in with." = "Uses the session the Claude desktop app is signed in with.";
+"Sign in to the Claude desktop app to see usage." = "Sign in to the Claude desktop app to see usage.";
+"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again.";
+"The Claude desktop app's session was refused. Open it and sign in again." = "The Claude desktop app's session was refused. Open it and sign in again.";

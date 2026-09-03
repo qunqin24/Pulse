@@ -20,14 +20,35 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
     case endpoint
     /// Only the route through the provider's own tooling.
     case tooling
+    /// Only the session the provider's own desktop app is signed in with.
+    ///
+    /// Claude Code alone, and the **primary** account's only. `.automatic`
+    /// does fall back to it — but only once the keychain has already been
+    /// granted, which is what keeps a default from going looking for a prompt
+    /// of its own. Pinning it here means the other two routes are not tried at
+    /// all, so a failure is reported rather than quietly answered elsewhere.
+    case desktopApp
 
     var id: String { rawValue }
+
+    /// The routes an account actually has. A picker offering one that cannot
+    /// work is a control whose only outcome is an error.
+    ///
+    /// The desktop route is the **primary** account's alone: what it reads is
+    /// the one session the desktop app is signed in with, which belongs to
+    /// whichever account that is — not to a second account Pulse signed in to
+    /// itself. Offered on an added account it would be a choice `fetchAdded`
+    /// silently ignores, which is a control that lies about what it did.
+    static func options(for account: AccountKey) -> [UsageSource] {
+        allCases.filter { $0 != .desktopApp || (account.provider == .claudeCode && account.isPrimary) }
+    }
 
     var title: String {
         switch self {
         case .automatic: .localized("Automatic")
         case .endpoint: .localized("Usage endpoint")
         case .tooling: .localized("Provider tooling")
+        case .desktopApp: .localized("Desktop app")
         }
     }
 
@@ -44,6 +65,12 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             .localized("Uses whatever Claude Code last reported to its status line.")
         case (.tooling, .codex):
             .localized("Asks the Codex app server, which signs in on its own.")
+        case (.desktopApp, .claudeCode):
+            .localized("Uses the session the Claude desktop app is signed in with.")
+        case (.desktopApp, .codex):
+            // Never shown: `options(for:)` doesn't offer it, and `source(for:)`
+            // won't return it for anything but Claude Code.
+            .localized("Use the endpoint when possible, the other route when not.")
         case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
              (_, .minimax), (_, .minimaxCN), (_, .copilot):
             // Never shown either — one route, and it needs a key.

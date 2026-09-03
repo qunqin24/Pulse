@@ -278,10 +278,24 @@ struct CodexUsageService: Sendable {
         var plan: String?
         var credits: String?
 
+        // The server's own last word on whether ordinary included usage may
+        // still be spent. It is a sibling of the groups, not a member of one —
+        // so it applies to all of them — and `nil` means "unavailable", which
+        // is explicitly not the same as "no": the protocol says clients must
+        // not infer recovery from percentages or reset times.
+        let ordinaryRefused = result["ordinaryUsageAllowed"] as? Bool == false
+
         for (key, group) in ordered {
             let scope = group["limitName"] as? String
 
-            windows += ["primary", "secondary"].compactMap { slot -> UsageWindow? in
+            // **This group's windows, not every group's.** They used to be
+            // marked on the accumulated array, so the second group's "limit
+            // reached" put the spent mark on whichever window was fullest
+            // across all the groups read so far — routinely one belonging to a
+            // model group that was perfectly fine. The flag is group-scoped in
+            // Codex's own protocol: it sits on the snapshot that holds the
+            // windows, never on a window.
+            var ofThisGroup: [UsageWindow] = ["primary", "secondary"].compactMap { slot -> UsageWindow? in
                 guard
                     let node = group[slot] as? [String: Any],
                     let percent = number(node["usedPercent"])
@@ -300,8 +314,10 @@ struct CodexUsageService: Sendable {
                 )
             }
 
-            windows = Self.markingSpent(windows, if: group["spendControlReached"] as? Bool == true
-                || (group["rateLimitReachedType"].map { !($0 is NSNull) } ?? false))
+            ofThisGroup = Self.markingSpent(ofThisGroup, if: group["spendControlReached"] as? Bool == true
+                || (group["rateLimitReachedType"].map { !($0 is NSNull) } ?? false)
+                || ordinaryRefused)
+            windows += ofThisGroup
 
             plan = plan ?? group["planType"] as? String
             if credits == nil, let node = group["credits"] as? [String: Any] {

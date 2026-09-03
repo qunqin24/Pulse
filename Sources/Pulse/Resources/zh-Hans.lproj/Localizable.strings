@@ -282,3 +282,10 @@
 "Runs out in %@" = "%@后耗尽";
 "Expected to last the window" = "预计可用至本轮重置";
 "Won't last the window" = "预计撑不到本轮重置";
+
+/* The Claude desktop app as a usage route */
+"Desktop app" = "桌面端";
+"Uses the session the Claude desktop app is signed in with." = "用 Claude 桌面端已登录的会话读取。";
+"Sign in to the Claude desktop app to see usage." = "登录 Claude 桌面端后即可看到用量。";
+"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse 需要钥匙串权限才能读取 Claude 桌面端的会话。点刷新可再问一次。";
+"The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面端的会话被拒绝。请打开它重新登录。";

@@ -418,8 +418,13 @@ final class AppSettings {
         self.showsForecast = showsForecast
     }
 
+    /// A stored route the provider doesn't offer resolves to `.automatic`
+    /// rather than being handed on. Routes are keyed by account and providers
+    /// gain and lose them between versions, so a list saved while one existed
+    /// would otherwise pin a provider to a route that can only fail.
     func source(for account: AccountKey) -> UsageSource {
-        sources[account.id].flatMap(UsageSource.init(rawValue:)) ?? .automatic
+        let stored = sources[account.id].flatMap(UsageSource.init(rawValue:)) ?? .automatic
+        return UsageSource.options(for: account).contains(stored) ? stored : .automatic
     }
 
     func setSource(_ source: UsageSource, for account: AccountKey) {
@@ -628,7 +633,18 @@ final class AppSettings {
         guard !account.isPrimary else { return }
 
         extraAccounts.removeAll { $0.key == account }
-        enabledAccounts.remove(account.id)
+        // **The set refuses to go empty, and that refusal put the removed
+        // account straight back.** `enabledAccounts` restores its old value
+        // rather than accept nothing — so deleting the only enabled account
+        // left its id behind, naming an account that no longer exists, and the
+        // rail drew nothing at all because `shownAccounts` filters the real
+        // ones. The provider this account belonged to takes its place: there
+        // is always one, and it is the nearest thing to what was being watched.
+        if enabledAccounts == [account.id] {
+            enabledAccounts = [AccountKey(account.provider).id]
+        } else {
+            enabledAccounts.remove(account.id)
+        }
         providerOrder.removeAll { $0 == account.id }
         pinnedWindows[account.id] = nil
         sources[account.id] = nil

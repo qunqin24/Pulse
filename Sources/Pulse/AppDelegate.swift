@@ -49,6 +49,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Daily at most, and only from a bundle — see `AppUpdate`.
         update.checkIfDue()
 
+        // Asks for the Claude desktop app's keychain item now rather than
+        // leaving it behind a setting nobody would think to open. Fenced and
+        // asked once — see `requestPermissionAtLaunch`. It runs off this
+        // thread, since the dialog blocks whoever raised it.
+        let claudeCode = AccountKey(.claudeCode)
+        let claudeSource = settings.source(for: claudeCode)
+        ClaudeDesktopSession.requestPermissionAtLaunch(
+            willBeUsed: settings.isEnabled(claudeCode)
+                && [.automatic, .desktopApp].contains(claudeSource)
+        ) { [weak self] in
+            // A grant is a new route, and the pass that just went out did not
+            // have it.
+            self?.store.refresh(claudeCode)
+        }
+
         store.start()
 
         let controller = FloatingPanelController(store: store, settings: settings, placement: placement)

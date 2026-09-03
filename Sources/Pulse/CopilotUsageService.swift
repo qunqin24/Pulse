@@ -135,9 +135,15 @@ struct CopilotUsageService: Sendable {
             windowSeconds: 30 * 86_400,
             resetsAt: resets,
             reportsLength: false,
-            // Its own word for it. An account can be blocked on a lane while
-            // the percentage still reads short of the whole.
-            isExhausted: remaining <= 0 || (number(snapshot["overage_count"]) ?? 0) > 0
+            // **Spent is not the same as over the allowance.** A lane with
+            // overage permitted keeps working past its included share and is
+            // billed for it — Copilot's own client treats exhausted as
+            // `used >= quota && !overageEnabled && !unlimited` and lets the
+            // request through otherwise. So `overage_count` above zero means
+            // the opposite of blocked: it is the count of what has already
+            // been spent that way. Reading it as spent painted a red ring for
+            // someone who had deliberately paid to carry on.
+            isExhausted: remaining <= 0 && !(snapshot["overage_permitted"] as? Bool ?? false)
         )
     }
 

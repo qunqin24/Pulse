@@ -168,6 +168,15 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// Signed in, but the login Claude Code saved has gone stale and
         /// nothing here can renew it.
         case claudeLoginExpired
+        /// The desktop route, and its three separate ways of coming up empty.
+        /// No desktop app on this Mac, or one that has never been signed in.
+        case claudeDesktopNotSignedIn
+        /// Its cookie store is there and its keychain key was not handed over
+        /// — the prompt was denied, or dismissed. The remedy is to ask again,
+        /// which is what the pane's own refresh does.
+        case claudeDesktopKeyRefused
+        /// The session was read and the service refused it.
+        case claudeDesktopSessionExpired
         /// The `codex` command isn't installed, or isn't where we looked.
         case codexNotInstalled
         /// Found `codex`, but `codex app-server` wouldn't start.
@@ -215,6 +224,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .signInRequired: .localized("Sign in to Codex to see usage.")
             case .claudeSignInRequired: .localized("Sign in to Claude Code to see usage.")
             case .claudeLoginExpired: .localized("Claude Code's saved login expired. Use Claude Code, or connect the status line.")
+            case .claudeDesktopNotSignedIn: .localized("Sign in to the Claude desktop app to see usage.")
+            case .claudeDesktopKeyRefused: .localized("Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again.")
+            case .claudeDesktopSessionExpired: .localized("The Claude desktop app's session was refused. Open it and sign in again.")
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")

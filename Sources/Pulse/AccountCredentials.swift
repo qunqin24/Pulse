@@ -52,6 +52,26 @@ enum AccountCredentialStore {
         return save(all)
     }
 
+    /// Stores a renewal, unless what is already there outlives it.
+    ///
+    /// **A renewal is not an ordinary write.** Two passes can be renewing the
+    /// same account at once — the second only because the first was given up
+    /// on for taking too long — and the abandoned one answers last. Written
+    /// plainly, that puts the older login back over the newer, and a provider
+    /// that rotates refresh tokens will then refuse it: the account is signed
+    /// out by the act of keeping it signed in. Which one lives longer is the
+    /// question, and both of them answer it.
+    ///
+    /// Sign-out still goes through `set(_:for:)`, which is unconditional:
+    /// forgetting a login is a decision, not a race.
+    @discardableResult
+    static func renewed(_ credentials: AccountCredentials, for account: AccountKey) -> Bool {
+        if let existing = self.credentials(for: account), existing.expiresAt >= credentials.expiresAt {
+            return false
+        }
+        return set(credentials, for: account)
+    }
+
     // MARK: - The file
 
     /// What is stored, or nil when there is a file here that cannot be read.

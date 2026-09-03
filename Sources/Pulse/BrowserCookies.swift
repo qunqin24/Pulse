@@ -222,35 +222,59 @@ enum BrowserCookies {
     // MARK: - Chromium: SQLite, values encrypted with a key from the keychain
 
     private static func chromium(_ browser: Browser, host: String) -> [(String, String)] {
-        guard let key = chromiumKey(browser) else { return [] }
+        guard
+            let service = browser.keychainService,
+            let key = safeStorageKey(service: service)
+        else { return [] }
 
         for store in chromiumStores(browser) {
-            let rows = query(
-                store,
-                "SELECT name, encrypted_value FROM cookies WHERE host_key = ? OR host_key = ? OR host_key LIKE ?",
-                [host, ".\(host)", "%.\(host)"]
-            ) { statement -> (String, String)? in
-                guard
-                    let name = sqlite3_column_text(statement, 0),
-                    let blob = sqlite3_column_blob(statement, 1)
-                else { return nil }
-
-                let count = Int(sqlite3_column_bytes(statement, 1))
-                let encrypted = Data(bytes: blob, count: count)
-                guard let value = decrypt(encrypted, with: key) else { return nil }
-                return (String(cString: name), value)
-            }
+            let rows = chromiumCookies(at: store, host: host, key: key)
             if !rows.isEmpty { return rows }
         }
 
         return []
     }
 
-    /// The browser's own storage key, which lives in the login keychain — this
-    /// is the read that raises the prompt.
-    private static func chromiumKey(_ browser: Browser) -> Data? {
-        guard let service = browser.keychainService else { return nil }
+    /// One Chromium-format store, read for a single host.
+    ///
+    /// Internal because a Chromium cookie file is not the same thing as a
+    /// browser: the Claude desktop app is Electron, so it keeps a store of
+    /// exactly this shape under a `Safe Storage` key of its own, while being
+    /// nothing anybody browses with. `ClaudeDesktopSession` reads it through
+    /// here rather than owning a second copy of the format.
+    ///
+    /// The host match is the host, its dot-form and its subdomains, never a
+    /// suffix — asking for `claude.ai` must not return `notclaude.ai`, whose
+    /// value would then be joined into the header sent to the real one.
+    static func chromiumCookies(at store: URL, host: String, key: Data) -> [(String, String)] {
+        query(
+            store,
+            "SELECT name, encrypted_value FROM cookies WHERE host_key = ? OR host_key = ? OR host_key LIKE ?",
+            [host, ".\(host)", "%.\(host)"]
+        ) { statement -> (String, String)? in
+            guard
+                let name = sqlite3_column_text(statement, 0),
+                let blob = sqlite3_column_blob(statement, 1)
+            else { return nil }
 
+            let count = Int(sqlite3_column_bytes(statement, 1))
+            let encrypted = Data(bytes: blob, count: count)
+            guard let value = decrypt(encrypted, with: key) else { return nil }
+            return (String(cString: name), value)
+        }
+    }
+
+    /// The storage key an Electron app keeps in the login keychain — this is
+    /// the read that raises the prompt.
+    ///
+    /// Named by its service rather than by a browser, because the Claude
+    /// desktop app has one of these too (`Claude Safe Storage`) and is not a
+    /// browser. The service name is always written out by the caller and never
+    /// derived from a display name: Edge is shown as "Edge" and stores its key
+    /// under "Microsoft Edge Safe Storage", and building the name from the
+    /// display name found nothing, failed silently, and fell through to the
+    /// next browser.
+    static func safeStorageKey(service: String) -> Data? {
         var request: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

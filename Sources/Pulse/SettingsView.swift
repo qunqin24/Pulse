@@ -821,7 +821,14 @@ struct SettingsView: View {
                         get: { settings.source(for: account) },
                         set: { settings.setSource($0, for: account) }
                     )) {
-                        ForEach(UsageSource.allCases) { option in
+                        // A route this Mac cannot take is a choice whose only
+                        // outcome is an error — the same rule the browser list
+                        // follows. A route already *pinned* is still offered,
+                        // so deleting the desktop app says so on the card
+                        // rather than silently switching to another route.
+                        ForEach(UsageSource.options(for: account).filter {
+                            $0 != .desktopApp || ClaudeDesktopSession.isAvailable || source == .desktopApp
+                        }) { option in
                             Text(option.title).tag(option)
                         }
                     }

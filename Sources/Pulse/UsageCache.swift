@@ -51,6 +51,24 @@ actor UsageCache {
     /// something, whichever was actually taken later.
     func reconciled(_ fetched: ProviderUsage) -> ProviderUsage {
         if case .live = fetched.state, !fetched.windows.isEmpty {
+            // **`.live` is not the same as "newest".** The status-line route
+            // calls its capture live for ten minutes after it was taken, and
+            // that capture can be older than a reading the endpoint route
+            // banked a minute ago — so an unconditional store let the older of
+            // two live readings overwrite the newer, and the next launch
+            // opened on it. Which was taken later is the only question that
+            // matters here, and both of them say.
+            // Half of this was wrong the first time: refusing to *store* the
+            // older reading still handed it back, so the panel went backwards
+            // anyway and only the next launch was spared. What is banked is a
+            // real reading with a later timestamp — it is shown, marked stale
+            // so it carries its own date, exactly as a refusal's fallback is.
+            if let banked = reading(for: fetched.account),
+               let bankedAt = banked.observedAt,
+               let takenAt = fetched.observedAt,
+               takenAt < bankedAt {
+                return banked
+            }
             store(fetched)
             return fetched
         }
@@ -63,7 +81,8 @@ actor UsageCache {
         // day, while Settings holds an empty field, hides the one thing the
         // user needs told. Reported as it is.
         if case .unavailable(let reason) = fetched.state,
-           [.apiKeyMissing, .ollamaSessionMissing, .signedOut].contains(reason) {
+           [.apiKeyMissing, .ollamaSessionMissing, .signedOut,
+            .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused].contains(reason) {
             return fetched
         }
 

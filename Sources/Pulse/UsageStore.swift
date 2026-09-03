@@ -163,14 +163,24 @@ final class UsageStore {
         // blank for as long as the slowest provider takes to answer, which on
         // a cold start is most of a second and looks like an app that has not
         // finished loading.
+        // **Restored before the first request goes out, not alongside it.**
+        // The guard below only knows whether a slot is still unavailable, and
+        // an unavailable slot is not always an empty one: a pass that has
+        // already landed `.apiKeyMissing` or `.signedOut` is a real answer —
+        // the one answer the user has to be told — and a cache entry arriving
+        // a moment later put yesterday's percentages over it. Racing was never
+        // worth anything here: this is a disk read, and the requests it was
+        // running beside take a round trip.
         Task { [accounts = settings.allAccounts] in
             for account in accounts {
                 guard let cached = await UsageCache.shared.lastReading(for: account) else { continue }
-                // A fetch that has already landed is newer than anything on
-                // disk and must not be undone by it.
+                // Nothing has been fetched yet, so anything but the seeded
+                // placeholder would be a reading — and there cannot be one.
                 guard case .unavailable = self.usage(for: account).state else { continue }
                 self.usage[account.id] = cached
             }
+
+            self.refresh()
         }
 
         // Only relevant when the app server is being used as a fallback; it
@@ -180,8 +190,6 @@ final class UsageStore {
                 Task { @MainActor in self?.refresh() }
             }
         }
-
-        refresh()
     }
 
     /// The user hovered the rail to read a card, which is the clearest sign
@@ -352,6 +360,15 @@ final class UsageStore {
             let (rawMiniMax, rawMiniMaxCN) = await (minimaxUsage, minimaxCNUsage)
             let rawCopilot = await copilotUsage
 
+            // **The disowning is checked before anything is written, not just
+            // before the readings are handed to the panel.** `reconciled`
+            // banks what it is given, so a pass that had been given up on used
+            // to put its stale readings on disk on the way past — where the
+            // next launch reads them — even though the guard below then threw
+            // them away. Nothing this pass learned is worth keeping once
+            // another pass has run.
+            guard pass == self.currentPass else { return }
+
             // A refusal — rate limited, expired token, a VPN dropping the
             // connection — falls back to the last good reading rather than
             // blanking the card. It comes back marked stale, so it says how
@@ -371,9 +388,17 @@ final class UsageStore {
 
             // Accounts Pulse signed in to itself, read one at a time: each
             // may have to renew its token first, and they are few.
+            //
+            // Held rather than written as they arrive: this loop is the
+            // longest part of a pass — a token renewal is its own round trip —
+            // so it is where a pass is most likely to be disowned, and it was
+            // the one place that wrote straight into `usage` with no check at
+            // all. Every one of these went over a newer reading.
+            var fetchedExtras: [(String, ProviderUsage)] = []
             for account in extras {
                 let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
-                self.usage[account.id] = await UsageCache.shared.reconciled(raw)
+                guard pass == self.currentPass else { return }
+                fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw)))
             }
 
 
@@ -381,6 +406,8 @@ final class UsageStore {
             // has run since, and everything below would put its stale readings
             // over newer ones and clear flags that now belong elsewhere.
             guard pass == self.currentPass else { return }
+
+            for (id, usage) in fetchedExtras { self.usage[id] = usage }
 
             // Only what was actually fetched is written back. A provider that
             // is off the rail was never asked, so its slot here would be
@@ -553,7 +580,9 @@ final class UsageStore {
                 return .unavailable(account, reason: .signedOut)
             }
             credentials = renewed
-            AccountCredentialStore.set(credentials, for: account)
+            // Compare-and-set: a pass that was given up on can still be in
+            // here, and its answer must not replace a newer login.
+            AccountCredentialStore.renewed(credentials, for: account)
         }
 
         return switch account.provider {

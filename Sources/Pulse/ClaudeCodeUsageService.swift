@@ -56,6 +56,12 @@ struct ClaudeCodeUsageService: Sendable {
             return readCapturedUsage()
                 ?? .unavailable(.claudeCode, reason: StatusLineHook.isInstalled ? .awaitingResponse : .notConnected)
 
+        case .desktopApp:
+            // Pinned here for the same reason as the other two: a failure is
+            // reported rather than quietly answered from somewhere else. It is
+            // never reached from `.automatic` — see `UsageSource.desktopApp`.
+            return await ClaudeDesktopSession.usage(for: AccountKey(.claudeCode))
+
         case .endpoint:
             guard let token = loadAccessToken() else {
                 return .unavailable(.claudeCode, reason: .claudeSignInRequired)
@@ -87,6 +93,18 @@ struct ClaudeCodeUsageService: Sendable {
                     // reserve.
                     return readCapturedUsage() ?? .unavailable(.claudeCode, reason: reason)
                 }
+            }
+
+            // **Before the status line, not after it.** That route is a push:
+            // it only moves while a session runs, and a Mac driven through the
+            // desktop app never renders a status line at all — so what it
+            // holds can be a day old and still pass, which is exactly how a
+            // panel came to sit on yesterday's figures with a refresh button
+            // that appeared to do nothing. A live reading outranks a captured
+            // one; the capture keeps its turn when there is no live reading to
+            // be had. Silent only — see `usageIfAlreadyPermitted`.
+            if let desktop = await ClaudeDesktopSession.usageIfAlreadyPermitted(for: AccountKey(.claudeCode)) {
+                return desktop
             }
 
             return readCapturedUsage()
@@ -288,6 +306,11 @@ struct ClaudeCodeUsageService: Sendable {
                   let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             else { return nil }
 
+            // The one moment this can be asked: the desktop route needs to
+            // know whose account the CLI is on, and by the time it asks, the
+            // token that would answer has expired. See `ClaudeAccountIdentity`.
+            ClaudeAccountIdentity.remember(ClaudeAccountIdentity.fingerprint(fromProfile: root))
+
             return planName(from: root)
         }
 
@@ -299,7 +322,7 @@ struct ClaudeCodeUsageService: Sendable {
         /// figure belongs in the name. Anything unfamiliar is passed through
         /// tidied rather than blanked: an unknown name still beats none, and
         /// it is the only clue left when a new tier appears.
-        func planName(from root: [String: Any]) -> String? {
+        nonisolated func planName(from root: [String: Any]) -> String? {
             let organization = root["organization"] as? [String: Any]
 
             let tier = (organization?["rate_limit_tier"] as? String)?.lowercased()
@@ -335,7 +358,7 @@ struct ClaudeCodeUsageService: Sendable {
         }
 
         /// `claude_max` reads as a field name; "Claude Max" reads as a plan.
-        private func tidy(_ raw: String) -> String {
+        nonisolated private func tidy(_ raw: String) -> String {
             raw.split(whereSeparator: { $0 == "_" || $0 == "-" })
                 .map { $0.prefix(1).uppercased() + $0.dropFirst() }
                 .joined(separator: " ")
@@ -344,7 +367,12 @@ struct ClaudeCodeUsageService: Sendable {
 
     // MARK: - Parsing
 
-    private static func parse(
+    /// Internal rather than private because the desktop route answers with
+    /// the very same shape — `limits[]` carrying `kind`/`percent`/`severity`/
+    /// `resets_at`/`scope`, with the older top-level pair behind it — and two
+    /// readers of one payload is two chances to disagree about what a window
+    /// is. See `ClaudeDesktopSession`.
+    static func parse(
         _ root: [String: Any],
         for account: AccountKey,
         plan: String? = nil
