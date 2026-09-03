@@ -78,9 +78,20 @@ the warning, then go to **System Settings → Privacy & Security** and click
 
 ## Where the numbers come from
 
-| | | Route | Note |
-|:---:|---|---|---|
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/claude.svg"><img src="Sources/Pulse/Resources/claude.svg" width="30" alt=""></picture> | **Claude Code** | The account's usage endpoint, using the login Claude Code already stored; falls back to the status line | — |
+| | Route | Note |
+|---|---|---|
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/claude.svg"><img src="Sources/Pulse/Resources/claude.svg" width="22" height="22" alt=""></picture> **Claude Code** | The account's usage endpoint, using the login Claude Code already stored; falls back to the status line | — |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/openai.svg"><img src="Sources/Pulse/Resources/openai.svg" width="22" height="22" alt=""></picture> **Codex** | The endpoint Codex's own client uses; falls back to `codex app-server` | — |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/antigravity.svg"><img src="Sources/Pulse/Resources/antigravity.svg" width="22" height="22" alt=""></picture> **Antigravity** | The language server the editor runs locally | Reports only while Antigravity is open |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/cursor.svg"><img src="Sources/Pulse/Resources/cursor.svg" width="22" height="22" alt=""></picture> **Cursor** | The account's usage summary, via the login the editor already stored | Shown as the two pools on Cursor's account page |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/opencode.svg"><img src="Sources/Pulse/Resources/opencode.svg" width="22" height="22" alt=""></picture> **OpenCode Go** | An API key from Settings, or the login OpenCode's CLI already stored | — |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/kimi.svg"><img src="Sources/Pulse/Resources/kimi.svg" width="22" height="22" alt=""></picture> **Kimi Code** | An API key from Settings | — |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zai.svg"><img src="Sources/Pulse/Resources/zai.svg" width="22" height="22" alt=""></picture> **Z.ai** | An API key from Settings | International storefront; a mainland BigModel key won't work here |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zhipu.svg"><img src="Sources/Pulse/Resources/zhipu.svg" width="22" height="22" alt=""></picture> **GLM Coding Plan** | An API key from Settings, or one the GLM tooling already saved | Mainland storefront (`open.bigmodel.cn`) |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/minimax.svg"><img src="Sources/Pulse/Resources/minimax.svg" width="22" height="22" alt=""></picture> **MiniMax** / **MiniMax CN** | An API key from Settings | `api.minimax.io` and `api.minimaxi.com` |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/github.svg"><img src="Sources/Pulse/Resources/github.svg" width="22" height="22" alt=""></picture> **GitHub Copilot** | A sign-in, by device code | Asks for `read:user` and nothing else — not a pasted token |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/ollama.svg"><img src="Sources/Pulse/Resources/ollama.svg" width="22" height="22" alt=""></picture> **Ollama Cloud** | The signed-in settings page, with a session read from your browser | No quota API exists. See [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
+<source media="(prefers-color-scheme: dark)" srcset="Docs/icons/claude.svg"><img src="Sources/Pulse/Resources/claude.svg" width="30" alt=""></picture> | **Claude Code** | The account's usage endpoint, using the login Claude Code already stored; falls back to the status line | — |
 | <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/openai.svg"><img src="Sources/Pulse/Resources/openai.svg" width="30" alt=""></picture> | **Codex** | The endpoint Codex's own client uses; falls back to `codex app-server` | — |
 | <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/antigravity.svg"><img src="Sources/Pulse/Resources/antigravity.svg" width="30" alt=""></picture> | **Antigravity** | The language server the editor runs locally | Reports only while Antigravity is open |
 | <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/cursor.svg"><img src="Sources/Pulse/Resources/cursor.svg" width="30" alt=""></picture> | **Cursor** | The account's usage summary, via the login the editor already stored | Shown as the two pools on Cursor's account page |
