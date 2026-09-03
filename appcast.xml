@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.5</title>
+            <pubDate>Thu, 03 Sep 2026 04:42:16 -0000</pubDate>
+            <sparkle:version>1.0.5</sparkle:version>
+            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.5</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.5</h2><ul><li><strong>Claude Code read through the Claude desktop app.</strong> If you work in the desktop app rather than a terminal, Pulse had no way to see your limits: the desktop app hands the CLI a token through its own environment and renews it itself, so the login Pulse was reading went stale and never came back, and it never renders a status line either. Pulse can now read the session the desktop app is signed in with — a new &quot;Desktop app&quot; choice under Read usage from, and the route <code>Automatic</code> falls back to once you have allowed it. It asks for the keychain once, at launch, so there is nothing to go and find in Settings.</li><li><strong>The new route says why it can&#x27;t answer</strong>, rather than leaving the last reading in place with nothing but its &quot;Last read&quot; time to give it away — which is what makes a refresh look as though it did nothing. It says whether the desktop app is signed out, or whether it was the keychain that was refused.</li><li><strong>A reading could go backwards.</strong> A newer figure already on file could be replaced on screen by an older one that had just arrived, and a refresh that had been given up on could still overwrite the one that replaced it — including, for an added account, the renewed login itself.</li><li><strong>GitHub Copilot no longer shows a red ring for paid overage.</strong> Going past the included allowance with overage permitted is not being blocked, and it was being drawn as though it were.</li><li><strong>Codex no longer marks the wrong model group as spent.</strong> A group reporting &quot;limit reached&quot; could put the mark on another group&#x27;s window entirely.</li><li>Removing your only added account no longer leaves the rail empty.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.0.5">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.5/Pulse-1.0.5.zip"
+                       length="4096991"
+                       type="application/octet-stream"
+                       sparkle:edSignature="HD3h6wfcXWks7GAkhSwx9oJBs0J68OFQhQ8ZByvRtIrqgcGgkbPtCdHDgtxzTCatjgJ3CsAngDZlimWymVFZCA==" />
+        </item>
+        <item>
             <title>1.0.4</title>
             <pubDate>Wed, 02 Sep 2026 14:39:29 -0000</pubDate>
             <sparkle:version>1.0.4</sparkle:version>
