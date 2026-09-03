@@ -53,28 +53,17 @@ Pulse 未经 Apple 公证，macOS 会阻止首次启动。先打开 Pulse 并关
 
 | | 读取方式 | 注意 |
 |---|---|---|
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/claude.svg"><img src="Sources/Pulse/Resources/claude.svg" width="22" height="22" alt=""></picture> **Claude Code** | 账号的用量接口，用 Claude Code 已保存的登录信息；失败时回退到状态栏 | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/openai.svg"><img src="Sources/Pulse/Resources/openai.svg" width="22" height="22" alt=""></picture> **Codex** | Codex 自家客户端用的接口；失败时回退到 `codex app-server` | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/antigravity.svg"><img src="Sources/Pulse/Resources/antigravity.svg" width="22" height="22" alt=""></picture> **Antigravity** | 编辑器在本机运行的 language server | 只在 Antigravity 打开时报告 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/cursor.svg"><img src="Sources/Pulse/Resources/cursor.svg" width="22" height="22" alt=""></picture> **Cursor** | 账号的用量摘要接口，用编辑器已保存的登录信息 | 按其账号页分成两个额度池显示 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/opencode.svg"><img src="Sources/Pulse/Resources/opencode.svg" width="22" height="22" alt=""></picture> **OpenCode Go** | 设置中粘贴 API key，或用 OpenCode CLI 已保存的登录信息 | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/kimi.svg"><img src="Sources/Pulse/Resources/kimi.svg" width="22" height="22" alt=""></picture> **Kimi Code** | 设置中粘贴 API key | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zai.svg"><img src="Sources/Pulse/Resources/zai.svg" width="22" height="22" alt=""></picture> **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zhipu.svg"><img src="Sources/Pulse/Resources/zhipu.svg" width="22" height="22" alt=""></picture> **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/minimax.svg"><img src="Sources/Pulse/Resources/minimax.svg" width="22" height="22" alt=""></picture> **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/github.svg"><img src="Sources/Pulse/Resources/github.svg" width="22" height="22" alt=""></picture> **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/ollama.svg"><img src="Sources/Pulse/Resources/ollama.svg" width="22" height="22" alt=""></picture> **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
-<source media="(prefers-color-scheme: dark)" srcset="Docs/icons/claude.svg"><img src="Sources/Pulse/Resources/claude.svg" width="30" alt=""></picture> | **Claude Code** | 账号的用量接口，用 Claude Code 已保存的登录信息；失败时回退到状态栏 | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/openai.svg"><img src="Sources/Pulse/Resources/openai.svg" width="30" alt=""></picture> | **Codex** | Codex 自家客户端用的接口；失败时回退到 `codex app-server` | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/antigravity.svg"><img src="Sources/Pulse/Resources/antigravity.svg" width="30" alt=""></picture> | **Antigravity** | 编辑器在本机运行的 language server | 只在 Antigravity 打开时报告 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/cursor.svg"><img src="Sources/Pulse/Resources/cursor.svg" width="30" alt=""></picture> | **Cursor** | 账号的用量摘要接口，用编辑器已保存的登录信息 | 按其账号页分成两个额度池显示 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/opencode.svg"><img src="Sources/Pulse/Resources/opencode.svg" width="30" alt=""></picture> | **OpenCode Go** | 设置中粘贴 API key，或用 OpenCode CLI 已保存的登录信息 | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/kimi.svg"><img src="Sources/Pulse/Resources/kimi.svg" width="30" alt=""></picture> | **Kimi Code** | 设置中粘贴 API key | — |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zai.svg"><img src="Sources/Pulse/Resources/zai.svg" width="30" alt=""></picture> | **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/zhipu.svg"><img src="Sources/Pulse/Resources/zhipu.svg" width="30" alt=""></picture> | **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/minimax.svg"><img src="Sources/Pulse/Resources/minimax.svg" width="30" alt=""></picture> | **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/github.svg"><img src="Sources/Pulse/Resources/github.svg" width="30" alt=""></picture> | **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
-| <picture><source media="(prefers-color-scheme: dark)" srcset="Docs/icons/ollama.svg"><img src="Sources/Pulse/Resources/ollama.svg" width="30" alt=""></picture> | **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
+| **Claude Code** | 账号的用量接口，用 Claude Code 已保存的登录信息；失败时回退到状态栏 | — |
+| **Codex** | Codex 自家客户端用的接口；失败时回退到 `codex app-server` | — |
+| **Antigravity** | 编辑器在本机运行的 language server | 只在 Antigravity 打开时报告 |
+| **Cursor** | 账号的用量摘要接口，用编辑器已保存的登录信息 | 按其账号页分成两个额度池显示 |
+| **OpenCode Go** | 设置中粘贴 API key，或用 OpenCode CLI 已保存的登录信息 | — |
+| **Kimi Code** | 设置中粘贴 API key | — |
+| **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
+| **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
+| **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
+| **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
+| **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
 每个数字都是服务商上报的；Pulse 不根据本地 token 数估算百分比，服务商不回答时会直接说明。读取失败时退回上一次成功的读数并标注时间；已过重置时间的窗口会被丢弃。
 
