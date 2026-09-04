@@ -49,3 +49,8 @@ OAuth network failure -> Status Line -> valid cache -> error
 - `Sources/Pulse/UsageCache.swift`: cache reconciliation, expiry, and stale-state rules.
 - `Sources/Pulse/UsageStore.swift`: startup cache restoration and post-fetch reconciliation.
 - `Sources/Pulse/AppDelegate.swift`: one-time Desktop Keychain permission request.
+
+## Planned Feature: Grok Support
+
+- Add Grok as a supported provider in Pulse.
+- Track the implementation and scope in [Issue #9](https://github.com/qunqin24/Pulse/issues/9).
