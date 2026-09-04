@@ -5,86 +5,138 @@
 <h1 align="center">Pulse</h1>
 
 <p align="center">
-  <b>Claude Code、Codex、Antigravity、Cursor、OpenCode Go、Kimi Code、Ollama Cloud、<br>Z.ai、GLM、MiniMax、Grok、Grok Bot 或 GitHub Copilot 还剩多少额度。</b>
-</p>
-
-<p align="center">
-  <sub><b>macOS 14 Sonoma 或更高</b> · Apple 芯片与 Intel 通用 · <a href="README.md">English</a></sub>
+  <b>优雅无扰的 macOS 屏幕边缘 AI 编码额度监视器。</b><br>
+  实时掌握 Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Grok 等多平台的限额与剩余用量。
 </p>
 
 <p align="center">
   <a href="https://github.com/qunqin24/Pulse/releases/latest"><img src="https://img.shields.io/github/v/release/qunqin24/Pulse?color=black" alt="最新版本"></a>
-  <a href="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml"><img src="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml/badge.svg" alt="构建"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="许可"></a>
+  <img src="https://img.shields.io/badge/macOS-14.0%2B%20Sonoma-333333?logo=apple" alt="macOS 14+">
+  <a href="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml"><img src="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml/badge.svg" alt="构建状态"></a>
+  <img src="https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white" alt="Swift 6.0">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/许可-Apache%202.0-blue" alt="开源许可"></a>
 </p>
 
 <p align="center">
-  <img src="Docs/demo.gif" width="330" alt="Pulse 贴在屏幕左侧的胶囊">
+  <sub><b>macOS 14 Sonoma 或更高版本</b> · Apple 芯片与 Intel 通用 · <a href="README.md"><b>English</b></a></sub>
 </p>
-
-Pulse 是一个贴在屏幕边缘的小型悬浮监视器，用各服务商为你的账号上报的限额，显示你剩多少 AI 编码额度。它没有后端，也没有自己的账号。
-
-## 安装
-
-从 [Releases](https://github.com/qunqin24/Pulse/releases/latest) 下载最新的 **`Pulse-x.y.z.dmg`**，打开后把 Pulse 拖进「应用程序」。
-
-Pulse 未经 Apple 公证，macOS 会阻止首次启动。先打开 Pulse 并关闭警告，然后前往 **系统设置 → 隐私与安全性**，点击**仍要打开**。只需一次，后续版本会自行更新。
-
-## 功能
-
-- 每个 Agent 一个圆环，颜色按用量变化：绿、琥珀、红，用尽后更深——也可以按账号自选颜色（用尽的限额仍会变红）。点击圆环刷新该服务。
-- 指向圆环会展开一张卡片，列出该服务上报的每一项限额：已用多少、各窗口何时重置，以及可选的消耗速率预测（限额能否撑到本轮重置）。可以把某个窗口钉到圆环上；默认显示最接近用尽的那个。
-- 可停靠屏幕左右两侧或顶部（菜单栏之上），也可悬浮在任意位置，包括拖到第二台显示器，并记住所在屏幕。离开时收成一条细线；额度快用完时细线变红。默认不进入其他应用的全屏空间。
-- 圆环上的标记表示该 Agent 此刻是否正在工作（仅 Claude Code 和 Codex，其余几家本机没有会话记录）。
-- 启动时先显示上次读数，并标注读取时间；读取失败时退回上一次成功的读数，而不是只报一个错误。
-- 设置中根据 Claude Code 和 Codex 的会话记录生成消费历史，按公开 API 价格计算，另有一项明确标注的限额窗口价值估算。
-- 支持同一服务的多个账号：登录第二个 Claude Code 或 Codex 订阅即可并排查看。
-- 可配置：圆环顺序、间距、面板大小、两种胶囊各自的百分比开关、数字在圆环上方或下方、从正数改为倒数（显示剩余而非已用）、按账号自定义圆环颜色、可选的窗口时间进度弧、刷新间隔、语言（英语和简体中文，切换无需重启）。默认黑色面板；macOS 26 可选 Liquid Glass。
-- 默认开机自启——这个决定只做一次，关掉后不会被改回来。通过 Sparkle 自动更新，更新包用 EdDSA 密钥签名。
-- 自适应刷新，间隔 2 到 30 分钟；已关闭的服务不会被读取。
 
 <p align="center">
-  <img src="Docs/panel.png" height="300" alt="胶囊旁的详情卡片">
-  &nbsp;&nbsp;&nbsp;
-  <img src="Docs/settings.png" height="300" alt="Pulse 设置">
+  <img src="Docs/demo.gif" width="340" alt="贴在屏幕边缘的 Pulse 悬浮胶囊">
 </p>
 
-## 这些数字是怎么来的
+Pulse 是一个停靠在屏幕边缘的小巧悬浮监视器。它直接调用各大模型与服务商官方接口上报的用量数据，实时呈现你剩余的 AI 编码额度——无估算偏差、无远程后端、零遥测与隐私追踪。
 
-| | 读取方式 | 注意 |
+---
+
+## 核心特性
+
+### 一目了然的用量圆环
+- **智能用量着色**：环形进度随使用率平滑变色（绿 → 琥珀 → 红 → 用尽深红），亦可按账号自定义专属高亮色。
+- **实时工作状态灯**：圆环边缘带动态旋转光点，实时指示 Agent 是否正在生成或执行任务（支持 Claude Code 与 Codex）。
+- **时间窗口进度弧**：可选的外层时钟副弧线，直观呈现当前限额窗口的时间流逝比例。
+- **正数 / 倒数自由切换**：支持在“已消耗百分比（如 80% used）”与“剩余可用额度（如 20% left）”之间一键切换。
+
+### 悬停详情卡与智能消耗预测
+- **完整配额清单**：鼠标悬停在圆环上即可弹出详情卡，列出该平台的所有用量池、重置倒计时与生效状态。
+- **消耗速率与耗尽预测**：智能分析当前使用节奏是否足以撑到本轮周期重置；存在耗尽风险时，自动预测大致枯竭时间。
+- **置顶核心配额**：可自由指定将关注的配额钉在圆环主视图，或由系统默认展示最临近用尽的配额。
+
+### 原生丝滑、静默无扰
+- **多位置随心停靠**：可吸附停靠在屏幕左边缘、右边缘或顶部（菜单栏之上），亦可在屏幕任意位置自由悬浮。
+- **多显示器支持**：随心拖拽到外接屏幕，自动记忆所在显示器位置；拔掉副屏后自适应回归主屏。
+- **边缘微光收起**：闲置时自动折叠为一条极窄细线，不遮挡代码与工作视线；仅在额度见底预警时细线泛红提醒。
+- **全屏空间避让**：默认不在其他全屏应用（Spaces）中弹出干扰。
+- **原生质感**：提供沉稳耐看的纯黑底板，macOS 26+ 更可选原生 **Liquid Glass（流动玻璃）** 材质。
+
+### 多账号管理与本地消费账本
+- **多账号并行**：支持同一服务绑定多个订阅（例如并排查看工作与个人的两个 Claude Code 或 Codex 账号）。
+- **本地消费历史**：直接解析本地 CLI 会话日志，基于官方公开 API 价格折算历史总消费，并估算限额窗口的实际价值。
+- **纯本地极客架构**：100% 运行在本地。无需注册 Pulse 账号，无中间服务器，绝不收集数据。
+
+<p align="center">
+  <img src="Docs/panel.png" height="300" alt="详情卡片">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="Docs/settings.png" height="300" alt="Pulse 设置界面">
+</p>
+
+---
+
+## 支持的服务商与读取方式
+
+Pulse 仅呈现服务商官方上报的真实数字，绝不依靠本地 Token 粗略估算：
+
+| 服务商 | 读取通道与鉴权方式 | 说明与特性 |
 |---|---|---|
-| **Claude Code** | 账号的用量接口，用 Claude Code 已保存的登录信息；失败时回退到状态栏 | — |
-| **Codex** | Codex 自家客户端用的接口；失败时回退到 `codex app-server` | — |
-| **Antigravity** | 编辑器在本机运行的 language server | 只在 Antigravity 打开时报告 |
-| **Cursor** | 账号的用量摘要接口，用编辑器已保存的登录信息 | 按其账号页分成两个额度池显示 |
-| **OpenCode Go** | 设置中粘贴 API key，或用 OpenCode CLI 已保存的登录信息 | — |
-| **Kimi Code** | 设置中粘贴 API key | — |
-| **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
-| **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
-| **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
-| **Grok** | Grok Build CLI 自家的代理接口，用 `grok login` 已保存的登录信息 | 一个周额度池，全 Grok 产品共用，不只是 CLI |
-| **Grok Bot** | Cursor 的 dashboard 接口，用 Cursor 编辑器已保存的登录信息 | 和上面的 Grok 是两笔额度：这个随 Cursor 套餐附送，不是 SuperGrok 的 |
-| **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
-| **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
+| **Claude Code** | 官方 OAuth 用量接口；自动回退至 Claude 桌面端 Web 会话及状态栏 | 优先复用本机已存凭据，支持终端及桌面端混合无缝切换 |
+| **Codex** | 官方客户端接口；回退至 `codex app-server` | 自动复用本地 Codex 登录凭证 |
+| **Antigravity** | 编辑器本地运行的 Language Server (LSP) | 在 Antigravity 编辑器运行期间实时报告 |
+| **Cursor** | Cursor 账号用量摘要接口 | 读取编辑器已保存凭据，分别展示 Fast / Slow 两个额度池 |
+| **Grok** | Grok Build CLI 官方代理接口 | 一个统一的周额度池，与网页/CLI/API 全线 Grok 共享 |
+| **Grok Bot** | Cursor 仪表盘接口 | Cursor 套餐内包含的 xAI 专属额度 |
+| **GitHub Copilot** | GitHub 设备码（Device Code）登录 | 仅申请极窄的 `read:user` 权限，绝不触碰你的仓库代码 |
+| **OpenCode Go** | 设置中填入 API Key，或读取 OpenCode CLI 登录信息 | — |
+| **Kimi Code** | 设置中填入 API Key | — |
+| **Z.ai** | 设置中填入 API Key | 智谱国际站（`api.z.ai`），与国内账号独立 |
+| **GLM 编码套餐** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
+| **MiniMax / MiniMax CN** | 设置中填入 API Key | 同时支持国际站（`minimax.io`）与国内站（`minimaxi.com`） |
+| **Ollama Cloud** | 本地读取浏览器登录会话 Cookies | 官方无配额 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
-每个数字都是服务商上报的；Pulse 不根据本地 token 数估算百分比，服务商不回答时会直接说明。读取失败时退回上一次成功的读数并标注时间；已过重置时间的窗口会被丢弃。
+---
 
-## 隐私
+## 安装与快速上手
 
-Pulse 没有后端。多数服务用你自己的工具已保存在这台 Mac 上的登录信息读取；其余几家需要你粘贴 API key；Ollama Cloud 的会话从浏览器读取（仅限 `ollama.com` 及其登录 cookie）。key 和会话加密保存在 Pulse 自己的文件夹中，仅本人可读。消费历史完全在本机计算。没有任何数据被上传。
+1. 前往 [Releases](https://github.com/qunqin24/Pulse/releases/latest) 下载最新的 **`Pulse-x.y.z.dmg`**。
+2. 打开安装镜像，将 **Pulse** 拖拽至「应用程序（Applications）」文件夹即可。
+
+> [!NOTE]
+> **macOS 首次启动拦截处理**：  
+> Pulse 是开源项目且未参与 Apple 付费公证，macOS 首次启动会触发安全拦截：
+> - **图形界面方式**：启动 Pulse，关闭拦截弹窗，打开 **系统设置 → 隐私与安全性**，点击 **“仍要打开”**。
+> - **终端快速放行（推荐）**：
+>   ```bash
+>   xattr -cr /Applications/Pulse.app
+>   ```
+> *(后续通过内置的 Sparkle 进行静默更新，无需再次授权)*。
+
+---
+
+## 隐私与安全性
+
+Pulse 秉持绝对的“本地优先”与最小权限设计原则：
+- **零网络后端**：Pulse 在本地直接请求服务商 API，不设任何转发服务器。
+- **免手动导 Token**：绝大多数工具直接复用本地开发环境已有的登录态（`~/.claude`、`~/.codex`、Cursor 本地状态等）。
+- **本地加密存储**：手动输入的 API Key 和 Session 均经过加密保存于 Pulse 应用目录内，权限仅限当前系统用户。
+- **代码与对话绝对安全**：Pulse 绝不读取或上传你的源码、终端上下文、Prompt 或模型生成内容。
+
+---
 
 ## 从源码构建
 
-见 [Docs/build-from-source.md](Docs/build-from-source.md)（英文）。
+Pulse 采用现代化 Swift 6 和原生 SwiftUI 构建，无沉重依赖。
 
-## 代码结构
+```bash
+# 克隆仓库
+git clone https://github.com/qunqin24/Pulse.git
+cd Pulse
 
-源码都在 `Sources/Pulse`，一个 SwiftUI 视图一个文件，供应商图标在 `Sources/Pulse/Resources`。更深入的说明见 [CLAUDE.md](CLAUDE.md)。
+# 直接编译并运行
+swift run Pulse
+
+# 或打包为标准的 macOS App Bundle
+./Scripts/bundle.sh
+```
+
+更多开发环境配置与细节说明，请参阅 [Docs/build-from-source.md](Docs/build-from-source.md)。
+
+---
 
 ## 设计来源
 
 Pulse 的灵感来自 [**Vinz**(@hivinz_)](https://x.com/hivinz_/status/2092996055248126353) 2026 年 8 月在 X 上分享的一个 UI 概念。Pulse 是独立的实现，交互、功能、动画和视觉细节均为自有。Vinz 与 Pulse 没有关联，也不为其负责。
 
-## 许可
+---
 
-[Apache 2.0](LICENSE)。内置的第三方素材保留各自的许可，见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+## 开源许可
+
+本项目遵循 [Apache 2.0 开源许可协议](LICENSE)。附带的第三方资源遵循其各自的许可协议，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
