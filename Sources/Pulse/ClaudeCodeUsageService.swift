@@ -86,7 +86,7 @@ struct ClaudeCodeUsageService: Sendable {
                 case .success(let usage):
                     return usage
                 case .needsFreshCredentials:
-                    break // fall through to whatever the status line captured
+                    break // fall through to the desktop session, then the status line
                 case .failed(let reason):
                     // A network stumble shouldn't hide a perfectly good
                     // captured reading, so prefer that and keep the error in

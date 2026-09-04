@@ -181,7 +181,15 @@ struct UsageDetailCard: View {
     }
 
     private static func resetText(_ window: UsageWindow) -> String {
-        guard let resets = window.resetsAt else { return window.lengthText }
+        // **The fallback may only state a length the provider stated.**
+        // `windowSeconds` is sometimes a sort key rather than a measurement —
+        // Cursor's billing cycle stored as a flat 30 days, Kimi's rolling
+        // weekly allowance, Grok Bot's week — and printing one here would put
+        // a figure nobody reported on the card, under a heading that reads
+        // like a reported one. Nothing is said instead, which is the truth.
+        guard let resets = window.resetsAt else {
+            return window.reportsLength ? window.lengthText : ""
+        }
 
         let formatter = DateFormatter()
         formatter.locale = LocalizationSource.locale

@@ -107,6 +107,7 @@
 "Use the endpoint when possible, the other route when not." = "优先用接口，取不到时改用另一条路。";
 "Reads your account's limits with the login Claude Code saved." = "用 Claude Code 保存的登录信息读取账户额度。";
 "Reads your account's limits with the login Codex saved." = "用 Codex 保存的登录信息读取账户额度。";
+"Reads your account's limits with the login Grok saved." = "用 Grok 保存的登录信息读取账户额度。";
 "Uses whatever Claude Code last reported to its status line." = "使用 Claude Code 最近一次报告给状态栏的数据。";
 "Asks the Codex app server, which signs in on its own." = "询问 Codex 的 app server，它自己处理登录。";
 "Read usage from" = "用量来源";
@@ -186,8 +187,14 @@
 /* Cursor */
 "Sign in to Cursor to see usage." = "在 Cursor 中登录后才能读到用量。";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Cursor 保存的登录被拒绝了。打开 Cursor 让它重新登录。";
+"Sign in to Grok to see usage." = "登录 Grok 后才能读到用量。";
+"Grok's saved login expired. Use Grok to renew it." = "Grok 保存的登录过期了。用一次 Grok 让它重新登录。";
+"This Cursor plan doesn't include Grok Bot." = "当前 Cursor 套餐不含 Grok Bot。";
 "Reads your account's limits with the login Cursor saved." = "用 Cursor 已保存的登录读取账号额度。";
 "Cursor's own login" = "Cursor 自己的登录";
+"Grok's own login" = "Grok 自己的登录信息";
+"Uses the login Grok's CLI already saved." = "用 Grok CLI 已保存的登录信息读取。";
+"Grok Bot is billed to your Cursor account." = "Grok Bot 的额度算在你的 Cursor 账户上。";
 "Uses the login Cursor already saved." = "用 Cursor 已保存的登录读取。";
 "Refresh" = "刷新";
 "Pulse %@ is available" = "Pulse %@ 可更新";
@@ -255,6 +262,7 @@
 "Code" = "验证码";
 "Copied — paste it on the page that opened." = "已复制，在打开的页面里粘贴即可。";
 "Copied. Sign in there first if asked, then paste it." = "已复制。页面若要求登录，先登录再粘贴。";
+"Already on the page. Sign in there first if asked, then approve it." = "已经填在页面上了。若提示登录先登录，然后确认授权。";
 "Copy" = "复制";
 "Open page" = "打开页面";
 "Sign-in" = "登录";

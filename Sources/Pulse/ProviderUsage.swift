@@ -188,6 +188,19 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case cursorSignInRequired
         /// There is a login, and the account refused it.
         case cursorLoginExpired
+        /// Grok Build's CLI has never signed in on this Mac, so there is no
+        /// login to borrow. Its own case rather than `.signInRequired`, which
+        /// names Codex — the trap the rest of this enum was fixed for once
+        /// already.
+        case grokSignInRequired
+        /// There is a login and it has aged out. The CLI renews its own token
+        /// while it is used and nothing renews it for Pulse, so the remedy is
+        /// to use Grok, exactly as with Cursor.
+        case grokLoginExpired
+        /// A plan that simply does not include Grok Bot. Not a failure to
+        /// report anything — a complete answer, and "no limits reported"
+        /// would send someone looking for a fault that is not there.
+        case grokBotNotIncluded
         /// An account Pulse signed in to itself, whose login has gone and
         /// cannot be renewed. Names no provider: every added account can
         /// reach this, and a message naming one is the trap the rest of this
@@ -232,6 +245,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
+            case .grokSignInRequired: .localized("Sign in to Grok to see usage.")
+            case .grokLoginExpired: .localized("Grok's saved login expired. Use Grok to renew it.")
+            case .grokBotNotIncluded: .localized("This Cursor plan doesn't include Grok Bot.")
             case .signedOut: .localized("Sign in to this account again in Settings.")
             case .notSignedIn: .localized("Sign in from Settings to see usage.")
             case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")

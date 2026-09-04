@@ -50,7 +50,21 @@ OAuth network failure -> Status Line -> valid cache -> error
 - `Sources/Pulse/UsageStore.swift`: startup cache restoration and post-fetch reconciliation.
 - `Sources/Pulse/AppDelegate.swift`: one-time Desktop Keychain permission request.
 
-## Planned Feature: Grok Support
+## Grok Support
 
-- Add Grok as a supported provider in Pulse.
-- Track the implementation and scope in [Issue #9](https://github.com/qunqin24/Pulse/issues/9).
+Shipped. Grok is a provider in its own right, read from the Grok Build CLI's
+own proxy with the OIDC login `grok login` stores in `~/.grok/auth.json`:
+
+- `GET cli-chat-proxy.grok.com/v1/billing?format=credits` for the figures,
+  with an `x-xai-token-auth: xai-grok-cli` header. Without that header the same
+  path answers the enterprise credit shape, which is zeroes on a personal plan.
+- `GET cli-chat-proxy.grok.com/v1/settings` for the plan name.
+
+One window comes back, not several: a paid Grok plan spends a single weekly
+pool across every Grok product, so the ring is the account's week rather than
+the CLI's. The reply's `productUsage` breakdown is shares of that one pool and
+is deliberately not drawn as separate limits.
+
+Scope and history in [Issue #9](https://github.com/qunqin24/Pulse/issues/9);
+the reasoning is recorded against `GrokUsageService.swift` in
+[CLAUDE.md](../CLAUDE.md).

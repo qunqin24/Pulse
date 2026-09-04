@@ -18,6 +18,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case minimax
     case minimaxCN
     case copilot
+    case grok
+    case grokBot
 
     var id: String { rawValue }
 
@@ -41,6 +43,14 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .minimax: "MiniMax"
         case .minimaxCN: "MiniMax CN"
         case .copilot: "GitHub Copilot"
+        // The account's pool is spent across every Grok product, not just
+        // Grok Build's CLI, so the ring is about the account and the name
+        // says so. See `GrokUsageService`.
+        case .grok: "Grok"
+        // xAI's, sold through Cursor and billed against that account — a
+        // different bill from the SuperGrok pool above, under a name people
+        // already use for it. See `GrokBotUsageService`.
+        case .grokBot: "Grok Bot"
         }
     }
 
@@ -63,6 +73,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // provider already share a mark on the rail; this is the same case.
         case .minimax, .minimaxCN: "minimax"
         case .copilot: "github"
+        case .grok: "grok"
+        // The parent brand's mark rather than Grok's own, which is the one
+        // thing that tells the two apart on a rail carrying both.
+        case .grokBot: "xai"
         }
     }
 
@@ -84,7 +98,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
         }
     }
 
@@ -95,6 +109,42 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// itself, a login the other one stored — so it is stated rather than
     /// offered.
     var hasSourceChoice: Bool { keepsLocalTranscripts }
+
+    /// The one route this provider has, named for the settings row that
+    /// states it rather than offering a picker. Nil where the row is never
+    /// drawn — a provider with a choice of routes, or one whose credential is
+    /// a key the user pastes.
+    ///
+    /// **Exhaustive on purpose.** This was a ternary in `SettingsView` that
+    /// named Cursor's route and let *everything else* fall through to
+    /// Antigravity's words, so Grok's pane read "Antigravity's language
+    /// server · Only while Antigravity is open." — about a route it does not
+    /// have and an app it has nothing to do with. A switch here means the next
+    /// provider added cannot inherit somebody else's sentence in silence.
+    var soleRoute: (name: String, note: String)? {
+        switch self {
+        case .antigravity:
+            (String.localized("Antigravity's language server"),
+             String.localized("Only while Antigravity is open."))
+        case .cursor:
+            (String.localized("Cursor's own login"),
+             String.localized("Uses the login Cursor already saved."))
+        case .grok:
+            (String.localized("Grok's own login"),
+             String.localized("Uses the login Grok's CLI already saved."))
+        // The credential really is Cursor's: Grok Bot is billed against that
+        // account, so this names where the login comes from rather than the
+        // product it reports on.
+        case .grokBot:
+            (String.localized("Cursor's own login"),
+             String.localized("Grok Bot is billed to your Cursor account."))
+        // Either a choice of routes, or a key the user pastes: both are asked
+        // about elsewhere, so there is nothing here to state.
+        case .claudeCode, .codex, .openCodeGo, .kimiCode, .ollamaCloud,
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot:
+            nil
+        }
+    }
 
     /// Whether Pulse needs an API key from the user for this one.
     ///
@@ -134,7 +184,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     var keepsOwnCredential: Bool { usesAPIKey || self == .copilot }
 
     var canReportWithoutSetup: Bool {
-        guard keepsOwnCredential else { return true }
+        guard keepsOwnCredential else { return borrowsAnExistingLogin }
         if APIKeyStore.key(for: self) != nil { return true }
 
         // Two of them can find a credential another tool already saved, which
@@ -143,6 +193,31 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .openCodeGo: OpenCodeGoUsageService.storedKey() != nil
         case .glmCoding: ZaiUsageService.storedKey(for: .glmCoding) != nil
         default: false
+        }
+    }
+
+    /// For a provider that borrows another tool's login: whether there is one
+    /// on this Mac to borrow.
+    ///
+    /// **Needing no key is not the same as having something to say**, and
+    /// reading it that way is what the offer-once rule above would otherwise
+    /// do with a new provider. Grok borrows what `grok login` stored and Grok
+    /// Bot what the Cursor editor stored; with neither installed they would be
+    /// switched on at the next update for everyone, and the rail would grow
+    /// two rings reading "sign in to something you have never heard of" — the
+    /// exact greyed-out rail the rule exists to prevent, arriving as an
+    /// upgrade rather than on a first run.
+    ///
+    /// Only the two added here are gated. The others were offered before this
+    /// question was asked of anything, so they are stamped in every stored
+    /// list already and their answer cannot change what anyone sees; the rule
+    /// is for what comes next.
+    private var borrowsAnExistingLogin: Bool {
+        let home = URL(fileURLWithPath: NSHomeDirectory())
+        return switch self {
+        case .grok: FileManager.default.fileExists(atPath: home.appending(path: ".grok").path)
+        case .grokBot: CursorAppLogin.hasStoredLogin()
+        default: true
         }
     }
 
@@ -167,6 +242,19 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
         if manager.fileExists(atPath: home.appending(path: ".codex").path) {
             found.insert(.codex)
+        }
+        if manager.fileExists(atPath: home.appending(path: ".grok").path) {
+            found.insert(.grok)
+        }
+        // The standalone app only. Grok Bot can also be used inside Cursor,
+        // but a Cursor login is no evidence the plan *includes* it — every
+        // Cursor user would get a ring that says "your plan doesn't include
+        // this", which is the greyed-out rail this whole function exists to
+        // avoid. It is a switch away in Settings for anyone who has it.
+        let grokBot = ["/Applications/Grok Bot.app",
+                       home.appending(path: "Applications/Grok Bot.app").path]
+        if grokBot.contains(where: manager.fileExists(atPath:)) {
+            found.insert(.grokBot)
         }
         // Not everyone installs into /Applications.
         let antigravity = ["/Applications/Antigravity.app",

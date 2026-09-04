@@ -11,6 +11,11 @@ import Foundation
 /// different limits and are reported as three windows, all resetting with the
 /// billing cycle.
 ///
+/// Grok Bot is on this account too and is **not** read here — it is a weekly
+/// included allowance rather than a share of the monthly bill, so it is its
+/// own provider with its own ring. It borrows this file's login: see
+/// `GrokBotUsageService`.
+///
 /// `GET cursor.com/api/usage-summary` is not public API, exactly like the two
 /// CLI routes, and can change without notice.
 struct CursorUsageService: Sendable {

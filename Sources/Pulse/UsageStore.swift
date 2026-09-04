@@ -31,6 +31,8 @@ final class UsageStore {
     private let codex: CodexUsageService
     private let claudeCode = ClaudeCodeUsageService()
     private let antigravity = AntigravityUsageService()
+    private let grok = GrokUsageService()
+    private let grokBot = GrokBotUsageService()
     private let cursor = CursorUsageService()
     private var timer: Timer?
     /// Kept with the centre each was registered on: workspace notifications
@@ -313,7 +315,7 @@ final class UsageStore {
         let wanted = Set(settings.shownAccounts.filter(\.isPrimary).map(\.provider))
         let extras = settings.shownAccounts.filter { !$0.isPrimary }
 
-        Task { [codex, claudeCode, antigravity, cursor] in
+        Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
             // Independent, so they run side by side rather than one waiting on
             // another's round trip.
             async let codexUsage = wanted.contains(.codex)
@@ -352,13 +354,19 @@ final class UsageStore {
             async let copilotUsage = wanted.contains(.copilot)
                 ? await copilot.fetch()
                 : ProviderUsage.unavailable(.copilot, reason: .loading)
+            async let grokUsage = wanted.contains(.grok)
+                ? await grok.fetch()
+                : ProviderUsage.unavailable(.grok, reason: .loading)
+            async let grokBotUsage = wanted.contains(.grokBot)
+                ? await grokBot.fetch()
+                : ProviderUsage.unavailable(.grokBot, reason: .loading)
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
             let (rawKimi, rawCursor, rawOllama) = await (kimiUsage, cursorUsage, ollamaUsage)
             let (rawZai, rawGLM) = await (zaiUsage, glmUsage)
             let (rawMiniMax, rawMiniMaxCN) = await (minimaxUsage, minimaxCNUsage)
-            let rawCopilot = await copilotUsage
+            let (rawCopilot, rawGrok, rawGrokBot) = await (copilotUsage, grokUsage, grokBotUsage)
 
             // **The disowning is checked before anything is written, not just
             // before the readings are handed to the panel.** `reconciled`
@@ -385,6 +393,8 @@ final class UsageStore {
             let fetchedMiniMax = await UsageCache.shared.reconciled(rawMiniMax)
             let fetchedMiniMaxCN = await UsageCache.shared.reconciled(rawMiniMaxCN)
             let fetchedCopilot = await UsageCache.shared.reconciled(rawCopilot)
+            let fetchedGrok = await UsageCache.shared.reconciled(rawGrok)
+            let fetchedGrokBot = await UsageCache.shared.reconciled(rawGrokBot)
 
             // Accounts Pulse signed in to itself, read one at a time: each
             // may have to renew its token first, and they are few.
@@ -396,7 +406,7 @@ final class UsageStore {
             // all. Every one of these went over a newer reading.
             var fetchedExtras: [(String, ProviderUsage)] = []
             for account in extras {
-                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
+                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
                 guard pass == self.currentPass else { return }
                 fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw)))
             }
@@ -427,6 +437,8 @@ final class UsageStore {
                 (.minimax, fetchedMiniMax),
                 (.minimaxCN, fetchedMiniMaxCN),
                 (.copilot, fetchedCopilot),
+                (.grok, fetchedGrok),
+                (.grokBot, fetchedGrokBot),
             ] where wanted.contains(provider) {
                 self.usage[AccountKey(provider).id] = fetched
             }
@@ -455,6 +467,8 @@ final class UsageStore {
                 (.minimax, fetchedMiniMax),
                 (.minimaxCN, fetchedMiniMaxCN),
                 (.copilot, fetchedCopilot),
+                (.grok, fetchedGrok),
+                (.grokBot, fetchedGrokBot),
             ].contains { provider, fetched in
                 wanted.contains(provider)
                     && previous[AccountKey(provider).id]?.windows != fetched.windows
@@ -504,10 +518,10 @@ final class UsageStore {
         let zai = ZaiUsageService(provider: provider, enteredKey: key)
         let minimax = MiniMaxUsageService(provider: provider, enteredKey: key)
 
-        Task { [codex, claudeCode, antigravity, cursor] in
+        Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
             let raw: ProviderUsage
             if !account.isPrimary {
-                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex)
+                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
             } else {
             switch provider {
             case .codex:
@@ -530,6 +544,10 @@ final class UsageStore {
                 raw = await minimax.fetch()
             case .copilot:
                 raw = await CopilotUsageService(token: key).fetch()
+            case .grok:
+                raw = await grok.fetch()
+            case .grokBot:
+                raw = await grokBot.fetch()
             }
             }
 
@@ -569,13 +587,20 @@ final class UsageStore {
     private static func fetchAdded(
         _ account: AccountKey,
         claudeCode: ClaudeCodeUsageService,
-        codex: CodexUsageService
+        codex: CodexUsageService,
+        grok: GrokUsageService,
+        grokBot: GrokBotUsageService
     ) async -> ProviderUsage {
         guard var credentials = AccountCredentialStore.credentials(for: account) else {
             return .unavailable(account, reason: .signedOut)
         }
 
         if !credentials.isFresh {
+            // Grok Bot lands in the `else` deliberately: `OAuthLogin` has no
+            // configuration for it, because its sign-in is not OAuth and no
+            // refresh endpoint was found in Cursor's own client. Its tokens
+            // run **sixty days** (measured), so signing in again twice a year
+            // is the honest answer rather than a renewal that cannot happen.
             guard let renewed = try? await OAuthLogin.refresh(credentials, for: account.provider) else {
                 return .unavailable(account, reason: .signedOut)
             }
@@ -588,6 +613,8 @@ final class UsageStore {
         return switch account.provider {
         case .claudeCode: await claudeCode.fetch(account: account, token: credentials.accessToken)
         case .codex: await codex.fetch(account: account, credentials: credentials)
+        case .grok: await grok.fetch(account: account, token: credentials.accessToken)
+        case .grokBot: await grokBot.fetch(account: account, token: credentials.accessToken)
         // Nothing else can be signed in to, so nothing else gets here.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot:

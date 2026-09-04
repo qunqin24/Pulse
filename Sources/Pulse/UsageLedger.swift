@@ -287,7 +287,7 @@ actor UsageLedgerReader {
         // Antigravity is an editor and keeps nothing; OpenCode keeps its own
         // store rather than the JSONL these two parsers read.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: nil
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: nil
         }
 
         guard let root else { return [] }
@@ -308,7 +308,7 @@ actor UsageLedgerReader {
         case .claudeCode: return parseClaudeCode(data)
         case .codex: return parseCodex(data)
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: return [:]
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: return [:]
         }
     }
 

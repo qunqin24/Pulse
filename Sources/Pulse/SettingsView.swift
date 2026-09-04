@@ -806,10 +806,18 @@ struct SettingsView: View {
 
     /// Where a provider's figures come from, plus anything that route needs
     /// setting up.
+    ///
+    /// **Not drawn when it would be empty.** An added account of a provider
+    /// with one route has nothing here: no picker, no key field, and the
+    /// route row below is the primary account's. Drawn anyway it is a
+    /// "Connection" heading over an empty box, which reads as a control that
+    /// failed to load rather than as a section with nothing to say.
+    @ViewBuilder
     private func connection(for account: AccountKey) -> some View {
         let source = settings.source(for: account)
 
-        return SettingsGroup(String.localized("Connection")) {
+        if hasConnectionControls(for: account) {
+        SettingsGroup(String.localized("Connection")) {
             // A account.provider with a single route gets told, not asked. A picker
             // with one entry is a control that cannot do anything.
             if account.provider.hasSourceChoice {
@@ -951,19 +959,23 @@ struct SettingsView: View {
             } else {
                 // One route, so it is stated rather than offered — but what
                 // that route is differs: a server one of them runs while it is
-                // open, a login the other one already saved.
-                let route = account.provider == .cursor
-                    ? (name: String.localized("Cursor's own login"),
-                       note: String.localized("Uses the login Cursor already saved."))
-                    : (name: String.localized("Antigravity's language server"),
-                       note: String.localized("Only while Antigravity is open."))
-
-                SettingsRow(String.localized("Read usage from"), subtitle: route.note) {
-                    Text(route.name)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                        .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                // open, a login the others already saved. The wording belongs
+                // to the provider (`Provider.soleRoute`), where the switch is
+                // exhaustive: this was a ternary that gave every provider but
+                // Cursor Antigravity's sentence.
+                // Primary only. What this row names is the login the
+                // provider's own tool stored, and an account Pulse signed in
+                // to itself does not use it — `fetchAdded` goes straight over
+                // HTTP with the token Pulse holds. Stating the CLI's route
+                // there would name a credential this account never touches.
+                if account.isPrimary, let route = account.provider.soleRoute {
+                    SettingsRow(String.localized("Read usage from"), subtitle: route.note) {
+                        Text(route.name)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                            .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                    }
                 }
             }
 
@@ -975,6 +987,16 @@ struct SettingsView: View {
                 claudeCodeStatusLine
             }
         }
+        }
+    }
+
+    /// Whether `connection(for:)` has anything to put in its card — the same
+    /// four questions it asks, answered before the heading is drawn.
+    private func hasConnectionControls(for account: AccountKey) -> Bool {
+        if account.provider.hasSourceChoice { return true }
+        if account.provider == .copilot { return true }
+        if account.provider.usesAPIKey { return true }
+        return account.isPrimary && account.provider.soleRoute != nil
     }
 
     /// Signing in to another subscription of the same provider, and getting
@@ -1018,8 +1040,13 @@ struct SettingsView: View {
                             // hand-off to a Google account fails with
                             // `token_exchange_failed` when the browser has no
                             // session, and this row is the only place that
-                            // says so.
-                            subtitle: String.localized("Copied. Sign in there first if asked, then paste it.")
+                            // says so. Which half is said depends on whether
+                            // the provider's own link already carries the
+                            // code — telling someone to paste on a page that
+                            // filled itself in is an instruction to undo.
+                            subtitle: devicePrompt.prefilled
+                                ? String.localized("Already on the page. Sign in there first if asked, then approve it.")
+                                : String.localized("Copied. Sign in there first if asked, then paste it.")
                         ) {
                             HStack(spacing: 10) {
                                 Text(devicePrompt.userCode)
@@ -1141,10 +1168,20 @@ struct SettingsView: View {
             }
             do {
                 let credentials: AccountCredentials
-                if OAuthLogin.usesDeviceCode(provider) {
-                    // A code the user types on the provider's own page. No
-                    // local port to collide with the CLI's sign-in, and
-                    // nothing redirected back to this Mac.
+                if provider == .grokBot {
+                    // Cursor has no OAuth for a third party to drive: its page
+                    // takes a challenge and a nonce and the tokens are polled
+                    // for afterwards. Nothing comes back to this Mac and there
+                    // is no code to type, so this branch shows neither.
+                    credentials = try await CursorWebLogin.signIn()
+                } else if OAuthLogin.usesDeviceCode(provider) {
+                    // A code shown on the provider's own page. No local
+                    // port to collide with the CLI's sign-in, and nothing
+                    // redirected back to this Mac. Whether the page fills the
+                    // code in itself is the provider's decision — GitHub and
+                    // OpenAI send no pre-filled link, xAI does — so the code
+                    // goes on the clipboard either way and the row's subtitle
+                    // follows `DevicePrompt.prefilled`.
                     let prompt = try await OAuthLogin.startDevice(provider)
                     devicePrompt = prompt
                     // On the clipboard the moment it exists, like GitHub's. The
@@ -1298,7 +1335,14 @@ struct SettingsView: View {
     }
 
     private func resetText(_ window: UsageWindow) -> String? {
-        guard let resets = window.resetsAt else { return window.lengthText }
+        // **The same rule as `UsageDetailCard.resetText`, and it has to be
+        // stated in both places.** `windowSeconds` is sometimes a sort key
+        // rather than a measurement, and printing one here put a figure nobody
+        // reported under a heading that reads like a reported one — with the
+        // panel's own card, an inch away, deliberately saying nothing.
+        guard let resets = window.resetsAt else {
+            return window.reportsLength ? window.lengthText : nil
+        }
         let formatter = DateFormatter()
         formatter.locale = LocalizationSource.locale
         formatter.setLocalizedDateFormatFromTemplate(

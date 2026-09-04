@@ -107,6 +107,7 @@
 "Use the endpoint when possible, the other route when not." = "Use the endpoint when possible, the other route when not.";
 "Reads your account's limits with the login Claude Code saved." = "Reads your account's limits with the login Claude Code saved.";
 "Reads your account's limits with the login Codex saved." = "Reads your account's limits with the login Codex saved.";
+"Reads your account's limits with the login Grok saved." = "Reads your account's limits with the login Grok saved.";
 "Uses whatever Claude Code last reported to its status line." = "Uses whatever Claude Code last reported to its status line.";
 "Asks the Codex app server, which signs in on its own." = "Asks the Codex app server, which signs in on its own.";
 "Read usage from" = "Read usage from";
@@ -186,8 +187,14 @@
 /* Cursor */
 "Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Cursor's saved login was refused. Open Cursor to renew it.";
+"Sign in to Grok to see usage." = "Sign in to Grok to see usage.";
+"Grok's saved login expired. Use Grok to renew it." = "Grok's saved login expired. Use Grok to renew it.";
+"This Cursor plan doesn't include Grok Bot." = "This Cursor plan doesn't include Grok Bot.";
 "Reads your account's limits with the login Cursor saved." = "Reads your account's limits with the login Cursor saved.";
 "Cursor's own login" = "Cursor's own login";
+"Grok's own login" = "Grok's own login";
+"Uses the login Grok's CLI already saved." = "Uses the login Grok's CLI already saved.";
+"Grok Bot is billed to your Cursor account." = "Grok Bot is billed to your Cursor account.";
 "Uses the login Cursor already saved." = "Uses the login Cursor already saved.";
 "Refresh" = "Refresh";
 "Pulse %@ is available" = "Pulse %@ is available";
@@ -255,6 +262,7 @@
 "Code" = "Code";
 "Copied — paste it on the page that opened." = "Copied — paste it on the page that opened.";
 "Copied. Sign in there first if asked, then paste it." = "Copied. Sign in there first if asked, then paste it.";
+"Already on the page. Sign in there first if asked, then approve it." = "Already on the page. Sign in there first if asked, then approve it.";
 "Copy" = "Copy";
 "Open page" = "Open page";
 "Sign-in" = "Sign-in";

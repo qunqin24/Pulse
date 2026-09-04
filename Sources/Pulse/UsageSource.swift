@@ -75,6 +75,14 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
              (_, .minimax), (_, .minimaxCN), (_, .copilot):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
+        case (_, .grokBot):
+            // Never shown: one route, and it borrows the login Cursor stored,
+            // since Grok Bot is billed against that account.
+            .localized("Reads your account's limits with the login Cursor saved.")
+        case (_, .grok):
+            // Never shown: one route, and it borrows the login Grok's own CLI
+            // stored, exactly as Cursor's does.
+            .localized("Reads your account's limits with the login Grok saved.")
         case (_, .ollamaCloud):
             // Never shown: one route, and it reads a page rather than an API.
             .localized("Reads your quota from Ollama's own settings page.")

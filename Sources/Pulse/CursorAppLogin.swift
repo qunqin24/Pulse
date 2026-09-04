@@ -39,8 +39,15 @@ enum CursorAppLogin {
     private static let expiryHeadroom: TimeInterval = 60
 
     static func session() -> Session? {
+        accessToken().flatMap(session(from:))
+    }
+
+    /// The same cookie built out of a token from somewhere else — an account
+    /// Pulse signed in to itself, whose token never goes near the editor's
+    /// database. The arithmetic is the token's own, so it lives here beside
+    /// the reader rather than being written a second time.
+    static func session(from token: String) -> Session? {
         guard
-            let token = accessToken(),
             let claims = claims(in: token),
             let subject = claims["sub"] as? String,
             let expiry = claims["exp"] as? Double,
@@ -54,6 +61,14 @@ enum CursorAppLogin {
         // `%3A%3A` is `::` encoded, which is how the value appears in the
         // cookie the site sets for itself.
         return Session(cookie: "WorkosCursorSessionToken=\(account)%3A%3A\(token)")
+    }
+
+    /// When a token stops being accepted, read from the token itself. Cursor
+    /// issues these for **60 days** — measured against this Mac's own, which
+    /// is why an account Pulse signs in to here does not need renewing every
+    /// few hours the way a Codex or Claude Code login does.
+    static func expiry(of token: String) -> Date? {
+        (claims(in: token)?["exp"] as? Double).map(Date.init(timeIntervalSince1970:))
     }
 
     /// Whether a token is stored at all, as against a *usable* one.

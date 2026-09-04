@@ -60,13 +60,20 @@ struct ExtraAccount: Codable, Hashable, Identifiable, Sendable {
 extension Provider {
     /// Whether Pulse can watch more than one account of this provider.
     ///
-    /// Only the two it can sign in to itself. The others are read from a
+    /// Only the ones it can sign in to itself. The others are read from a
     /// credential their own tool stored, and that store holds exactly one
     /// login — so a second account of theirs is not something Pulse can be
     /// shown, however the rest of the app is shaped.
     var supportsMultipleAccounts: Bool {
         switch self {
-        case .claudeCode, .codex: true
+        // Grok Bot is signed in to through Cursor's own login page rather
+        // than by OAuth — a second allowance is a second Cursor account. See
+        // `CursorWebLogin`.
+        case .claudeCode, .codex, .grok, .grokBot: true
+        // **Cursor itself is not on this list, and that is not an oversight.**
+        // The same sign-in would work, but Cursor's usage summary is read
+        // from the editor's own stored login and a second account has no
+        // editor behind it. Grok Bot needs nothing but the token.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot: false
         }

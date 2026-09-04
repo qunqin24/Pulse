@@ -21,6 +21,22 @@ import Network
 /// copying the credential the CLI already has — copied, it would expire in
 /// hours with no way to renew it that did not risk invalidating the CLI's.
 enum OAuthLogin {
+    /// The two shapes a device-code sign-in comes in.
+    ///
+    /// **They are not variations on one flow.** RFC 8628 polls the ordinary
+    /// token endpoint and gets tokens straight back; OpenAI's polls an
+    /// endpoint of its own, answers with an authorization code *and the proof
+    /// key it generated itself*, and that code is then exchanged against a
+    /// redirect address of theirs. Writing one as a special case of the other
+    /// means a parser that reads neither reliably.
+    enum DeviceFlow: Sendable {
+        /// The specification as published: `POST` to this endpoint for a code,
+        /// then poll the configuration's own token endpoint.
+        case standard(code: URL)
+        /// OpenAI's own, whose paths hang off this base. See `startDevice`.
+        case openAI(base: URL)
+    }
+
     struct Configuration: Sendable {
         let authorize: URL
         let token: URL
@@ -39,13 +55,13 @@ enum OAuthLogin {
         /// fields the specification names and nothing else. Sending one an
         /// extra field is not harmless — see the note on the scopes.
         let exchangeCarriesState: Bool
-        /// Codex offers a device-code flow, and it is the better one to take:
-        /// no local port to collide with the CLI's own sign-in, no redirect
-        /// back to this Mac at all, and the provider generates the proof key
-        /// itself. It is also the path that works — the redirect flow, matched
-        /// field for field to the published client, still ended on OpenAI's
-        /// own error page.
-        let deviceCodeBase: URL?
+        /// A device-code sign-in, where there is one, and which shape it
+        /// takes. It is the better flow to be on wherever it is offered: no
+        /// local port to collide with the CLI's own sign-in, and nothing
+        /// redirected back to this Mac at all. For Codex it is also the only
+        /// path that works — the redirect flow, matched field for field to the
+        /// published client, still ended on OpenAI's own error page.
+        let deviceFlow: DeviceFlow?
 
         static func of(_ provider: Provider) -> Configuration? {
             switch provider {
@@ -67,7 +83,7 @@ enum OAuthLogin {
                     extraAuthorizeItems: [URLQueryItem(name: "code", value: "true")],
                     sendsJSON: true,
                     exchangeCarriesState: true,
-                    deviceCodeBase: nil
+                    deviceFlow: nil
                 )
             case .codex:
                 Configuration(
@@ -91,10 +107,43 @@ enum OAuthLogin {
                     ],
                     sendsJSON: false,
                     exchangeCarriesState: false,
-                    deviceCodeBase: URL(string: "https://auth.openai.com/api/accounts")!
+                    deviceFlow: .openAI(base: URL(string: "https://auth.openai.com/api/accounts")!)
+                )
+            case .grok:
+                // Read from xAI's own discovery document
+                // (`auth.x.ai/.well-known/openid-configuration`) rather than
+                // out of the CLI's strings, which is the same rule one step
+                // earlier: the provider publishes these, so they are taken
+                // from where the provider publishes them. The client id is the
+                // CLI's, and appears in `~/.grok/auth.json` as `oidc_client_id`
+                // after any `grok login`.
+                Configuration(
+                    authorize: URL(string: "https://auth.x.ai/oauth2/authorize")!,
+                    token: URL(string: "https://auth.x.ai/oauth2/token")!,
+                    clientID: "b1a00492-073a-47ea-816f-4c329264a828",
+                    // `grok-cli:access` is what the CLI's own proxy is gated
+                    // on, and `email` is what keeps two Grok accounts from
+                    // both being offered as "Grok". Dropped from the CLI's
+                    // set: `profile`, `api:access`, and the conversation and
+                    // workspace scopes — none of which a usage figure needs,
+                    // and the last two of which would let Pulse read and write
+                    // the account's chats. `billing:read` looks like the exact
+                    // right scope and is refused: measured, the device
+                    // endpoint answers `invalid_scope — Scope 'billing:read'
+                    // is not allowed for this client`.
+                    scopes: ["openid", "email", "offline_access", "grok-cli:access"],
+                    // Unused: this provider signs in by device code. Its
+                    // client does accept an arbitrary loopback port at
+                    // `/callback`, which is what the CLI uses.
+                    fixedPort: nil,
+                    redirectPath: "/callback",
+                    extraAuthorizeItems: [],
+                    sendsJSON: false,
+                    exchangeCarriesState: false,
+                    deviceFlow: .standard(code: URL(string: "https://auth.x.ai/oauth2/device/code")!)
                 )
             case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grokBot:
                 nil
             }
         }
@@ -137,8 +186,22 @@ enum OAuthLogin {
     struct DevicePrompt: Sendable, Equatable {
         let userCode: String
         let verificationURL: URL
+        /// Whatever this flow calls the handle it polls with — RFC 8628's
+        /// `device_code`, or OpenAI's `device_auth_id`.
         let deviceAuthID: String
         let interval: Duration
+        /// Whether `verificationURL` already carries the code.
+        ///
+        /// A pre-filled link is the shape of the device-code phishing attack —
+        /// see the note in `GitHubDeviceLogin` — but only when the link comes
+        /// from somebody else. Here Pulse asked for the code itself and opens
+        /// the page itself, so the danger has no way in, and whether such a
+        /// link exists at all is the service's own decision: GitHub
+        /// deliberately sends none, xAI sends one. Used where it is offered,
+        /// never constructed where it is not. The code is still copied and
+        /// shown, since a page that does not pre-fill is the case this cannot
+        /// detect.
+        var prefilled: Bool = false
     }
 
     // MARK: - Device code
@@ -147,9 +210,52 @@ enum OAuthLogin {
     static func startDevice(_ provider: Provider) async throws -> DevicePrompt {
         guard
             let configuration = Configuration.of(provider),
-            let base = configuration.deviceCodeBase
+            let flow = configuration.deviceFlow
         else { throw Failure.unsupported }
 
+        switch flow {
+        case .standard(let code):
+            return try await startStandardDevice(configuration, at: code)
+        case .openAI(let base):
+            return try await startOpenAIDevice(configuration, base: base)
+        }
+    }
+
+    /// RFC 8628: one form post, and the reply says everything — the code, where
+    /// to type it, how often to ask, and the handle to ask with.
+    private static func startStandardDevice(
+        _ configuration: Configuration,
+        at endpoint: URL
+    ) async throws -> DevicePrompt {
+        let reply = try await postForm([
+            "client_id": configuration.clientID,
+            "scope": configuration.scopes.joined(separator: " "),
+        ], to: endpoint)
+
+        guard
+            let code = reply["user_code"] as? String,
+            let handle = reply["device_code"] as? String,
+            let page = (reply["verification_uri"] as? String).flatMap(URL.init(string:))
+        else { throw Failure.unreadableReply }
+
+        let complete = (reply["verification_uri_complete"] as? String).flatMap(URL.init(string:))
+        let seconds = (reply["interval"] as? Double)
+            ?? (reply["interval"] as? String).flatMap(Double.init)
+            ?? 5
+
+        return DevicePrompt(
+            userCode: code,
+            verificationURL: complete ?? page,
+            deviceAuthID: handle,
+            interval: .seconds(max(seconds, 1)),
+            prefilled: complete != nil
+        )
+    }
+
+    private static func startOpenAIDevice(
+        _ configuration: Configuration,
+        base: URL
+    ) async throws -> DevicePrompt {
         let reply = try await postJSON(
             ["client_id": configuration.clientID],
             to: base.appending(path: "deviceauth/usercode")
@@ -183,8 +289,87 @@ enum OAuthLogin {
     static func awaitDevice(_ prompt: DevicePrompt, for provider: Provider) async throws -> AccountCredentials {
         guard
             let configuration = Configuration.of(provider),
-            let base = configuration.deviceCodeBase
+            let flow = configuration.deviceFlow
         else { throw Failure.unsupported }
+
+        switch flow {
+        case .standard:
+            return try await awaitStandardDevice(prompt, configuration: configuration)
+        case .openAI(let base):
+            return try await awaitOpenAIDevice(prompt, configuration: configuration, base: base)
+        }
+    }
+
+    /// RFC 8628's other half: poll the ordinary token endpoint until it stops
+    /// saying "not yet".
+    ///
+    /// **A refusal and a "still waiting" arrive with the same status**, 400,
+    /// and are told apart only by the `error` in the body — which is why the
+    /// body is read before anything is concluded from the status. `slow_down`
+    /// is an instruction, not a failure: the interval is lengthened by the five
+    /// seconds the specification names and the poll continues, since a client
+    /// that ignores it is eventually cut off.
+    private static func awaitStandardDevice(
+        _ prompt: DevicePrompt,
+        configuration: Configuration
+    ) async throws -> AccountCredentials {
+        var wait = prompt.interval
+        let deadline = Date().addingTimeInterval(15 * 60)
+
+        while Date() < deadline {
+            try Task.checkCancellation()
+            try await Task.sleep(for: wait)
+
+            switch try await pollStandardDevice(prompt, configuration: configuration) {
+            case .granted(let credentials): return credentials
+            case .pending: continue
+            case .slowDown: wait += .seconds(5)
+            }
+        }
+
+        throw Failure.timedOut
+    }
+
+    private enum DeviceOutcome {
+        case granted(AccountCredentials)
+        case pending
+        case slowDown
+    }
+
+    /// Its own request rather than a call to `post`, so that "not yet" never
+    /// has to travel as a `Failure` — one the UI would be free to put in front
+    /// of the user every few seconds while nothing is actually wrong.
+    private static func pollStandardDevice(
+        _ prompt: DevicePrompt,
+        configuration: Configuration
+    ) async throws -> DeviceOutcome {
+        let (status, json) = try await send(form: [
+            "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
+            "device_code": prompt.deviceAuthID,
+            "client_id": configuration.clientID,
+        ], to: configuration.token)
+
+        if status == 200 {
+            guard let json else { throw Failure.unreadableReply }
+            return .granted(try credentials(from: json))
+        }
+
+        // The body, not the status, is what separates waiting from refusal:
+        // both arrive as a 400.
+        switch json?["error"] as? String {
+        case "authorization_pending": return .pending
+        case "slow_down": return .slowDown
+        default:
+            let said = (json?["error_description"] as? String) ?? (json?["error"] as? String)
+            throw Failure.refused(said.map { "oauth/token: HTTP \(status) — \($0)" } ?? "oauth/token: HTTP \(status)")
+        }
+    }
+
+    private static func awaitOpenAIDevice(
+        _ prompt: DevicePrompt,
+        configuration: Configuration,
+        base: URL
+    ) async throws -> AccountCredentials {
 
         let deadline = Date().addingTimeInterval(15 * 60)
         let url = base.appending(path: "deviceauth/token")
@@ -243,6 +428,50 @@ enum OAuthLogin {
         return (code, verifier)
     }
 
+    /// The same as `postJSON`, with the body the specification actually asks
+    /// for. RFC 8628's code endpoint takes a form; OpenAI's takes JSON.
+    private static func postForm(_ body: [String: String], to url: URL) async throws -> [String: Any] {
+        let (status, json) = try await send(form: body, to: url)
+        guard status == 200 else {
+            let said = (json?["error_description"] as? String) ?? (json?["error"] as? String)
+            throw Failure.refused(said.map { "\(url.lastPathComponent): HTTP \(status) — \($0)" }
+                ?? "\(url.lastPathComponent): HTTP \(status)")
+        }
+        guard let json else { throw Failure.unreadableReply }
+        return json
+    }
+
+    /// One form post, answered with the status *and* whatever the body parsed
+    /// to. Both are needed together: on these endpoints a refusal and a "still
+    /// waiting" share a status and differ only in the body.
+    private static func send(
+        form body: [String: String],
+        to url: URL
+    ) async throws -> (status: Int, json: [String: Any]?) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.httpBody = Data(body.map { "\($0.key)=\(Self.formEncoded($0.value))" }
+            .joined(separator: "&").utf8)
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            if error is CancellationError { throw error }
+            try Task.checkCancellation()
+            throw Failure.refused(String.localized("The service didn't respond."))
+        }
+
+        return (
+            (response as? HTTPURLResponse)?.statusCode ?? 0,
+            (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        )
+    }
+
     private static func postJSON(_ body: [String: String], to url: URL) async throws -> [String: Any] {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -295,7 +524,7 @@ enum OAuthLogin {
     /// Whether this provider is signed in to by showing a code rather than by
     /// sending the browser back here.
     static func usesDeviceCode(_ provider: Provider) -> Bool {
-        Configuration.of(provider)?.deviceCodeBase != nil
+        Configuration.of(provider)?.deviceFlow != nil
     }
 
     // MARK: - Signing in
@@ -440,7 +669,12 @@ enum OAuthLogin {
         }
 
         guard let json else { throw Failure.unreadableReply }
+        return try credentials(from: json)
+    }
 
+    /// A token reply turned into a login. Shared with the device-code poll,
+    /// which reaches the same endpoint by a different grant.
+    private static func credentials(from json: [String: Any]) throws -> AccountCredentials {
         guard
             let access = json["access_token"] as? String,
             let lifetime = json["expires_in"] as? Double
@@ -517,7 +751,9 @@ enum OAuthLogin {
     }
 }
 
-private extension Data {
+/// Shared with `CursorWebLogin`, whose proof key is PKCE's even though the
+/// flow around it is not OAuth's.
+extension Data {
     /// Base64 as OAuth wants it: URL-safe, unpadded.
     var base64URLEncoded: String {
         base64EncodedString()

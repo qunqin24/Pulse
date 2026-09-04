@@ -5,7 +5,7 @@
 <h1 align="center">Pulse</h1>
 
 <p align="center">
-  <b>Claude Code、Codex、Antigravity、Cursor、OpenCode Go、Kimi Code、Ollama Cloud、<br>Z.ai、GLM、MiniMax 或 GitHub Copilot 还剩多少额度。</b>
+  <b>Claude Code、Codex、Antigravity、Cursor、OpenCode Go、Kimi Code、Ollama Cloud、<br>Z.ai、GLM、MiniMax、Grok、Grok Bot 或 GitHub Copilot 还剩多少额度。</b>
 </p>
 
 <p align="center">
@@ -62,6 +62,8 @@ Pulse 未经 Apple 公证，macOS 会阻止首次启动。先打开 Pulse 并关
 | **Z.ai** | 设置中粘贴 API key | 国际站，国内 BigModel 的 key 不适用 |
 | **GLM 编码套餐** | 设置中粘贴 API key，或读取 GLM 工具已保存的 key | 国内站（`open.bigmodel.cn`） |
 | **MiniMax** / **MiniMax CN** | 设置中粘贴 API key | `api.minimax.io` 和 `api.minimaxi.com` |
+| **Grok** | Grok Build CLI 自家的代理接口，用 `grok login` 已保存的登录信息 | 一个周额度池，全 Grok 产品共用，不只是 CLI |
+| **Grok Bot** | Cursor 的 dashboard 接口，用 Cursor 编辑器已保存的登录信息 | 和上面的 Grok 是两笔额度：这个随 Cursor 套餐附送，不是 SuperGrok 的 |
 | **GitHub Copilot** | 设备码登录 | 只申请 `read:user`，不需要你粘贴令牌 |
 | **Ollama Cloud** | 登录后的设置页，会话从浏览器读取 | 没有额度 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 
