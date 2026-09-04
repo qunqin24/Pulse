@@ -1,0 +1,91 @@
+name: New provider · 新服务
+description: A service you would like Pulse to track. 希望 Pulse 支持监控的服务。
+title: "[Provider] "
+labels: ["enhancement", "provider"]
+body:
+  - type: markdown
+    attributes:
+      value: "English or 中文， whichever you'd rather. 中英文都可以。"
+
+  - type: markdown
+    attributes:
+      value: >
+        Fill in what you know and leave the rest blank — partial answers still
+        help. The one that usually decides whether a service can be supported
+        at all is **whether it publishes a usage or quota API**: Pulse never
+        estimates a percentage, so if the service doesn't report one, there is
+        nothing honest to draw. 知道多少写多少，不确定的留空即可。通常直接决定
+        能不能支持的是**它有没有查询用量的接口**——Pulse 从不自己推算百分比，
+        服务不上报的话就没有能如实显示的数字。
+
+  - type: input
+    id: provider
+    attributes:
+      label: Which service, exactly? / 具体是哪个服务
+      description: >
+        The product name and a link. Some brands sell more than one thing —
+        Grok's CLI plan and Grok Bot are different limits with the same word in
+        the name. 产品名和链接。有些品牌不止一个产品，比如 Grok 的 CLI 套餐和
+        Grok Bot 就是名字相近的两笔额度。
+      placeholder: "Kimi Code — https://…"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: credential
+    attributes:
+      label: How do you sign in to it? / 你是怎么登录的
+      description: >
+        Pulse prefers to borrow a login the service's own tool already saved,
+        so nothing has to be pasted. Pulse 会尽量借用该服务自己的工具已经保存的
+        登录信息，这样你什么都不用粘贴。
+      multiple: true
+      options:
+        - A CLI or app that signs itself in · 有自己会登录的 CLI 或客户端
+        - An API key I paste somewhere · 我自己粘贴的 API key
+        - Only a website I log in to · 只有网页登录
+        - Not sure · 不确定
+    validations:
+      required: false
+
+  - type: input
+    id: plan
+    attributes:
+      label: Which plan are you on? / 你用的是哪个套餐
+      description: >
+        Limits often differ by tier, and a reply on a free account can look
+        nothing like a paid one. 不同档位的限额结构常常不一样，免费账号返回的内容
+        和付费账号可能完全不同。
+      placeholder: "Pro / 会员版"
+    validations:
+      required: false
+
+  - type: textarea
+    id: endpoint
+    attributes:
+      label: Does it publish a usage or quota API? / 它有没有查询用量的接口
+      description: >
+        A link to the docs, or the request its own dashboard makes.
+        文档链接，或者它自己的控制台发的请求。
+    validations:
+      required: false
+
+  - type: textarea
+    id: regions
+    attributes:
+      label: Separate accounts per region? / 国内外是不是两个账号
+      description: >
+        Some services run a mainland and an international site whose keys are
+        not interchangeable — those get one entry each. Different *endpoints*
+        for one account do not. 有些服务的国内站和国际站是两套账号、key 不通用，
+        这种会各占一个位置;同一个账号的多个接入点则不会。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: secrets
+    attributes:
+      label: Before posting / 发布前
+      options:
+        - label: No API key, token, cookie or account id in my request or screenshots. 内容和截图中不含密钥、令牌、cookie 或账号 id。
+          required: true

@@ -5,15 +5,56 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: "English or 中文, whichever you'd rather. 中英文都可以。"
+      value: "English or 中文， whichever you'd rather. 中英文都可以。"
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Which provider is it about? / 是哪个服务的问题
+      description: >
+        Most bugs are about one provider's reading. Pick the panel itself if
+        it isn't. 大多数问题都和某一个服务的读数有关；如果不是，选"面板本身"。
+      options:
+        - Claude Code
+        - Codex
+        - Antigravity
+        - Cursor
+        - OpenCode Go
+        - Kimi Code
+        - Ollama Cloud
+        - Z.ai
+        - GLM Coding Plan
+        - MiniMax
+        - MiniMax CN
+        - GitHub Copilot
+        - Grok
+        - Grok Bot
+        - The panel itself · 面板本身，不是某个服务
+    validations:
+      required: true
 
   - type: textarea
     id: what
     attributes:
       label: What happened / 发生了什么
-      description: And what you expected instead. 以及你期望看到的结果。
+      description: >
+        And what you expected instead. A screenshot helps a lot for anything
+        visual. 以及你期望看到的结果。界面问题贴张截图会很有帮助。
     validations:
       required: true
+
+  - type: textarea
+    id: official
+    attributes:
+      label: What does the service itself say? / 服务方自己显示多少
+      description: >
+        For a reading that looks wrong: what the provider's own dashboard or
+        CLI reports at the same moment. That tells us whether Pulse is reading
+        it wrong or the service is reporting it that way. 如果数字看着不对，
+        同一时刻它的官网控制台或 CLI 报的是多少。这能区分是 Pulse 读错了，
+        还是服务方本来就是这么报的。
+    validations:
+      required: false
 
   - type: textarea
     id: steps
@@ -30,7 +71,7 @@ body:
     attributes:
       label: Pulse version / Pulse 版本
       description: Settings › About. 设置 › 关于。
-      placeholder: "1.0.2"
+      placeholder: "1.0.6"
     validations:
       required: true
 
