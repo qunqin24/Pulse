@@ -120,9 +120,7 @@ walkthrough.
 
 ## Design
 
-Thank you, [**Vinz** (@hivinz_)](https://x.com/hivinz_/status/2092996055248126353).
-
-Pulse is built from a concept he posted on X in August 2026: a rail of rings held against the edge of the screen, everything worth knowing in one glance and nothing else. That idea is his; most of the work here has been trying not to spoil it. He didn't build this and isn't responsible for it.
+Pulse was inspired by a UI concept shared by [**Vinz** (@hivinz_)](https://x.com/hivinz_/status/2092996055248126353) on X in August 2026. Pulse is an independent implementation with its own interactions, functionality, animations, and visual details. Vinz is not affiliated with or responsible for Pulse.
 
 ## License
 
