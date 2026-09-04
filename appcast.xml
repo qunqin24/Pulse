@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.6</title>
+            <pubDate>Fri, 04 Sep 2026 04:56:29 -0000</pubDate>
+            <sparkle:version>1.0.6</sparkle:version>
+            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.6</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.6</h2><ul><li><strong>Grok</strong>, read from the login Grok Build&#x27;s CLI already stores — nothing to paste. One thing worth knowing before the ring confuses you: since June 2026 a paid Grok plan spends <strong>one weekly pool across every Grok product</strong> — the web chat, Imagine, voice, the API and the CLI alike — so this is what the account has spent this week, not what the CLI has. That is why it is called Grok rather than Grok Build.</li><li><strong>Grok Bot</strong>, which is a different limit despite the name. It comes with a Cursor plan rather than a SuperGrok one, so it is read with the login the Cursor editor already stores and carries the xAI mark to tell the two apart on the rail. It appears by itself only if the standalone app is installed; otherwise switch it on in Settings.</li><li><strong>A second account of either.</strong> Grok signs in with a device code, Grok Bot through Cursor&#x27;s own sign-in page. Both ask for the narrowest access that can read a limit — never for permission to read or write your conversations.</li><li>A card could print a window length the provider never reported. Some limits carry a length that only exists to sort the rows — a rolling week, a billing cycle — and when there was no reset time to show, that length was printed as though it were one.</li><li>A provider with a single route named the wrong one in Settings. Every such provider but Cursor was described as &quot;Antigravity&#x27;s language server&quot;, about an app it had nothing to do with.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.0.6">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.6/Pulse-1.0.6.zip"
+                       length="4201483"
+                       type="application/octet-stream"
+                       sparkle:edSignature="15hQ+wT7n2ZhlJLcHeD+rnYWunTE1a1vbaFLdqu+dXR47TPMFNoJAsOpSfY57RxoyzjaxRbEBg58NRfUadUsBA==" />
+        </item>
+        <item>
             <title>1.0.5</title>
             <pubDate>Thu, 03 Sep 2026 04:42:16 -0000</pubDate>
             <sparkle:version>1.0.5</sparkle:version>
