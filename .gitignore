@@ -12,3 +12,6 @@ xcuserdata/
 
 # Assembled app bundle
 build.noindex/
+
+# OpenCode triage local install
+.github/opencode/node_modules/

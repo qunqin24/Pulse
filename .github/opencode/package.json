@@ -1,0 +1,13 @@
+{
+  "name": "pulse-opencode-triage",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pinned OpenCode CLI for Pulse bounded triage. Not published.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "opencode-ai": "1.18.29"
+  }
+}

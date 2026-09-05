@@ -1,0 +1,148 @@
+# Bounded public triage bot. Comments only. Residual issues:write is documented
+# in Docs/opencode-triage.md.
+name: OpenCode triage
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions: {}
+
+concurrency:
+  group: opencode-triage-${{ github.repository }}-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: vars.OPENCODE_BOT_ENABLED == 'true' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    outputs:
+      disposition: ${{ steps.collect.outputs.disposition }}
+    steps:
+      - name: Checkout trusted workflow SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Stage trusted tools
+        run: node .github/scripts/opencode-stage-tools.mjs
+
+      - name: Upload trusted tools
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: triage-tools
+          path: trusted-tools/
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error
+
+      - name: Collect public metadata
+        id: collect
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/opencode-collect.mjs
+
+      - name: Upload input
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: triage-input
+          path: triage-input.json
+          retention-days: 1
+          if-no-files-found: ignore
+
+  analyze:
+    needs: collect
+    if: vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition == 'analyze' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions: {}
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Download trusted tools
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: triage-tools
+          path: .
+
+      - name: Download input
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: triage-input
+          path: .
+
+      - name: Install pinned CLI
+        working-directory: .github/opencode
+        run: npm ci --ignore-scripts
+
+      - name: Analyze
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: node .github/scripts/opencode-analyze.mjs
+
+      - name: Upload result
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: triage-result
+          path: triage-result.json
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    needs: [collect, analyze]
+    if: always() && !cancelled() && vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition != 'skip' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - name: Checkout trusted workflow SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "20"
+
+      - name: Download input
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: triage-input
+          path: .
+
+      - name: Download result
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: triage-result
+          path: .
+
+      - name: Publish comment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/opencode-publish.mjs

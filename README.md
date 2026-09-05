@@ -25,7 +25,7 @@
   <img src="Docs/demo.gif" width="340" alt="Pulse floating rail docked against the screen edge">
 </p>
 
-Pulse is an unobtrusive floating monitor that docks neatly along the edge of your screen. It queries official quota endpoints directly to show exactly how much of your AI coding allowance remains across all your assistants — with zero estimation, zero telemetry, and zero backend.
+Pulse is an unobtrusive floating monitor that docks neatly along the edge of your screen. It shows remaining allowance from the figures each service reports — using that product's own client routes, not a Pulse server — with no Pulse account and no telemetry. Pulse does not invent usage percentages.
 
 ---
 
@@ -50,9 +50,9 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 - **macOS Aesthetic**: Classic solid obsidian surface or native **Liquid Glass** on macOS 26+.
 
 ### Multi-Account & Local Ledger
-- **Multi-Account Support**: Monitor multiple subscriptions for the same provider (e.g., two Claude Code or Codex accounts) side-by-side with custom labels.
+- **Multi-Account Support**: Monitor multiple subscriptions for the same provider (Claude Code, Codex, Grok, Grok Bot) side-by-side with custom labels.
 - **On-Device Spending History**: Reconstructs your historical token expenditures from local CLI session transcripts, calculated against published API prices.
-- **Privacy First**: 100% on-device operation. No servers, no accounts, no proxies, and zero telemetry.
+- **Privacy First**: No Pulse servers, no Pulse account, and no telemetry. Requests go to the providers you already use (and follow macOS system proxy settings).
 
 <p align="center">
   <img src="Docs/panel.png" height="300" alt="Detailed usage card beside rail">
@@ -64,12 +64,12 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 
 ## Supported Providers & Data Routes
 
-Pulse queries the authoritative figures reported by each service provider. It never guesses percentages from local token counts:
+Pulse shows the figures each service reports. It never guesses percentages from local token counts. Routes differ by product (documented client APIs, editor logins, local language servers, pasted keys) — not one official public quota API for every row. Contributor detail: [Docs/providers/README.md](Docs/providers/README.md).
 
 | Provider | Data Route & Auth Method | Notes |
 |---|---|---|
-| **Claude Code** | Official OAuth usage endpoint; automatic fallbacks to Claude Desktop session & Status Line | Reads existing CLI/Desktop session; auto-falls back seamlessly |
-| **Codex** | Official client endpoint; fallback to `codex app-server` | Reads local Codex credentials directly |
+| **Claude Code** | Account OAuth usage endpoint; automatic fallbacks to Claude Desktop session & Status Line | Reads existing CLI/Desktop session; auto-falls back seamlessly |
+| **Codex** | Client usage endpoint; fallback to `codex app-server` | Reads local Codex credentials directly |
 | **Antigravity** | Local Language Server (LSP) | Active while the Antigravity editor is running |
 | **Cursor** | Cursor account usage summary API | Shows fast and slow request pools from existing editor login |
 | **Grok** | Grok Build CLI proxy (`cli-chat-proxy.grok.com`) | Single unified weekly pool shared across all Grok products |
@@ -104,8 +104,8 @@ Pulse queries the authoritative figures reported by each service provider. It ne
 ## Privacy & Security
 
 Pulse is designed with strict local-first security principles:
-- **Zero Backend**: Pulse runs exclusively on your machine without intermediate proxy servers.
-- **Local Credentials**: Reads credentials already stored locally by your development tools (`~/.claude`, `~/.codex`, Cursor storage, etc.).
+- **No Pulse backend**: There is no Pulse server, account, or telemetry. The app talks to the providers you already use; it does not insert its own proxy. macOS system proxy settings still apply.
+- **Local Credentials**: Reads credentials already stored locally by your development tools (`~/.claude`, `~/.codex`, Cursor storage, etc.) where that is how the product works; some providers need a key or sign-in you enter in Settings.
 - **Encrypted Local Storage**: Manually entered API keys and session tokens are encrypted and saved strictly in Pulse's local application directory with owner-only permissions.
 - **Code & Chat Privacy**: Pulse never reads your source code, terminal history, prompts, or LLM conversations.
 
@@ -127,7 +127,13 @@ swift run Pulse
 ./Scripts/bundle.sh
 ```
 
-See [Docs/build-from-source.md](Docs/build-from-source.md) for full developer requirements and toolchain setup.
+See [Docs/build-from-source.md](Docs/build-from-source.md) for toolchain setup. Shipping a release: [Docs/releasing.md](Docs/releasing.md).
+
+---
+
+## Contributing
+
+How the repo is documented, what must not regress, and how to update the right page: [CONTRIBUTING.md](CONTRIBUTING.md). Map of topic docs: [Docs/README.md](Docs/README.md).
 
 ---
 
