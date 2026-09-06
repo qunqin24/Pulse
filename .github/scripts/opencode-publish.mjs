@@ -5,10 +5,12 @@ import {
   BotError,
   DEDUP_MARKER_PREFIX,
   FIXED_FAILURE,
+  FOLLOWUP_MARKER_PREFIX,
   HTTP_ISSUE_MAX,
   HTTP_POST_MAX,
   OWNER_PING,
   botAlreadyCommented,
+  botMarkerPresent,
   cloneResult,
   commentApiPath,
   dedupMarker,
@@ -26,6 +28,7 @@ import {
   validateInputDocument,
   validateResult,
 } from "./opencode-lib.mjs";
+import { collectFollowup as collectFollowupFromCollect } from "./opencode-collect.mjs";
 
 export async function runPublish({
   env = process.env,
@@ -33,9 +36,11 @@ export async function runPublish({
   inputPath = path.resolve("triage-input.json"),
   resultPath = path.resolve("triage-result.json"),
 } = {}) {
+  let payload;
   let target;
   try {
-    target = parseTrustedTarget(env, loadEventPayload(env.GITHUB_EVENT_PATH));
+    payload = loadEventPayload(env.GITHUB_EVENT_PATH);
+    target = parseTrustedTarget(env, payload);
   } catch {
     return { posted: false, reason: "invalid target" };
   }
@@ -63,12 +68,59 @@ export async function runPublish({
     if (!pullMatchesTarget(identity, target)) {
       return { posted: false, reason: "stale" };
     }
+  } else if (target.kind === "issue") {
+    let issue;
+    try {
+      ({ json: issue } = await githubRequestJson({
+        method: "GET",
+        pathname: resourceApiPath("issue", target.number),
+        number: target.number,
+        token,
+        fetchImpl,
+        maxBytes: HTTP_ISSUE_MAX,
+      }));
+    } catch {
+      return { posted: false, reason: "noverify" };
+    }
+    if (issue.state !== "open" || issue.pull_request) return { posted: false, reason: "stale" };
+    const eventTitle = payload.issue && payload.issue.title;
+    const eventBody = payload.issue && payload.issue.body;
+    if (issue.title !== eventTitle || (issue.body || "") !== (eventBody || "")) {
+      return { posted: false, reason: "stale" };
+    }
+  } else if (target.kind === "issue_followup") {
+    let live;
+    try {
+      live = await collectFollowupFromCollect({ target, payload, token, fetchImpl });
+    } catch {
+      return { posted: false, reason: "noverify" };
+    }
+    if (live.skip) return { posted: false, reason: live.reason || "stale" };
+    target = { ...target, fingerprint: live.discussion.fingerprint };
+    if (fs.existsSync(inputPath)) {
+      try {
+        const input = validateInputDocument(JSON.parse(fs.readFileSync(inputPath, "utf8")));
+        if (!sourceMatchesTarget(input.source, target) || input.source.fingerprint !== live.discussion.fingerprint) {
+          return { posted: false, reason: "stale" };
+        }
+      } catch {
+        // invalid input cannot become a normal model comment
+      }
+    }
   }
 
-  const result = loadPublishResult(inputPath, resultPath, target);
+  const result =
+    target.kind === "issue_followup" && !followupInputMatches(inputPath, target)
+      ? { fixed: true, value: cloneResult(FIXED_FAILURE) }
+      : loadPublishResult(inputPath, resultPath, target);
   const body = result.fixed ? fixedFailureComment(target) : renderComment(result.value, target);
   const marker = dedupMarker(target);
-  if (!body.includes(marker) || !marker.startsWith(DEDUP_MARKER_PREFIX)) throw new BotError("missing marker");
+  if (
+    !body.includes(marker) ||
+    (!marker.startsWith(DEDUP_MARKER_PREFIX) && !marker.startsWith(FOLLOWUP_MARKER_PREFIX))
+  ) {
+    throw new BotError("missing marker");
+  }
   if ((result.fixed || result.value.status === "risk" || result.value.status === "failure") && !body.includes(OWNER_PING)) {
     throw new BotError("missing owner ping");
   }
@@ -82,7 +134,7 @@ export async function runPublish({
     }
     return { posted: false, reason: "noverify" };
   }
-  if (botAlreadyCommented(comments, marker)) {
+  if (botAlreadyCommented(comments, marker) || botMarkerPresent(comments, marker)) {
     return { posted: false, reason: "duplicate" };
   }
 
@@ -96,6 +148,16 @@ export async function runPublish({
     body: { body },
   });
   return { posted: true, number: target.number, fixed: result.fixed };
+}
+
+function followupInputMatches(inputPath, target) {
+  try {
+    if (!fs.existsSync(inputPath)) return false;
+    const input = validateInputDocument(JSON.parse(fs.readFileSync(inputPath, "utf8")));
+    return sourceMatchesTarget(input.source, target) && input.source.fingerprint === target.fingerprint;
+  } catch {
+    return false;
+  }
 }
 
 export function loadPublishResult(inputPath, resultPath, target) {

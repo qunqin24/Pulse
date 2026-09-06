@@ -4,7 +4,9 @@ name: OpenCode triage
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
   pull_request_target:
     types: [opened, synchronize, reopened]
 
@@ -16,9 +18,9 @@ concurrency:
 
 jobs:
   collect:
-    if: vars.OPENCODE_BOT_ENABLED == 'true' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    if: vars.OPENCODE_BOT_ENABLED == 'true' && ((github.event_name == 'issues' && github.event.action == 'opened') || (github.event_name == 'issues' && github.event.action == 'edited' && !github.event.issue.pull_request && github.event.sender.type != 'Bot' && !contains(github.event.sender.login, '[bot]') && github.event.sender.login == github.event.issue.user.login && (github.event.changes.title || github.event.changes.body)) || (github.event_name == 'issue_comment' && github.event.action == 'created' && !github.event.issue.pull_request && github.event.comment.user.type != 'Bot' && !contains(github.event.comment.user.login, '[bot]') && (github.event.comment.user.login == github.event.issue.user.login || contains(format('|{0}|', github.event.comment.user.login), '|qunqin24|'))) || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     permissions:
       contents: read
       issues: read
@@ -67,7 +69,7 @@ jobs:
 
   analyze:
     needs: collect
-    if: vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition == 'analyze' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    if: vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition == 'analyze' && ((github.event_name == 'issues' && github.event.action == 'opened') || (github.event_name == 'issues' && github.event.action == 'edited' && !github.event.issue.pull_request && github.event.sender.type != 'Bot' && !contains(github.event.sender.login, '[bot]') && github.event.sender.login == github.event.issue.user.login && (github.event.changes.title || github.event.changes.body)) || (github.event_name == 'issue_comment' && github.event.action == 'created' && !github.event.issue.pull_request && github.event.comment.user.type != 'Bot' && !contains(github.event.comment.user.login, '[bot]') && (github.event.comment.user.login == github.event.issue.user.login || contains(format('|{0}|', github.event.comment.user.login), '|qunqin24|'))) || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions: {}
@@ -109,7 +111,7 @@ jobs:
 
   publish:
     needs: [collect, analyze]
-    if: always() && !cancelled() && vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition != 'skip' && (github.event_name == 'issues' || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
+    if: always() && !cancelled() && vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition != 'skip' && ((github.event_name == 'issues' && github.event.action == 'opened') || (github.event_name == 'issues' && github.event.action == 'edited' && !github.event.issue.pull_request && github.event.sender.type != 'Bot' && !contains(github.event.sender.login, '[bot]') && github.event.sender.login == github.event.issue.user.login && (github.event.changes.title || github.event.changes.body)) || (github.event_name == 'issue_comment' && github.event.action == 'created' && !github.event.issue.pull_request && github.event.comment.user.type != 'Bot' && !contains(github.event.comment.user.login, '[bot]') && (github.event.comment.user.login == github.event.issue.user.login || contains(format('|{0}|', github.event.comment.user.login), '|qunqin24|'))) || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:

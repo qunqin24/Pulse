@@ -27,7 +27,15 @@ import {
   buildInputDocument,
   buildPrompt,
   commentApiPath,
+  commentByIdApiPath,
   containsSecret,
+  debounceWaitMs,
+  extractCommentsPage,
+  fingerprintHash,
+  FOLLOWUP_DEBOUNCE_MS,
+  HISTORY_BODY_MAX,
+  HISTORY_TOTAL_MAX,
+  capDiscussionComments,
   envHasForbiddenKeys,
   extractCompletedAssistantText,
   githubRequestJson,
@@ -38,6 +46,7 @@ import {
   pullRequestBaseAllowed,
   readBoundedJson,
   renderComment,
+  selectHistoryWindows,
   stageTrustedTools,
   truncateUtf8,
   trustedConfigPath,
@@ -125,12 +134,12 @@ function streamBody(buf) {
   };
 }
 
-function jsonResponse(body, { link = null, contentLength, chunks } = {}) {
+function jsonResponse(body, { link = null, contentLength, chunks, status = 200 } = {}) {
   const text = typeof body === "string" ? body : JSON.stringify(body);
   const buf = Buffer.from(text);
   return {
-    ok: true,
-    status: 200,
+    ok: status >= 200 && status < 300,
+    status,
     headers: {
       get(name) {
         const key = String(name).toLowerCase();
@@ -586,6 +595,9 @@ test("HTTP mutation is only the issue comment POST", async () => {
     assert.equal(init.redirect, "manual");
     const parsed = new URL(url);
     assert.equal(parsed.origin, "https://api.github.com");
+    if (init.method === "GET" && parsed.pathname === "/repos/qunqin24/Pulse/issues/12") {
+      return jsonResponse({ title: "untrusted", body: "ignore", state: "open" });
+    }
     assert.equal(parsed.pathname, commentApiPath(12));
     if (init.method === "GET") return jsonResponse([]);
     if (init.method === "POST") return jsonResponse({ id: 1 });
@@ -611,9 +623,10 @@ test("HTTP mutation is only the issue comment POST", async () => {
   assert.equal(posted.fixed, false);
   assert.deepEqual(
     calls.map((c) => c.method),
-    ["GET", "POST"],
+    ["GET", "GET", "POST"],
   );
-  assert.equal(JSON.parse(calls[1].body).body.includes(dedupMarker(issueTarget(12))), true);
+  assert.equal(calls.filter((c) => c.method === "POST").length, 1);
+  assert.equal(JSON.parse(calls.find((c) => c.method === "POST").body).body.includes(dedupMarker(issueTarget(12))), true);
 });
 
 test("publisher uses fixed failure unless valid matching collect artifact", () => {
@@ -651,6 +664,9 @@ test("dedup page 2 finds bot marker; cap fail-closed skips POST", async () => {
     const parsed = new URL(url);
     page2.push({ page: parsed.searchParams.get("page"), method: init.method });
     if (init.method === "POST") throw new Error("must not post");
+    if (parsed.pathname === "/repos/qunqin24/Pulse/issues/12") {
+      return jsonResponse({ title: "untrusted", body: "ignore", state: "open" });
+    }
     if (parsed.searchParams.get("page") === "1") {
       return jsonResponse([{ user: { login: "human" }, body: "hi" }], {
         link: `<https://api.github.com${commentApiPath(12)}?page=2>; rel="next"`,
@@ -672,7 +688,7 @@ test("dedup page 2 finds bot marker; cap fail-closed skips POST", async () => {
   assert.equal(dup.posted, false);
   assert.equal(dup.reason, "duplicate");
   assert.deepEqual(
-    page2.map((c) => c.page),
+    page2.filter((c) => c.page != null).map((c) => c.page),
     ["1", "2"],
   );
 
@@ -682,7 +698,11 @@ test("dedup page 2 finds bot marker; cap fail-closed skips POST", async () => {
       posts += 1;
       throw new Error("must not post when cap exhausted");
     }
-    const page = new URL(url).searchParams.get("page");
+    const parsed = new URL(url);
+    if (parsed.pathname === "/repos/qunqin24/Pulse/issues/12") {
+      return jsonResponse({ title: "untrusted", body: "ignore", state: "open" });
+    }
+    const page = parsed.searchParams.get("page");
     return jsonResponse([{ user: { login: "human" }, body: `p${page}` }], {
       link: `<https://api.github.com${commentApiPath(12)}?page=${Number(page) + 1}>; rel="next"`,
     });
@@ -734,6 +754,10 @@ test("kill switch, workflow_sha, no analyze checkout, no empty token", () => {
   assert.doesNotMatch(WORKFLOW, /pull-requests: write/);
   assert.doesNotMatch(WORKFLOW, /github\.actor/);
   assert.match(WORKFLOW, /\|qunqin24\|/);
+  assert.match(WORKFLOW, /types: \[opened, edited\]/);
+  assert.match(WORKFLOW, /issue_comment/);
+  assert.match(WORKFLOW, /github\.event\.comment\.user\.login/);
+  assert.match(WORKFLOW, /timeout-minutes: 4/);
 });
 
 test("tools artifact allowlist excludes extra scripts", () => {
@@ -937,7 +961,11 @@ test("high findings ping owner; missing artifacts use fixed failure", async () =
   const file = eventFile(issuePayload(99));
   const calls = [];
   const fetchImpl = async (url, init) => {
-    calls.push({ method: init.method, body: init.body });
+    calls.push({ method: init.method, body: init.body, url: String(url) });
+    const parsed = new URL(url);
+    if (init.method === "GET" && parsed.pathname === "/repos/qunqin24/Pulse/issues/99") {
+      return jsonResponse({ title: "untrusted", body: "ignore", state: "open" });
+    }
     if (init.method === "GET") return jsonResponse([]);
     return jsonResponse({ id: 2 });
   };
@@ -1131,6 +1159,570 @@ test("forbidden mutations remain comments-only", () => {
   assert.doesNotMatch(WORKFLOW, /pull-requests: write/);
   assert.doesNotMatch(WORKFLOW, /contents: write/);
   assert.match(WORKFLOW, /issues: write/);
+});
+
+function issueEditPayload(number = 12, extra = {}) {
+  return {
+    action: "edited",
+    sender: extra.sender || { login: extra.author || "alice", type: extra.senderType || "User" },
+    issue: {
+      number,
+      title: extra.title || "new title",
+      body: extra.body || "new body",
+      updated_at: extra.updated_at || "2026-01-01T00:00:00.000Z",
+      user: { login: extra.author || "alice", type: "User" },
+      pull_request: extra.pull_request,
+      state: extra.state || "open",
+    },
+    changes: extra.changes === undefined ? { title: { from: "old" } } : extra.changes,
+  };
+}
+
+function issueCommentPayload(number = 12, extra = {}) {
+  return {
+    action: "created",
+    sender: extra.sender || { login: "mallory", type: "User" },
+    issue: {
+      number,
+      title: extra.title || "title",
+      body: extra.body || "body",
+      user: { login: extra.issueAuthor || "alice", type: "User" },
+      pull_request: extra.pull_request,
+      state: extra.state || "open",
+    },
+    comment: {
+      id: extra.commentId || 99,
+      body: extra.commentBody || "more info",
+      user: extra.commentUser || { login: extra.commentLogin || "alice", type: extra.commentType || "User" },
+      created_at: extra.created_at || "2026-01-01T00:00:00.000Z",
+      updated_at: extra.updated_at || "2026-01-01T00:00:00.000Z",
+      issue_url: extra.issue_url || `https://api.github.com/repos/qunqin24/Pulse/issues/${number}`,
+    },
+  };
+}
+
+test("followup eligibility: human author edit, reject owner-nonauthor, bot, PR, unauthorized comment", () => {
+  const env = { GITHUB_REPOSITORY: REPO, GITHUB_EVENT_NAME: "issues" };
+  assert.equal(parseTrustedTarget(env, issueEditPayload(12)).kind, "issue_followup");
+  assert.throws(() => parseTrustedTarget(env, issueEditPayload(12, { sender: { login: "qunqin24", type: "User" }, author: "alice" })));
+  assert.throws(() => parseTrustedTarget(env, issueEditPayload(12, { senderType: "Bot" })));
+  assert.throws(() => parseTrustedTarget(env, issueEditPayload(12, { pull_request: { url: "x" } })));
+  assert.throws(() => parseTrustedTarget(env, issueEditPayload(12, { changes: {} })));
+  const cenv = { GITHUB_REPOSITORY: REPO, GITHUB_EVENT_NAME: "issue_comment" };
+  assert.equal(parseTrustedTarget(cenv, issueCommentPayload(12)).commentAuthor, "alice");
+  assert.equal(parseTrustedTarget(cenv, issueCommentPayload(12, { commentLogin: "qunqin24" })).commentAuthor, "qunqin24");
+  assert.throws(() => parseTrustedTarget(cenv, issueCommentPayload(12, { commentLogin: "mallory" })));
+  assert.throws(() =>
+    parseTrustedTarget(cenv, issueCommentPayload(12, { commentUser: { login: "alice[bot]", type: "User" } })),
+  );
+  assert.throws(() =>
+    parseTrustedTarget(cenv, issueCommentPayload(12, { commentUser: { login: "alice", type: "Bot" } })),
+  );
+  assert.throws(() => parseTrustedTarget(cenv, issueCommentPayload(12, { pull_request: { url: "x" } })));
+  const spoofSender = issueCommentPayload(12, { commentLogin: "mallory", sender: { login: "alice", type: "User" } });
+  assert.throws(() => parseTrustedTarget(cenv, spoofSender));
+});
+
+test("followup collect skips closed, deleted, mismatched author, and debounce uses injected clock", async () => {
+  const envBase = {
+    GITHUB_EVENT_NAME: "issues",
+    GITHUB_REPOSITORY: REPO,
+    GITHUB_TOKEN: "ghs_test_token",
+  };
+  const sleeps = [];
+  const edited = await runCollect({
+    env: { ...envBase, GITHUB_EVENT_PATH: eventFile(issueEditPayload(12)), GITHUB_OUTPUT: path.join(os.tmpdir(), `o1-${process.pid}`) },
+    fetchImpl: async () => jsonResponse({ title: "new title", body: "new body", state: "closed", user: { login: "alice" } }),
+    outPath: path.join(os.tmpdir(), `skip-closed-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:00:30.000Z"),
+    sleep: async (ms) => {
+      sleeps.push(ms);
+    },
+  });
+  assert.equal(edited.disposition, "skip");
+  assert.equal(sleeps[0], 30000);
+
+  const cenv = {
+    GITHUB_EVENT_NAME: "issue_comment",
+    GITHUB_REPOSITORY: REPO,
+    GITHUB_TOKEN: "ghs_test_token",
+    GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+    GITHUB_OUTPUT: path.join(os.tmpdir(), `o2-${process.pid}`),
+  };
+  const deleted = await runCollect({
+    env: cenv,
+    fetchImpl: async (url) => {
+      if (String(url).includes("/comments/99")) return jsonResponse({}, { status: 404 });
+      return jsonResponse({ title: "title", body: "body", state: "open", user: { login: "alice" } });
+    },
+    outPath: path.join(os.tmpdir(), `skip-del-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(deleted.disposition, "skip");
+  assert.equal(debounceWaitMs(Date.parse("2026-01-01T00:00:00.000Z"), Date.parse("2026-01-01T00:00:00.000Z")), FOLLOWUP_DEBOUNCE_MS);
+  assert.equal(debounceWaitMs(Date.parse("2026-01-01T00:00:00.000Z"), Date.parse("2026-01-01T00:02:00.000Z")), 0);
+});
+
+test("discussion pages last/prev, host injection ignored, fingerprint ignores new bot comments", () => {
+  const number = 12;
+  assert.equal(
+    extractCommentsPage(
+      `<https://evil.example/x?page=9>; rel="last", <https://api.github.com/repos/qunqin24/Pulse/issues/12/comments?page=3&per_page=100>; rel="last"`,
+      number,
+      "last",
+    ),
+    3,
+  );
+  assert.equal(
+    extractCommentsPage(`<https://evil.example/repos/qunqin24/Pulse/issues/12/comments?page=9>; rel="last"`, number, "last"),
+    null,
+  );
+  const humans = Array.from({ length: 20 }, (_, i) => ({
+    id: i + 1,
+    user: { login: "alice", type: "User" },
+    created_at: "2026-01-01T00:00:00.000Z",
+    body: `h${i}`,
+  }));
+  const bots = Array.from({ length: 20 }, (_, i) => ({
+    id: 100 + i,
+    user: { login: BOT_LOGIN, type: "Bot" },
+    created_at: "2026-01-01T00:00:00.000Z",
+    body: `bot${i}`,
+  }));
+  const first = selectHistoryWindows([...humans, ...bots]);
+  const second = selectHistoryWindows([...humans, ...bots, { id: 200, user: { login: BOT_LOGIN, type: "Bot" }, created_at: "2026-01-02T00:00:00.000Z", body: "newest bot" }]);
+  assert.equal(first.fingerprintComments.length, 20);
+  assert.equal(first.fingerprintComments.every((c) => !c.bot), true);
+  assert.deepEqual(
+    fingerprintHash({ title: "t", body: "b", nonbotComments: first.fingerprintComments }),
+    fingerprintHash({ title: "t", body: "b", nonbotComments: second.fingerprintComments }),
+  );
+  assert.equal(second.contextComments.some((c) => c.id === 200), true);
+});
+
+test("followup collect posts analyze for author edit and coalesces comment same fingerprint", async () => {
+  const issueJson = { title: "new title", body: "new body", state: "open", user: { login: "alice" } };
+  const comments = [
+    { id: 1, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:00.000Z", body: "hello" },
+    { id: 99, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:00.000Z", body: "more info" },
+  ];
+  const fetchImpl = async (url) => {
+    if (String(url).includes("/comments/") && !String(url).includes("/issues/12/comments")) {
+      return jsonResponse({
+        id: 99,
+        user: { login: "alice", type: "User" },
+        body: "more info",
+        issue_url: "https://api.github.com/repos/qunqin24/Pulse/issues/12",
+      });
+    }
+    if (String(url).includes("/issues/12/comments")) return jsonResponse(comments);
+    return jsonResponse(issueJson);
+  };
+  const edit = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(issueEditPayload(12)),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `fe-${process.pid}`),
+    },
+    fetchImpl,
+    outPath: path.join(os.tmpdir(), `edit-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(edit.disposition, "analyze");
+  const comment = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+      GITHUB_EVENT_NAME: "issue_comment",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `fc-${process.pid}`),
+    },
+    fetchImpl,
+    outPath: path.join(os.tmpdir(), `cmt-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(comment.document.source.fingerprint, edit.document.source.fingerprint);
+  const newer = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12, { commentId: 2, commentBody: "new reply" })),
+      GITHUB_EVENT_NAME: "issue_comment",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `fn-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/comments/2")) {
+        return jsonResponse({
+          id: 2,
+          user: { login: "alice", type: "User" },
+          body: "new reply",
+          issue_url: "https://api.github.com/repos/qunqin24/Pulse/issues/12",
+        });
+      }
+      if (String(url).includes("/issues/12/comments")) {
+        return jsonResponse([
+          ...comments,
+          { id: 2, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:01.000Z", body: "new reply" },
+        ]);
+      }
+      return jsonResponse(issueJson);
+    },
+    outPath: path.join(os.tmpdir(), `new-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.notEqual(newer.document.source.fingerprint, edit.document.source.fingerprint);
+});
+
+test("publisher followup stale or matching marker does not POST", async () => {
+  const payload = issueEditPayload(12);
+  const target = parseTrustedTarget({ GITHUB_REPOSITORY: REPO, GITHUB_EVENT_NAME: "issues" }, payload);
+  const issueJson = { title: "new title", body: "new body", state: "open", user: { login: "alice" } };
+  const comments = [];
+  const built = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `fp-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/12/comments")) return jsonResponse(comments);
+      return jsonResponse(issueJson);
+    },
+    outPath: path.join(os.tmpdir(), `fp-in-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  const marker = dedupMarker({ ...target, fingerprint: built.document.source.fingerprint });
+  const stale = await runPublish({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+    },
+    fetchImpl: async () => jsonResponse({ title: "changed", body: "new body", state: "open", user: { login: "alice" } }),
+    inputPath: built.output,
+    resultPath: path.join(os.tmpdir(), `fp-out-${process.pid}.json`),
+  });
+  assert.equal(stale.reason, "stale");
+  const dup = await runPublish({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+    },
+    fetchImpl: async (url, init) => {
+      if (init.method === "POST") throw new Error("must not post");
+      if (String(url).includes("/issues/12/comments")) {
+        return jsonResponse([{ user: { login: BOT_LOGIN }, body: `${marker}\nprior` }]);
+      }
+      return jsonResponse(issueJson);
+    },
+    inputPath: built.output,
+    resultPath: path.join(os.tmpdir(), `fp-out2-${process.pid}.json`),
+  });
+  assert.equal(dup.reason, "duplicate");
+});
+
+test("workflow guards prevent bot-loop followups", () => {
+  assert.match(WORKFLOW, /github\.event\.comment\.user\.type != 'Bot'/);
+  assert.match(WORKFLOW, /github\.event\.sender\.login == github\.event\.issue\.user\.login/);
+  assert.doesNotMatch(WORKFLOW, /github\.event\.sender\.login == github\.event\.comment/);
+});
+
+test("trigger comment absent from list is still shown and hashed", async () => {
+  const issueJson = { title: "title", body: "body", state: "open", user: { login: "alice" } };
+  const listed = [{ id: 1, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:00.000Z", body: "hello" }];
+  const got = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+      GITHUB_EVENT_NAME: "issue_comment",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `tr-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/comments/99")) {
+        return jsonResponse({
+          id: 99,
+          user: { login: "alice", type: "User" },
+          created_at: "2026-01-01T00:00:02.000Z",
+          body: "more info",
+          issue_url: "https://api.github.com/repos/qunqin24/Pulse/issues/12",
+        });
+      }
+      if (String(url).includes("/issues/12/comments")) return jsonResponse(listed);
+      return jsonResponse(issueJson);
+    },
+    outPath: path.join(os.tmpdir(), `tr-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(got.disposition, "analyze");
+  assert.equal(got.document.discussion.comments.some((c) => c.id === 99), true);
+  const without = fingerprintHash({
+    title: "title",
+    body: "body",
+    nonbotComments: [{ id: 1, login: "alice", createdAt: "2026-01-01T00:00:00.000Z", body: "hello" }],
+  });
+  assert.notEqual(got.document.source.fingerprint, without);
+  assert.equal(got.document.source.fingerprint, got.document.discussion.fingerprint);
+});
+
+test("trigger survives >20 comments and 32KiB budget", () => {
+  const big = "y".repeat(HISTORY_BODY_MAX);
+  const many = Array.from({ length: 25 }, (_, i) => ({
+    id: i + 1,
+    user: { login: "alice", type: "User" },
+    created_at: "2026-01-01T00:00:00.000Z",
+    body: big,
+  }));
+  const trigger = {
+    id: 99,
+    user: { login: "alice", type: "User" },
+    created_at: "2026-01-01T00:00:03.000Z",
+    body: "TRIGGER",
+  };
+  const windows = selectHistoryWindows([...many, trigger], { reserveId: 99 });
+  assert.equal(windows.fingerprintComments.some((c) => c.id === 99), true);
+  assert.equal(windows.contextComments.some((c) => c.id === 99), true);
+  const capped = capDiscussionComments(windows.contextComments, { reserveId: 99 });
+  assert.equal(capped.some((c) => c.id === 99 && c.body === "TRIGGER"), true);
+  assert.equal(capped.some((c) => c.id === 25), true);
+  assert.equal(capped.some((c) => c.id === 1 || c.id === 7), false);
+  const total = capped.reduce((sum, row) => sum + Buffer.byteLength(row.body, "utf8"), 0);
+  assert.ok(total <= HISTORY_TOTAL_MAX);
+});
+
+test("stale fingerprint does not POST even if result missing or invalid", async () => {
+  const payload = issueEditPayload(12);
+  const issueSame = { title: "new title", body: "new body", state: "open", user: { login: "alice" } };
+  const historyA = [{ id: 1, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:00.000Z", body: "hello" }];
+  const historyB = [
+    ...historyA,
+    { id: 2, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:05.000Z", body: "later" },
+  ];
+  const built = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `stale-a-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/12/comments")) return jsonResponse(historyA);
+      return jsonResponse(issueSame);
+    },
+    outPath: path.join(os.tmpdir(), `stale-a-in-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  const missing = await runPublish({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+    },
+    fetchImpl: async (url, init) => {
+      if (init.method === "POST") throw new Error("must not post");
+      if (String(url).includes("/issues/12/comments")) return jsonResponse(historyB);
+      return jsonResponse(issueSame);
+    },
+    inputPath: built.output,
+    resultPath: path.join(os.tmpdir(), `missing-res-${process.pid}.json`),
+  });
+  assert.equal(missing.posted, false);
+  assert.equal(missing.reason, "stale");
+  const badResult = path.join(os.tmpdir(), `bad-res-${process.pid}.json`);
+  fs.writeFileSync(badResult, "{not json");
+  const invalid = await runPublish({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+    },
+    fetchImpl: async (url, init) => {
+      if (init.method === "POST") throw new Error("must not post");
+      if (String(url).includes("/issues/12/comments")) return jsonResponse(historyB);
+      return jsonResponse(issueSame);
+    },
+    inputPath: built.output,
+    resultPath: badResult,
+  });
+  assert.equal(invalid.posted, false);
+  assert.equal(invalid.reason, "stale");
+});
+
+test("missing followup input posts one fixed failure with live fingerprint", async () => {
+  const payload = issueEditPayload(12);
+  const issueJson = { title: "new title", body: "new body", state: "open", user: { login: "alice" } };
+  const posts = [];
+  const posted = await runPublish({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(payload),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+    },
+    fetchImpl: async (url, init) => {
+      if (init.method === "POST") {
+        posts.push(JSON.parse(init.body).body);
+        return jsonResponse({ id: 1 });
+      }
+      if (String(url).includes("/issues/12/comments")) return jsonResponse([]);
+      return jsonResponse(issueJson);
+    },
+    inputPath: path.join(os.tmpdir(), `no-in-${process.pid}.json`),
+    resultPath: path.join(os.tmpdir(), `no-out-${process.pid}.json`),
+  });
+  assert.equal(posted.posted, true);
+  assert.equal(posted.fixed, true);
+  assert.equal(posts.length, 1);
+  const fp = fingerprintHash({ title: "new title", body: "new body", nonbotComments: [] });
+  const target = parseTrustedTarget({ GITHUB_REPOSITORY: REPO, GITHUB_EVENT_NAME: "issues" }, payload);
+  assert.match(posts[0], new RegExp(dedupMarker({ ...target, fingerprint: fp }).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+});
+
+test("followup source/discussion mismatch and crossed identities are rejected", () => {
+  const env = { GITHUB_REPOSITORY: REPO, GITHUB_EVENT_NAME: "issues" };
+  const target = parseTrustedTarget(env, issueEditPayload(12));
+  const fp = fingerprintHash({ title: "new title", body: "new body", nonbotComments: [] });
+  const doc = buildInputDocument({
+    target: { ...target, fingerprint: fp },
+    title: "new title",
+    body: "new body",
+    files: [],
+    discussion: { comments: [], fingerprint: fp },
+  });
+  assert.throws(() =>
+    validateInputDocument({
+      ...doc,
+      discussion: { ...doc.discussion, fingerprint: "a".repeat(64) },
+    }),
+  );
+  assert.throws(() =>
+    validateInputDocument({
+      ...doc,
+      source: { ...doc.source, action: "created" },
+    }),
+  );
+  assert.throws(() =>
+    validateInputDocument({
+      ...doc,
+      source: { ...doc.source, eventName: "issue_comment" },
+    }),
+  );
+  assert.throws(() =>
+    validateInputDocument({
+      ...doc,
+      source: { ...doc.source, commentID: 9, commentAuthor: "alice" },
+    }),
+  );
+});
+
+test("trigger GET 404 skips, 500 errors, fetched bot marker skips", async () => {
+  const cenv = {
+    GITHUB_EVENT_NAME: "issue_comment",
+    GITHUB_REPOSITORY: REPO,
+    GITHUB_TOKEN: "ghs_test_token",
+  };
+  const skip404 = await runCollect({
+    env: {
+      ...cenv,
+      GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `e404-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/comments/99")) return jsonResponse({}, { status: 404 });
+      return jsonResponse({ title: "title", body: "body", state: "open", user: { login: "alice" } });
+    },
+    outPath: path.join(os.tmpdir(), `e404-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(skip404.disposition, "skip");
+  await assert.rejects(
+    () =>
+      runCollect({
+        env: {
+          ...cenv,
+          GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+          GITHUB_OUTPUT: path.join(os.tmpdir(), `e500-${process.pid}`),
+        },
+        fetchImpl: async (url) => {
+          if (String(url).includes("/issues/comments/99")) return jsonResponse({}, { status: 500 });
+          return jsonResponse({ title: "title", body: "body", state: "open", user: { login: "alice" } });
+        },
+        outPath: path.join(os.tmpdir(), `e500-doc-${process.pid}.json`),
+        now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+        sleep: async () => {},
+      }),
+    /GitHub API 500/,
+  );
+  const humans = [{ id: 1, user: { login: "alice", type: "User" }, created_at: "2026-01-01T00:00:00.000Z", body: "hello" }];
+  const fp = fingerprintHash({
+    title: "new title",
+    body: "new body",
+    nonbotComments: [{ id: 1, login: "alice", createdAt: "2026-01-01T00:00:00.000Z", body: "hello" }],
+  });
+  const marker = dedupMarker({
+    kind: "issue_followup",
+    number: 12,
+    fingerprint: fp,
+  });
+  const skipped = await runCollect({
+    env: {
+      GITHUB_EVENT_PATH: eventFile(issueEditPayload(12)),
+      GITHUB_EVENT_NAME: "issues",
+      GITHUB_REPOSITORY: REPO,
+      GITHUB_TOKEN: "ghs_test_token",
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `botskip-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/12/comments")) {
+        return jsonResponse([...humans, { id: 50, user: { login: BOT_LOGIN, type: "Bot" }, created_at: "2026-01-01T00:00:00.000Z", body: `${marker}\nprior` }]);
+      }
+      return jsonResponse({ title: "new title", body: "new body", state: "open", user: { login: "alice" } });
+    },
+    outPath: path.join(os.tmpdir(), `botskip-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(skipped.disposition, "skip");
+  const botTrigger = await runCollect({
+    env: {
+      ...cenv,
+      GITHUB_EVENT_PATH: eventFile(issueCommentPayload(12)),
+      GITHUB_OUTPUT: path.join(os.tmpdir(), `bottrig-${process.pid}`),
+    },
+    fetchImpl: async (url) => {
+      if (String(url).includes("/issues/comments/99")) {
+        return jsonResponse({
+          id: 99,
+          user: { login: "alice", type: "Bot" },
+          body: "more info",
+          issue_url: "https://api.github.com/repos/qunqin24/Pulse/issues/12",
+        });
+      }
+      return jsonResponse({ title: "title", body: "body", state: "open", user: { login: "alice" } });
+    },
+    outPath: path.join(os.tmpdir(), `bottrig-doc-${process.pid}.json`),
+    now: () => Date.parse("2026-01-01T00:01:00.000Z"),
+    sleep: async () => {},
+  });
+  assert.equal(botTrigger.disposition, "skip");
 });
 
 function fakeChild(ndjson, { code = 0, hang = false } = {}) {

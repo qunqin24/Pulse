@@ -6,9 +6,20 @@ Official product docs: [OpenCode Go](https://opencode.ai/docs/go/), [tools](http
 
 ## What it does
 
-On **new issues** (`opened`) and pull requests (`opened`, `synchronize`, `reopened`) in `qunqin24/Pulse`, a workflow may post a triage comment. It does **not** run on comments, edits, labels, closes, reviews, or manual `workflow_dispatch`.
+On **new issues** (`opened`), **issue follow-ups**, and pull requests (`opened`, `synchronize`, `reopened`) in `qunqin24/Pulse`, a workflow may post a triage comment. It does **not** run on labels, closes, reviews, or manual `workflow_dispatch`.
 
-Pull requests are ignored unless `pull_request.base.repo.full_name` is `qunqin24/Pulse`. Any base **branch** is allowed. PRs **authored** by `qunqin24` (case-insensitive login) are ignored in every job; this uses `pull_request.user.login`, **not** `github.actor`, `sender`, or the head-repo owner. The owner’s **issues** are still triaged.
+Issue follow-ups are **non-PR issues only**:
+
+- `issues` `edited` — title or body changed, and **only** when `sender.login` is the human issue author (`type` not Bot, login not `[bot]`). The repo owner editing someone else’s issue is ignored.
+- `issue_comment` `created` — human `comment.user` is the issue author **or** `qunqin24`. Authorization uses `comment.user`, **not** `sender`. Bots and `*[bot]` identities are rejected so the bot cannot loop on its own replies.
+
+Those guards are on **all three jobs**, including `always()` publish. Ineligible follow-ups `disposition=skip` and do not fall through to a failure comment.
+
+Follow-up collect waits up to **60 seconds** from the event timestamp (coalescing, not a hard rate cap), then re-reads the issue (and the triggering comment). Discussion history is bounded: at most **three** comment pages (first, last, previous), last 20 comments in the model context, 2KiB per body / 32KiB combined, inside the existing 192KiB input cap. The **trigger comment is always merged** into that window (reserved in the 20-comment and 32KiB budgets) even if the list pages omit it. Prior bot comments are untrusted context. The **fingerprint** hashes current title/body plus a **separate non-bot** window taken from those **fetched pages only** — extra bot comments on those pages cannot evict humans from that window; that is not an absolute guarantee over unfetched history. Follow-up dedup is marker `v3:issue-followup:number:hash`. Opened issues and PRs keep v2 markers. Edit and comment that produce the same fingerprint coalesce. The bot’s own reply must not change the fingerprint.
+
+GET-then-POST is best-effort; a race can still duplicate or skip. There are **no** close/label commands.
+
+Pull requests are ignored unless `pull_request.base.repo.full_name` is `qunqin24/Pulse`. Any base **branch** is allowed. PRs **authored** by `qunqin24` (case-insensitive login) are ignored in every job; this uses `pull_request.user.login`, **not** `github.actor`, `sender`, or the head-repo owner. The owner’s **issues** (opened and, as author or owner commenter, follow-ups) are still triaged.
 
 The comment is posted as **`github-actions[bot]`**. No GitHub App is required.
 
@@ -36,9 +47,9 @@ Concurrency is **per target** (this issue or this PR), not one global group that
 
 Checkout (collect and publish only) uses **`github.workflow_sha`** (the default-branch workflow commit for `pull_request_target`). Never PR head, never `github.sha`, never a mutable `main` ref checkout. `persist-credentials: false`. Analyze does **not** check out the repository.
 
-1. **collect** — read-only GitHub API. Public, bounded metadata; for PRs, bounded patches. Does not check out the PR branch. Does not execute PR content. Uploads `triage-tools` (staged allowlist under `trusted-tools/` with hidden files) **before** the API collect step. Writes `disposition=analyze|skip` to `GITHUB_OUTPUT`. For PRs, `GET /pulls/N` **before and after** the files list must match the event head SHA, base ref, base repo, author, and `open`; mismatch is a successful **skip** (no input, no model, no comment). API failure leaves disposition unset so publish can use the fixed failure path.
+1. **collect** — read-only GitHub API. Public, bounded metadata; for PRs, bounded patches. Does not check out the PR branch. Does not execute PR content. Uploads `triage-tools` (staged allowlist under `trusted-tools/` with hidden files) **before** the API collect step. Writes `disposition=analyze|skip` to `GITHUB_OUTPUT`. For PRs, `GET /pulls/N` **before and after** the files list must match the event head SHA, base ref, base repo, author, and `open`; mismatch is a successful **skip** (no input, no model, no comment). Follow-ups skip when the issue is closed, is a PR, the edit/comment no longer matches, or a v3 marker is already present. API failure leaves disposition unset so publish can use the fixed failure path **only if** the current event still verifies.
 2. **analyze** — `permissions: {}`. Runs only when `disposition == 'analyze'`. **No checkout.** Downloads `triage-tools` and executes only those trusted paths. Child environment has **no** `GITHUB_TOKEN`.
-3. **publish** — `contents: read`, `issues: write`, `pull-requests: read` (not write). Runs on `always() && !cancelled()` when eligible and `disposition != 'skip'` (missing disposition is not skip). Before any comment it **GET**s the PR again; identity mismatch is a silent skip; if the GET cannot verify, it fail-closes with **no** comment. Dedup uses a v2 marker derived only from trusted fields (`number`, `kind`, `action`, `headSHA`, hash of `baseRef`) — not raw untrusted text. Issue reruns of the same opened event dedup. `synchronize` with a new SHA posts; the same SHA does not. `reopened` with the same SHA is **one** extra comment; repeating reopen with that SHA dedups. Retargeting the same head onto another base is a different marker. A model result is used only when the collect artifact identity fully matches the event; otherwise the fixed failure text with the **same** marker.
+3. **publish** — `contents: read`, `issues: write`, `pull-requests: read` (not write). Runs on `always() && !cancelled()` when eligible and `disposition != 'skip'` (missing disposition is not skip). Before any comment it re-GETs the PR or issue (and follow-up comment/history). Identity mismatch, closed, deleted, or unverifiable GET: **no** comment. Dedup: opened issues and PRs use v2 markers as before; follow-ups use v3 fingerprint markers scanned across fetched bot comments plus the paginated comment list. Opened issues also suppress when the title/body changed or the issue closed. A model result is used only when the collect artifact identity fully matches; otherwise the fixed failure text with the **same** marker.
 
 GET-then-POST is not atomic. A narrow race can still duplicate or skip; that is documented, not a guarantee.
 
