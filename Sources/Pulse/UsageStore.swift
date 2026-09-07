@@ -681,11 +681,22 @@ final class UsageStore {
     /// successful pass.
     func reconsiderAlerts() {
         guard let alerts else { return }
+        let now = Date()
+        var needsRefresh = false
         for account in settings.shownAccounts {
             let reading = usage(for: account)
-            guard case .live = reading.state else { continue }
+            guard case .live = reading.state,
+                  let observedAt = reading.observedAt,
+                  now.timeIntervalSince(observedAt) <= UsageCache.maximumAge else {
+                needsRefresh = true
+                continue
+            }
+            if reading.windows.contains(where: { ($0.resetsAt ?? .distantFuture) <= now }) {
+                needsRefresh = true
+            }
             alerts.observe(reading, raw: reading, as: account)
         }
+        if needsRefresh { refresh() }
     }
 
     func usage(for account: AccountKey) -> ProviderUsage {

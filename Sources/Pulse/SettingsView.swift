@@ -420,10 +420,11 @@ struct SettingsView: View {
                         get: { settings.alertThreshold },
                         set: {
                             settings.alertThreshold = $0
-                            alerts.requestAuthorizationIfNeeded()
-                            // A limit already over the line is announced once,
-                            // now — not at some point in the next half hour.
-                            store.reconsiderAlerts()
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
                         }
                     )) {
                         ForEach(AlertThreshold.allCases) { threshold in
@@ -445,10 +446,11 @@ struct SettingsView: View {
                         get: { settings.alertsOnReset },
                         set: {
                             settings.alertsOnReset = $0
-                            alerts.requestAuthorizationIfNeeded()
-                            // A limit already over the line is announced once,
-                            // now — not at some point in the next half hour.
-                            store.reconsiderAlerts()
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
                         }
                     ))
                     .labelsHidden()
@@ -468,10 +470,11 @@ struct SettingsView: View {
                         get: { settings.alertsOnFailure },
                         set: {
                             settings.alertsOnFailure = $0
-                            alerts.requestAuthorizationIfNeeded()
-                            // A limit already over the line is announced once,
-                            // now — not at some point in the next half hour.
-                            store.reconsiderAlerts()
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
                         }
                     ))
                     .labelsHidden()

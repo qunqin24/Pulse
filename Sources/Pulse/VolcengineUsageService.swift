@@ -229,6 +229,21 @@ struct VolcengineUsageService: Sendable {
             return .failure(Refusal(reason: .volcengineCLIMissing))
         }
 
+        // Darwin Foundation normally creates a group led by the child. Verify
+        // it before signalling a group, and never target Pulse's own group.
+        // A fast-exiting leader may already be reaped while its group survives.
+        // That last check confirms a group with this id exists *now*; a pid
+        // freed and reused before `stop()` would be somebody else's. It needs
+        // the child reaped, the pid reissued within milliseconds, and the new
+        // owner to be a group leader — accepted against leaving descendants
+        // running, which is what this branch is for.
+        let pid = process.processIdentifier
+        let ownGroup = getpgrp()
+        let reportedGroup = getpgid(pid)
+        let hasGroup = reportedGroup == pid
+            || (reportedGroup == -1 && errno == ESRCH && kill(-pid, 0) == 0)
+        let processGroup = pid > 1 && pid != ownGroup && hasGroup ? pid : nil
+
         let collected = Collected()
         let readers = DispatchGroup()
         for (pipe, isStandardOutput) in [(out, true), (err, false)] {
@@ -262,15 +277,19 @@ struct VolcengineUsageService: Sendable {
         /// SIGTERM, then SIGKILL, then give up — each bounded. `terminate()`
         /// alone is a request, and a CLI with a stuck graceful-shutdown path
         /// is exactly the thing being escaped from.
-        /// Kills the child. **Not the tree** — `Process` cannot put the child in
-        /// its own process group, and killing ours would take Pulse with it. A
-        /// grandchild that has been backgrounded outlives this call holding its
-        /// own copy of the pipe write ends; it no longer holds anything of
-        /// ours, since the handlers are cleared and the `Pipe` goes with the
-        /// call. `arkcli` is not known to daemonise, and the alternative is
-        /// hand-rolled `posix_spawn` with `POSIX_SPAWN_SETPGROUP` — which is
-        /// where the two bugs in this function came from the first two times.
         func stop() {
+            if let processGroup {
+                kill(-processGroup, SIGTERM)
+                let until = DispatchTime.now() + 2
+                // The leader exiting is not enough: a descendant can retain
+                // the pipes and ignore TERM. Give the whole group its grace.
+                while kill(-processGroup, 0) == 0, DispatchTime.now() < until {
+                    Thread.sleep(forTimeInterval: 0.02)
+                }
+                if kill(-processGroup, 0) == 0 { kill(-processGroup, SIGKILL) }
+                _ = exited.wait(timeout: .now() + 2)
+                return
+            }
             process.terminate()
             guard exited.wait(timeout: .now() + 2) == .timedOut else { return }
             kill(process.processIdentifier, SIGKILL)

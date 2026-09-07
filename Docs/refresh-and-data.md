@@ -4,7 +4,7 @@ Pulse shows **figures the provider reported**. It does not invent a usage percen
 
 Per-provider HTTP, cookies, and login: [providers/README.md](providers/README.md). Why percentages stay reported: [decisions/reported-figures.md](decisions/reported-figures.md).
 
-What Pulse says about these readings unprompted: [notifications.md](notifications.md). What it hands to anything outside the panel: [json-output.md](json-output.md). **Every fetched reading is written through `UsageStore.commit(_:for:)`**, which is also where the alert rules see it — the seeded placeholders and the cache restored at launch are written directly, because neither is something Pulse has just observed.
+What Pulse says about these readings unprompted: [notifications.md](notifications.md). What it hands to anything outside the panel: [json-output.md](json-output.md). **Every fetched reading is written through `UsageStore.commit(_:raw:for:)`**, which gives alert rules both the raw result and the reconciled display reading. Seeded placeholders and restored cache do not enter the rules. Explicit notification-setting changes reconsider valid live snapshots after authorization, and request a refresh if current readings are stale or expired.
 
 ## Refresh loop
 

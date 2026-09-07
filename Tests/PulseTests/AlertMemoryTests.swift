@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UserNotifications
 @testable import Pulse
 
 /// The notification rules, which are the reason `AlertMemory.alerts` was
@@ -113,6 +114,26 @@ struct AlertMemoryTests {
     func thresholdOff() {
         var memory = AlertMemory()
         #expect(run(&memory, Self.live(Self.window(used: 1.0, exhausted: true)), threshold: .off).isEmpty)
+    }
+
+    @Test("Reconsidering a live snapshot never announces a window that already reset")
+    func expiredLiveWindowIsSilent() {
+        var memory = AlertMemory()
+        let expired = Self.window(used: 1, resetsAt: Self.now.addingTimeInterval(-1), exhausted: true)
+        #expect(run(&memory, Self.live(expired)).isEmpty)
+        #expect(memory.accounts[Self.account.id]?.windows.isEmpty == true)
+
+        let current = Self.window("weekly-current", used: 0.93, resetsAt: Self.now.addingTimeInterval(3600))
+        let produced = run(&memory, Self.live(expired, current))
+        #expect(produced.map(\.window?.id) == ["weekly-current"])
+    }
+
+    @Test("A live snapshot older than the cache lifetime cannot be reconsidered as current")
+    func ancientLiveSnapshotIsSilent() {
+        var memory = AlertMemory()
+        let old = Self.live(Self.window(used: 1), at: Self.now.addingTimeInterval(-86_401))
+        #expect(run(&memory, old).isEmpty)
+        #expect(run(&memory, Self.live(Self.window(used: 0.93))).count == 1)
     }
 
     @Test("Lowering the threshold announces the step that is now crossed")
@@ -263,7 +284,7 @@ struct AlertMemoryTests {
     func steadyStatesAreNotFailures() {
         for reason: ProviderUsage.Unavailability in [
             .apiKeyMissing, .notSignedIn, .antigravityNotRunning, .grokBotNotIncluded,
-            .noLimitsReported, .loading, .codexNotInstalled
+            .noLimitsReported, .loading, .codexNotInstalled, .volcengineSignInRequired
         ] {
             var memory = AlertMemory()
             for _ in 1...5 {
@@ -491,6 +512,34 @@ struct AlertsThroughTheCacheTests {
         #expect(produced.map(\.kind) == [.unreadable(.unreachable)])
     }
 
+    @Test("Real failures behind fresh cached figures keep the thirty-minute grace")
+    func freshCacheKeepsTheGrace() async {
+        let cache = Self.cache()
+        var memory = AlertMemory()
+        let sample = Self.live(used: 0.4)
+        let now = Date()
+        let good = ProviderUsage(account: Self.account, windows: sample.windows,
+                                 observedAt: now, state: .live, plan: nil, creditBalance: nil)
+        _ = await cache.reconciled(good)
+        let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
+        let shown = await cache.reconciled(down)
+        #expect(shown.state == .stale)
+        for seconds in [120.0, 240, 360, 1800] {
+            let produced = memory.alerts(for: shown, raw: down.state, as: Self.account,
+                                        threshold: .off, announcesReset: false, announcesFailure: true,
+                                        staleMeansFailure: true, now: now.addingTimeInterval(seconds))
+            #expect(produced.isEmpty)
+        }
+        #expect(memory.accounts[Self.account.id]?.failures == 0)
+        var produced: [UsageAlert] = []
+        for seconds in [1801.0, 1921, 2041] {
+            produced += memory.alerts(for: shown, raw: down.state, as: Self.account,
+                                      threshold: .off, announcesReset: false, announcesFailure: true,
+                                      staleMeansFailure: true, now: now.addingTimeInterval(seconds))
+        }
+        #expect(produced.map(\.kind) == [.unreadable(.unreachable)])
+    }
+
     @Test("An answer with no limits in it ends a run of failures")
     func answeredBreaksTheRun() async {
         var memory = AlertMemory()
@@ -534,5 +583,60 @@ struct AlertsThroughTheCacheTests {
         // has been witnessed, so nothing may be said.
         let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
         #expect(alerts(&memory, shown: await cache.reconciled(down), raw: down).isEmpty)
+    }
+}
+
+@Suite("Notification authorization")
+@MainActor
+struct NotificationAuthorizationTests {
+    @Test("An in-flight grant does not consume readings, and concurrent requests share it", arguments: [true, false])
+    func pendingAuthorizationDoesNotConsumeWarning(granted: Bool) async throws {
+        let file = FileManager.default.temporaryDirectory.appending(path: "pulse-permission-\(UUID()).json")
+        let settings = AppSettings(alertThreshold: .ninety)
+        let alerts = UsageAlerts(settings: settings, file: file)
+        var finish: CheckedContinuation<Bool, Never>?
+        let first = Task {
+            await alerts.requestAuthorizationIfNeeded {
+                await withCheckedContinuation { finish = $0 }
+            }
+        }
+        while finish == nil { await Task.yield() }
+        var joined = false
+        var repeated = false
+        let second = Task {
+            joined = true
+            return await alerts.requestAuthorizationIfNeeded {
+                repeated = true
+                return false
+            }
+        }
+        while !joined { await Task.yield() }
+
+        let account = AccountKey(.claudeCode)
+        let reading = ProviderUsage(
+            account: account,
+            windows: [UsageWindow(id: "weekly", kind: .weekly, scope: nil,
+                                  usedFraction: 0.93, windowSeconds: 604_800, resetsAt: nil)],
+            observedAt: Date(), state: .live, plan: nil, creditBalance: nil
+        )
+        alerts.observe(reading, raw: reading, as: account)
+        #expect(alerts.memory.accounts.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: file.path))
+        finish?.resume(returning: granted)
+        #expect(await first.value == granted)
+        #expect(await second.value == granted)
+        #expect(!repeated)
+        var memory = alerts.memory
+        #expect(memory.alerts(for: reading, raw: reading.state, as: account,
+                              threshold: .ninety, announcesReset: false, announcesFailure: false,
+                              staleMeansFailure: false, now: Date()).count == 1)
+    }
+
+    @Test("The foreground presentation callback is a real optional protocol method")
+    func foregroundSelectorIsImplemented() {
+        let handler = NotificationTapHandler(open: {})
+        #expect(handler.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(
+            _:willPresent:withCompletionHandler:
+        ))))
     }
 }

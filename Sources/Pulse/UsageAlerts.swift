@@ -205,7 +205,13 @@ struct AlertMemory: Codable, Sendable, Equatable {
 
         case .unavailable(let reason):
             switch Self.standing(of: reason) {
-            case .failure: countFailure(reason)
+            case .failure:
+                if case .stale = reading.state,
+                   let observedAt = reading.observedAt,
+                   now.timeIntervalSince(observedAt) <= Self.stalenessBeforeSaying {
+                    break
+                }
+                countFailure(reason)
             case .answered: succeeded()
             case .neutral: break
             }
@@ -216,12 +222,16 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // already recorded here — and a figure that falls is how a reset is
         // detected. Running the cache through these rules would announce a
         // reset every time the network hiccuped.
-        guard case .live = rawState, case .live = reading.state, threshold != .off else {
+        guard case .live = rawState, case .live = reading.state, threshold != .off,
+              let observedAt = reading.observedAt,
+              now.timeIntervalSince(observedAt) <= UsageCache.maximumAge else {
             accounts[account.id] = record
             return produced
         }
 
         for window in reading.windows {
+            // A previously live snapshot can outlast its window between polls.
+            guard window.resetsAt.map({ $0 > now }) ?? true else { continue }
             let seen = record.windows[window.id]
             // First sighting starts at nothing announced, so a limit that is
             // *already* past the line is said once, now.
@@ -334,7 +344,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .cursorLoginExpired, .grokLoginExpired, .signedOut, .apiKeyRefused,
              .ollamaSessionExpired, .ollamaPageChanged,
              .unreachable, .unreadableReply, .rateLimited, .serverError,
-             .codexServerFailed, .volcengineSignInRequired:
+             .codexServerFailed:
             .failure
 
         // The provider replied. "No limits on this plan" and "your Cursor plan
@@ -350,7 +360,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
              .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
-             .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing:
+             .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
+             .volcengineSignInRequired:
             .neutral
         }
     }
@@ -403,16 +414,20 @@ final class UsageAlerts {
     private(set) var authorization: UNAuthorizationStatus = .notDetermined
 
     private let settings: AppSettings
-    private var memory: AlertMemory
+    // Read-only outside this type so tests can verify no warning is consumed during authorization.
+    private(set) var memory: AlertMemory
     private var tapHandler: NotificationTapHandler?
+    private var authorizationRequest: Task<Bool, Never>?
+    private let memoryFile: URL
 
     private static var file: URL {
         PulseStorage.directory.appending(path: "alerts.json")
     }
 
-    init(settings: AppSettings) {
+    init(settings: AppSettings, file: URL = UsageAlerts.file) {
         self.settings = settings
-        memory = (try? Data(contentsOf: Self.file))
+        memoryFile = file
+        memory = (try? Data(contentsOf: file))
             .flatMap { try? JSONDecoder().decode(AlertMemory.self, from: $0) } ?? AlertMemory()
     }
 
@@ -445,18 +460,27 @@ final class UsageAlerts {
     /// Asks, if anything is switched on and nobody has been asked yet. Called
     /// from the settings pane the moment a switch goes on, which is the one
     /// place the dialog is expected.
-    func requestAuthorizationIfNeeded() {
-        guard Self.isSupported, settings.wantsAlerts else { return }
-
-        Task {
-            // `.sound` as well as `.alert`: without it in the grant the
-            // system's per-app sound setting is disabled outright, and every
-            // `content.sound` is dropped no matter what the user does with the
-            // switch afterwards.
-            _ = try? await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .sound])
-            await readAuthorization()
+    func requestAuthorizationIfNeeded() async -> Bool {
+        guard Self.isSupported else { return false }
+        return await requestAuthorizationIfNeeded {
+            let granted = (try? await UNUserNotificationCenter.current()
+                .requestAuthorization(options: [.alert, .sound])) ?? false
+            await self.readAuthorization()
+            return granted
         }
+    }
+
+    /// Injectable authorization operation: tests never contact the system centre.
+    func requestAuthorizationIfNeeded(using request: @escaping @MainActor () async -> Bool) async -> Bool {
+        guard settings.wantsAlerts else { return false }
+        if let authorizationRequest {
+            return await authorizationRequest.value && settings.wantsAlerts
+        }
+        let pending = Task { await request() }
+        authorizationRequest = pending
+        let granted = await pending.value
+        authorizationRequest = nil
+        return granted && settings.wantsAlerts
     }
 
     /// A reading has landed. Decide what it is worth saying, and say it.
@@ -469,7 +493,8 @@ final class UsageAlerts {
         // file**: without this the memory was written on the first pass of
         // every launch — measured — and a run of failures was counted up for a
         // feature nobody had turned on.
-        guard settings.wantsAlerts else { return }
+        guard settings.wantsAlerts, authorizationRequest == nil,
+              !Self.isSupported || authorization != .notDetermined else { return }
 
         let before = memory
         let alerts = memory.alerts(
@@ -590,7 +615,7 @@ final class UsageAlerts {
         // rest of this type, and reading it from the queue is the kind of
         // actor-isolation slip that is a warning here and an error in Xcode.
         let snapshot = memory
-        let destination = Self.file
+        let destination = memoryFile
         Self.disk.async {
             PulseStorage.prepare()
             guard let data = try? JSONEncoder().encode(snapshot) else { return }
@@ -607,11 +632,19 @@ final class UsageAlerts {
 /// than the account's own: the pane is the view's own state, and reaching into
 /// it from here would mean threading a selection through the window controller
 /// for a feature that is one click away as it is.
-private final class NotificationTapHandler: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
+final class NotificationTapHandler: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
     private let open: @MainActor () -> Void
 
     init(open: @escaping @MainActor () -> Void) {
         self.open = open
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list, .sound])
     }
 
     /// The completion-handler form rather than the `async` one, deliberately.

@@ -14,13 +14,14 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 |---|---|
 | `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate. [notifications.md](notifications.md) |
 | `AlertsThroughTheCacheTests` | The same rules reached the way production reaches them: service → `UsageCache.reconciled` → state machine |
+| `NotificationAuthorizationTests` | An injected authorization decision, concurrent requests, no warning consumed while a grant is pending, and the foreground delegate selector; no system permission or notification delivery |
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
-| `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, a grandchild holding them, and how a non-zero exit is classified |
+| `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |
 
 ## What is not, and why
 

@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 import Testing
 @testable import Pulse
 
@@ -262,18 +263,26 @@ struct VolcengineProcessTests {
         #expect(elapsed < .seconds(20))
     }
 
-    @Test("A grandchild holding the pipes does not hold the call")
-    func grandchildDoesNotHoldTheCall() async throws {
-        // The child exits immediately but leaves a background process holding
-        // the write ends. What is guaranteed is that **this call returns** —
-        // not that the grandchild dies: `Process` cannot put the child in its
-        // own process group, so `stop()` kills the child and nothing below it.
-        // Asserting a bounded return is asserting what the code promises.
+    @Test("A grandchild is terminated even after its parent exits", arguments: [false, true])
+    func grandchildDoesNotHoldTheCall(ignoresTERM: Bool) async throws {
+        let file = FileManager.default.temporaryDirectory.appending(path: "pulse-grandchild-\(UUID()).pid")
+        defer { try? FileManager.default.removeItem(at: file) }
         let started = ContinuousClock.now
-        _ = await VolcengineUsageService.run(
-            Self.shell, ["-c", "(sleep 30) & printf done; exit 0"], deadline: 2
+        let command = ignoresTERM ? "trap '' TERM; exec sleep 30" : "exec sleep 30"
+        let result = await VolcengineUsageService.run(
+            Self.shell,
+            ["-c", "(\(command)) & printf '%s' \"$!\" > \"$1\"; exit 0", "pulse-test", file.path],
+            deadline: 1
         )
         #expect(started.duration(to: .now) < .seconds(20))
+        #expect(result == .failure(.init(reason: .unreachable)))
+        let pid = try #require(Int32(String(contentsOf: file, encoding: .utf8)))
+        defer { if kill(pid, 0) == 0 { kill(pid, SIGKILL) } }
+        let until = ContinuousClock.now + .seconds(3)
+        while kill(pid, 0) == 0, ContinuousClock.now < until {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(kill(pid, 0) == -1 && errno == ESRCH, "the runner returned but its descendant survived")
     }
 
     @Test("A missing binary is reported, not thrown")

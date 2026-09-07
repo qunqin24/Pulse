@@ -2,7 +2,7 @@
 
 Owns: when Pulse posts a system notification, what it says, and what it refuses to say. Settings copy and layout: [ui/settings.md](ui/settings.md). Where readings come from: [refresh-and-data.md](refresh-and-data.md).
 
-Source: [`Sources/Pulse/UsageAlerts.swift`](../Sources/Pulse/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Entry point: `UsageStore.commit(_:for:)` — **every fetched reading goes through it, and only fetched ones**.
+Source: [`Sources/Pulse/UsageAlerts.swift`](../Sources/Pulse/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds.
 
 ## What can be said
 
@@ -13,7 +13,7 @@ Four things, and nothing else. Each is something you would want to know *while l
 | `approaching(percent:)` | A window's used share reaches the chosen step | `alertThreshold` |
 | `spent` | The provider reports the window exhausted, or the share rounds *down* to 100 | `alertThreshold` |
 | `reset` | A window that was warned about has unambiguously turned over | `alertsOnReset` + `alertThreshold` |
-| `unreadable(_:)` | Three passes in a row produced nothing current, and the figures on screen are over 30 minutes old | `alertsOnFailure` |
+| `unreadable(_:)` | Three eligible failures; cached figures remain protected for their first 30 minutes, while a failure with no usable figures counts immediately | `alertsOnFailure` |
 
 All off by default. All ask for the **default sound**; the mute switch is macOS's own per-app "Play sound for notifications".
 
@@ -31,6 +31,8 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 **Limits are judged on `.live` readings only.** A `.stale` reading carries whatever the cache last banked, which can be *lower* than the figure already recorded — and a figure that falls is how a reset is detected. Running the cache through these rules announced a reset every time the network hiccuped.
 
+**A live snapshot is not live forever.** Limit rules require a dated reading no older than the cache's 24-hour maximum and skip individual windows whose reset time has passed. Reconsidering existing readings applies these same guards, and requests a refresh when a displayed reading is stale, undated, too old, or contains an expired window. The remaining valid windows can still warn immediately.
+
 **A reset needs unambiguous evidence.** Two signals: the provider's reset time moved forward by more than a minute, or the share dropped by 40 points or more. A drop of 5 points says nothing — a rolling window (Kimi's week, which can reset anywhere inside it) slides down a few points at a time without anything having reset.
 
 **The announced step is cleared by that same evidence, not by the drop.** Clearing it on any 5-point dip re-armed a window that had not reset: 95% → 89% → 93% announced twice, and went on announcing for as long as the figure wobbled across the line. "At most one notification per limit" was on the tin and was not what it did. `oscillationDoesNotReAnnounce` pins it. A reset is also only announced for a window that was mentioned on the way up: "your 5-hour window reset" about a window that never passed 12% is a notification about nothing. That dependency is why the Settings row is greyed out while the threshold is Off.
@@ -41,9 +43,9 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 **`.stale` on its own is not a failure** for the rest, and this is the trap. `UsageCache.reconciled` hands back a stale reading for a *successful* fetch too: the status-line route calls its capture live for ten minutes, so a good capture can be older than what the endpoint banked a minute ago, and the newer banked one is returned instead — marked stale, every pass, for an account that is working. Counting that would have put "Claude Code can't be read" on screen for the provider most likely to hit it.
 
-The reason is also gone by then: a failed fetch that the cache answers for arrives as `.stale`, with the `Unavailability` swallowed by the fallback. So a stale reading is asked the question it *can* answer, which is also the one the user cares about — **are the figures on the panel getting old**. Over `stalenessBeforeSaying` (30 minutes, the top of the adaptive interval, so at least one missed pass) it counts; under it, nothing.
+**Classification uses the raw fetch, not the cached replacement.** A closed Antigravity still displays its cached figures, but the raw `.antigravityNotRunning` remains neutral however old those figures become. A genuine failure behind the same cache counts only after `stalenessBeforeSaying` (30 minutes); before then it does not advance the streak. A raw live answer clears the streak even if reconciliation selects a newer cached reading. A service's own raw `.stale` result is judged by age and the push-route exemption.
 
-**Unavailable is not the same as failed.** `AlertMemory.isFailure` is an exhaustive switch, and the question it asks is "did something that was working stop", not "is there anything to show". A credential that went bad or a request that did not get through counts. A setup step nobody has taken (`apiKeyMissing`, `notSignedIn`), an app that is not running (`antigravityNotRunning`), and a complete answer with no numbers in it (`grokBotNotIncluded`, `noLimitsReported`) do not — all of them stay true until somebody does something, and being told on a timer is nagging. A new `Unavailability` case must be classified in that switch; the compiler will insist.
+**Unavailable is not the same as failed.** `AlertMemory.standing(of:)` exhaustively distinguishes failure, answered, and neutral. A credential that went bad or a request that did not get through counts. Complete answers without numbers (`grokBotNotIncluded`, `noLimitsReported`) clear both the failure streak and the reported-outage mark. Setup steps (`apiKeyMissing`, `notSignedIn`, `volcengineSignInRequired`) and an app that is not running remain neutral. Ark CLI's generic sign-in response cannot distinguish never configured from expired, so it is not evidence of an outage.
 
 **Three failures, not one.** Against an interval of 2–30 minutes that is six minutes to an hour and a half of silence. One failed pass is not news — these endpoints are undocumented, and a dropped connection answers for itself on the next tick. Reported once per outage: `reportedFailure` is cleared only by a reading that works.
 
@@ -51,7 +53,7 @@ The reason is also gone by then: a failed fetch that the cache answers for arriv
 
 `AlertMemory` is persisted to `alerts.json` in [`PulseStorage.directory`](../Sources/Pulse/ModelPrices.swift), keyed by account id, then by window id. It has to be on disk: Pulse starts at login and runs while the Mac sleeps, so "have I already mentioned this" cannot live in memory alone — every relaunch would re-announce everything already over the line, which is what makes people switch notifications off for good.
 
-It is kept up to date **whether or not anything can be posted**, so a build with no bundle, or a grant that was refused, cannot later wake up and announce a fortnight of crossings it slept through.
+It is kept up to date even when a grant was refused or the build is unbundled, so neither later announces a fortnight of missed crossings. **An unresolved authorization decision is different:** readings are not consumed while authorization is unknown in a bundled app or a request is in flight. They remain eligible for the immediate evaluation after a successful grant.
 
 Every rule on this page is covered by `AlertMemoryTests` ([testing.md](testing.md)). Change one, change that.
 
@@ -64,6 +66,10 @@ Every rule on this page is covered by `AlertMemoryTests` ([testing.md](testing.m
 `UNUserNotificationCenter.current()` does not fail politely without an app bundle: it raises, and takes the process with it. `swift run` produces a bare executable and is the normal way to work on this app, so every entry point is fenced by `UsageAlerts.isSupported` (`Bundle.main.bundleIdentifier != nil`) and the Settings row says why the switches are dead. **Test notifications from `./Scripts/bundle.sh`, never from `swift run`.**
 
 Permission is asked for the moment a switch goes on in Settings — not at launch. A permission dialog at launch, for a feature nobody has switched on, is how an app gets denied for good.
+
+The request is awaited before reconsidering readings; concurrent setting changes share one in-flight request. Refreshes that finish while the prompt is open still update the display, but cannot mark warnings as announced. A refused request does not trigger a reconsideration. The request completion also checks that alerts are still wanted.
+
+The delegate implements the completion-handler `willPresent` selector and requests banner, list, and sound even while Settings is the active window. Without it, enabling a warning in Settings could consume the warning while macOS suppressed its presentation. System notification and sound settings still apply. Tests verify authorization ordering and the delegate selector, not real macOS banner delivery.
 
 The subtitle reports `UNAuthorizationStatus`, not the switches: a grant can be withdrawn in System Settings long after it was given, and a switch left on while macOS drops everything Pulse posts is a setting that lies. **It is re-read every time the settings window opens** (`refreshAuthorization`) — read once at launch and never again, the row said alerts were on while macOS discarded every one, which is the exact failure the field exists to report.
 
