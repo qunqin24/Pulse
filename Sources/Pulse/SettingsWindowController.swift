@@ -49,8 +49,18 @@ final class SettingsWindowController {
     }
 
     private func makeWindow() -> NSWindow {
+        // 920 × 660 rather than the 760 × 500 it opened at first.
+        //
+        // The old default was set when the sidebar held four rows. It now holds
+        // fourteen providers plus every added account, and the general pane a
+        // six-group stack — so the window opened already scrolling in both
+        // columns, which reads as a window that is broken rather than one that
+        // is small. This is the size at which the sidebar shows its accounts
+        // without scrolling and a settings group fits whole; `minWidth` /
+        // `minHeight` on the view are unchanged, so it can still be dragged
+        // down to the old size. It fits a 13-inch display with room over.
         let window = SettingsWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 760, height: 500),
+            contentRect: NSRect(x: 0, y: 0, width: 920, height: 660),
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false

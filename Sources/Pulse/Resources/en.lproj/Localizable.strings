@@ -315,3 +315,12 @@
 "%@ left." = "%@ left.";
 "This limit is spent." = "This limit is spent.";
 "This limit has reset." = "This limit has reset.";
+
+/* Settings sidebar search */
+"Search" = "Search";
+"No matches" = "No matches";
+
+/* Resetting the rail order */
+"Reset order" = "Reset order";
+"Back to the order Pulse ships with." = "Back to the order Pulse ships with.";
+"Reset" = "Reset";

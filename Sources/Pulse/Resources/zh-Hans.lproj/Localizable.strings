@@ -315,3 +315,12 @@
 "%@ left." = "剩余 %@。";
 "This limit is spent." = "这条限额已经用尽。";
 "This limit has reset." = "这条限额已经重置。";
+
+/* 设置侧边栏搜索 */
+"Search" = "搜索";
+"No matches" = "没有匹配的项目";
+
+/* 重置排序 */
+"Reset order" = "重置顺序";
+"Back to the order Pulse ships with." = "恢复成 Pulse 默认的排列。";
+"Reset" = "重置";

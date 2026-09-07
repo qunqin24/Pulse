@@ -44,28 +44,66 @@ struct SettingsView: View {
     /// sign at all — without a way out the button stays disabled for the whole
     /// quarter of an hour.
     @State private var signInTask: Task<Void, Never>?
+    /// Narrows the sidebar. Fourteen providers plus every added account is a
+    /// list that scrolls on any window worth opening.
+    @State private var search = ""
+    /// The row a reorder drag is currently over, so it can say so.
+    @State private var dropTarget: AccountKey?
 
     var body: some View {
         NavigationSplitView {
             List(selection: $pane) {
-                Section(String.localized("Panel")) {
-                    row(.general)
-                }
-
-                Section(String.localized("Accounts")) {
-                    // Same order as the rail: a sidebar that disagreed with
-                    // the thing it configures is its own small confusion.
-                    ForEach(settings.orderedAccounts) { account in
-                        row(.account(account))
+                if matches(.general) {
+                    Section(String.localized("Panel")) {
+                        row(.general)
                     }
                 }
 
-                Section(String.localized("Application")) {
-                    row(.about)
+                if !matchingAccounts.isEmpty {
+                    Section(String.localized("Accounts")) {
+                        // Same order as the rail: a sidebar that disagreed with
+                        // the thing it configures is its own small confusion.
+                        ForEach(matchingAccounts) { account in
+                            row(.account(account))
+                        }
+                    }
+                }
+
+                if matches(.about) {
+                    Section(String.localized("Application")) {
+                        row(.about)
+                    }
                 }
             }
             .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 170, ideal: 180, max: 220)
+            // Wide enough for the longest name the list can hold —
+            // "GLM Coding Plan", with "GitHub Copilot" and "OpenCode Go"
+            // behind it. At the old 170/180/220 every one of those truncated
+            // to an ellipsis, which on a list whose entire job is telling
+            // fourteen products apart is the one thing it must not do. These
+            // are brand names and are not translated, so the requirement does
+            // not move with the language.
+            //
+            // **`min` is the half that matters**, not `ideal`. AppKit saves the
+            // divider position, so `ideal` is only ever read once per install
+            // and anybody who has already opened this window keeps whatever
+            // width they had; `min` is a clamp and applies to all of them.
+            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 320)
+            // `.sidebar`, not `.automatic`: this window has no `NSToolbar` —
+            // see `SettingsWindowController` on why the title bar is left to
+            // AppKit — and automatic placement has nowhere to put the field.
+            .searchable(
+                text: $search,
+                placement: .sidebar,
+                prompt: Text(localized: "Search")
+            )
+            .overlay {
+                if isSearching, matchingAccounts.isEmpty, !matches(.general), !matches(.about) {
+                    Text(localized: "No matches")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+            }
         } detail: {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
@@ -108,6 +146,38 @@ struct SettingsView: View {
     private func title(_ pane: SettingsPane) -> String {
         if case .account(let account) = pane { return settings.label(for: account) }
         return pane.title
+    }
+
+    /// What the sidebar is being narrowed to, or nothing.
+    private var query: String {
+        search.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isSearching: Bool { !query.isEmpty }
+
+    /// Accounts whose name the search matches, in rail order.
+    ///
+    /// Matched against the provider's name **as well as** the user's label, not
+    /// instead of it. A second Claude subscription called "工作" is still a
+    /// Claude Code account, and typing the product name is the obvious way to
+    /// look for it — `title(_:)` alone would only know the label.
+    private var matchingAccounts: [AccountKey] {
+        guard isSearching else { return settings.orderedAccounts }
+        return settings.orderedAccounts.filter {
+            matches(title(.account($0))) || matches($0.provider.displayName)
+        }
+    }
+
+    private func matches(_ pane: SettingsPane) -> Bool {
+        guard isSearching else { return true }
+        return matches(title(pane))
+    }
+
+    /// Case- and accent-insensitive, and localized: `localizedStandardContains`
+    /// is what Finder searches with, so "z.ai" finds Z.ai and a stray accent
+    /// doesn't lose a row.
+    private func matches(_ text: String) -> Bool {
+        text.localizedStandardContains(query)
     }
 
     private func row(_ pane: SettingsPane) -> some View {
@@ -462,6 +532,55 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.borderless)
                     }
+                    // The whole row, not just the text: a drag that only
+                    // starts on the label is a drag most people conclude
+                    // isn't there.
+                    .contentShape(.rect)
+                    .background(dropTarget == account ? Color.accentColor.opacity(0.12) : .clear)
+                    .draggable(account.id) {
+                        // The system's own drag image is the row at full
+                        // width, which at 900pt is a slab. This is the two
+                        // things being moved: the mark and the name.
+                        HStack(spacing: 8) {
+                            LobeIconView(provider: account.provider, size: 15)
+                            Text(settings.label(for: account))
+                                .font(.system(size: 13))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                    }
+                    .dropDestination(for: String.self) { ids, _ in
+                        dropTarget = nil
+                        guard let dragged = ids.first.flatMap(AccountKey.init(id:)),
+                              settings.orderedAccounts.contains(dragged)
+                        else { return false }
+
+                        settings.move(dragged, onto: account)
+                        return true
+                    } isTargeted: { isTargeted in
+                        // Cleared by identity, not unconditionally: the row
+                        // being left and the row being entered report in an
+                        // order nobody promises, so a bare `nil` on exit can
+                        // wipe the highlight the next row has just set.
+                        if isTargeted {
+                            dropTarget = account
+                        } else if dropTarget == account {
+                            dropTarget = nil
+                        }
+                    }
+                }
+
+                // Last, and disabled while there is nothing to undo. A drag
+                // that went somewhere unintended is easy to make and, at
+                // fourteen rows, tedious to walk back by hand.
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Reset order"),
+                    subtitle: String.localized("Back to the order Pulse ships with.")
+                ) {
+                    Button(String.localized("Reset")) { settings.resetOrder() }
+                        .disabled(!settings.hasCustomOrder)
                 }
             }
 

@@ -94,6 +94,45 @@ final class AppSettings {
         providerOrder = order.map(\.id)
     }
 
+    /// Whether the rail is in an order somebody chose, rather than the one it
+    /// ships with.
+    ///
+    /// Compared against the accounts themselves, not against whether anything
+    /// is stored: dragging a row down and back up again leaves a full stored
+    /// list that happens to match the default exactly, and offering to reset
+    /// an order that is already the default is a button that does nothing.
+    var hasCustomOrder: Bool { orderedAccounts != allAccounts }
+
+    /// Back to declaration order.
+    ///
+    /// By clearing the stored list rather than writing the default into it, so
+    /// a provider added in a later version keeps arriving at the bottom of the
+    /// rail instead of being pinned by a list written before it existed —
+    /// which is the whole reason `orderedAccounts` appends what it doesn't
+    /// recognise.
+    func resetOrder() { providerOrder = [] }
+
+    /// Drops an account into the place another one currently holds.
+    ///
+    /// The standard "take its place" behaviour, and it reads in both
+    /// directions because the indices shift underneath it: dragging *down*
+    /// onto a row lands after it (the target moved up when the dragged row was
+    /// lifted out), dragging *up* onto a row lands before it. Both are what
+    /// the pointer was pointing at.
+    func move(_ account: AccountKey, onto target: AccountKey) {
+        guard account != target else { return }
+
+        var order = orderedAccounts
+        guard
+            let from = order.firstIndex(of: account),
+            let to = order.firstIndex(of: target)
+        else { return }
+
+        order.remove(at: from)
+        order.insert(account, at: min(to, order.count))
+        providerOrder = order.map(\.id)
+    }
+
     /// What to call an account. A provider's first one is just the provider;
     /// the rest carry a label so two subscriptions can be told apart.
     func label(for account: AccountKey) -> String {
