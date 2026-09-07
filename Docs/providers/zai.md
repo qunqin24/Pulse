@@ -4,12 +4,12 @@ One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsa
 
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|
-| `.zai` | z.ai · GLM Coding Plan | `https://api.z.ai` | `zai` |
-| `.glmCoding` | BigModel · GLM Coding Plan | `https://open.bigmodel.cn` | `zhipu` |
+| `.zai` | z.ai | `https://api.z.ai` | `zai` |
+| `.glmCoding` | 智谱 | `https://open.bigmodel.cn` | `zhipu` |
 
 They are one company’s international and mainland storefronts, answering the same JSON on different hosts — **separate accounts with separate keys**. A key for one is refused by the other. CodexBar models this as one provider with a region switch; Pulse gives each a ring so someone with only the mainland plan does not have to know an international one exists.
 
-**Both ring names say the storefront, and say it first** — that is issue #13. They were `Z.ai` and `GLM Coding Plan`, named for the brand and for the product; but **z.ai sells its plan under the name "GLM Coding Plan" too**, so an international subscriber picked the row literally called that, pasted a z.ai key, and had it sent to BigModel. The storefront leads because a truncated sidebar row has to keep the half that distinguishes them.
+**The rings are named for the two shops, not for the product** — that is issue #13. They were `Z.ai` and `GLM Coding Plan`; but **z.ai sells its plan under the name "GLM Coding Plan" too**, so an international subscriber picked the row literally called that, pasted a z.ai key, and had it sent to BigModel. The company is the one thing that differs and the one thing a buyer knows, so it is the whole name — and neither row keeps the ambiguous one.
 
 ## Refusals arrive as HTTP 200
 

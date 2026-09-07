@@ -66,18 +66,15 @@ struct ZaiErrorTests {
         #expect(try ZaiUsageService.problem(reply(code: nil, msg: nil)) == .serverError)
     }
 
-    @Test("The two rows say which storefront, and say it first")
+    @Test("The two rows are named for the shops, not for the product")
     func namesDisambiguate() {
-        // One product sold in two places, both calling it the GLM Coding
-        // Plan. A row named for the brand and a row named for the product
-        // read as two different things to somebody holding one of them —
-        // issue #13. The storefront leads because that is what survives a
-        // truncated sidebar row.
-        #expect(Provider.zai.displayName.hasPrefix("z.ai"))
-        #expect(Provider.glmCoding.displayName.hasPrefix("BigModel"))
-        #expect(Provider.zai.displayName != Provider.glmCoding.displayName)
+        // Both shops sell the same thing under the same name, so a row called
+        // "GLM Coding Plan" is a row half the buyers pick wrongly — issue #13.
+        #expect(Provider.zai.displayName == "z.ai")
+        #expect(Provider.glmCoding.displayName == "智谱")
         for provider in [Provider.zai, .glmCoding] {
-            #expect(provider.displayName.contains("GLM Coding Plan"))
+            #expect(!provider.displayName.contains("GLM Coding Plan"),
+                    "the ambiguous name is what caused the mix-up")
         }
     }
 }

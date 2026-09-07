@@ -9,7 +9,7 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.8
 
-- **The GLM Coding Plan's two rows now say which shop they are for** — "z.ai · GLM Coding Plan" and "BigModel · GLM Coding Plan". They were called "Z.ai" and "GLM Coding Plan", which was a trap: z.ai sells its plan under that name as well, so anyone on the international plan picked the row named after their product and had their key sent to the mainland service, which of course refused it.
+- **The two GLM Coding Plan rows are now named for the shops** — **z.ai** and **智谱**. They were "Z.ai" and "GLM Coding Plan", which was a trap: both shops sell the plan under that same name, so anyone on the international plan picked the row named after their product and had their key sent to the mainland service, which of course refused it.
 - **A refused key now says the key was refused.** These services answer with an ordinary HTTP 200 and put the verdict inside, and Pulse only recognised the English wording and two of the numbers — so the most common mistake of all, a key from the other one of the two shops, came out as "the service returned an error" and sent people looking for an outage that was not happening.
 
 ## 1.0.7
