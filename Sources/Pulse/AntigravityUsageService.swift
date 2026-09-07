@@ -1,22 +1,29 @@
 import Foundation
 
-/// Antigravity's limits, read from the language server it runs on this Mac.
+/// Antigravity's limits, read from a language server running on this Mac.
 ///
-/// The odd one out of the three. There is no account endpoint to ask and no
-/// stored login to borrow: Antigravity's editor starts a `language_server`
-/// process of its own and talks to it over HTTPS on the loopback interface,
-/// and that process is the only thing that knows the quota. So this is the one
-/// provider whose figures exist **only while the app is running** — which is
-/// what `.antigravityNotRunning` says, rather than dressing it up as a failure.
+/// The odd one out of the fourteen. There is no account endpoint to ask and no
+/// stored login to borrow: Antigravity starts a `language_server` process of
+/// its own and talks to it over HTTPS on the loopback interface, and that
+/// process is the only thing that knows the quota. So this is the one provider
+/// whose figures exist **only while something of Antigravity's is running** —
+/// which is what `.antigravityNotRunning` says, rather than dressing it up as
+/// a failure.
 ///
 /// Three things have to be found, and not one of them can be assumed:
-/// - **the process**, which lives inside the app bundle rather than on `PATH`;
-/// - **the port**, because the app starts the server with
-///   `--https_server_port 0`, meaning "take any free one" — it is a different
-///   port on every launch, so anything hardcoded is wrong by the next restart;
+/// - **the process**, which lives inside an app bundle rather than on `PATH`;
+/// - **the port**, because the server is started with `--https_server_port 0`,
+///   meaning "take any free one" — it is a different port on every launch, so
+///   anything hardcoded is wrong by the next restart;
 /// - **the CSRF token**, a per-launch UUID passed on the command line. Without
 ///   it the server answers `unauthenticated`, and it is the reason this can
 ///   only ever read the quota of the Antigravity running as this same user.
+///
+/// **More than one process can match, and most of them are the wrong one.**
+/// Antigravity IDE runs two language servers and only one answers; the other
+/// refuses this RPC outright. Taking the first match and giving up if it did
+/// not work was a real fault — measured, the one that answers was second.
+/// Every candidate is tried, and every port each of them listens on.
 struct AntigravityUsageService: Sendable {
     /// The RPCs this uses. Antigravity is built on Codeium's language server,
     /// hence the `exa.` package and the `x-codeium-` header.
@@ -32,80 +39,132 @@ struct AntigravityUsageService: Sendable {
     private static let csrfHeader = "x-codeium-csrf-token"
 
     func fetch() async -> ProviderUsage {
-        guard let server = Self.locateServer() else {
+        let servers = Self.locateServers()
+        guard !servers.isEmpty else {
             return .unavailable(.antigravity, reason: .antigravityNotRunning)
         }
 
-        // The server listens on more than one port and only one of them speaks
-        // this. Which is which isn't advertised, so they are simply tried.
-        for port in server.ports {
-            switch await Self.ask(port: port, token: server.token) {
-            case .success(let windows) where !windows.isEmpty:
-                return ProviderUsage(
-                    account: AccountKey(.antigravity),
-                    windows: windows,
-                    observedAt: Date(),
-                    state: .live,
-                    // A second call, because the quota reply doesn't name the
-                    // plan. Its absence is not worth failing the reading over.
-                    plan: await Self.plan(port: port, token: server.token),
-                    // Antigravity reports a monthly credit *allowance*, never a
-                    // balance. Putting an allowance here would read as "this is
-                    // what you have left" — which is the one thing it isn't.
-                    creditBalance: nil
-                )
-            case .success:
-                return .unavailable(.antigravity, reason: .noLimitsReported)
-            case .failure(.wrongPort):
-                continue
-            case .failure(let reason):
-                return .unavailable(.antigravity, reason: reason.unavailability)
+        // An answer with no limits in it is a real answer, but not a reason to
+        // stop: with two servers up it is what the wrong one says. Held, and
+        // reported only if nothing better turns up.
+        var answeredEmpty = false
+
+        for server in servers {
+            // A server listens on more than one port and only one of them
+            // speaks this. Which is which isn't advertised, so they are tried.
+            for port in server.ports {
+                switch await Self.ask(port: port, token: server.token) {
+                case .success(let windows) where !windows.isEmpty:
+                    return ProviderUsage(
+                        account: AccountKey(.antigravity),
+                        windows: windows,
+                        observedAt: Date(),
+                        state: .live,
+                        // A second call, because the quota reply doesn't name
+                        // the plan. Its absence is not worth failing over.
+                        plan: await Self.plan(port: port, token: server.token),
+                        // Antigravity reports a monthly credit *allowance*,
+                        // never a balance. Putting an allowance here would read
+                        // as "this is what you have left" — the one thing it
+                        // isn't.
+                        creditBalance: nil
+                    )
+                case .success:
+                    answeredEmpty = true
+                case .failure(.wrongPort):
+                    continue
+                case .failure(.refused):
+                    // The other of Antigravity IDE's two servers answers 401 to
+                    // this RPC. That is this process saying "not me", not the
+                    // account being refused, so it is worth no more than a
+                    // closed port — keep looking.
+                    continue
+                case .failure(let reason):
+                    return .unavailable(.antigravity, reason: reason.unavailability)
+                }
             }
         }
 
-        return .unavailable(.antigravity, reason: .unreachable)
+        return .unavailable(.antigravity, reason: answeredEmpty ? .noLimitsReported : .unreachable)
     }
 
     // MARK: - Finding it
+
+    /// Which Antigravity a language server belongs to, in the order they are
+    /// asked.
+    ///
+    /// The app first. Both were measured to answer the same
+    /// `RetrieveUserQuotaSummary` payload — the same two groups, the same
+    /// weekly and five-hour buckets, the same reset times — so this ordering
+    /// costs nothing when only one is running and settles it when both are.
+    /// The app is the product these limits belong to; the IDE is an extension
+    /// carrying a copy of the same server.
+    private enum Origin: CaseIterable {
+        case app
+        case ide
+
+        /// A fragment of the process's own path.
+        ///
+        /// The **bundle**, never the executable's name: `language_server` is
+        /// Codeium's binary and its other editors ship the same one, which
+        /// would otherwise be asked for Antigravity's quota and answer for
+        /// something else. The IDE's copy is named `language_server_macos_arm`
+        /// and still contains `/language_server`, so the name test below holds
+        /// for both while these keep them apart.
+        ///
+        /// `/Antigravity.app/` does not match `/Antigravity IDE.app/` — the
+        /// space is what separates them, and it is why these are written with
+        /// their slashes.
+        var pathFragment: String {
+            switch self {
+            case .app: "/Antigravity.app/"
+            case .ide: "/Antigravity IDE.app/"
+            }
+        }
+    }
 
     private struct Server {
         let ports: [Int]
         let token: String
     }
 
-    private static func locateServer() -> Server? {
-        guard let (pid, token) = languageServerProcess() else { return nil }
-
-        let ports = listeningPorts(of: pid)
-        return ports.isEmpty ? nil : Server(ports: ports, token: token)
+    /// Every language server on this Mac that might be able to answer, best
+    /// first.
+    ///
+    /// Plural, and that is the point: Antigravity IDE runs two of them and
+    /// only one answers this RPC. One `ps` for all of them, then one `lsof`
+    /// each — a process listening on nothing cannot be asked anything, so it
+    /// is dropped here rather than being tried and timing out.
+    private static func locateServers() -> [Server] {
+        languageServerProcesses().compactMap { candidate in
+            let ports = listeningPorts(of: candidate.pid)
+            return ports.isEmpty ? nil : Server(ports: ports, token: candidate.token)
+        }
     }
 
-    /// The language server's pid and CSRF token, from the process list.
-    ///
-    /// Matched on the app bundle's own path rather than on the executable's
-    /// name: `language_server` is Codeium's binary and the same name is used by
-    /// its other editors, which would otherwise be asked for Antigravity's
-    /// quota and answer for something else.
-    private static func languageServerProcess() -> (pid: Int32, token: String)? {
-        guard let listing = run("/bin/ps", ["-axww", "-o", "pid=,command="]) else { return nil }
+    /// Every matching process's pid and CSRF token, in `Origin` order.
+    private static func languageServerProcesses() -> [(pid: Int32, token: String)] {
+        guard let listing = run("/bin/ps", ["-axww", "-o", "pid=,command="]) else { return [] }
 
-        for line in listing.split(separator: "\n") {
-            guard
-                line.contains("/Antigravity.app/"),
-                line.contains("/language_server")
-            else { continue }
+        let lines = listing.split(separator: "\n").filter { $0.contains("/language_server") }
 
-            let fields = line.split(separator: " ", omittingEmptySubsequences: true)
-            guard
-                let pid = fields.first.flatMap({ Int32($0) }),
-                let flag = fields.firstIndex(of: "--csrf_token"),
-                fields.index(after: flag) < fields.endIndex
-            else { continue }
+        return Origin.allCases.flatMap { origin in
+            lines
+                .filter { $0.contains(origin.pathFragment) }
+                .compactMap { line in
+                    // Splitting on spaces survives a bundle path that has one
+                    // in it: the pid is still the first field, and the token is
+                    // still whatever follows the flag.
+                    let fields = line.split(separator: " ", omittingEmptySubsequences: true)
+                    guard
+                        let pid = fields.first.flatMap({ Int32($0) }),
+                        let flag = fields.firstIndex(of: "--csrf_token"),
+                        fields.index(after: flag) < fields.endIndex
+                    else { return nil }
 
-            return (pid, String(fields[fields.index(after: flag)]))
+                    return (pid, String(fields[fields.index(after: flag)]))
+                }
         }
-
-        return nil
     }
 
     /// Every loopback port the process is listening on.
