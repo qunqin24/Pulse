@@ -11,6 +11,7 @@ Maintained map. Change the topic file that owns a behaviour in the same patch as
 | [architecture.md](architecture.md) | App shell, settings state, first-run / offer-once, login item, defaults domain |
 | [ui/README.md](ui/README.md) | Panel geometry, input, glass/rings, settings window |
 | [refresh-and-data.md](refresh-and-data.md) | Refresh loop, cache, activity, ledger, forecast, estimate |
+| [notifications.md](notifications.md) | When Pulse posts a notification, and what it refuses to say |
 | [development.md](development.md) | Localization, resources, layout budgets, how to add UI |
 | [build-from-source.md](build-from-source.md) | Toolchain, `swift build`, `#Preview`, local run |
 | [releasing.md](releasing.md) | Tag, bundle, Sparkle, DMG, CI |

@@ -297,3 +297,21 @@
 "Sign in to the Claude desktop app to see usage." = "登录 Claude 桌面端后即可看到用量。";
 "Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse 需要钥匙串权限才能读取 Claude 桌面端的会话。点刷新可再问一次。";
 "The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面端的会话被拒绝。请打开它重新登录。";
+
+/* 通知 */
+"Notifications" = "通知";
+"Off" = "关闭";
+"Warn at" = "提醒阈值";
+"Notify when a limit passes this, and again when it is spent." = "限额超过这个数字时提醒一次，用尽时再提醒一次。";
+"Turned off for Pulse in System Settings › Notifications." = "已在「系统设置 › 通知」里关闭了 Pulse 的通知。";
+"Notifications need the bundled app." = "通知需要打包后的 App 才能发出。";
+"When a limit comes back" = "限额恢复时";
+"Only for one you were warned about." = "只针对之前提醒过的那条限额。";
+"When a reading stops arriving" = "读不到用量时";
+"After several failed checks in a row, once per outage." = "连续几次读取失败后提醒，一次故障只说一遍。";
+"Can't be read" = "读不到";
+"The last few checks didn't get through, so the panel is showing older figures." = "最近几次都没读到，面板上是旧数字。";
+"%@ used." = "已用 %@。";
+"%@ left." = "剩余 %@。";
+"This limit is spent." = "这条限额已经用尽。";
+"This limit has reset." = "这条限额已经重置。";

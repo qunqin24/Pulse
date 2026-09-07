@@ -297,3 +297,21 @@
 "Sign in to the Claude desktop app to see usage." = "Sign in to the Claude desktop app to see usage.";
 "Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again.";
 "The Claude desktop app's session was refused. Open it and sign in again." = "The Claude desktop app's session was refused. Open it and sign in again.";
+
+/* Notifications */
+"Notifications" = "Notifications";
+"Off" = "Off";
+"Warn at" = "Warn at";
+"Notify when a limit passes this, and again when it is spent." = "Notify when a limit passes this, and again when it is spent.";
+"Turned off for Pulse in System Settings › Notifications." = "Turned off for Pulse in System Settings › Notifications.";
+"Notifications need the bundled app." = "Notifications need the bundled app.";
+"When a limit comes back" = "When a limit comes back";
+"Only for one you were warned about." = "Only for one you were warned about.";
+"When a reading stops arriving" = "When a reading stops arriving";
+"After several failed checks in a row, once per outage." = "After several failed checks in a row, once per outage.";
+"Can't be read" = "Can't be read";
+"The last few checks didn't get through, so the panel is showing older figures." = "The last few checks didn't get through, so the panel is showing older figures.";
+"%@ used." = "%@ used.";
+"%@ left." = "%@ left.";
+"This limit is spent." = "This limit is spent.";
+"This limit has reset." = "This limit has reset.";

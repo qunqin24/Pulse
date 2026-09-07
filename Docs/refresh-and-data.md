@@ -4,6 +4,8 @@ Pulse shows **figures the provider reported**. It does not invent a usage percen
 
 Per-provider HTTP, cookies, and login: [providers/README.md](providers/README.md). Why percentages stay reported: [decisions/reported-figures.md](decisions/reported-figures.md).
 
+What Pulse says about these readings unprompted: [notifications.md](notifications.md). **Every fetched reading is written through `UsageStore.commit(_:for:)`**, which is also where the alert rules see it — the seeded placeholders and the cache restored at launch are written directly, because neither is something Pulse has just observed.
+
 ## Refresh loop
 
 `UsageStore` is `@Observable`. The interval is **adaptive by default** (`AdaptiveRefresh`): **2–30 minutes** (`floor` 120s, `ceiling` 1800s). It is **not** a 60-second repeating timer. (An older comment on `UsageStore` said that; the code schedules a one-shot.)

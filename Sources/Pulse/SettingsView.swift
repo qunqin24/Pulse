@@ -8,6 +8,7 @@ struct SettingsView: View {
     let settings: AppSettings
     let placement: PanelPlacement
     let update: AppUpdate
+    let alerts: UsageAlerts
 
     @State private var pane: SettingsPane = .general
     @State private var hookGeneration = 0
@@ -340,10 +341,97 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(String.localized("Notifications")) {
+                SettingsRow(
+                    String.localized("Warn at"),
+                    subtitle: alertsSubtitle
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.alertThreshold },
+                        set: {
+                            settings.alertThreshold = $0
+                            alerts.requestAuthorizationIfNeeded()
+                        }
+                    )) {
+                        ForEach(AlertThreshold.allCases) { threshold in
+                            Text(threshold.title).tag(threshold)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!UsageAlerts.isSupported)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("When a limit comes back"),
+                    subtitle: String.localized("Only for one you were warned about.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.alertsOnReset },
+                        set: {
+                            settings.alertsOnReset = $0
+                            alerts.requestAuthorizationIfNeeded()
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    // Nothing to fire about: a reset is only announced for a
+                    // window that was mentioned on the way up.
+                    .disabled(!UsageAlerts.isSupported || settings.alertThreshold == .off)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("When a reading stops arriving"),
+                    subtitle: String.localized("After several failed checks in a row, once per outage.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.alertsOnFailure },
+                        set: {
+                            settings.alertsOnFailure = $0
+                            alerts.requestAuthorizationIfNeeded()
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!UsageAlerts.isSupported)
+                }
+            }
+
+            SettingsGroup(String.localized("Refresh")) {
+                SettingsRow(
+                    String.localized("Check every"),
+                    subtitle: refreshSubtitle
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.refreshInterval },
+                        set: { settings.refreshInterval = $0 }
+                    )) {
+                        ForEach(RefreshInterval.allCases) { interval in
+                            Text(interval.title).tag(interval)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            }
+
             SettingsGroup(String.localized("Order")) {
-                // Arrows rather than dragging. Four rows is not enough to make
-                // a drag worth learning, and a drag that misses does something
-                // — an arrow that misses does nothing.
+                // **Drag, and the arrows as well.** This was arrows only, on
+                // the reasoning that four rows is not enough to make a drag
+                // worth learning and that an arrow which misses does nothing
+                // while a drag which misses does something. The first half of
+                // that stopped being true: there are fourteen providers now,
+                // plus every added account, and moving the bottom one to the
+                // top is thirteen clicks.
+                //
+                // The arrows stay rather than being replaced. They are the
+                // precise way to move one place, they are the only way that
+                // works from the keyboard, and they carry the accessibility
+                // labels — drag and drop has none to give.
                 ForEach(Array(settings.orderedAccounts.enumerated()), id: \.element) { index, account in
                     if index > 0 { SettingsRowDivider() }
 
@@ -397,24 +485,6 @@ struct SettingsView: View {
                 }
             }
 
-            SettingsGroup(String.localized("Refresh")) {
-                SettingsRow(
-                    String.localized("Check every"),
-                    subtitle: refreshSubtitle
-                ) {
-                    Picker("", selection: Binding(
-                        get: { settings.refreshInterval },
-                        set: { settings.refreshInterval = $0 }
-                    )) {
-                        ForEach(RefreshInterval.allCases) { interval in
-                            Text(interval.title).tag(interval)
-                        }
-                    }
-                    .labelsHidden()
-                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
-                }
-            }
-
             SettingsGroup(String.localized("Language")) {
                 SettingsRow(
                     String.localized("Interface language"),
@@ -446,6 +516,23 @@ struct SettingsView: View {
         case .on, .off:
             .localized("Start Pulse automatically when you log in.")
         }
+    }
+
+    /// Says what the *system* thinks, which is the half the switches cannot
+    /// know. A switch left on while macOS is dropping everything Pulse posts is
+    /// a setting that lies, and permission can be withdrawn in System Settings
+    /// long after it was given.
+    private var alertsSubtitle: String {
+        guard UsageAlerts.isSupported else {
+            // The `swift run` case: a bare executable has no bundle, and the
+            // notification centre raises rather than refusing politely.
+            return .localized("Notifications need the bundled app.")
+        }
+
+        if settings.wantsAlerts, alerts.authorization == .denied {
+            return .localized("Turned off for Pulse in System Settings › Notifications.")
+        }
+        return .localized("Notify when a limit passes this, and again when it is spent.")
     }
 
     /// The catch only applies while it is on, so it is only said then.
@@ -1480,6 +1567,7 @@ enum SettingsPane: Hashable {
         store: UsageStore(settings: AppSettings()),
         settings: AppSettings(),
         placement: PanelPlacement(),
-        update: AppUpdate()
+        update: AppUpdate(),
+        alerts: UsageAlerts(settings: AppSettings())
     )
 }

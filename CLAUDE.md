@@ -32,6 +32,7 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no test target
 - **Hover:** SwiftUI `.onHover` does not work on this accessory, non-key panel. Enter from tracking areas, leave from sampling the pointer — never exit events. Drag and ring clicks belong to `FloatingPanel.sendEvent`. `hitTest` / synthesised events are not proof of real input. [Docs/ui/input.md](Docs/ui/input.md)
 - **Percentages:** Pulse does not invent usage percentages. If a provider reports none, say so. The money estimate is the labelled exception. [Docs/refresh-and-data.md](Docs/refresh-and-data.md)
 - **Localization:** only `String.localized(_:)` / `Text(localized:)`. No implicit `Text("…")`. No conditionals inside `localized:`. Interpolate `String`, not `Int` (`%lld` vs `%@`). Run `./Scripts/check-localization.sh`. [Docs/development.md](Docs/development.md)
+- **Notifications say nothing Pulse did not witness.** No alert on a first sighting, `spent` only when the provider says so, a reset only on unambiguous evidence, and an unavailable reading is not automatically a failure. All off by default, all silent. `UNUserNotificationCenter` **raises without an app bundle** — every entry point is fenced by `UsageAlerts.isSupported`, so test from `./Scripts/bundle.sh`, never `swift run`. [Docs/notifications.md](Docs/notifications.md)
 - **Disabled providers are not fetched.** Shared `Unavailability` copy names no provider.
 - **Layout constants are budgets** (`PanelMetrics` computed `var`, never `static let`). Anything new on the panel takes size from them.
 - **Do not fetch or document provider auth here.** [Docs/providers/README.md](Docs/providers/README.md)
@@ -46,6 +47,7 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no test target
 | Glass, rings, colour, activity mark | [Docs/ui/rings-and-surface.md](Docs/ui/rings-and-surface.md) |
 | Settings window copy/layout | [Docs/ui/settings.md](Docs/ui/settings.md) |
 | Refresh, cache, activity, ledger | [Docs/refresh-and-data.md](Docs/refresh-and-data.md) |
+| Notifications, alert rules | [Docs/notifications.md](Docs/notifications.md) |
 | Localization, resources, adding UI | [Docs/development.md](Docs/development.md) |
 | Bundle, tag, Sparkle, DMG | [Docs/releasing.md](Docs/releasing.md) / [Docs/build-from-source.md](Docs/build-from-source.md) |
 | Why / failure lessons | [Docs/decisions/README.md](Docs/decisions/README.md) |

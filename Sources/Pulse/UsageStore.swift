@@ -27,6 +27,9 @@ final class UsageStore {
     private(set) var currentInterval: TimeInterval = AdaptiveRefresh.floor
 
     private let settings: AppSettings
+    /// Posts notifications about the readings that land here. Nil in previews,
+    /// which have no bundle to post from and nothing to say anyway.
+    private let alerts: UsageAlerts?
     private let appServer = CodexAppServer()
     private let codex: CodexUsageService
     private let claudeCode = ClaudeCodeUsageService()
@@ -77,8 +80,9 @@ final class UsageStore {
     /// `AgentActivityMonitor`.
     let activity = AgentActivityMonitor()
 
-    init(settings: AppSettings) {
+    init(settings: AppSettings, alerts: UsageAlerts? = nil) {
         self.settings = settings
+        self.alerts = alerts
         codex = CodexUsageService(server: appServer)
 
         for account in settings.allAccounts {
@@ -417,7 +421,7 @@ final class UsageStore {
             // over newer ones and clear flags that now belong elsewhere.
             guard pass == self.currentPass else { return }
 
-            for (id, usage) in fetchedExtras { self.usage[id] = usage }
+            for (id, usage) in fetchedExtras { self.commit(usage, for: id) }
 
             // Only what was actually fetched is written back. A provider that
             // is off the rail was never asked, so its slot here would be
@@ -440,7 +444,7 @@ final class UsageStore {
                 (.grok, fetchedGrok),
                 (.grokBot, fetchedGrokBot),
             ] where wanted.contains(provider) {
-                self.usage[AccountKey(provider).id] = fetched
+                self.commit(fetched, for: AccountKey(provider).id)
             }
             self.isRefreshing = false
             self.refreshStartedAt = nil
@@ -554,7 +558,7 @@ final class UsageStore {
             guard pass == self.currentPass else { return }
 
             let fetched = await UsageCache.shared.reconciled(raw)
-            self.usage[account.id] = fetched
+            self.commit(fetched, for: account.id)
 
             if previous?.windows != fetched.windows {
                 self.signals.lastChange = Date()
@@ -634,6 +638,19 @@ final class UsageStore {
         guard let account = queued.first else { return }
         queued.remove(account)
         refresh(account)
+    }
+
+    /// Writes a fetched reading into the table, and lets the alerts see it.
+    ///
+    /// **Every fetched reading goes through here, and only fetched ones.** The
+    /// seeded placeholders and the cache restored at launch are written
+    /// directly: neither is something Pulse has just observed, and running the
+    /// restored cache through the alert rules would announce a fortnight of
+    /// crossings the moment the app opened.
+    private func commit(_ fetched: ProviderUsage, for id: String) {
+        usage[id] = fetched
+        guard let alerts, let account = AccountKey(id: id) else { return }
+        alerts.observe(fetched, as: account)
     }
 
     func usage(for account: AccountKey) -> ProviderUsage {

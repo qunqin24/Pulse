@@ -9,7 +9,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// version when there is one.
     let update = AppUpdate()
     private let placement = PanelPlacement.restored()
-    private lazy var store = UsageStore(settings: settings)
+    /// Not private: the settings pane shows what the system says about
+    /// permission, which is not the same as what the switches say.
+    private(set) lazy var alerts = UsageAlerts(settings: settings)
+    private lazy var store = UsageStore(settings: settings, alerts: alerts)
 
     private var panelController: FloatingPanelController?
     private var settingsWindow: SettingsWindowController?
@@ -64,6 +67,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.store.refresh(claudeCode)
         }
 
+        // Before the first pass, so nothing is decided about a reading before
+        // the memory of what has already been said is in place. Deliberately
+        // does not ask for permission — see `UsageAlerts.start`.
+        alerts.start { [weak self] in self?.showSettings() }
+
         store.start()
 
         let controller = FloatingPanelController(store: store, settings: settings, placement: placement)
@@ -88,7 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showSettings() {
-        let window = settingsWindow ?? SettingsWindowController(store: store, settings: settings, placement: placement, update: update)
+        let window = settingsWindow ?? SettingsWindowController(store: store, settings: settings, placement: placement, update: update, alerts: alerts)
         settingsWindow = window
         window.show()
     }

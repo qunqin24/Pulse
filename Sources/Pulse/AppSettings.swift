@@ -368,6 +368,53 @@ final class AppSettings {
         }
     }
 
+    /// How full a limit gets before Pulse posts a notification about it.
+    ///
+    /// Off by default, like every other setting that makes Pulse do something
+    /// unprompted. Whatever step is chosen, a limit the provider reports as
+    /// **spent** is always the second one — the two are one setting because
+    /// wanting the warning and not wanting to hear that it happened is not a
+    /// combination anybody has.
+    var alertThreshold: AlertThreshold {
+        didSet {
+            guard alertThreshold != oldValue else { return }
+            UserDefaults.standard.set(alertThreshold.rawValue, forKey: Key.alertThreshold)
+        }
+    }
+
+    /// Say when a limit that was warned about has come back.
+    ///
+    /// Depends on `alertThreshold`, and the settings pane greys it out to say
+    /// so: a reset is only announced for a window Pulse had already mentioned
+    /// on the way up, so with the threshold off there is nothing this can fire
+    /// about. See `AlertMemory` for why it is tied that way.
+    var alertsOnReset: Bool {
+        didSet {
+            guard alertsOnReset != oldValue else { return }
+            UserDefaults.standard.set(alertsOnReset, forKey: Key.alertsOnReset)
+        }
+    }
+
+    /// Say when several passes in a row have failed to read an account.
+    ///
+    /// The one alert that is about Pulse rather than about usage. A failed
+    /// fetch falls back to the last good reading, which is the right thing to
+    /// show and also the reason the fault is invisible: the panel goes on
+    /// displaying perfectly plausible figures with only a "last read" time to
+    /// give it away.
+    var alertsOnFailure: Bool {
+        didSet {
+            guard alertsOnFailure != oldValue else { return }
+            UserDefaults.standard.set(alertsOnFailure, forKey: Key.alertsOnFailure)
+        }
+    }
+
+    /// Whether anything at all would be posted. What decides if permission is
+    /// worth asking for.
+    var wantsAlerts: Bool {
+        alertThreshold != .off || alertsOnReset || alertsOnFailure
+    }
+
     /// Called after any change that the AppKit side has to react to — showing
     /// or hiding the panel, or resizing it because the rail got shorter.
     var onChange: (() -> Void)?
@@ -393,7 +440,10 @@ final class AppSettings {
         labelAboveRing: Bool = false,
         showsWindowClock: Bool = false,
         showsRemaining: Bool = false,
-        showsForecast: Bool = false
+        showsForecast: Bool = false,
+        alertThreshold: AlertThreshold = .default,
+        alertsOnReset: Bool = false,
+        alertsOnFailure: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -416,6 +466,9 @@ final class AppSettings {
         self.showsWindowClock = showsWindowClock
         self.showsRemaining = showsRemaining
         self.showsForecast = showsForecast
+        self.alertThreshold = alertThreshold
+        self.alertsOnReset = alertsOnReset
+        self.alertsOnFailure = alertsOnFailure
     }
 
     /// A stored route the provider doesn't offer resolves to `.automatic`
@@ -587,7 +640,11 @@ final class AppSettings {
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
             showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
-            showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false
+            showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
+            alertThreshold: (defaults.object(forKey: Key.alertThreshold) as? Int)
+                .flatMap(AlertThreshold.init(rawValue:)) ?? .default,
+            alertsOnReset: defaults.object(forKey: Key.alertsOnReset) as? Bool ?? false,
+            alertsOnFailure: defaults.object(forKey: Key.alertsOnFailure) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -682,6 +739,9 @@ final class AppSettings {
         static let showsWindowClock = "settings.showsWindowClock"
         static let showsRemaining = "settings.showsRemaining"
         static let showsForecast = "settings.showsForecast"
+        static let alertThreshold = "settings.alertThreshold"
+        static let alertsOnReset = "settings.alertsOnReset"
+        static let alertsOnFailure = "settings.alertsOnFailure"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

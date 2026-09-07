@@ -46,6 +46,7 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 - **Flexible Edge Docking**: Dock to the left, right, or top of your screen (above the menu bar), or float freely anywhere.
 - **Multi-Monitor Native**: Drag Pulse to any secondary display; it remembers screen placement and gracefully returns if disconnected.
 - **Auto-Collapse**: Automatically folds into a razor-thin sliver when idle to eliminate distraction, glowing red only when quota runs critically low.
+- **Opt-In Notifications**: Off until you turn them on. Get told when a limit passes 75/80/90/95%, when the provider says it is spent, when a window you were warned about comes back, and when several checks in a row fail so the panel is quietly showing older figures. Each thing is said once: a limit already past the line when you switch this on is mentioned straight away, then never again until it resets or gets worse.
 - **Spaces-Friendly**: By default, stays out of your full-screen application Spaces.
 - **macOS Aesthetic**: Classic solid obsidian surface or native **Liquid Glass** on macOS 26+.
 
