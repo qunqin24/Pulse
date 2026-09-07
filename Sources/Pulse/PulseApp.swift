@@ -27,6 +27,14 @@ enum PulseMain {
             exit(0)
         }
 
+        // Before `LegacyDefaults.migrateIfNeeded()` deliberately: this command
+        // reads settings and must not be the thing that migrates them. A
+        // status line running it every couple of seconds is not the moment to
+        // decide an installation's defaults — the app does that at launch.
+        if CommandLine.arguments.contains(UsageReport.modeArgument) {
+            exit(UsageReport.run())
+        }
+
         // Before anything reads a setting: running from a bundle changes
         // which `UserDefaults` domain that means.
         LegacyDefaults.migrateIfNeeded()

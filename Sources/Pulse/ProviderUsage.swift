@@ -103,6 +103,17 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// what the providers do: Cursor reports 0.03% and its own page says 1%.
     var percentText: String { percentText(remaining: false) }
 
+    /// The same figure as `percentText`, as a number.
+    ///
+    /// One rule, two renderings: `--json` prints an integer and the panel
+    /// prints a string, and a status line built from the first must agree with
+    /// the ring built from the second. Two copies of "never round away the
+    /// fact that there is *some*" would eventually disagree by a point, at the
+    /// one end where a point is the whole message.
+    func percentValue(remaining: Bool = false) -> Int {
+        Self.figure(remaining ? remainingFraction : usedFraction)
+    }
+
     /// The same reading counted from the other end, when the user has asked to
     /// see what is **left**.
     ///
@@ -117,17 +128,16 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// used reads 100% while anything used reads at most 99%. The two views
     /// need not sum to 100 — only one of them is ever on screen.
     func percentText(remaining: Bool) -> String {
-        guard remaining else { return Self.figure(usedFraction) }
-        return Self.figure(remainingFraction)
+        "\(percentValue(remaining: remaining))%"
     }
 
     /// A fraction as a whole percentage that never rounds away the fact that
     /// there is *some*, or that there is *not all*.
-    private static func figure(_ fraction: Double) -> String {
+    private static func figure(_ fraction: Double) -> Int {
         let percent = min(max(fraction, 0), 1) * 100
-        if percent <= 0 { return "0%" }
-        if percent >= 100 { return "100%" }
-        return "\(Int(min(max(percent.rounded(), 1), 99)))%"
+        if percent <= 0 { return 0 }
+        if percent >= 100 { return 100 }
+        return Int(min(max(percent.rounded(), 1), 99))
     }
 
     /// What is left of the window, 0...1 — the arc when the figure is flipped.

@@ -578,6 +578,52 @@ final class AppSettings {
         LocalizationSource.use(language)
     }
 
+    /// What is on the rail, for a command that must not disturb anything.
+    ///
+    /// **Reads and never writes**, which is the whole reason it is not
+    /// `restored()`. That one stamps `hasRun`, the offered list and the
+    /// resolved enabled set on its way through — correct once at launch, and
+    /// wrong for something a status line runs every few seconds. It also puts
+    /// the language into effect and re-measures `PanelMetrics`, neither of
+    /// which a command printing JSON has any business doing.
+    ///
+    /// Nothing is resolved or defaulted either: an installation that has never
+    /// run the app has nothing stored, and the honest answer for it is an
+    /// empty rail rather than a guess at what would be switched on.
+    struct StoredRail: Sendable {
+        /// Enabled accounts, in the order the rail draws them.
+        let accounts: [AccountKey]
+        /// What the user calls an added account.
+        let labels: [String: String]
+        /// The window each account's ring is pinned to, if any.
+        let pinnedWindows: [String: String]
+    }
+
+    static func storedRail() -> StoredRail {
+        let defaults = UserDefaults.standard
+
+        let extras = defaults.data(forKey: Key.extraAccounts)
+            .flatMap { try? JSONDecoder().decode([ExtraAccount].self, from: $0) } ?? []
+        let known = Provider.allCases.flatMap { provider in
+            [AccountKey(provider)] + extras.filter { $0.provider == provider }.map(\.key)
+        }
+
+        let enabled = Set(defaults.stringArray(forKey: Key.enabledProviders) ?? [])
+        // Same resolution as `orderedAccounts`: stored order first, then
+        // anything it doesn't mention, so a provider added since a stored list
+        // was written comes last rather than vanishing.
+        let stored = (defaults.stringArray(forKey: Key.providerOrder) ?? [])
+            .compactMap(AccountKey.init(id:))
+            .filter(known.contains)
+        let ordered = stored + known.filter { !stored.contains($0) }
+
+        return StoredRail(
+            accounts: ordered.filter { enabled.contains($0.id) },
+            labels: Dictionary(uniqueKeysWithValues: extras.map { ($0.id, $0.label) }),
+            pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:]
+        )
+    }
+
     static func restored() -> AppSettings {
         let defaults = UserDefaults.standard
 

@@ -16,6 +16,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
+| `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 
 ## What is not, and why
 

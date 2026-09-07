@@ -13,6 +13,7 @@ swift build
 ./Scripts/dmg.sh
 ./Scripts/check-localization.sh
 swift test
+./build.noindex/Pulse.app/Contents/MacOS/Pulse --json
 ```
 
 **`xcode-select` must point at Xcode, not CommandLineTools.** `#Preview` is expanded by an Xcode plugin; otherwise every build fails with `PreviewsMacros plugin not found`. Check with `xcode-select -p`. One-off: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build`.
@@ -50,6 +51,7 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no linter. **`
 | Refresh, cache, activity, ledger | [Docs/refresh-and-data.md](Docs/refresh-and-data.md) |
 | Notifications, alert rules | [Docs/notifications.md](Docs/notifications.md) |
 | What is tested, fixtures | [Docs/testing.md](Docs/testing.md) |
+| `--json` output contract | [Docs/json-output.md](Docs/json-output.md) |
 | Localization, resources, adding UI | [Docs/development.md](Docs/development.md) |
 | Bundle, tag, Sparkle, DMG | [Docs/releasing.md](Docs/releasing.md) / [Docs/build-from-source.md](Docs/build-from-source.md) |
 | Why / failure lessons | [Docs/decisions/README.md](Docs/decisions/README.md) |
