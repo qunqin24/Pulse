@@ -333,3 +333,7 @@
 "Access keys" = "访问密钥";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "格式为 AccessKeyID:SecretAccessKey，来自火山引擎。可不填——走 arkcli 不需要。加密保存在本机。";
 "Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity 开着但没有响应，重启它通常能解决。";
+
+/* 内圈第二条限额 */
+"Second limit inside the ring" = "环内显示第二条限额";
+"A thinner ring for the next-fullest limit, where a provider has one." = "在圆环里面加一条细环，显示第二满的那条限额（服务商有第二条时才画）。";

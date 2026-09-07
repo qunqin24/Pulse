@@ -202,6 +202,9 @@ struct FloatingUsagePanelView: View {
                     ? usage.headlineWindow(preferring: settings.pinnedWindow(for: account))?
                         .elapsedFraction(at: minute)
                     : nil,
+                second: settings.showsSecondRing
+                    ? usage.secondWindow(preferring: settings.pinnedWindow(for: account))
+                    : nil,
                 showsRemaining: settings.showsRemaining
             )
         }

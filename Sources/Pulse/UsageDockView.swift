@@ -45,6 +45,19 @@ enum DockLayout {
     /// from wanting the whole panel bigger.
     static var itemSpacing: CGFloat { 30 * PanelMetrics.scale * PanelMetrics.spacing }
 
+    /// The second ring's own geometry, all of it measured off the first so
+    /// the two cannot drift apart.
+    ///
+    /// **Everything inside the ring has to move for this**, which is why it is
+    /// here and not a constant in the view. At standard scale the band between
+    /// the icon's disc and the ring's inner edge is six points wide, and the
+    /// activity mark already rides the middle of it — the one place a second
+    /// arc wants. So when this is on the mark moves inward and the disc gives
+    /// up two points; the ring itself, the rail's width and the ring centres
+    /// are all unchanged, so nothing outside this circle notices.
+    static var secondRingDiameter: CGFloat { 26 * PanelMetrics.scale }
+    static var secondRingLineWidth: CGFloat { 2.5 * PanelMetrics.scale }
+
     /// Reach of the two convex corners on the rail's inner side. They are
     /// drawn as superellipse ("squircle") corners rather than circular arcs —
     /// see `DockBerthShape.appendCorner`. Constrained by
@@ -241,6 +254,9 @@ struct RailEntry: Identifiable, Equatable {
     /// outer arc off — either because the setting is off, or because this
     /// window doesn't report enough to work it out.
     var elapsed: Double?
+    /// The next-fullest limit, when the second ring is switched on and this
+    /// provider reports more than one.
+    var second: UsageWindow?
     /// Show what is left rather than what is gone — the figure and the arc
     /// together. Carried on the entry like the tint, because the item is built
     /// from this and doesn't otherwise see the settings.

@@ -324,6 +324,22 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         return windows.max { $0.usedFraction < $1.usedFraction }
     }
 
+    /// The limit the second ring shows: the fullest one that is **not** the
+    /// one already on the ring.
+    ///
+    /// Stated that way rather than "the weekly one" so it needs no table of
+    /// which window each provider considers its long one — and so it keeps
+    /// working when the headline is pinned. What the rail ends up showing is
+    /// the two that matter most, whichever they are.
+    ///
+    /// Nil when the provider reports only one limit. A second ring drawn empty
+    /// would read as a limit at zero, or as a fault; a provider with one pool
+    /// simply keeps the single ring it has always had.
+    func secondWindow(preferring id: String? = nil) -> UsageWindow? {
+        guard let headline = headlineWindow(preferring: id), windows.count > 1 else { return nil }
+        return windows.filter { $0.id != headline.id }.max { $0.usedFraction < $1.usedFraction }
+    }
+
     static func unavailable(_ provider: Provider, reason: Unavailability) -> ProviderUsage {
         unavailable(AccountKey(provider), reason: reason)
     }

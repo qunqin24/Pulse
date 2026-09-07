@@ -28,9 +28,19 @@ The pointed-at halo hangs on the **progress arc**, not the ring view. Its inward
 
 `showsWindowClock`, default off. **Outside** the usage ring (inside is the activity mark). Neutral, low opacity, not a second hue. Applied as an overlay **after** `.frame(width: diameter…)`, never a ZStack child (a wider child grew the usage ring). Nil when the provider gives `resetsAt` or length without the other; `reportsLength` must be true. Own 60s ticker, not the usage loop.
 
+## Second ring
+
+`showsSecondRing`, default off. `ProviderUsage.secondWindow(preferring:)` — **the fullest limit that is not the one already on the ring**, stated that way so it needs no table of which window each provider calls its long one, and so it keeps working when the headline is pinned. Nil where the provider reports one limit: an empty second ring reads as a limit at zero, or as a fault.
+
+**Inside, not outside.** Outside is the clock arc's, and the limit that matters most has to stay the outer, bigger, thicker one — so nothing moves for anybody who leaves this off. Same colour language as the first ring: two arcs measuring the same kind of thing must be read the same way, and a second hue would be a second vocabulary for one idea. Size and weight are what tell them apart. Spent fills it, whichever way it counts.
+
+**It moves what is already in there**, which is why the geometry is a `PanelMetrics` budget (`showSecondRing`) and `DockLayout.secondRing…` rather than a constant in the view. At standard scale the band between the icon disc and the ring's inner edge is 6pt, and the **activity mark rides the middle of it** — the one place a second arc wants, and the providers reporting two limits are exactly the two whose CLIs make it spin. With the ring on, the mark moves in against the disc and the disc gives up 2pt a side. The ring, the rail's width and the ring centres are unchanged.
+
+The percent label under the ring still follows the **outer** limit only. Two figures in that space is a change to `DockLayout.percentTextWidth`, which is a budget the whole rail is measured from.
+
 ## Activity mark
 
-White arc on the empty ring between icon disc and usage stroke. Core Animation, not `TimelineView`. Reset `spinning` on disappear. [../refresh-and-data.md](../refresh-and-data.md)
+White arc on the empty ring between icon disc and usage stroke — **or just outside the icon disc when the second ring is on**, see above. Core Animation, not `TimelineView`. Reset `spinning` on disappear. [../refresh-and-data.md](../refresh-and-data.md)
 
 ## Icons
 

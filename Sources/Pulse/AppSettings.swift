@@ -454,6 +454,25 @@ final class AppSettings {
         alertThreshold != .off || alertsOnReset || alertsOnFailure
     }
 
+    /// A second, smaller ring inside the first, for the next-fullest limit.
+    ///
+    /// Off by default. The ring is the one thing on this panel somebody reads
+    /// without stopping, and two arcs is twice as much to take in — the card
+    /// is a hover away and already lists every limit. Someone who wants both
+    /// at a glance turns it on knowing what it costs.
+    ///
+    /// **A `PanelMetrics` entry**, because it moves the activity mark and the
+    /// icon's disc inside the ring — see `DockLayout`. Set before the change
+    /// is announced, so whoever re-measures sees the size it is about to be.
+    var showsSecondRing: Bool {
+        didSet {
+            guard showsSecondRing != oldValue else { return }
+            PanelMetrics.showSecondRing(showsSecondRing)
+            UserDefaults.standard.set(showsSecondRing, forKey: Key.showsSecondRing)
+            onChange?()
+        }
+    }
+
     /// Called after any change that the AppKit side has to react to — showing
     /// or hiding the panel, or resizing it because the rail got shorter.
     var onChange: (() -> Void)?
@@ -480,6 +499,7 @@ final class AppSettings {
         showsWindowClock: Bool = false,
         showsRemaining: Bool = false,
         showsForecast: Bool = false,
+        showsSecondRing: Bool = false,
         alertThreshold: AlertThreshold = .default,
         alertsOnReset: Bool = false,
         alertsOnFailure: Bool = false
@@ -505,6 +525,7 @@ final class AppSettings {
         self.showsWindowClock = showsWindowClock
         self.showsRemaining = showsRemaining
         self.showsForecast = showsForecast
+        self.showsSecondRing = showsSecondRing
         self.alertThreshold = alertThreshold
         self.alertsOnReset = alertsOnReset
         self.alertsOnFailure = alertsOnFailure
@@ -731,6 +752,7 @@ final class AppSettings {
             showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
             showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
+            showsSecondRing: defaults.object(forKey: Key.showsSecondRing) as? Bool ?? false,
             alertThreshold: (defaults.object(forKey: Key.alertThreshold) as? Int)
                 .flatMap(AlertThreshold.init(rawValue:)) ?? .default,
             alertsOnReset: defaults.object(forKey: Key.alertsOnReset) as? Bool ?? false,
@@ -743,6 +765,7 @@ final class AppSettings {
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
         PanelMetrics.showForecast(settings.showsForecast)
+        PanelMetrics.showSecondRing(settings.showsSecondRing)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }
@@ -829,6 +852,7 @@ final class AppSettings {
         static let showsWindowClock = "settings.showsWindowClock"
         static let showsRemaining = "settings.showsRemaining"
         static let showsForecast = "settings.showsForecast"
+        static let showsSecondRing = "settings.showsSecondRing"
         static let alertThreshold = "settings.alertThreshold"
         static let alertsOnReset = "settings.alertsOnReset"
         static let alertsOnFailure = "settings.alertsOnFailure"

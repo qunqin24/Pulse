@@ -364,6 +364,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Second limit inside the ring"),
+                    subtitle: String.localized("A thinner ring for the next-fullest limit, where a provider has one.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsSecondRing },
+                        set: { settings.showsSecondRing = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Show what's left"),
                     subtitle: String.localized("Counts down instead of up, figure and ring together.")
                 ) {

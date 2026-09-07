@@ -47,6 +47,16 @@ struct UsageRingView: View {
     /// somebody chose for the ring.
     var elapsedFraction: Double?
 
+    /// The next-fullest limit, drawn as a smaller ring inside this one.
+    ///
+    /// Inside rather than outside, which is where the clock arc goes: two
+    /// usage arcs have to read as the same kind of measurement, and the one
+    /// that matters most should stay the outer, bigger, thicker one. Nil for a
+    /// provider that reports a single limit — an empty second ring reads as a
+    /// limit at zero, or as a fault.
+    var secondFraction: Double?
+    var secondIsSpent = false
+
     @State private var spinning = false
     @State private var refreshSpinning = false
 
@@ -58,8 +68,15 @@ struct UsageRingView: View {
     private static let iconScale: CGFloat = 0.8
 
     private var centreDiameter: CGFloat {
-        max(diameter - (lineWidth + Self.centreGap) * 2, 0)
+        // The disc gives up two points a side to the second ring, which needs
+        // the band the disc's margin was using. Only when it is actually
+        // drawn: a provider with one limit keeps the icon it always had.
+        let squeeze = secondFraction == nil ? 0 : Self.secondRingSqueeze * PanelMetrics.scale
+        return max(diameter - (lineWidth + Self.centreGap) * 2 - squeeze * 2, 0)
     }
+
+    /// How much the icon's disc shrinks to make room, per side.
+    private static let secondRingSqueeze: CGFloat = 2
 
     /// The busy arc rides the empty ring between the icon's disc and the
     /// usage ring — halfway between the two, so it touches neither.
@@ -70,7 +87,14 @@ struct UsageRingView: View {
     /// arc laid over it would cover the answer while claiming to be about
     /// something else entirely.
     private var busyDiameter: CGFloat {
-        max(diameter - lineWidth * 1.5 - Self.centreGap, 0)
+        // **The second ring takes this band.** The mark and the ring would be
+        // stroked at the same radius otherwise — and the providers that report
+        // two limits are exactly the two whose CLIs make this spin. With the
+        // ring there the mark rides just outside the disc instead.
+        guard secondFraction == nil else {
+            return max(centreDiameter + Self.secondRingSqueeze * PanelMetrics.scale, 0)
+        }
+        return max(diameter - lineWidth * 1.5 - Self.centreGap, 0)
     }
 
     /// How much of the circle the arc covers. Short enough to read as a
@@ -96,6 +120,41 @@ struct UsageRingView: View {
     /// The circle the clock arc is stroked along.
     private var clockDiameter: CGFloat {
         diameter + lineWidth + (Self.clockGap + Self.clockLineWidth / 2) * 2 * PanelMetrics.scale
+    }
+
+    /// The next-fullest limit, as a thinner ring inside the first.
+    ///
+    /// Same colour language, deliberately: two arcs measuring the same kind of
+    /// thing must be read the same way, and a second hue would be a second
+    /// vocabulary for one idea. What tells them apart is size and weight — the
+    /// limit that matters most is the outer, thicker one, and stays where a
+    /// single ring has always been so nothing moves for somebody who leaves
+    /// this off.
+    @ViewBuilder
+    private func secondRing(_ fraction: Double) -> some View {
+        let used = min(max(fraction, 0), 1)
+        let spent = secondIsSpent || used >= 1
+        let shown = showsRemaining && !spent ? 1 - used : used
+        let colour = chosenTint.flatMap { spent ? nil : $0 }
+            ?? UsageTint.color(for: used, isExhausted: spent)
+
+        ZStack {
+            Circle()
+                .stroke(Color.primary.opacity(0.18), lineWidth: DockLayout.secondRingLineWidth)
+
+            Circle()
+                // Full when spent, whichever way it counts — the same rule the
+                // outer ring gets, and for the same reason: the most urgent
+                // state must not be the one with the least ink.
+                .trim(from: 0, to: spent ? 1 : max(shown, 0))
+                .stroke(
+                    colour,
+                    style: StrokeStyle(lineWidth: DockLayout.secondRingLineWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.35), value: shown)
+        }
+        .frame(width: DockLayout.secondRingDiameter, height: DockLayout.secondRingDiameter)
     }
 
     /// What the arc and the halo are drawn in.
@@ -151,6 +210,10 @@ struct UsageRingView: View {
             // Dimmed while there is no reading, so the rail shows at a glance
             // which providers it actually has data for.
             .foregroundStyle(.primary.opacity(usedFraction == nil ? 0.35 : 1))
+
+            if let secondFraction {
+                secondRing(secondFraction)
+            }
 
             if isBusy {
                 Circle()
