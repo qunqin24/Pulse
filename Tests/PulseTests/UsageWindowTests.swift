@@ -66,11 +66,16 @@ struct UsageWindowTests {
 /// and must draw nothing at all where there is only one limit.
 @Suite("The second ring's limit")
 struct SecondWindowTests {
-    private static func window(_ id: String, used: Double) -> UsageWindow {
+    private static func window(
+        _ id: String,
+        used: Double,
+        scope: String? = nil,
+        kind: UsageWindow.Kind = .weekly
+    ) -> UsageWindow {
         UsageWindow(
             id: id,
-            kind: .weekly,
-            scope: nil,
+            kind: kind,
+            scope: scope,
             usedFraction: used,
             windowSeconds: 7 * 86_400,
             resetsAt: nil
@@ -117,6 +122,75 @@ struct SecondWindowTests {
         // table of which window each provider calls its long one.
         #expect(usage.headlineWindow(preferring: "weekly")?.id == "weekly")
         #expect(usage.secondWindow(preferring: "weekly")?.id == "5h")
+    }
+
+    @Test("A provider with two pools pairs within one of them")
+    func staysInsideTheModelGroup() {
+        // Antigravity reports a five-hour and a weekly for each of two model
+        // groups, and they are separate budgets. Pairing the ring's Gemini
+        // weekly with a Claude five-hour would put two unrelated pools on one
+        // mark, with nothing to tell the reader they had been mixed.
+        let usage = Self.usage([
+            Self.window("gemini-5h", used: 0.00, scope: "Gemini", kind: .fiveHour),
+            Self.window("gemini-weekly", used: 0.01, scope: "Gemini"),
+            Self.window("3p-5h", used: 0.00, scope: "Claude and GPT", kind: .fiveHour),
+            Self.window("3p-weekly", used: 0.00, scope: "Claude and GPT")
+        ])
+
+        #expect(usage.headlineWindow()?.id == "gemini-weekly")
+        #expect(usage.secondWindow()?.scope == "Gemini")
+        #expect(usage.secondWindow()?.id == "gemini-5h")
+    }
+
+    @Test("Even when a different group holds a fuller limit")
+    func groupBeatsFullness() {
+        let usage = Self.usage([
+            Self.window("a-5h", used: 0.90, scope: "A", kind: .fiveHour),
+            Self.window("a-weekly", used: 0.10, scope: "A"),
+            Self.window("b-weekly", used: 0.60, scope: "B")
+        ])
+
+        // B's 60% is fuller than A's 10%, and still the wrong answer: the ring
+        // is A's, so the inner ring has to be A's too.
+        #expect(usage.headlineWindow()?.id == "a-5h")
+        #expect(usage.secondWindow()?.id == "a-weekly")
+    }
+
+    @Test("A group with nothing else falls back rather than drawing nothing")
+    func fallsBackOutsideTheGroup() {
+        let usage = Self.usage([
+            Self.window("solo", used: 0.80, scope: "Only one here", kind: .fiveHour),
+            Self.window("other", used: 0.30, scope: "Elsewhere")
+        ])
+
+        #expect(usage.headlineWindow()?.id == "solo")
+        // Better a limit from elsewhere than an empty ring.
+        #expect(usage.secondWindow()?.id == "other")
+    }
+
+    @Test("Claude Code's unscoped pair are each other's group")
+    func unscopedWindowsPair() {
+        let usage = Self.usage([
+            Self.window("5h", used: 0.14, kind: .fiveHour),
+            Self.window("weekly", used: 0.08),
+            Self.window("weekly-scoped", used: 0.00, scope: "Fable")
+        ])
+
+        #expect(usage.headlineWindow()?.id == "5h")
+        // The model-scoped weekly is left to the card, even though it is a
+        // window of the same provider.
+        #expect(usage.secondWindow()?.id == "weekly")
+    }
+
+    @Test("Ties keep the provider's own order, so the ring does not shuffle")
+    func tiesAreStable() {
+        let usage = Self.usage([
+            Self.window("first", used: 0.5),
+            Self.window("second", used: 0.0),
+            Self.window("third", used: 0.0)
+        ])
+        #expect(usage.secondWindow()?.id == "second")
+        #expect(usage.secondWindow()?.id == "second")
     }
 
     @Test("Two limits at the same figure still resolve to two different rings")

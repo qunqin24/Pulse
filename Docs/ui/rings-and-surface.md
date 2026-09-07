@@ -30,7 +30,11 @@ The pointed-at halo hangs on the **progress arc**, not the ring view. Its inward
 
 ## Second ring
 
-`showsSecondRing`, default off. `ProviderUsage.secondWindow(preferring:)` — **the fullest limit that is not the one already on the ring**, stated that way so it needs no table of which window each provider calls its long one, and so it keeps working when the headline is pinned. Nil where the provider reports one limit: an empty second ring reads as a limit at zero, or as a fault.
+`showsSecondRing`, default off. `ProviderUsage.secondWindow(preferring:)` — **the fullest limit in the ring's own model group**, falling back to the fullest of everything else when that group holds nothing more. Nil where the provider reports one limit: an empty second ring reads as a limit at zero, or as a fault.
+
+**The group comes first because a provider can report two independent budgets.** Antigravity reports four windows — a five-hour and a weekly for `Gemini`, the same pair for `Claude and GPT` — and they are separate pools. Pairing the ring's Gemini weekly with a Claude five-hour puts two unrelated budgets on one mark, with nothing to tell the reader they have been mixed. Same group, and the two rings answer one question: how much of *this* pool is gone, over five hours and over the week.
+
+Claude Code falls out of the same rule: its five-hour and weekly limits are unscoped, so they are each other's group, and the model-scoped weekly is left to the card. Stated as "fullest" rather than "the weekly one" so it needs no table of which window each provider calls its long one, and so it keeps working when the ring is pinned. `max(by:)` keeps the first of equals, so a rail of untouched windows stays in the provider's own order instead of shuffling between passes.
 
 **Inside, not outside.** Outside is the clock arc's, and the limit that matters most has to stay the outer, bigger, thicker one — so nothing moves for anybody who leaves this off. Same colour language as the first ring: two arcs measuring the same kind of thing must be read the same way, and a second hue would be a second vocabulary for one idea. Size and weight are what tell them apart. Spent fills it, whichever way it counts.
 

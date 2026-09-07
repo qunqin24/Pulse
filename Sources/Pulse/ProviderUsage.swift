@@ -324,20 +324,40 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         return windows.max { $0.usedFraction < $1.usedFraction }
     }
 
-    /// The limit the second ring shows: the fullest one that is **not** the
-    /// one already on the ring.
+    /// The limit the second ring shows: **the fullest of the ring's own model
+    /// group**, or of everything else where the group has nothing more.
     ///
-    /// Stated that way rather than "the weekly one" so it needs no table of
-    /// which window each provider considers its long one — and so it keeps
-    /// working when the headline is pinned. What the rail ends up showing is
-    /// the two that matter most, whichever they are.
+    /// The group comes first because a provider can report two independent
+    /// budgets. Antigravity reports four windows — a five-hour and a weekly
+    /// for "Gemini", and the same pair for "Claude and GPT" — and they are
+    /// separate pools. Pairing the ring's weekly Gemini figure with a
+    /// five-hour Claude one puts two unrelated budgets on one mark: neither
+    /// number says anything about the other, and the reader has no way to
+    /// tell they are being mixed. Same group, and the two rings answer one
+    /// question — how much of *this* pool is gone, over five hours and over
+    /// the week.
     ///
-    /// Nil when the provider reports only one limit. A second ring drawn empty
-    /// would read as a limit at zero, or as a fault; a provider with one pool
-    /// simply keeps the single ring it has always had.
+    /// Claude Code falls out of the same rule for free: its five-hour and
+    /// weekly limits are unscoped, so they are each other's group, and the
+    /// model-scoped weekly is left to the card.
+    ///
+    /// The fallback matters for the provider whose ring is the only window in
+    /// its group — better a second limit from elsewhere than an empty ring.
+    /// Stated as "fullest" rather than "the weekly one" so it needs no table
+    /// of which window each provider considers its long one, and so it keeps
+    /// working when the ring is pinned.
+    ///
+    /// Nil when the provider reports one limit. An empty second ring reads as
+    /// a limit at zero, or as a fault.
     func secondWindow(preferring id: String? = nil) -> UsageWindow? {
         guard let headline = headlineWindow(preferring: id), windows.count > 1 else { return nil }
-        return windows.filter { $0.id != headline.id }.max { $0.usedFraction < $1.usedFraction }
+
+        let rest = windows.filter { $0.id != headline.id }
+        let sameGroup = rest.filter { $0.scope == headline.scope }
+        // `max(by:)` keeps the first of equals, so a rail of untouched windows
+        // stays in the provider's own order rather than shuffling between
+        // passes.
+        return (sameGroup.isEmpty ? rest : sameGroup).max { $0.usedFraction < $1.usedFraction }
     }
 
     static func unavailable(_ provider: Provider, reason: Unavailability) -> ProviderUsage {
