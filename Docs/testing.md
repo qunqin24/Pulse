@@ -1,0 +1,38 @@
+# Testing
+
+Owns: what `swift test` covers, what it deliberately does not, and the two conventions the suite depends on. Toolchain and build flags: [build-from-source.md](build-from-source.md).
+
+```bash
+swift test
+```
+
+There was no test target until 2026-09-07. What prompted one was not a policy: two real faults were found by reading code in a single afternoon — Antigravity taking the first matching helper and giving up when the one that answers was second, and `.stale` being treated as a failed fetch when a *successful* one produces it too — and the notification rules had shipped with nothing proving them at all.
+
+## What is covered
+
+| Suite | Covers |
+|---|---|
+| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate. [notifications.md](notifications.md) |
+| `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
+| `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
+| `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
+
+## What is not, and why
+
+**No UI tests.** The panel is an accessory `NSPanel` whose hover cannot be driven by synthesised events — `hitTest` and synthetic `NSEvent`s both reported a handle as perfectly reachable while real clicks were being dropped, which is the lesson in [ui/input.md](ui/input.md). A UI test here would report the same thing.
+
+**No live provider calls.** Every route needs somebody's real credential and answers differently by plan. Fixtures are captured by hand from a real reply and committed; the capture is recorded in that provider's page.
+
+**No network, no clock, no disk in a rule test.** `AlertMemory.alerts` takes `now` as an argument for exactly this reason. `UsageCache.init(file:)` takes a path for exactly this reason. Anything that has to reach for a real one is not a rule test.
+
+## Two conventions
+
+**The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving 63 files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
+
+**A symbol may be `internal` instead of `private` so a test can hold it**, and when it is, the comment says so and says not to tidy it back. `AntigravityUsageService.Reply` and `windows(from:)` are the first two. Nothing outside the module can see them either way; the difference is only whether the fixture test compiles.
+
+## Fixtures
+
+`Tests/PulseTests/Fixtures/`, copied whole into the test bundle so a schema change diffs readably. Read them with `Bundle.module.url(forResource:withExtension:subdirectory:)`.
+
+Captured payloads carry no account name, email, or token — check before committing one. A quota reply is bucket ids, display names, fractions and reset times, and that is all it should be.

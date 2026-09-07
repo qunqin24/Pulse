@@ -283,7 +283,12 @@ struct AntigravityUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal rather than private, and deliberately: this and `windows(from:)`
+    /// below are the halves a test can hold a real captured payload against,
+    /// and the parsing is the part of this file most likely to be broken by a
+    /// change at the other end. Nothing outside the module can see them. Do
+    /// not tidy them back to `private` — that takes the fixture test with it.
+    struct Reply: Decodable {
         struct Bucket: Decodable {
             let bucketId: String?
             let window: String?
@@ -312,7 +317,7 @@ struct AntigravityUsageService: Sendable {
         let userStatus: UserStatus?
     }
 
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    static func windows(from reply: Reply) -> [UsageWindow] {
         (reply.response?.groups ?? []).flatMap { group -> [UsageWindow] in
             let scope = modelGroup(group.displayName)
 

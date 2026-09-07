@@ -47,6 +47,8 @@ The reason is also gone by then: a failed fetch that the cache answers for arriv
 
 It is kept up to date **whether or not anything can be posted**, so a build with no bundle, or a grant that was refused, cannot later wake up and announce a fortnight of crossings it slept through.
 
+Every rule on this page is covered by `AlertMemoryTests` ([testing.md](testing.md)). Change one, change that.
+
 `AlertMemory.alerts(for:as:…)` is pure apart from its own `self` — no disk, no notification centre, and the one clock reading it needs is taken at the edge and passed in as `now`. That is what makes these rules arguable.
 
 `UsageAlerts.observe` returns immediately when `AppSettings.wantsAlerts` is false, so nothing is tracked and no file is written for a feature nobody has switched on. Without that guard the memory was written on the first pass of every launch — measured — and failures were counted up against accounts for nothing.

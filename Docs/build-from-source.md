@@ -1,6 +1,6 @@
 # Build from source
 
-Pulse is a Swift package (`Package.swift`), macOS 14+, Swift tools 6.0. No test target, no linter. Open the package in Xcode or use the CLI.
+Pulse is a Swift package (`Package.swift`), macOS 14+, Swift tools 6.0. No linter; `swift test` covers rules and parsing ([testing.md](testing.md)). Open the package in Xcode or use the CLI.
 
 User-facing clone-and-run stays in the README. **This file is the toolchain contract.** Shipping a tagged build, Sparkle, and the DMG: [releasing.md](releasing.md).
 

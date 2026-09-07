@@ -1,6 +1,6 @@
 # Contributing
 
-Pulse is a macOS menu-bar app. There is no test target and no linter. Review is human plus whatever the author ran. This file is for people changing the repo; [CLAUDE.md](CLAUDE.md) is the short AI entry.
+Pulse is a macOS menu-bar app. There is no linter; there is a test target (`swift test`) covering rules, cache reconciliation and provider fixtures — see [Docs/testing.md](Docs/testing.md) for what it does and does not reach. Review is human plus whatever the author ran. This file is for people changing the repo; [CLAUDE.md](CLAUDE.md) is the short AI entry.
 
 ## Workflow
 

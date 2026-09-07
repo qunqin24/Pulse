@@ -109,7 +109,7 @@ working.
 
 ## Checking it
 
-There is no test target in this repository. The parser, the cookie filter and
+The parser, the cookie filter and
 both cookie-store formats are driven from throwaway probe packages against data
 built on purpose — a `binarycookies` file assembled record by record, and
 Chromium values encrypted with the same PBKDF2/AES-128-CBC scheme — so none of

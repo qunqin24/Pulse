@@ -35,7 +35,7 @@ CodexBar’s notes say the IDE’s local endpoints expose only session/model quo
 | `3p-5h` | Claude and GPT models | 5h | 1 |
 | `3p-weekly` | Claude and GPT models | weekly | 1 |
 
-`GetUserStatus` on the same port named the plan (`Pro`). Their note may be about an older IDE build; either way, do not drop the IDE origin on the strength of it without re-measuring.
+That payload is committed as `Tests/PulseTests/Fixtures/antigravity-quota.json` and is what `AntigravityParsingTests` holds the parser against. `GetUserStatus` on the same port named the plan (`Pro`). Their note may be about an older IDE build; either way, do not drop the IDE origin on the strength of it without re-measuring.
 
 ### The `agy` CLI, not implemented
 

@@ -12,6 +12,7 @@ swift build
 ./Scripts/bundle.sh
 ./Scripts/dmg.sh
 ./Scripts/check-localization.sh
+swift test
 ```
 
 **`xcode-select` must point at Xcode, not CommandLineTools.** `#Preview` is expanded by an Xcode plugin; otherwise every build fails with `PreviewsMacros plugin not found`. Check with `xcode-select -p`. One-off: `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift build`.
@@ -24,7 +25,7 @@ A clean `swift build` is not the Xcode check. Actor-isolation mistakes can be wa
 swift build -Xswiftc -swift-version -Xswiftc 6
 ```
 
-Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no test target, no linter. CI and release need the macOS 26 SDK (`glassEffect`).
+Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no linter. **`swift test` exists** — rules, cache reconciliation and provider fixtures; run it, and add to it when you change a rule. [Docs/testing.md](Docs/testing.md). CI and release need the macOS 26 SDK (`glassEffect`).
 
 ## Do not violate
 
@@ -48,6 +49,7 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no test target
 | Settings window copy/layout | [Docs/ui/settings.md](Docs/ui/settings.md) |
 | Refresh, cache, activity, ledger | [Docs/refresh-and-data.md](Docs/refresh-and-data.md) |
 | Notifications, alert rules | [Docs/notifications.md](Docs/notifications.md) |
+| What is tested, fixtures | [Docs/testing.md](Docs/testing.md) |
 | Localization, resources, adding UI | [Docs/development.md](Docs/development.md) |
 | Bundle, tag, Sparkle, DMG | [Docs/releasing.md](Docs/releasing.md) / [Docs/build-from-source.md](Docs/build-from-source.md) |
 | Why / failure lessons | [Docs/decisions/README.md](Docs/decisions/README.md) |
