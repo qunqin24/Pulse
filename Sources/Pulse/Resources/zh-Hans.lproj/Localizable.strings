@@ -337,3 +337,4 @@
 /* 内圈第二条限额 */
 "Second limit inside the ring" = "环内显示第二条限额";
 "A thinner ring for the next-fullest limit, where a provider has one." = "在圆环里面加一条细环，显示第二满的那条限额（服务商有第二条时才画）。";
+"That key works. The account has no Coding Plan running on it." = "密钥是有效的，这个账号名下没有生效中的 Coding Plan。";

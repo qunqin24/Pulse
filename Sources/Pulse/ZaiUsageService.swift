@@ -140,6 +140,14 @@ struct ZaiUsageService: Sendable {
     /// endpoint actually returns. See `ZaiErrorTests`.
     static func problem(_ reply: Reply) -> ProviderUsage.Unavailability {
         let said = (reply.msg ?? "").lowercased()
+
+        // **Checked before anything else, because the code is useless here.**
+        // A working key on an account with no running subscription answers
+        // `500` — the vendor's generic number — with this sentence, and 500
+        // alone would say the service broke. The phrase is embedded in English
+        // on both hosts, so one test covers both wordings.
+        if said.contains("coding plan") { return .zaiNoCodingPlan }
+
         let authWords = [
             "token", "auth", "key", "unauthor", "forbidden", "credential",
             // The same sentences from the mainland host. Matched as text

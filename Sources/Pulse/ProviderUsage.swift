@@ -241,6 +241,17 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case volcengineCLIMissing
         /// It is installed and has never been signed in, or the session went.
         case volcengineSignInRequired
+        /// The key works and the account has no Coding Plan running on it.
+        ///
+        /// Measured with a live Coding Plan key whose subscription had lapsed:
+        /// `500 当前用户不存在coding plan`, over an HTTP 200, on all three
+        /// hosts, from a key that answers a `glm-4-flash` completion perfectly
+        /// well. The plan is a **subscription on the account**, not a property
+        /// of the key, so authentication succeeding says nothing about whether
+        /// there is a quota to report. A complete answer, not a fault — and it
+        /// used to be reported as "the service returned an error", which sends
+        /// somebody to look for an outage instead of at their subscription.
+        case zaiNoCodingPlan
         /// No key has been entered for a provider that needs one.
         case apiKeyMissing
         /// There is a key, and the service refused it.
@@ -278,6 +289,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")
             case .volcengineCLIMissing: .localized("Install arkcli and run `arkcli auth login`, or add access keys in Settings.")
             case .volcengineSignInRequired: .localized("arkcli isn't signed in. Run `arkcli auth login`.")
+            case .zaiNoCodingPlan: .localized("That key works. The account has no Coding Plan running on it.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

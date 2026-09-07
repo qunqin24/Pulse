@@ -59,6 +59,22 @@ struct ZaiErrorTests {
         }
     }
 
+    @Test("A key that works on an account with no plan is not a fault")
+    func noCodingPlan() throws {
+        // Measured against the live endpoint with a real Coding Plan key
+        // whose subscription had lapsed — one that still answers a
+        // `glm-4-flash` completion. All three hosts reply with this, over an
+        // HTTP 200, using the vendor's generic 500: the code says nothing and
+        // only the sentence does.
+        #expect(try ZaiUsageService.problem(reply(code: 500, msg: "当前用户不存在coding plan"))
+            == .zaiNoCodingPlan)
+        // And it must outrank the code test: 500 alone would say the service
+        // broke, which sends somebody to look for an outage instead of at
+        // their subscription.
+        #expect(try ZaiUsageService.problem(reply(code: 500, msg: "user has no coding plan"))
+            == .zaiNoCodingPlan)
+    }
+
     @Test("Rate limiting and real server faults are still told apart")
     func notEverythingIsTheKey() throws {
         #expect(try ZaiUsageService.problem(reply(code: 429, msg: "too many requests")) == .rateLimited)

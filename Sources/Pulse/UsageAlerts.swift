@@ -361,7 +361,9 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
              .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
              .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
-             .volcengineSignInRequired:
+             .volcengineSignInRequired,
+             // Not having bought a plan stays true until somebody buys one.
+             .zaiNoCodingPlan:
             .neutral
         }
     }

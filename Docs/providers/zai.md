@@ -21,8 +21,11 @@ The verdict is in the envelope, so the status line says nothing and `problem(_:)
 | A well-formed key the host does not know | `1000` · `身份验证失败。` |
 | No `Authorization` header | `1001` · `Header中未收到Authorization参数…` |
 | Any of the above, on `api.z.ai` | the same codes, in English |
+| A **working** key with no Coding Plan running on the account | `500` · `当前用户不存在coding plan` |
 
-The keyword list was **English only** while the mainland host answers in Chinese, so nothing matched and everything fell through to a code test that knew only HTTP's numbers. `1000` — the shape a key from the *other region* produces, which is the common mistake — came out as "the service returned an error" and sent people looking for an outage. Chinese wording is matched now, and Zhipu's 1000-series is treated as authentication. The words matter more than the numbers: the numbering is this vendor's own and is not published in full.
+That last row was measured with a real Coding Plan key whose subscription had lapsed — one that still answers a `glm-4-flash` completion perfectly well — on all three hosts. **The plan is a subscription on the account, not a property of the key**: authentication succeeds and the quota endpoint still has nothing to report. So a refused key and an unsubscribed account are different problems with different remedies, and only the sentence tells them apart. It is checked before the code test, since `500` is this vendor's generic number and on its own would say the service broke — which sends somebody to look for an outage instead of at their subscription. The phrase is embedded in English on both hosts, so one test covers both wordings.
+
+**What is still not verified:** no key here has a Coding Plan on it, so the success path — `data.limits[]` into windows — has never been held against a real payload. Only the refusals have. The keyword list was **English only** while the mainland host answers in Chinese, so nothing matched and everything fell through to a code test that knew only HTTP's numbers. `1000` — the shape a key from the *other region* produces, which is the common mistake — came out as "the service returned an error" and sent people looking for an outage. Chinese wording is matched now, and Zhipu's 1000-series is treated as authentication. The words matter more than the numbers: the numbering is this vendor's own and is not published in full.
 
 Extra accounts are not supported. `keepsLocalTranscripts` is false.
 
