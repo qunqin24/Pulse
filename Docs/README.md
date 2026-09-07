@@ -19,7 +19,6 @@ Maintained map. Change the topic file that owns a behaviour in the same patch as
 | [releasing.md](releasing.md) | Tag, bundle, Sparkle, DMG, CI |
 | [providers/README.md](providers/README.md) | Per-provider routes, auth, cookies, extra accounts |
 | [decisions/README.md](decisions/README.md) | Why / failure lessons (historical) |
-| [opencode-triage.md](opencode-triage.md) | GitHub new-issue/PR triage commenter (OpenCode Go; default off) |
 
 ## Providers
 
