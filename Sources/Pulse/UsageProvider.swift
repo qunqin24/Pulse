@@ -37,8 +37,16 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Two entries rather than one with a region switch, because they are
         // two accounts on two services: a key for one is refused by the other,
         // and plenty of people have only one of them.
-        case .zai: "Z.ai"
-        case .glmCoding: "GLM Coding Plan"
+        // **Both say which storefront**, and say it first. These are one
+        // product sold in two places — z.ai calls it the GLM Coding Plan and
+        // so does BigModel — so a row named for the brand and a row named for
+        // the product read as two different things to somebody holding one of
+        // them. An international subscriber picked the row literally called
+        // "GLM Coding Plan", pasted a z.ai key, and had it sent to BigModel,
+        // which refused it (issue #13). The storefront leads because that is
+        // what a truncated sidebar row has to keep.
+        case .zai: "z.ai · GLM Coding Plan"
+        case .glmCoding: "BigModel · GLM Coding Plan"
         // Same product, two storefronts and two accounts. There is no separate
         // brand name for the mainland one, so the region is the distinction.
         case .minimax: "MiniMax"

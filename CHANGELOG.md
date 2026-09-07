@@ -7,6 +7,11 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.0.8
+
+- **The GLM Coding Plan's two rows now say which shop they are for** — "z.ai · GLM Coding Plan" and "BigModel · GLM Coding Plan". They were called "Z.ai" and "GLM Coding Plan", which was a trap: z.ai sells its plan under that name as well, so anyone on the international plan picked the row named after their product and had their key sent to the mainland service, which of course refused it.
+- **A refused key now says the key was refused.** These services answer with an ordinary HTTP 200 and put the verdict inside, and Pulse only recognised the English wording and two of the numbers — so the most common mistake of all, a key from the other one of the two shops, came out as "the service returned an error" and sent people looking for an outage that was not happening.
+
 ## 1.0.7
 
 - **Pulse can tell you, instead of waiting to be looked at.** Three switches in Settings, all off until you turn them on. **Warn at** posts a notification when a limit passes 75, 80, 90 or 95% — whichever you pick — and again when the provider says it is spent. **When a limit comes back** says so once the window you were warned about has turned over, which is the moment you can start again. **When a reading stops arriving** is the one that is about Pulse rather than about usage: a failed check falls back to the last good figures, which is the right thing to show and also the reason the fault is invisible — the panel goes on displaying perfectly plausible numbers with only a "last read" time to give it away. It waits for three failures in a row and then says it once, with the same sentence the card would have shown you.

@@ -21,8 +21,8 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.openCodeGo` | OpenCode Go | `opencode` | Pasted key, else OpenCode’s `auth.json` | no | pasted / found key | no | OpenCode stored key |
 | `.kimiCode` | Kimi Code | `kimi` | Pasted key | no | pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
-| `.zai` | Z.ai | `zai` | Pasted key | no | pasted key | no | none |
-| `.glmCoding` | GLM Coding Plan | `zhipu` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
+| `.zai` | z.ai · GLM Coding Plan | `zai` | Pasted key | no | pasted key | no | none |
+| `.glmCoding` | BigModel · GLM Coding Plan | `zhipu` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
 | `.minimax` | MiniMax | `minimax` | Pasted key | no | pasted key | no | none |
 | `.minimaxCN` | MiniMax CN | `minimax` | Pasted key | no | pasted key | no | none |
 | `.copilot` | GitHub Copilot | `github` | GitHub device login; token in `keys.dat` | no | sign-in | no | none |

@@ -126,14 +126,38 @@ struct ZaiUsageService: Sendable {
     }
 
     /// What the envelope's refusal actually was.
-    private static func problem(_ reply: Reply) -> ProviderUsage.Unavailability {
+    ///
+    /// **The keywords used to be English only, and the mainland host answers
+    /// in Chinese**, so nothing ever matched and everything fell through to
+    /// the code — which only knew HTTP's numbers. Measured against the live
+    /// endpoint: a key of the wrong shape gets `401 令牌已过期或验证不正确`,
+    /// a well-formed key that the host does not recognise gets
+    /// `1000 身份验证失败。`, and a missing header gets `1001`. Only the first
+    /// was mapped, so the common case — a key from the *other* region, which
+    /// is the right shape and the wrong account — was reported as "the service
+    /// returned an error" and sent people looking for an outage.
+    /// Internal so the mapping can be held against the envelopes the live
+    /// endpoint actually returns. See `ZaiErrorTests`.
+    static func problem(_ reply: Reply) -> ProviderUsage.Unavailability {
         let said = (reply.msg ?? "").lowercased()
-        if ["token", "auth", "key", "unauthor", "forbidden", "credential"].contains(where: said.contains) {
-            return .apiKeyRefused
-        }
-        return switch reply.code {
+        let authWords = [
+            "token", "auth", "key", "unauthor", "forbidden", "credential",
+            // The same sentences from the mainland host. Matched as text
+            // because the code list below cannot be complete: this is one
+            // vendor's private numbering, and it is not published in full.
+            "身份验证", "鉴权", "认证", "令牌", "未授权", "无权限", "密钥"
+        ]
+        if authWords.contains(where: said.contains) { return .apiKeyRefused }
+
+        return switch reply.code ?? 0 {
+        // HTTP's numbers, which this envelope also uses.
         case 401, 403: .apiKeyRefused
         case 429: .rateLimited
+        // Zhipu's own 1000-series is authentication. 1000 and 1001 are
+        // measured; the rest of the band is documented as the same family and
+        // sending somebody to check their key is the better mistake — the
+        // alternative reported a working service as broken.
+        case 1000...1099: .apiKeyRefused
         default: .serverError
         }
     }

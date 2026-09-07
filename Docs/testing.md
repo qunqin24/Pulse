@@ -20,6 +20,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
+| `ZaiErrorTests` | What the GLM Coding Plan's HTTP-200 refusals mean, from envelopes taken off both live hosts |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 | `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |
 

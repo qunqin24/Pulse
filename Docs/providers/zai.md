@@ -4,10 +4,25 @@ One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsa
 
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|
-| `.zai` | Z.ai | `https://api.z.ai` | `zai` |
-| `.glmCoding` | GLM Coding Plan | `https://open.bigmodel.cn` | `zhipu` |
+| `.zai` | z.ai · GLM Coding Plan | `https://api.z.ai` | `zai` |
+| `.glmCoding` | BigModel · GLM Coding Plan | `https://open.bigmodel.cn` | `zhipu` |
 
 They are one company’s international and mainland storefronts, answering the same JSON on different hosts — **separate accounts with separate keys**. A key for one is refused by the other. CodexBar models this as one provider with a region switch; Pulse gives each a ring so someone with only the mainland plan does not have to know an international one exists.
+
+**Both ring names say the storefront, and say it first** — that is issue #13. They were `Z.ai` and `GLM Coding Plan`, named for the brand and for the product; but **z.ai sells its plan under the name "GLM Coding Plan" too**, so an international subscriber picked the row literally called that, pasted a z.ai key, and had it sent to BigModel. The storefront leads because a truncated sidebar row has to keep the half that distinguishes them.
+
+## Refusals arrive as HTTP 200
+
+The verdict is in the envelope, so the status line says nothing and `problem(_:)` is the whole of what the user is told. Measured against both live hosts on 2026-09-07:
+
+| Sent | Envelope |
+|---|---|
+| A key of the wrong shape | `401` · `令牌已过期或验证不正确` |
+| A well-formed key the host does not know | `1000` · `身份验证失败。` |
+| No `Authorization` header | `1001` · `Header中未收到Authorization参数…` |
+| Any of the above, on `api.z.ai` | the same codes, in English |
+
+The keyword list was **English only** while the mainland host answers in Chinese, so nothing matched and everything fell through to a code test that knew only HTTP's numbers. `1000` — the shape a key from the *other region* produces, which is the common mistake — came out as "the service returned an error" and sent people looking for an outage. Chinese wording is matched now, and Zhipu's 1000-series is treated as authentication. The words matter more than the numbers: the numbering is this vendor's own and is not published in full.
 
 Extra accounts are not supported. `keepsLocalTranscripts` is false.
 
