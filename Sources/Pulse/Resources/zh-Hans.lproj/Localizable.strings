@@ -12,24 +12,24 @@
 
 "Floating panel" = "悬浮面板";
 "Show floating panel" = "显示悬浮面板";
-"The usage rail at the edge of the screen." = "屏幕边缘的用量胶囊。";
+"The usage rail at the edge of the screen." = "在屏幕边缘显示用量胶囊。";
 "Hide in full screen" = "全屏时隐藏";
-"Keep the floating panel out of full-screen apps." = "其他应用全屏时隐藏悬浮面板，避免打扰。";
+"Keep the floating panel out of full-screen apps." = "其他应用进入全屏时自动隐藏，避免遮挡。";
 "Left" = "左侧";
 "Top" = "上";
 "Percentages on top" = "顶部显示百分比";
 "Percentages at the side" = "侧边显示百分比";
-"The figure under each ring, docked left or right." = "吸附左右两侧时,圆环下面的数字。";
+"The figure under each ring, docked left or right." = "吸附在左右两侧时，在圆环下方显示百分比。";
 "Time until reset" = "距离重置的时间";
-"A second arc outside each ring, for how much of the window has passed." = "在圆环外侧加一条弧,显示这个额度窗口过去了多少。";
+"A second arc outside each ring, for how much of the window has passed." = "在圆环外侧显示一圈进度，指示当前额度周期已过去多少。";
 "Figure above the ring" = "数字显示在圆环上方";
 "Show what's left" = "显示剩余额度";
 "Forecast" = "用尽预测";
-"Whether each limit lasts its window, on the card." = "在额度卡上说明每条限额是否够用到重置。";
-"Counts down instead of up, figure and ring together." = "改为倒着数，数字和圆环一起。";
-"Swaps the two, wherever the panel is." = "把数字和圆环的上下位置对调,两种吸附方式都生效。";
-"Only when the panel is docked to the top." = "仅在面板吸附到顶部时生效。";
-"Drag it anywhere; near an edge it snaps on." = "可以拖到任意位置,靠近边缘会自动吸附。";
+"Whether each limit lasts its window, on the card." = "在额度卡中预估每条限额能否用到下次重置。";
+"Counts down instead of up, figure and ring together." = "百分比与圆环改为显示剩余量，而非已用量。";
+"Swaps the two, wherever the panel is." = "将百分比移到圆环上方，各停靠位置均生效。";
+"Only when the panel is docked to the top." = "吸附在屏幕顶部时显示百分比。";
+"Drag it anywhere; near an edge it snaps on." = "可拖动到任意位置，靠近边缘时自动吸附。";
 "Right" = "右侧";
 
 "Show in panel" = "在面板中显示";
@@ -43,7 +43,7 @@
 
 "Language" = "语言";
 "Interface language" = "界面语言";
-"Takes effect right away." = "立即生效。";
+"Takes effect right away." = "切换后立即生效。";
 "System" = "跟随系统";
 
 /* 悬浮面板 */
@@ -98,7 +98,7 @@
 "Custom" = "自定义";
 "Colour" = "颜色";
 "Coloured by how much is left." = "按剩余量变色。";
-"A colour of your own, whatever the usage." = "固定使用你选的颜色,与用量无关。";
+"A colour of your own, whatever the usage." = "固定使用你选的颜色，与用量无关。";
 "Which limit the rail's ring tracks." = "胶囊上的圆环跟踪哪一条限额。";
 "Highest usage" = "占用最高的一条";
 "Automatic" = "自动";
@@ -112,7 +112,7 @@
 "Asks the Codex app server, which signs in on its own." = "询问 Codex 的 app server，它自己处理登录。";
 "Read usage from" = "用量来源";
 "Check every" = "刷新间隔";
-"How often to fetch new figures." = "多久获取一次最新数据。";
+"How often to fetch new figures." = "获取最新用量数据的频率。";
 "%@ seconds" = "%@ 秒";
 "%@ minutes" = "%@ 分钟";
 "The service didn't respond." = "服务没有响应。";
@@ -151,7 +151,7 @@
 
 /* Auto-collapse */
 "Hide until pointed at" = "自动收起";
-"Against a screen edge, the rail shrinks to a sliver until you point at it." = "贴边时缩成细线，鼠标移过去才展开。";
+"Against a screen edge, the rail shrinks to a sliver until you point at it." = "贴边时收起为细条，鼠标指向时展开。";
 "Show usage panel" = "展开用量面板";
 
 /* Free placement */
@@ -162,22 +162,22 @@
 /* Panel size */
 "Size" = "整体大小";
 "Spacing" = "间距";
-"How much air there is between the rings." = "圆环之间留多少空隙。";
+"How much air there is between the rings." = "调整圆环之间的间距。";
 "Tight" = "紧凑";
 "Loose" = "宽松";
-"Size of the rail on screen." = "胶囊显示的大小。";
+"Size of the rail on screen." = "调整胶囊的整体尺寸。";
 "Small" = "小";
 "Standard" = "标准";
 "Large" = "大";
 
 /* Launch at login */
 "Open at login" = "开机自启";
-"Start Pulse automatically when you log in." = "登录后自动启动 Pulse。";
+"Start Pulse automatically when you log in." = "登录 macOS 后自动启动 Pulse。";
 "Waiting for approval in System Settings › General › Login Items." = "等待在「系统设置 › 通用 › 登录项」中允许。";
 
 /* Liquid Glass */
 "Liquid Glass" = "毛玻璃";
-"Frosted glass instead of solid black." = "用半透明代替纯黑。";
+"Frosted glass instead of solid black." = "使用半透明材质，替代纯黑背景。";
 "Drag it by a ring while this is on." = "开启后只能按住圆环拖动。";
 "Open Antigravity to see its usage." = "打开 Antigravity 才能读到它的用量。";
 "Asks the language server Antigravity runs while it is open." = "向 Antigravity 打开时运行的语言服务器读取。";
@@ -200,7 +200,7 @@
 "Pulse %@ is available" = "Pulse %@ 可更新";
 "Check now" = "检查更新";
 "Checking…" = "正在检查…";
-"Built from source — no update check." = "源码构建,不检查更新。";
+"Built from source — no update check." = "源码构建，不检查更新。";
 "%@ installed · %@ available" = "已装 %@ · 可更新到 %@";
 "%@ · up to date" = "%@ · 已是最新";
 "Update to %@" = "更新到 %@";
@@ -212,18 +212,18 @@
 "Session cookie" = "登录 Cookie";
 "Read from browser" = "从浏览器读取";
 "Only %@." = "只从 %@ 读取。";
-"Only %@. It will ask for the keychain." = "只从 %@ 读取,会请求钥匙串授权。";
+"Only %@. It will ask for the keychain." = "只从 %@ 读取，会请求钥匙串授权。";
 "Starts with %@." = "先从 %@ 找起。";
-"Starts with %@. It will ask for the keychain." = "先从 %@ 找起,会请求钥匙串授权。";
+"Starts with %@. It will ask for the keychain." = "先从 %@ 找起，会请求钥匙串授权。";
 "Finds it in the browser you signed in with." = "在你登录用的那个浏览器里找。";
 "Read" = "读取";
 "No browser cookie store was found." = "没有找到任何浏览器的 Cookie 存储。";
 "Read from %@." = "已从 %@ 读取。";
-"No Ollama session found. Sign in at ollama.com first." = "没找到 Ollama 的登录信息,请先在 ollama.com 登录。";
+"No Ollama session found. Sign in at ollama.com first." = "没找到 Ollama 的登录信息，请先在 ollama.com 登录。";
 "Copied from your browser. Stored encrypted on this Mac." = "从浏览器复制。加密保存在本机。";
 "Add an Ollama session in Settings." = "请在设置中添加 Ollama 的登录信息。";
-"The Ollama session expired. Sign in again and add it." = "Ollama 的登录已过期,请重新登录后再添加。";
-"Ollama's page has changed and can no longer be read." = "Ollama 的页面变了,已经读不出来了。";
+"The Ollama session expired. Sign in again and add it." = "Ollama 的登录已过期，请重新登录后再添加。";
+"Ollama's page has changed and can no longer be read." = "Ollama 的页面变了，已经读不出来了。";
 "Reads your quota from Ollama's own settings page." = "从 Ollama 自己的设置页面读取额度。";
 "Save" = "保存";
 "Monthly limit" = "每月限额";
@@ -231,7 +231,7 @@
 "Not yet" = "尚未读取";
 "That key was refused. Check it in Settings." = "这个 key 被拒绝了，去设置里检查一下。";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code 存的登录已过期。用一下 Claude Code，或在设置里连接状态栏。";
-"Keep reading Claude Code's usage after its login expires?" = "登录过期后仍能读到 Claude Code 的用量?";
+"Keep reading Claude Code's usage after its login expires?" = "登录过期后仍能读到 Claude Code 的用量？";
 "Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code 存的登录只有几小时有效，而且只有它自己能续期。它同时会把额度报给已注册的状态栏命令——Pulse 可以当这个命令，那样无论登录是否新鲜都读得到。\n\n这会改写 ~/.claude/settings.json，并改变你 Claude Code 会话底部那行状态栏。你原有的状态栏仍然照常工作，随时可以在设置里断开。";
 "Not now" = "以后再说";
 "Order" = "顺序";
@@ -268,18 +268,18 @@
 "Sign-in" = "登录";
 "Name" = "名称";
 "Remove account" = "移除账号";
-"Forgets its login and takes it off the rail." = "忘记它的登录,并从胶囊上移除。";
+"Forgets its login and takes it off the rail." = "忘记它的登录，并从胶囊上移除。";
 "Remove" = "移除";
 "Couldn't save the login on this Mac." = "无法在本机保存登录信息。";
 "Sign in to this account again in Settings." = "请在设置中重新登录这个账号。";
 "Sign in from Settings to see usage." = "在设置中登录后即可看到用量。";
 "This provider can't be signed in to from Pulse." = "这个服务无法从 Pulse 登录。";
-"Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录,然后重试。";
+"Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录，然后重试。";
 "Sign-in was cancelled." = "登录已取消。";
-"The browser didn't come back. If it showed an error, try again." = "浏览器没有回来。如果它显示了错误,请重试。";
+"The browser didn't come back. If it showed an error, try again." = "浏览器没有回来。如果它显示了错误，请重试。";
 "This page can be closed." = "这个页面可以关闭了。";
-"Sign-in failed. You can close this page." = "登录失败,可以关闭这个页面。";
-"Signed in. You can close this page and go back to Pulse." = "已登录,可以关闭页面回到 Pulse 了。";
+"Sign-in failed. You can close this page." = "登录失败，可以关闭这个页面。";
+"Signed in. You can close this page and go back to Pulse." = "已登录，可以关闭页面回到 Pulse 了。";
 "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
 "Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
 "Open" = "打开";
@@ -302,13 +302,13 @@
 "Notifications" = "通知";
 "Off" = "关闭";
 "Warn at" = "提醒阈值";
-"Notify when a limit passes this, and again when it is spent." = "限额超过这个数字时提醒一次，用尽时再提醒一次。";
+"Notify when a limit passes this, and again when it is spent." = "限额超过所选比例时提醒一次，用尽时再提醒一次。";
 "Turned off for Pulse in System Settings › Notifications." = "已在「系统设置 › 通知」里关闭了 Pulse 的通知。";
 "Notifications need the bundled app." = "通知需要打包后的 App 才能发出。";
 "When a limit comes back" = "限额恢复时";
-"Only for one you were warned about." = "只针对之前提醒过的那条限额。";
+"Only for one you were warned about." = "仅提醒此前已预警过的限额。";
 "When a reading stops arriving" = "读不到用量时";
-"After several failed checks in a row, once per outage." = "连续几次读取失败后提醒，一次故障只说一遍。";
+"After several failed checks in a row, once per outage." = "连续多次读取失败后提醒，同一次故障只提醒一次。";
 "Can't be read" = "读不到";
 "The last few checks didn't get through, so the panel is showing older figures." = "最近几次都没读到，面板上是旧数字。";
 "%@ used." = "已用 %@。";
@@ -335,6 +335,6 @@
 "Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity 开着但没有响应，重启它通常能解决。";
 
 /* 内圈第二条限额 */
-"Second limit inside the ring" = "环内显示第二条限额";
-"A thinner ring for the next-fullest limit, where a provider has one." = "在圆环里面加一条细环，显示第二满的那条限额（服务商有第二条时才画）。";
+"Second limit inside the ring" = "显示第二条限额";
+"A thinner ring for the next-fullest limit, where a provider has one." = "在圆环内侧显示第二条限额，仅当服务商提供多条时可用。";
 "That key works. The account has no Coding Plan running on it." = "密钥是有效的，这个账号名下没有生效中的 Coding Plan。";

@@ -81,6 +81,19 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <!-- Without this the app is English on a Chinese Mac. The strings ship
+         correctly inside Pulse_Pulse.bundle, but CFBundle resolves a nested
+         bundle's language against the *main* bundle's declared localizations:
+         with none declared, Bundle.module.preferredLocalizations comes back
+         ["en"] under AppleLanguages ("zh-Hans-CN") and every lookup returns
+         the English key. Declaring them here flips it to ["zh-Hans"]. Keep in
+         step with Sources/Pulse/Resources/*.lproj. -->
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleVersion</key><string>$VERSION</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
