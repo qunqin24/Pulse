@@ -95,5 +95,10 @@ jobs:
           test -d "$APP/Contents/Resources/Pulse_Pulse.bundle"
           test -f "$APP/Contents/Resources/AppIcon.icns"
           test "$(defaults read "$PWD/$APP/Contents/Info.plist" LSUIElement)" = "1"
+          # CFBundle resolves Bundle.module's language against the *main*
+          # bundle. Lose these and a Chinese Mac gets an English app, with a
+          # green build and every string still shipped. Read with -o - : a
+          # bare `plutil -extract` rewrites the file it was asked to read.
+          plutil -extract CFBundleLocalizations json -o - "$APP/Contents/Info.plist" | grep -q 'zh-Hans'
           echo "Version: $(defaults read "$PWD/$APP/Contents/Info.plist" CFBundleShortVersionString)"
           echo "Architectures: $(lipo -archs "$APP/Contents/MacOS/Pulse")"

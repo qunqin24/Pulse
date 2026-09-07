@@ -41,6 +41,12 @@ Why implicit `Text` fails, and the scanner’s blind spots: [decisions/localizat
 
 The package resource bundle must land in `Contents/Resources` in a real app (`Bundle.module` looks through `Bundle.main.resourceURL`). Leave it out and the app runs, silently in English, with no marks. [releasing.md](releasing.md).
 
+Shipping the `.lproj` folders is **not enough on its own**. CFBundle resolves a nested bundle's language against the **main** bundle's declared localizations, so with no `CFBundleLocalizations` in `Pulse.app/Contents/Info.plist`, `Bundle.module.preferredLocalizations` comes back `["en"]` on a Mac set to `zh-Hans-CN` and every lookup returns the English key — strings all present, all unused. `Scripts/bundle.sh` declares `en` and `zh-Hans`; CI asserts `zh-Hans` survives. Adding a language means adding it in **both** places.
+
+Measured on 1.0.7's bundle: identical apps differing only by that key gave `preferredLocalizations` `["en"]` vs `["zh-Hans"]`, and `"Quit Pulse"` vs `"退出 Pulse"`.
+
+When checking the key by hand, `plutil -extract … -o -`. Without `-o -` `plutil` **overwrites the plist it was reading**.
+
 ## Adding UI or a provider
 
 - New panel chrome: take size from `PanelMetrics`; keep the card an overlay; do not resize the window while a card opens ([ui/panel-geometry.md](ui/panel-geometry.md)).
