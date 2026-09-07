@@ -43,6 +43,31 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
         allCases.filter { $0 != .desktopApp || (account.provider == .claudeCode && account.isPrimary) }
     }
 
+    /// Whether *this route on this account* only produces a reading while the
+    /// tool is being used, so old figures mean idleness rather than a fault.
+    ///
+    /// **A property of the route, not of the provider.** Claude Code has four
+    /// routes and only one of them is a push: the status line writes when a
+    /// response lands, and its capture is marked stale ten minutes later —
+    /// which says nobody has used Claude Code since lunch. `.endpoint` and
+    /// `.desktopApp` ask a server on every pass, and an **added** account has
+    /// no status line at all (`ClaudeCodeUsageService` reaches those over HTTP
+    /// and nothing else). Asked of the provider instead, this silenced a real
+    /// outage on three of the four — for the provider Pulse is most about,
+    /// while the identical outage on Codex still alerted.
+    ///
+    /// `.automatic` counts, and that is the conservative half of the trade:
+    /// it can be answered by the capture, and nothing in a reading says which
+    /// route produced it. Staying quiet where Pulse cannot tell is the rule
+    /// the whole alert subsystem is built on.
+    ///
+    /// Read by `AlertMemory` as `staleMeansFailure` — see
+    /// [Docs/notifications.md](../../Docs/notifications.md).
+    func reportsOnlyWhenUsed(for account: AccountKey) -> Bool {
+        guard account.provider == .claudeCode, account.isPrimary else { return false }
+        return self == .automatic || self == .tooling
+    }
+
     var title: String {
         switch self {
         case .automatic: .localized("Automatic")

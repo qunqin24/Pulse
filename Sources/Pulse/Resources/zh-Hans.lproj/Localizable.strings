@@ -332,3 +332,4 @@
 "Asks arkcli, using the login it already saved." = "调用 arkcli，用它已经保存的登录。";
 "Access keys" = "访问密钥";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "格式为 AccessKeyID:SecretAccessKey，来自火山引擎。可不填——走 arkcli 不需要。加密保存在本机。";
+"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity 开着但没有响应，重启它通常能解决。";

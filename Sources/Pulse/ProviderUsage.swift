@@ -193,6 +193,12 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexServerFailed
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
+        /// It **is** open, and every helper it runs refused this RPC — a
+        /// version bump, or the app still starting. Its own case because
+        /// "Open Antigravity" is false advice when it is already open, and
+        /// because a fault the user can only wait out is not one to be told
+        /// about on a timer.
+        case antigravityNotAnswering
         /// Cursor has never been signed in on this Mac, so there is no login
         /// to borrow.
         case cursorSignInRequired
@@ -259,6 +265,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
+            case .antigravityNotAnswering: .localized("Antigravity is open but didn't answer. Restarting it usually helps.")
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
             case .grokSignInRequired: .localized("Sign in to Grok to see usage.")

@@ -232,8 +232,6 @@ struct AlertMemory: Codable, Sendable, Equatable {
                     // second of jitter is not a new window.
                     seen.resetsAt.map { new.timeIntervalSince($0) > 60 } ?? false
                 } ?? false
-                let fell = window.usedFraction < seen.fraction - 0.05
-
                 // Said only when the evidence is unambiguous. `fell` alone is
                 // not: a rolling window — Kimi's week, which can reset anywhere
                 // inside it — slides down a few points at a time without
@@ -318,7 +316,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // something, and none of them worth a banner on a timer.
         case .loading, .notConnected, .awaitingResponse, .noLimitsReported,
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
-             .codexNotInstalled, .antigravityNotRunning, .cursorSignInRequired,
+             .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
+             .cursorSignInRequired,
              .grokSignInRequired, .grokBotNotIncluded, .notSignedIn,
              .ollamaSessionMissing, .apiKeyMissing,
              // Both are "install it and sign in", which stays true until
@@ -447,7 +446,7 @@ final class UsageAlerts {
             threshold: settings.alertThreshold,
             announcesReset: settings.alertsOnReset,
             announcesFailure: settings.alertsOnFailure,
-            staleMeansFailure: !account.provider.reportsOnlyWhenUsed,
+            staleMeansFailure: !settings.source(for: account).reportsOnlyWhenUsed(for: account),
             // The one clock reading in here, taken at the edge and passed in,
             // so the rules themselves stay decidable from their arguments.
             now: Date()
@@ -554,11 +553,15 @@ final class UsageAlerts {
     private func save() {
         // Snapshot on the actor, write off it: `AlertMemory` is a value type,
         // so the queue gets bytes nobody else can be changing underneath it.
+        // The path is snapshotted too — `file` is main-actor isolated with the
+        // rest of this type, and reading it from the queue is the kind of
+        // actor-isolation slip that is a warning here and an error in Xcode.
         let snapshot = memory
+        let destination = Self.file
         Self.disk.async {
             PulseStorage.prepare()
             guard let data = try? JSONEncoder().encode(snapshot) else { return }
-            try? data.write(to: Self.file, options: .atomic)
+            try? data.write(to: destination, options: .atomic)
         }
     }
 }

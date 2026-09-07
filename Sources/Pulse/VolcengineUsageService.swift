@@ -201,6 +201,14 @@ struct VolcengineUsageService: Sendable {
         process.standardOutput = out
         process.standardError = err
 
+        // **Never `waitUntilExit()`.** It has no timeout, and bounding only the
+        // readers moved the hang rather than removing it: a child that ignores
+        // SIGTERM, or one that closes its pipes and keeps running, sailed past
+        // the deadline and parked here for ever. The handler is set before the
+        // process starts so an exit cannot be missed between the two.
+        let exited = DispatchSemaphore(value: 0)
+        process.terminationHandler = { _ in exited.signal() }
+
         do {
             try process.run()
         } catch {
@@ -211,26 +219,60 @@ struct VolcengineUsageService: Sendable {
         let readers = DispatchGroup()
         for (pipe, isStandardOutput) in [(out, true), (err, false)] {
             readers.enter()
-            DispatchQueue.global(qos: .utility).async {
-                defer { readers.leave() }
-                while true {
-                    let chunk = pipe.fileHandleForReading.availableData
-                    if chunk.isEmpty { return }
-                    collected.append(chunk, toStandardOutput: isStandardOutput, ceiling: outputCeiling)
+            // **A handler, not a blocking read loop.** A loop parks a thread
+            // per pipe, and a grandchild inheriting the write end keeps it
+            // parked after this call has given up — a leak that repeats until
+            // libdispatch's per-QoS thread cap starves everything else. A
+            // handler holds no thread: if the far end never closes, it simply
+            // stops being called.
+            pipe.fileHandleForReading.readabilityHandler = { handle in
+                let chunk = handle.availableData
+                guard !chunk.isEmpty else {
+                    // EOF. Clearing the handler is what releases the file
+                    // descriptor, and `leave` must happen exactly once.
+                    handle.readabilityHandler = nil
+                    readers.leave()
+                    return
                 }
+                collected.append(chunk, toStandardOutput: isStandardOutput, ceiling: outputCeiling)
             }
         }
 
-        if readers.wait(timeout: .now() + deadline) == .timedOut {
-            // Killing it closes the pipes, which is what lets the readers
-            // finish; without that they would outlive this call.
+        /// Detaches from both pipes. Anything still holding a write end is no
+        /// longer this call's problem, and nothing is left blocked on it.
+        func releasePipes() {
+            out.fileHandleForReading.readabilityHandler = nil
+            err.fileHandleForReading.readabilityHandler = nil
+        }
+
+        /// SIGTERM, then SIGKILL, then give up — each bounded. `terminate()`
+        /// alone is a request, and a CLI with a stuck graceful-shutdown path
+        /// is exactly the thing being escaped from.
+        func stop() {
             process.terminate()
-            _ = readers.wait(timeout: .now() + 2)
-            process.waitUntilExit()
+            guard exited.wait(timeout: .now() + 2) == .timedOut else { return }
+            kill(process.processIdentifier, SIGKILL)
+            _ = exited.wait(timeout: .now() + 2)
+        }
+
+        if readers.wait(timeout: .now() + deadline) == .timedOut {
+            stop()
+            // A moment for the readers to see the pipes close, and no more.
+            _ = readers.wait(timeout: .now() + 1)
+            releasePipes()
             return .failure(Refusal(reason: .unreachable))
         }
 
-        process.waitUntilExit()
+        // The pipes are closed, which is not the same as the process being
+        // gone — it can hold both open through a child of its own, or simply
+        // close them and carry on.
+        if exited.wait(timeout: .now() + 2) == .timedOut {
+            stop()
+            releasePipes()
+            return .failure(Refusal(reason: .unreachable))
+        }
+
+        releasePipes()
         let (data, problem) = collected.taken()
 
         guard process.terminationStatus == 0 else {

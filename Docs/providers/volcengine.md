@@ -33,9 +33,11 @@ Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead o
 
 - **Both pipes are drained at once.** Reading stdout to EOF and only then reading stderr deadlocks the moment the child writes more than a 64 KiB pipe buffer to stderr before closing stdout — a panic, a debug build, a TLS dump. The child blocks writing, Pulse blocks reading, neither returns.
 - **Reading never stops early.** Past the 512 KiB ceiling the bytes are dropped but the pipe is still drained; a reader that walks away is the same deadlock wearing a different hat.
-- **A 15-second deadline that `terminate()`s**, and the whole thing on a global queue rather than the cooperative pool — blocking work parked on a cooperative thread takes one of a core-width pool with it.
+- **Every wait is bounded, and the kill escalates.** `Process.waitUntilExit()` has no timeout, so bounding only the readers moved the hang rather than removing it — a child that ignores SIGTERM, or one that closes its pipes and keeps running, sailed past the deadline and parked the call for ever. Exit is awaited through `terminationHandler` with a deadline; `terminate()` is a *request*, so SIGKILL follows if it is not honoured.
+- **Reading is a `readabilityHandler`, not a blocking loop.** A loop parks a thread per pipe, and a grandchild inheriting the write end keeps it parked after the call has given up — a leak that repeats until libdispatch's per-QoS thread cap starves everything else. A handler holds no thread.
+- **The whole thing on a global queue** rather than the cooperative pool: blocking work parked on a cooperative thread takes one of a core-width pool with it.
 
-`VolcengineProcessTests` produces both failures for real: a child that floods stderr with 1 MiB, and one that never exits.
+`VolcengineProcessTests` produces each failure for real: a child that floods stderr with 1 MiB, one that ignores SIGTERM, one that closes its pipes and keeps running, and one that leaves a grandchild holding the write ends.
 
 ```
 { "items": [ { "product": "coding-plan" | "agent-plan"

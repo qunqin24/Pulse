@@ -100,10 +100,15 @@ struct AntigravityUsageService: Sendable {
 
         if answeredEmpty { return .unavailable(.antigravity, reason: .noLimitsReported) }
         // Something is running and would not answer, versus nothing answering
-        // at all. The first is Antigravity being unhelpful; the second is
-        // Antigravity being gone, and only one of them is a fault worth
-        // telling somebody about on a timer.
-        return .unavailable(.antigravity, reason: somethingAnswered ? .unreadableReply : .antigravityNotRunning)
+        // at all. Neither is a fault to be told about on a timer, and the
+        // first attempt at this said `.unreadableReply` — which sits in
+        // `AlertMemory.isFailure` right beside `.unreachable`, so the banner
+        // the fix was written to stop went on firing about an app that was
+        // open. The reason has to be one the classification actually spares.
+        return .unavailable(
+            .antigravity,
+            reason: somethingAnswered ? .antigravityNotAnswering : .antigravityNotRunning
+        )
     }
 
     // MARK: - Finding it

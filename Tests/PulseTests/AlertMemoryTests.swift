@@ -324,6 +324,38 @@ struct AlertMemoryTests {
         }
     }
 
+    @Test("Only Claude Code's push routes are spared, and only for the primary account")
+    func pushRouteIsPerRouteNotPerProvider() {
+        let claude = AccountKey(.claudeCode)
+        // The status line, and the automatic route that can fall back to it.
+        #expect(UsageSource.tooling.reportsOnlyWhenUsed(for: claude))
+        #expect(UsageSource.automatic.reportsOnlyWhenUsed(for: claude))
+        // These ask a server on every pass, so silence would hide a real
+        // outage — which is what asking the *provider* instead of the route
+        // did, for the provider Pulse is most about.
+        #expect(!UsageSource.endpoint.reportsOnlyWhenUsed(for: claude))
+        #expect(!UsageSource.desktopApp.reportsOnlyWhenUsed(for: claude))
+        // An added account has no status line at all: it is reached over HTTP
+        // and nothing else.
+        #expect(!UsageSource.automatic.reportsOnlyWhenUsed(for: AccountKey(.claudeCode, slot: "work")))
+        // And no other provider has a push route.
+        for provider in Provider.allCases where provider != .claudeCode {
+            #expect(!UsageSource.automatic.reportsOnlyWhenUsed(for: AccountKey(provider)),
+                    "\(provider) should not be spared")
+        }
+    }
+
+    @Test("Antigravity open but refusing is not a failure; nothing running is not either")
+    func antigravityReasonsAreSpared() {
+        var memory = AlertMemory()
+        for reason: ProviderUsage.Unavailability in [.antigravityNotAnswering, .antigravityNotRunning] {
+            memory = AlertMemory()
+            for _ in 1...5 {
+                #expect(run(&memory, Self.unavailable(reason)).isEmpty, "\(reason) alerted")
+            }
+        }
+    }
+
     @Test("Figures older than half an hour are a failure")
     func agedStaleIsAFailure() {
         var memory = AlertMemory()

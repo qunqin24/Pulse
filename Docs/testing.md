@@ -19,7 +19,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
-| `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a hang, and how a non-zero exit is classified |
+| `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, a grandchild holding them, and how a non-zero exit is classified |
 
 ## What is not, and why
 
@@ -29,7 +29,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 **A fixture written from another project's parser is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; a captured one replaces them the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
 
-**A subprocess test really spawns one.** `VolcengineProcessTests` runs `/bin/sh` on purpose: the two failures it covers — a child that fills the stderr pipe, and one that never exits — cannot be produced by a fake, and neither is visible by reading the code. The first version of that runner looked correct and had both. The deadline is a parameter so a test can use one second.
+**A subprocess test really spawns one.** `VolcengineProcessTests` runs `/bin/sh` on purpose: the two failures it covers — a child that fills the stderr pipe, and one that never exits — cannot be produced by a fake, and neither is visible by reading the code. The first version of that runner looked correct and had both; the *second* looked correct and still hung on a child that ignored SIGTERM. Neither was findable by reading. The deadline is a parameter so a test can use one second.
 
 **No network, no clock, no disk in a rule test.** `AlertMemory.alerts` takes `now` as an argument for exactly this reason. `UsageCache.init(file:)` takes a path for exactly this reason. Anything that has to reach for a real one is not a rule test.
 

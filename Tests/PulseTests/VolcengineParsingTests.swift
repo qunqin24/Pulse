@@ -231,6 +231,48 @@ struct VolcengineProcessTests {
         #expect(elapsed < .seconds(20))
     }
 
+    @Test("A child that ignores SIGTERM is killed, not waited on for ever")
+    func sigtermIgnoringChildIsKilled() async throws {
+        // The first fix bounded only the readers and then called
+        // `waitUntilExit()`, which has no timeout — so this child sailed past
+        // the deadline and parked the call permanently. `terminate()` is a
+        // request; a CLI with a stuck graceful-shutdown path ignores it.
+        let started = ContinuousClock.now
+        let result = await VolcengineUsageService.run(
+            Self.shell, ["-c", "trap '' TERM; sleep 60"], deadline: 1
+        )
+        let elapsed = started.duration(to: .now)
+
+        #expect(throws: VolcengineUsageService.Refusal.self) { try result.get() }
+        #expect(elapsed < .seconds(20))
+    }
+
+    @Test("A child that closes its pipes and keeps running is not waited on either")
+    func childThatClosesPipesButLivesIsBounded() async throws {
+        // The readers see EOF at once, so the group completes inside the
+        // deadline — and the old code then fell through to an unbounded wait
+        // for a process that had no intention of exiting.
+        let started = ContinuousClock.now
+        let result = await VolcengineUsageService.run(
+            Self.shell, ["-c", "exec 1>&- 2>&-; sleep 60"], deadline: 1
+        )
+        let elapsed = started.duration(to: .now)
+
+        #expect(throws: VolcengineUsageService.Refusal.self) { try result.get() }
+        #expect(elapsed < .seconds(20))
+    }
+
+    @Test("A grandchild holding the pipes does not hold the call")
+    func grandchildDoesNotHoldTheCall() async throws {
+        // The child exits immediately but leaves a background process with the
+        // write ends. Nothing may stay blocked on that.
+        let started = ContinuousClock.now
+        _ = await VolcengineUsageService.run(
+            Self.shell, ["-c", "(sleep 30) & printf done; exit 0"], deadline: 2
+        )
+        #expect(started.duration(to: .now) < .seconds(20))
+    }
+
     @Test("A missing binary is reported, not thrown")
     func missingBinary() async {
         let result = await VolcengineUsageService.run(

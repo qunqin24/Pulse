@@ -332,3 +332,4 @@
 "Asks arkcli, using the login it already saved." = "Asks arkcli, using the login it already saved.";
 "Access keys" = "Access keys";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.";
+"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity is open but didn't answer. Restarting it usually helps.";
