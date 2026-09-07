@@ -343,3 +343,4 @@
 "Reported by %@ for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost." = "Reported by %@ for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost.";
 "This account hasn't used anything yet, so there is nothing to chart." = "This account hasn't used anything yet, so there is nothing to chart.";
 "Asking %@" = "Asking %@";
+"Last 7 days" = "Last 7 days";

@@ -89,7 +89,7 @@ Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude 
 
 Neither money nor per-day history is reported by providers. Both are reconstructed from CLI transcripts (`UsageLedger`) at published API prices (`ModelPrices`, `models.dev`, cached a day). A model with no published price is left out, never given a plausible rate.
 
-Only providers with `keepsLocalTranscripts` (Claude Code and Codex today) get history, the labelled estimate, and the “working right now” mark. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
+`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and 智谱 also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
 
 Ledger notes (verify again after changing the counting; historical independent check agreed to the cent on one machine):
 

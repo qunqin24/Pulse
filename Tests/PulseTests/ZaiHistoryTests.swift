@@ -46,6 +46,57 @@ struct ZaiHistoryTests {
         #expect(ZaiUsageService.day(from: "nonsense") == nil)
     }
 
+    @Test("Each storefront is asked its own host")
+    func hostFollowsTheStorefront() {
+        let now = Date(timeIntervalSince1970: 1_788_768_000)
+        // Separate accounts with separate keys — sending one's bearer token to
+        // the other is what having two providers exists to prevent. A default
+        // on this parameter is how it happened: the call site omitted it and
+        // every history went to BigModel.
+        #expect(ZaiUsageService.statisticsURL(from: now, days: 30, host: "https://api.z.ai").host == "api.z.ai")
+        #expect(ZaiUsageService.statisticsURL(from: now, days: 30, host: "https://open.bigmodel.cn").host == "open.bigmodel.cn")
+    }
+
+    @Test("Quiet days between busy ones are kept, so the chart is a calendar")
+    func gapsAreFilled() throws {
+        let json = #"{"code":200,"success":true,"data":{"x_time":["2026-09-01","2026-09-05"],"tokensUsage":[100,200],"modelDataList":[]}}"#
+        let reply = try JSONDecoder().decode(ZaiUsageService.Statistics.self, from: Data(json.utf8))
+        let payload = try #require(reply.data)
+        let ledger = try #require(ZaiUsageService.ledger(from: payload))
+
+        // The chart draws one equal-width bar per element and no date axis, so
+        // two busy days a fortnight apart would read as consecutive.
+        #expect(ledger.days.count == 5)
+        let tokens = ledger.days.map(\.tokens)
+        #expect(tokens == [100, 0, 0, 0, 200])
+    }
+
+    @Test("A missing totals series falls back to the per-model counts")
+    func totalsMayBeAbsent() throws {
+        let json = #"{"code":200,"success":true,"data":{"x_time":["2026-09-06"],"modelDataList":[{"modelName":"glm-4.6","tokensUsage":[750]}]}}"#
+        let reply = try JSONDecoder().decode(ZaiUsageService.Statistics.self, from: Data(json.utf8))
+        // The per-model counts had already been collected; throwing the whole
+        // history away for want of a total was losing an answer it had.
+        let payload = try #require(reply.data)
+        let ledger = try #require(ZaiUsageService.ledger(from: payload))
+        let tokens = ledger.days.map(\.tokens)
+        #expect(tokens == [750])
+        #expect(ledger.days.first?.models["glm-4.6"] == 750)
+    }
+
+    @Test("A fractional count does not blank the whole history")
+    func fractionalCounts() throws {
+        // The lesson `Reply.Limit` records: one float where an integer was
+        // expected used to fail the decode and leave the pane saying the
+        // account had never been used.
+        let json = #"{"code":200,"success":true,"data":{"x_time":["2026-09-06"],"tokensUsage":[12.5],"modelDataList":[]}}"#
+        let reply = try JSONDecoder().decode(ZaiUsageService.Statistics.self, from: Data(json.utf8))
+        let payload = try #require(reply.data)
+        let ledger = try #require(ZaiUsageService.ledger(from: payload))
+        let tokens = ledger.days.map(\.tokens)
+        #expect(tokens == [13])
+    }
+
     @Test("Per-model totals are kept, summed across the day's hours")
     func modelTotals() throws {
         let ledger = try #require(ZaiUsageService.ledger(from: try Self.payload()))
@@ -90,7 +141,9 @@ struct ZaiHistoryTests {
     @Test("The span is local wall-clock, encoded, and inside what the server answers")
     func requestShape() throws {
         let now = Date(timeIntervalSince1970: 1_788_768_000)
-        let url = ZaiUsageService.statisticsURL(from: now, days: ZaiUsageService.historyDays)
+        let url = ZaiUsageService.statisticsURL(
+            from: now, days: ZaiUsageService.historyDays, host: "https://open.bigmodel.cn"
+        )
         let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
 
         #expect(url.host == "open.bigmodel.cn")

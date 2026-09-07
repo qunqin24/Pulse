@@ -368,6 +368,23 @@ struct AlertMemoryTests {
         }
     }
 
+    @Test("A complete answer ends a run of failures, including \"no plan on this account\"")
+    func completeAnswersClearTheRun() {
+        var memory = AlertMemory()
+        // A key that authenticated and an envelope that parsed. Classed
+        // neutral it cleared nothing, so an earlier outage's mark stayed set
+        // and the next real one said nothing.
+        for reason: ProviderUsage.Unavailability in [.zaiNoCodingPlan, .noLimitsReported, .grokBotNotIncluded] {
+            memory = AlertMemory()
+            for _ in 1...3 { _ = run(&memory, Self.unavailable(.unreachable)) }
+            _ = run(&memory, Self.unavailable(reason))
+
+            var produced: [UsageAlert] = []
+            for _ in 1...3 { produced += run(&memory, Self.unavailable(.unreachable)) }
+            #expect(produced.count == 1, "\(reason) left the reported mark stuck")
+        }
+    }
+
     @Test("Antigravity open but refusing is not a failure; nothing running is not either")
     func antigravityReasonsAreSpared() {
         var memory = AlertMemory()

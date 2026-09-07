@@ -350,7 +350,14 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // The provider replied. "No limits on this plan" and "your Cursor plan
         // doesn't include Grok Bot" are complete answers, and an answer ends
         // an outage as surely as a figure does.
-        case .noLimitsReported, .grokBotNotIncluded:
+        case .noLimitsReported, .grokBotNotIncluded,
+             // Same shape: a key that authenticated, an envelope that parsed,
+             // and a complete answer in it. Classed neutral it cleared
+             // nothing, so an earlier outage's `reportedFailure` stayed true
+             // for the life of the record and the *next* real outage said
+             // nothing — the exact failure the three-way split exists to
+             // prevent.
+             .zaiNoCodingPlan:
             .answered
 
         // Never set up, never signed in, or an app that simply is not
@@ -361,9 +368,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
              .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
              .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
-             .volcengineSignInRequired,
-             // Not having bought a plan stays true until somebody buys one.
-             .zaiNoCodingPlan:
+             .volcengineSignInRequired:
             .neutral
         }
     }

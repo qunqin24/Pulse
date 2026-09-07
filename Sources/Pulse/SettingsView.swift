@@ -982,6 +982,16 @@ struct SettingsView: View {
         // statistics cover the whole account, so there is nothing local to
         // read and nothing to cache between panes.
         if provider == .zai || provider == .glmCoding {
+            // A pane can be opened for an account that is switched off — it is
+            // how one gets switched on. Nothing on the refresh loop touches a
+            // disabled provider, and neither should this: it is the one place
+            // a key would otherwise leave the Mac for something the user has
+            // turned off.
+            guard settings.isEnabled(account) else {
+                ledgers[provider] = .empty
+                return
+            }
+
             let key = APIKeyStore.key(for: provider)
             ledgers[provider] = await ZaiUsageService(provider: provider, enteredKey: key).history()
                 ?? .empty

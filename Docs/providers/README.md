@@ -112,12 +112,12 @@ A provider’s first account id is the provider’s raw value. That is the migra
 
 Counting, cache filename, burn-rate, and estimate rules: [`../refresh-and-data.md`](../refresh-and-data.md).
 
-Only Claude Code and Codex set `keepsLocalTranscripts`. History, the labelled money estimate, and the “working right now” mark are left out for everyone else rather than shown as zeroes. OpenCode *does* keep sessions (`opencode stats`); they live in OpenCode’s own store, not the JSONL the ledger reads, so the flag is false today.
+Only Claude Code and Codex set `keepsLocalTranscripts`, which gates the labelled money estimate and the “working right now” mark. **History is the wider `providesHistory`**: Z.ai and 智谱 answer it from the account's own statistics instead ([zai.md](zai.md)). Both are left out for everyone else rather than shown as zeroes. OpenCode *does* keep sessions (`opencode stats`); they live in OpenCode’s own store, not the JSONL the ledger reads, so the flag is false today.
 
 Claude vs Codex token fields (exclude vs include cache; running total vs per-turn): [claude-code.md](claude-code.md), [codex.md](codex.md). Sort-key lengths (Kimi rolling week, Cursor/Copilot ~30-day stand-in, Grok Bot’s seven days without a stated reset) must keep `reportsLength: false` so they never feed the window clock or forecast.
 
 ## Adding a provider
 
-A new case needs: `Provider` answers (`displayName`, `iconResource`, `keepsLocalTranscripts`, `hasSourceChoice` / `soleRoute`, `usesAPIKey` / `usesSessionCookie` / `keepsOwnCredential`, `canReportWithoutSetup` / first-run evidence, `supportsMultipleAccounts`), an SVG in `Sources/Pulse/Resources/`, a service returning `ProviderUsage`, branches in `UsageStore` refresh and `fetchAdded` if relevant, and this directory updated in the same patch. `AgentActivity` and `UsageLedger` already return optional roots, so an agent with no transcripts opts out there.
+A new case needs: `Provider` answers (`displayName`, `iconResource`, `keepsLocalTranscripts`, `providesHistory`, `hasSourceChoice` / `soleRoute`, `usesAPIKey` / `usesSessionCookie` / `keepsOwnCredential`, `canReportWithoutSetup` / first-run evidence, `supportsMultipleAccounts`), an SVG in `Sources/Pulse/Resources/`, a service returning `ProviderUsage`, branches in `UsageStore` refresh and `fetchAdded` if relevant, and this directory updated in the same patch. `AgentActivity` and `UsageLedger` already return optional roots, so an agent with no transcripts opts out there.
 
 Do not document how to obtain someone else’s auth tokens in issues or the repo. Do not paste session cookies, keys, or page HTML into pull requests.

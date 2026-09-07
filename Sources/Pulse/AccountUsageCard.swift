@@ -119,7 +119,17 @@ struct AccountUsageCard: View {
             GridRow {
                 figure(String.localized("Busiest day"),
                        cost: busiest?.cost ?? 0, tokens: busiest?.tokens ?? 0)
-                figure(String.localized("All time"), cost: all.cost, tokens: all.tokens)
+                // **"All time" is only true of a ledger that goes back.** A
+                // provider's statistics are asked for a fixed window, so all
+                // time and the last month are the same sum — one figure
+                // printed twice, under a label claiming a lifetime Pulse does
+                // not have. A shorter span is something the window can answer.
+                if ledger.origin == .localTranscripts {
+                    figure(String.localized("All time"), cost: all.cost, tokens: all.tokens)
+                } else {
+                    let week = ledger.total(overLast: 7)
+                    figure(String.localized("Last 7 days"), cost: week.cost, tokens: week.tokens)
+                }
             }
         }
         .padding(16)

@@ -343,3 +343,4 @@
 "Reported by %@ for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost." = "由 %@ 按账号统计，涵盖你使用它的所有设备。仅统计 token 数量——所依据的数据无法折算成金额。";
 "This account hasn't used anything yet, so there is nothing to chart." = "这个账号还没有产生用量，暂时没有可统计的记录。";
 "Asking %@" = "正在向 %@ 查询";
+"Last 7 days" = "最近 7 天";

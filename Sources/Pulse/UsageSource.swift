@@ -327,17 +327,6 @@ enum PanelMetrics {
     }
     static var showsForecast: Bool { lock.withLock { storedForecast } }
 
-    /// Whether a second, smaller usage ring is drawn inside the first.
-    ///
-    /// A budget rather than a flag on the view: it changes what else fits
-    /// inside the ring — the activity mark moves in and the icon's disc gives
-    /// up two points — and everything that draws or hit-tests a ring reads
-    /// those from one place.
-    nonisolated(unsafe) private static var storedSecondRing = false
-    static func showSecondRing(_ shows: Bool) {
-        lock.withLock { storedSecondRing = shows }
-    }
-    static var showsSecondRing: Bool { lock.withLock { storedSecondRing } }
 
     static func makeRoom(for accounts: Int) {
         lock.withLock { storedCapacity = max(accounts, 1) }

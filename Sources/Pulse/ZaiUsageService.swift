@@ -336,7 +336,11 @@ extension ZaiUsageService {
             /// when daily. The server chooses; the label's own shape is what
             /// says which, so neither is assumed.
             let xTime: [String]?
-            let tokensUsage: [Int]?
+            /// `Double`, not `Int`, for the reason `Reply.Limit` records: a
+            /// service that starts reporting `12.5` where it reported `12`
+            /// would otherwise fail the whole decode and blank the history,
+            /// for a figure that is perfectly usable.
+            let tokensUsage: [Double]?
             let modelDataList: [Series]?
 
             enum CodingKeys: String, CodingKey {
@@ -347,7 +351,7 @@ extension ZaiUsageService {
 
         struct Series: Decodable, Sendable {
             let modelName: String?
-            let tokensUsage: [Int]?
+            let tokensUsage: [Double]?
         }
 
         let success: Bool?
@@ -360,7 +364,7 @@ extension ZaiUsageService {
         else { return nil }
 
         let now = Date()
-        var request = URLRequest(url: Self.statisticsURL(from: now, days: Self.historyDays))
+        var request = URLRequest(url: Self.statisticsURL(from: now, days: Self.historyDays, host: host))
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 20
@@ -377,7 +381,14 @@ extension ZaiUsageService {
 
     /// The span, in the shape the service wants: local wall-clock, no zone,
     /// seconds included, percent-encoded by `URLComponents`.
-    static func statisticsURL(from now: Date, days: Int, host: String? = nil) -> URL {
+    /// **`host` has no default, deliberately.** It had one, and this call site
+    /// omitted it: every history request went to `open.bigmodel.cn`, so a z.ai
+    /// subscriber's bearer token was sent to the other company's server, which
+    /// refused it — and the pane then said the account had never been used.
+    /// The two storefronts being separate accounts is the whole reason there
+    /// are two providers; sending one's credential to the other is the trap
+    /// this file exists to avoid.
+    static func statisticsURL(from now: Date, days: Int, host: String) -> URL {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -385,7 +396,7 @@ extension ZaiUsageService {
         let calendar = Calendar.current
         let start = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -days, to: now) ?? now)
 
-        var components = URLComponents(string: "\(host ?? "https://open.bigmodel.cn")/api/monitor/usage/model-usage")!
+        var components = URLComponents(string: "\(host)/api/monitor/usage/model-usage")!
         components.queryItems = [
             URLQueryItem(name: "startTime", value: formatter.string(from: start)),
             URLQueryItem(name: "endTime", value: formatter.string(from: now))
@@ -405,31 +416,53 @@ extension ZaiUsageService {
         for (index, label) in labels.enumerated() {
             guard let day = Self.day(from: label) else { continue }
 
-            if index < totals.count, totals[index] > 0 {
-                byDay[day, default: 0] += totals[index]
-            }
+            var fromModels = 0
             for series in payload.modelDataList ?? [] {
                 guard let name = series.modelName,
                       let counts = series.tokensUsage,
                       index < counts.count,
                       counts[index] > 0
                 else { continue }
-                modelsByDay[day, default: [:]][name, default: 0] += counts[index]
+                let tokens = Int(counts[index].rounded())
+                modelsByDay[day, default: [:]][name, default: 0] += tokens
+                fromModels += tokens
             }
+
+            // **The total series is preferred, and not required.** A reply
+            // whose `tokensUsage` is missing or short while `modelDataList` is
+            // populated used to throw the whole history away, having already
+            // collected the per-model counts that would have answered.
+            let total = index < totals.count ? Int(totals[index].rounded()) : fromModels
+            if total > 0 { byDay[day, default: 0] += total }
         }
 
         guard !byDay.isEmpty else { return nil }
 
-        let days = byDay.keys.sorted().map { day in
-            LedgerDay(
-                date: day,
-                tokens: byDay[day] ?? 0,
-                // No cost, and no pretending: these tokens are counted and
-                // cannot be priced from what the service reports.
-                cost: 0,
-                unpricedTokens: byDay[day] ?? 0,
-                models: modelsByDay[day] ?? [:]
+        // **Every day between the first and the last, including the empty
+        // ones.** `DailyTokensChart` draws one equal-width bar per element and
+        // no date axis, so a ledger of only the busy days is a chart that
+        // reads as a calendar and isn't one — a fortnight off would look like
+        // a weekend. The transcript path fills the same gaps for the same
+        // reason.
+        let calendar = Calendar.current
+        guard let first = byDay.keys.min(), let last = byDay.keys.max() else { return nil }
+
+        var days: [LedgerDay] = []
+        var cursor = first
+        while cursor <= last {
+            days.append(
+                LedgerDay(
+                    date: cursor,
+                    tokens: byDay[cursor] ?? 0,
+                    // No cost, and no pretending: these tokens are counted and
+                    // cannot be priced from what the service reports.
+                    cost: 0,
+                    unpricedTokens: byDay[cursor] ?? 0,
+                    models: modelsByDay[cursor] ?? [:]
+                )
             )
+            guard let next = calendar.date(byAdding: .day, value: 1, to: cursor), next > cursor else { break }
+            cursor = next
         }
 
         return UsageLedger(

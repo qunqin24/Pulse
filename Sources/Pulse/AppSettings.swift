@@ -461,13 +461,14 @@ final class AppSettings {
     /// is a hover away and already lists every limit. Someone who wants both
     /// at a glance turns it on knowing what it costs.
     ///
-    /// **A `PanelMetrics` entry**, because it moves the activity mark and the
-    /// icon's disc inside the ring — see `DockLayout`. Set before the change
-    /// is announced, so whoever re-measures sees the size it is about to be.
+    /// **Not a `PanelMetrics` entry**, unlike the other ring settings. What
+    /// moves inside the ring is decided from the reading itself — the view
+    /// only rearranges when there is a second limit to draw — so a copy of
+    /// this flag in the metrics was written on every change and read by
+    /// nothing.
     var showsSecondRing: Bool {
         didSet {
             guard showsSecondRing != oldValue else { return }
-            PanelMetrics.showSecondRing(showsSecondRing)
             UserDefaults.standard.set(showsSecondRing, forKey: Key.showsSecondRing)
             onChange?()
         }
@@ -765,7 +766,6 @@ final class AppSettings {
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
         PanelMetrics.showForecast(settings.showsForecast)
-        PanelMetrics.showSecondRing(settings.showsSecondRing)
         PanelMetrics.makeRoom(for: settings.allAccounts.count)
         return settings
     }
