@@ -24,9 +24,9 @@ The **Notifications** group's three controls are not independent of each other: 
 
 SwiftUI `Picker` / `Menu` on macOS **cannot be given a width**. `.frame`, min/max, `fixedSize`, and a fixed-width custom label were measured (historical) and none moved the control. Right-align at `SettingsLayout.controlWidth` as a *ceiling*; long labels truncate. An `NSPopUpButton` wrapper did give a true 180pt box and was removed: short labels floated in empty chrome. Don’t rebuild it without checking that first.
 
-Sidebar column: **min 200, ideal 220, max 320**. Sized to "GLM Coding Plan", the longest name in the list, with "GitHub Copilot" and "OpenCode Go" behind it — at the previous 170/180/220 all three truncated to an ellipsis, on a list whose only job is telling fourteen products apart. They are brand names, so the requirement does not move with the language. `min` is the half that matters: AppKit saves the divider position, so `ideal` is read once per install while `min` clamps everyone.
+Sidebar column: **min 200, ideal 220, max 320**. Sized to "GLM Coding Plan", the longest name in the list, with "GitHub Copilot" and "OpenCode Go" behind it — at the previous 170/180/220 all three truncated to an ellipsis, on a list whose only job is telling fifteen products apart. They are brand names, so the requirement does not move with the language. `min` is the half that matters: AppKit saves the divider position, so `ideal` is read once per install while `min` clamps everyone.
 
-Default window: **920 × 660**, set on the `NSWindow`'s `contentRect`; the view's `minWidth` / `minHeight` (720 × 460) are what it can be dragged down to. It opened at 760 × 500 when the sidebar held four rows — with fourteen providers and a six-group general pane that meant a window that was scrolling in both columns the moment it appeared. The size is not remembered across launches: the window is rebuilt and `center()`ed on each one.
+Default window: **920 × 660**, set on the `NSWindow`'s `contentRect`; the view's `minWidth` / `minHeight` (720 × 460) are what it can be dragged down to. It opened at 760 × 500 when the sidebar held four rows — with fifteen providers and a six-group general pane that meant a window that was scrolling in both columns the moment it appeared. The size is not remembered across launches: the window is rebuilt and `center()`ed on each one.
 
 `ImageRenderer` cannot draw this window (split view + AppKit controls). Check by running the app.
 
@@ -36,7 +36,7 @@ A provider with one route has that route **named**, and the name belongs to the 
 
 Each pane has its own refresh, with last-reading time. Rail click is not the only way.
 
-Reorder by **dragging a row, or with the arrows** — both, deliberately. It was arrows only, on the reasoning that four rows is not enough to make a drag worth learning and that an arrow which misses does nothing while a drag which misses does something. The first half stopped being true at fourteen providers plus added accounts: bottom to top is thirteen clicks. The arrows stay because they are the precise one-place move, the only keyboard path, and the only one carrying accessibility labels.
+Reorder by **dragging a row, or with the arrows** — both, deliberately. It was arrows only, on the reasoning that four rows is not enough to make a drag worth learning and that an arrow which misses does nothing while a drag which misses does something. The first half stopped being true at fifteen providers plus added accounts: bottom to top is fourteen clicks. The arrows stay because they are the precise one-place move, the only keyboard path, and the only one carrying accessibility labels.
 
 A **Reset order** row closes the group, disabled unless `hasCustomOrder` — which compares the accounts, not whether anything is stored, because dragging a row down and back up leaves a full stored list that matches the default exactly. `resetOrder()` clears `providerOrder` rather than writing the default into it, so a provider added in a later version still arrives at the bottom of the rail instead of being pinned by a list written before it existed.
 

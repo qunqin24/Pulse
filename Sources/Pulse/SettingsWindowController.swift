@@ -52,7 +52,7 @@ final class SettingsWindowController {
         // 920 × 660 rather than the 760 × 500 it opened at first.
         //
         // The old default was set when the sidebar held four rows. It now holds
-        // fourteen providers plus every added account, and the general pane a
+        // fifteen providers plus every added account, and the general pane a
         // six-group stack — so the window opened already scrolling in both
         // columns, which reads as a window that is broken rather than one that
         // is small. This is the size at which the sidebar shows its accounts

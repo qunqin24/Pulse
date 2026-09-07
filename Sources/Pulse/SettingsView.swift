@@ -44,7 +44,7 @@ struct SettingsView: View {
     /// sign at all — without a way out the button stays disabled for the whole
     /// quarter of an hour.
     @State private var signInTask: Task<Void, Never>?
-    /// Narrows the sidebar. Fourteen providers plus every added account is a
+    /// Narrows the sidebar. Fifteen providers plus every added account is a
     /// list that scrolls on any window worth opening.
     @State private var search = ""
     /// The row a reorder drag is currently over, so it can say so.
@@ -80,7 +80,7 @@ struct SettingsView: View {
             // "GLM Coding Plan", with "GitHub Copilot" and "OpenCode Go"
             // behind it. At the old 170/180/220 every one of those truncated
             // to an ellipsis, which on a list whose entire job is telling
-            // fourteen products apart is the one thing it must not do. These
+            // fifteen products apart is the one thing it must not do. These
             // are brand names and are not translated, so the requirement does
             // not move with the language.
             //
@@ -494,7 +494,7 @@ struct SettingsView: View {
                 // the reasoning that four rows is not enough to make a drag
                 // worth learning and that an arrow which misses does nothing
                 // while a drag which misses does something. The first half of
-                // that stopped being true: there are fourteen providers now,
+                // that stopped being true: there are fifteen providers now,
                 // plus every added account, and moving the bottom one to the
                 // top is thirteen clicks.
                 //
@@ -572,7 +572,7 @@ struct SettingsView: View {
 
                 // Last, and disabled while there is nothing to undo. A drag
                 // that went somewhere unintended is easy to make and, at
-                // fourteen rows, tedious to walk back by hand.
+                // fifteen rows, tedious to walk back by hand.
                 SettingsRowDivider()
 
                 SettingsRow(
