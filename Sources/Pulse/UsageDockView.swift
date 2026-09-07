@@ -459,7 +459,9 @@ private struct UsageDockItem: View {
             isBusy: entry.isRunning,
             isRefreshing: entry.isRefreshing,
             highlight: isSelected,
-            elapsedFraction: entry.elapsed
+            elapsedFraction: entry.elapsed,
+            secondFraction: entry.second?.usedFraction,
+            secondIsSpent: UsageTint.isSpent(entry.second)
         )
         .scaleEffect(isSelected ? 1.06 : 1)
     }

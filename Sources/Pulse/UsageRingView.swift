@@ -54,8 +54,14 @@ struct UsageRingView: View {
     /// that matters most should stay the outer, bigger, thicker one. Nil for a
     /// provider that reports a single limit — an empty second ring reads as a
     /// limit at zero, or as a fault.
-    var secondFraction: Double?
-    var secondIsSpent = false
+    /// **`let`, not `var`.** An optional `var` gets an implicit `nil` in the
+    /// memberwise initializer, so leaving this off the call site compiles
+    /// perfectly and draws nothing — which is exactly what happened: the wire
+    /// from the rail was written, lost to a bad patch, and the build stayed
+    /// green while the setting did nothing. A `let` has no default, so the
+    /// next person who forgets it is told.
+    let secondFraction: Double?
+    let secondIsSpent: Bool
 
     @State private var spinning = false
     @State private var refreshSpinning = false
@@ -439,7 +445,14 @@ private enum LobeIconStore {
 #Preview("Usage rings") {
     HStack(spacing: 20) {
         ForEach(Provider.allCases) { provider in
-            UsageRingView(provider: provider, usedFraction: 0.42, diameter: 68, lineWidth: 6)
+            UsageRingView(
+                provider: provider,
+                usedFraction: 0.42,
+                diameter: 68,
+                lineWidth: 6,
+                secondFraction: 0.18,
+                secondIsSpent: false
+            )
         }
     }
     .padding()
