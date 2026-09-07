@@ -48,6 +48,12 @@ struct AntigravityUsageService: Sendable {
         // stop: with two servers up it is what the wrong one says. Held, and
         // reported only if nothing better turns up.
         var answeredEmpty = false
+        // Whether anything answered at all. A server that refused this RPC is
+        // still Antigravity running — reporting `.unreachable` for it would
+        // say the app is not there while it is, and `.unreachable` is a
+        // failure the notifications count while `.antigravityNotRunning` is
+        // not. That regression arrived with the multi-origin search.
+        var somethingAnswered = false
 
         for server in servers {
             // A server listens on more than one port and only one of them
@@ -71,6 +77,7 @@ struct AntigravityUsageService: Sendable {
                     )
                 case .success:
                     answeredEmpty = true
+                    somethingAnswered = true
                 case .failure(.wrongPort):
                     continue
                 case .failure(.refused):
@@ -78,14 +85,25 @@ struct AntigravityUsageService: Sendable {
                     // this RPC. That is this process saying "not me", not the
                     // account being refused, so it is worth no more than a
                     // closed port — keep looking.
+                    somethingAnswered = true
                     continue
-                case .failure(let reason):
-                    return .unavailable(.antigravity, reason: reason.unavailability)
+                case .failure(.unreadable):
+                    // A 200 whose body would not decode. Also not a reason to
+                    // stop: "every candidate is tried" has to mean every
+                    // candidate, or the first odd body ends the search and the
+                    // server that would have answered is never asked.
+                    somethingAnswered = true
+                    continue
                 }
             }
         }
 
-        return .unavailable(.antigravity, reason: answeredEmpty ? .noLimitsReported : .unreachable)
+        if answeredEmpty { return .unavailable(.antigravity, reason: .noLimitsReported) }
+        // Something is running and would not answer, versus nothing answering
+        // at all. The first is Antigravity being unhelpful; the second is
+        // Antigravity being gone, and only one of them is a fault worth
+        // telling somebody about on a timer.
+        return .unavailable(.antigravity, reason: somethingAnswered ? .unreadableReply : .antigravityNotRunning)
     }
 
     // MARK: - Finding it
@@ -213,6 +231,9 @@ struct AntigravityUsageService: Sendable {
         case refused
         case unreadable
 
+        /// Kept for the shape of the enum; `fetch` decides the terminal
+        /// reason itself now, because none of these means the same thing
+        /// after every candidate has been tried as it does for one of them.
         var unavailability: ProviderUsage.Unavailability {
             switch self {
             case .wrongPort, .refused: .antigravityNotRunning

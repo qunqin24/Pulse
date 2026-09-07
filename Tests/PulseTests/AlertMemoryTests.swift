@@ -64,6 +64,7 @@ struct AlertMemoryTests {
         threshold: AlertThreshold = .ninety,
         announcesReset: Bool = true,
         announcesFailure: Bool = true,
+        staleMeansFailure: Bool = true,
         now: Date = AlertMemoryTests.now
     ) -> [UsageAlert] {
         memory.alerts(
@@ -72,6 +73,7 @@ struct AlertMemoryTests {
             threshold: threshold,
             announcesReset: announcesReset,
             announcesFailure: announcesFailure,
+            staleMeansFailure: staleMeansFailure,
             now: now
         )
     }
@@ -166,6 +168,31 @@ struct AlertMemoryTests {
         // Kimi's week can reset anywhere inside it, so the figure drifts down
         // without anything having turned over. Six points is drift.
         #expect(run(&memory, Self.live(Self.window(used: 0.89))).isEmpty)
+    }
+
+    @Test("A window oscillating across the line is announced once, not once per wobble")
+    func oscillationDoesNotReAnnounce() {
+        var memory = AlertMemory()
+        // Clearing the announced step on any drop — rather than on the same
+        // evidence that would announce a reset — re-armed a window that had
+        // not reset. A rolling allowance crossing back and forth then said
+        // "93% used" again, and again, for as long as it wobbled.
+        #expect(run(&memory, Self.live(Self.window(used: 0.95))).count == 1)
+        #expect(run(&memory, Self.live(Self.window(used: 0.89))).isEmpty)
+        #expect(run(&memory, Self.live(Self.window(used: 0.93))).isEmpty)
+        #expect(run(&memory, Self.live(Self.window(used: 0.88))).isEmpty)
+        #expect(run(&memory, Self.live(Self.window(used: 0.97))).isEmpty)
+    }
+
+    @Test("A real turnover still re-arms the step after an oscillation")
+    func turnoverStillRearms() {
+        var memory = AlertMemory()
+        _ = run(&memory, Self.live(Self.window(used: 0.95)))
+        _ = run(&memory, Self.live(Self.window(used: 0.89)))
+
+        // Unambiguous this time: a forty-point drop.
+        #expect(run(&memory, Self.live(Self.window(used: 0.05))).map(\.kind) == [.reset])
+        #expect(run(&memory, Self.live(Self.window(used: 0.94))).map(\.kind) == [.approaching(percent: 90)])
     }
 
     @Test("A drop of forty points with no reset time is a reset")
@@ -281,6 +308,19 @@ struct AlertMemoryTests {
         let recent = Self.now.addingTimeInterval(-120)
         for _ in 1...5 {
             #expect(run(&memory, Self.stale(observedAt: recent)).isEmpty)
+        }
+    }
+
+    @Test("A push route going quiet is never a failure, however old the figures")
+    func pushRouteStalenessIsNotAFailure() {
+        var memory = AlertMemory()
+        // Claude Code's status line only writes while a session runs. Hours
+        // old means nobody has used it, not that a check failed — and the
+        // copy would have said "the last few checks didn't get through" about
+        // checks that all got through.
+        let ancient = Self.now.addingTimeInterval(-6 * 3_600)
+        for _ in 1...6 {
+            #expect(run(&memory, Self.stale(observedAt: ancient), staleMeansFailure: false).isEmpty)
         }
     }
 

@@ -118,11 +118,25 @@ enum VolcengineSigner {
     /// but the unreserved set, and `~` is **not** escaped. `addingPercentEncoding`
     /// with a stock character set gets both of those wrong.
     private static func encode(_ value: String, keepingSlashes: Bool = false) -> String {
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-_.~")
+        // **Built from ASCII by hand, not from `CharacterSet.alphanumerics`.**
+        // That set is Unicode-wide, so a non-ASCII letter in a query value
+        // would be left unescaped here and escaped by the server before it
+        // recomputed — an unexplainable 403 the first time anything but
+        // `Action` and `Version` is signed.
+        var allowed = unreserved
         if keepingSlashes { allowed.insert("/") }
         return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
     }
+
+    /// `A-Z a-z 0-9 - _ . ~`, and nothing else.
+    private static let unreserved: CharacterSet = {
+        var set = CharacterSet()
+        set.insert(charactersIn: "A"..."Z")
+        set.insert(charactersIn: "a"..."z")
+        set.insert(charactersIn: "0"..."9")
+        set.insert(charactersIn: "-_.~")
+        return set
+    }()
 
     private static func hex<D: Sequence>(_ bytes: D) -> String where D.Element == UInt8 {
         bytes.map { String(format: "%02x", $0) }.joined()

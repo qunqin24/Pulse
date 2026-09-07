@@ -176,3 +176,100 @@ struct VolcengineParsingTests {
         #expect(VolcengineUsageService.credentials(from: nil) == nil)
     }
 }
+
+/// The `arkcli` subprocess, which is the part of this provider that can take
+/// the whole app down with it: a pass that never finishes never reschedules,
+/// so a hang here freezes the rail for all fifteen providers. Neither failure
+/// below is visible by reading the code — the first version of that runner
+/// looked correct and had both.
+@Suite("Volcengine arkcli subprocess")
+struct VolcengineProcessTests {
+    private static let shell = URL(fileURLWithPath: "/bin/sh")
+
+    @Test("A child that floods stderr does not deadlock")
+    func stderrFloodDoesNotDeadlock() async throws {
+        // A pipe buffer is 64 KiB. Reading stdout to EOF *before* touching
+        // stderr means the child blocks writing and we block reading, for
+        // ever. 1 MiB is comfortably past the edge.
+        let result = await VolcengineUsageService.run(
+            Self.shell,
+            ["-c", "yes ERROR | head -c 1048576 >&2; printf '{\"items\":[]}'"],
+            deadline: 20
+        )
+
+        let data = try result.get()
+        #expect(String(data: data, encoding: .utf8) == #"{"items":[]}"#)
+    }
+
+    @Test("Output past the ceiling is dropped, not read into memory for ever")
+    func hugeOutputIsCapped() async throws {
+        let result = await VolcengineUsageService.run(
+            Self.shell,
+            ["-c", "yes PADDING | head -c 4194304"],
+            deadline: 20
+        )
+
+        let data = try result.get()
+        // Bounded, and the process still exited cleanly — the reader kept
+        // draining after it stopped keeping, which is what stops the child
+        // blocking on a full pipe.
+        #expect(data.count <= 512 * 1024 + 65_536)
+    }
+
+    @Test("A child that never finishes is killed at the deadline")
+    func hangingChildIsTerminated() async throws {
+        let started = ContinuousClock.now
+        let result = await VolcengineUsageService.run(
+            Self.shell,
+            ["-c", "sleep 60"],
+            deadline: 1
+        )
+        let elapsed = started.duration(to: .now)
+
+        #expect(throws: VolcengineUsageService.Refusal.self) { try result.get() }
+        // Killed, not waited out. Without this the refresh loop stops.
+        #expect(elapsed < .seconds(20))
+    }
+
+    @Test("A missing binary is reported, not thrown")
+    func missingBinary() async {
+        let result = await VolcengineUsageService.run(
+            URL(fileURLWithPath: "/nonexistent/arkcli"), [], deadline: 5
+        )
+        #expect(result == .failure(.init(reason: .volcengineCLIMissing)))
+    }
+
+    // MARK: - Why a non-zero exit happened
+
+    @Test("Only a signed-out phrase reads as signed out")
+    func signedOutPhrases() {
+        for stderr in [
+            "Error: not signed in",
+            "please run `arkcli auth login`",
+            "unauthorized",
+            "credentials expired",
+        ] {
+            #expect(VolcengineUsageService.reason(forExitOf: stderr) == .volcengineSignInRequired,
+                    "missed: \(stderr)")
+        }
+    }
+
+    @Test("Help text is not a sign-in problem")
+    func helpTextIsNotSignedOut() {
+        // The trap: `"auth"` is a substring of `authentication`, `authority`,
+        // and of arkcli's own subcommand list. An arkcli too old or too new
+        // for `usage plan --format json` prints its usage and exits non-zero —
+        // and was told to run `arkcli auth login`, which succeeds and changes
+        // nothing, for ever.
+        let usage = """
+        Usage: arkcli [command]
+
+        Available commands:
+          auth        Manage authentication
+          usage       Show plan usage
+        """
+        #expect(VolcengineUsageService.reason(forExitOf: usage) == .unreadableReply)
+        #expect(VolcengineUsageService.reason(forExitOf: "unknown flag: --format") == .unreadableReply)
+        #expect(VolcengineUsageService.reason(forExitOf: "") == .unreadableReply)
+    }
+}

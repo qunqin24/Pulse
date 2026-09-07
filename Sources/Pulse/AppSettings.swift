@@ -619,7 +619,12 @@ final class AppSettings {
 
         return StoredRail(
             accounts: ordered.filter { enabled.contains($0.id) },
-            labels: Dictionary(uniqueKeysWithValues: extras.map { ($0.id, $0.label) }),
+            // `uniqueKeysWithValues` **traps** on a duplicate, and this
+            // dictionary is built from a file anyone can edit — in the one
+            // command a status line runs every couple of seconds. Everywhere
+            // else in the app tolerates duplicates (`label(for:)` takes the
+            // first), so crashing here would be the only place that doesn't.
+            labels: Dictionary(extras.map { ($0.id, $0.label) }, uniquingKeysWith: { first, _ in first }),
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:]
         )
     }

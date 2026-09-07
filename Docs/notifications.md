@@ -31,9 +31,13 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 **Limits are judged on `.live` readings only.** A `.stale` reading carries whatever the cache last banked, which can be *lower* than the figure already recorded — and a figure that falls is how a reset is detected. Running the cache through these rules announced a reset every time the network hiccuped.
 
-**A reset needs unambiguous evidence.** Two signals: the provider's reset time moved forward by more than a minute, or the share dropped by 40 points or more. A drop of 5 points clears the announced step but says nothing — a rolling window (Kimi's week, which can reset anywhere inside it) slides down a few points at a time without anything having reset. A reset is also only announced for a window that was mentioned on the way up: "your 5-hour window reset" about a window that never passed 12% is a notification about nothing. That dependency is why the Settings row is greyed out while the threshold is Off.
+**A reset needs unambiguous evidence.** Two signals: the provider's reset time moved forward by more than a minute, or the share dropped by 40 points or more. A drop of 5 points says nothing — a rolling window (Kimi's week, which can reset anywhere inside it) slides down a few points at a time without anything having reset.
 
-**`.stale` on its own is not a failure**, and this is the trap. `UsageCache.reconciled` hands back a stale reading for a *successful* fetch too: the status-line route calls its capture live for ten minutes, so a good capture can be older than what the endpoint banked a minute ago, and the newer banked one is returned instead — marked stale, every pass, for an account that is working. Counting that would have put "Claude Code can't be read" on screen for the provider most likely to hit it.
+**The announced step is cleared by that same evidence, not by the drop.** Clearing it on any 5-point dip re-armed a window that had not reset: 95% → 89% → 93% announced twice, and went on announcing for as long as the figure wobbled across the line. "At most one notification per limit" was on the tin and was not what it did. `oscillationDoesNotReAnnounce` pins it. A reset is also only announced for a window that was mentioned on the way up: "your 5-hour window reset" about a window that never passed 12% is a notification about nothing. That dependency is why the Settings row is greyed out while the threshold is Off.
+
+**A push route going quiet is never a failure.** Claude Code's status line writes only while a session runs, so its capture is marked stale ten minutes after the last response — which says nobody has used Claude Code since lunch, not that a check failed. Counted as an outage it posted *"the last few checks didn't get through"* over a route where every check got through: an alert about something Pulse did not witness. `Provider.reportsOnlyWhenUsed` is the flag, and `AlertMemory` takes it as `staleMeansFailure`. Claude Code is the only one — every other route asks a server on every pass.
+
+**`.stale` on its own is not a failure** for the rest, and this is the trap. `UsageCache.reconciled` hands back a stale reading for a *successful* fetch too: the status-line route calls its capture live for ten minutes, so a good capture can be older than what the endpoint banked a minute ago, and the newer banked one is returned instead — marked stale, every pass, for an account that is working. Counting that would have put "Claude Code can't be read" on screen for the provider most likely to hit it.
 
 The reason is also gone by then: a failed fetch that the cache answers for arrives as `.stale`, with the `Unavailability` swallowed by the fallback. So a stale reading is asked the question it *can* answer, which is also the one the user cares about — **are the figures on the panel getting old**. Over `stalenessBeforeSaying` (30 minutes, the top of the adaptive interval, so at least one missed pass) it counts; under it, nothing.
 
@@ -59,7 +63,7 @@ Every rule on this page is covered by `AlertMemoryTests` ([testing.md](testing.m
 
 Permission is asked for the moment a switch goes on in Settings — not at launch. A permission dialog at launch, for a feature nobody has switched on, is how an app gets denied for good.
 
-The subtitle reports `UNAuthorizationStatus`, not the switches: a grant can be withdrawn in System Settings long after it was given, and a switch left on while macOS drops everything Pulse posts is a setting that lies.
+The subtitle reports `UNAuthorizationStatus`, not the switches: a grant can be withdrawn in System Settings long after it was given, and a switch left on while macOS drops everything Pulse posts is a setting that lies. **It is re-read every time the settings window opens** (`refreshAuthorization`) — read once at launch and never again, the row said alerts were on while macOS discarded every one, which is the exact failure the field exists to report.
 
 ## Clicking one
 

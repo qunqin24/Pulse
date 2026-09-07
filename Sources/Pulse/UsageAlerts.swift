@@ -140,12 +140,20 @@ struct AlertMemory: Codable, Sendable, Equatable {
     /// the reading, the memory, and the three settings; nothing here reads the
     /// clock, the disk, or the notification centre. That is what makes the
     /// rules below arguable at all.
+    /// `staleMeansFailure` is false for a route that only produces a reading
+    /// while the tool is being *used*. Claude Code's status line is a push:
+    /// its capture is marked stale ten minutes after the last response, which
+    /// says the user stopped working, not that a check failed. Counted as an
+    /// outage it posted "the last few checks didn't get through" over a route
+    /// where every check got through — an alert about something Pulse did not
+    /// witness, which is the one thing the rules here exist to prevent.
     mutating func alerts(
         for reading: ProviderUsage,
         as account: AccountKey,
         threshold: AlertThreshold,
         announcesReset: Bool,
         announcesFailure: Bool,
+        staleMeansFailure: Bool,
         now: Date
     ) -> [UsageAlert] {
         var record = accounts[account.id] ?? Account()
@@ -173,7 +181,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
             // Judged on age, not on the fact of being stale — see
             // `stalenessBeforeSaying`. A reading with no date at all cannot be
             // vouched for either way, and the cache never banks one without.
-            guard let observedAt = reading.observedAt,
+            guard staleMeansFailure,
+                  let observedAt = reading.observedAt,
                   now.timeIntervalSince(observedAt) > Self.stalenessBeforeSaying
             else { break }
             countFailure(nil)
@@ -225,19 +234,28 @@ struct AlertMemory: Codable, Sendable, Equatable {
                 } ?? false
                 let fell = window.usedFraction < seen.fraction - 0.05
 
-                if movedOn || fell {
-                    // Said only when the evidence is unambiguous. `fell` alone
-                    // is not: a rolling window — Kimi's week, which can reset
-                    // anywhere inside it — slides down a few points at a time
-                    // without anything having reset, and announcing that is
-                    // worse than staying quiet. A reset time that has moved
-                    // forward is the provider saying so; a figure that has
-                    // dropped by forty points has not slid, it has turned over.
-                    let unambiguous = movedOn || seen.fraction - window.usedFraction >= 0.4
+                // Said only when the evidence is unambiguous. `fell` alone is
+                // not: a rolling window — Kimi's week, which can reset anywhere
+                // inside it — slides down a few points at a time without
+                // anything having reset, and announcing that is worse than
+                // staying quiet. A reset time that has moved forward is the
+                // provider saying so; a figure that has dropped by forty points
+                // has not slid, it has turned over.
+                let unambiguous = movedOn || seen.fraction - window.usedFraction >= 0.4
+
+                // **The step is cleared by the same evidence that would
+                // announce, not by the drop alone.** Clearing on any 5-point
+                // dip re-armed a window that had not reset: a rolling weekly
+                // allowance oscillating across the line — 95%, 89%, 93% — was
+                // announced at 95, said nothing at 89, and then announced
+                // again at 93, for as long as it wobbled. "At most one
+                // notification per limit" was written on the tin and was not
+                // what it did.
+                if unambiguous {
                     // And only for a limit that was worth mentioning on the way
                     // up. "Your 5-hour window reset" about a window that never
                     // got past 12% is a notification about nothing.
-                    if announcesReset, unambiguous, seen.announced > 0 {
+                    if announcesReset, seen.announced > 0 {
                         produced.append(UsageAlert(account: account, kind: .reset, window: window))
                     }
                     memory.announced = 0
@@ -385,6 +403,18 @@ final class UsageAlerts {
         Task { await readAuthorization() }
     }
 
+    /// Re-reads the grant. Called when the settings window opens, because that
+    /// is the only place `authorization` is shown and it can have been
+    /// withdrawn in System Settings at any point since launch.
+    ///
+    /// Without this the subtitle was read once at launch and never again — so
+    /// the row confidently said alerts were on while macOS dropped every one,
+    /// which is verbatim the failure the property exists to report.
+    func refreshAuthorization() {
+        guard Self.isSupported else { return }
+        Task { await readAuthorization() }
+    }
+
     /// Asks, if anything is switched on and nobody has been asked yet. Called
     /// from the settings pane the moment a switch goes on, which is the one
     /// place the dialog is expected.
@@ -417,6 +447,7 @@ final class UsageAlerts {
             threshold: settings.alertThreshold,
             announcesReset: settings.alertsOnReset,
             announcesFailure: settings.alertsOnFailure,
+            staleMeansFailure: !account.provider.reportsOnlyWhenUsed,
             // The one clock reading in here, taken at the edge and passed in,
             // so the rules themselves stay decidable from their arguments.
             now: Date()
@@ -511,10 +542,24 @@ final class UsageAlerts {
             .authorizationStatus
     }
 
+    /// One serial queue, so two saves cannot land out of order and neither
+    /// lands on the main thread.
+    ///
+    /// `observe` runs from `UsageStore.commit` for every account of every
+    /// pass, and the memory changes whenever a figure moves — so this was an
+    /// encode plus an atomic write (temp file, rename) on the UI thread
+    /// several times a refresh. Small file, wrong thread.
+    private static let disk = DispatchQueue(label: "Pulse.alerts", qos: .utility)
+
     private func save() {
-        PulseStorage.prepare()
-        guard let data = try? JSONEncoder().encode(memory) else { return }
-        try? data.write(to: Self.file, options: .atomic)
+        // Snapshot on the actor, write off it: `AlertMemory` is a value type,
+        // so the queue gets bytes nobody else can be changing underneath it.
+        let snapshot = memory
+        Self.disk.async {
+            PulseStorage.prepare()
+            guard let data = try? JSONEncoder().encode(snapshot) else { return }
+            try? data.write(to: Self.file, options: .atomic)
+        }
     }
 }
 

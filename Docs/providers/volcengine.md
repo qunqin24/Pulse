@@ -29,7 +29,13 @@ The Ark Coding Plan, sold on Volcengine (火山引擎). Named for the platform r
 
 `arkcli usage plan --format json`. Located by `ARKCLI_PATH`, then `PATH`, then `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin` — a GUI app inherits almost no `PATH`, the same problem `CodexAppServer.locateCodex` solves.
 
-Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it.
+Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it — and with three guarantees that are enforced rather than merely commented, because a pass that never finishes never calls `scheduleNext` and the rail then freezes for **all fifteen** providers, not just this one:
+
+- **Both pipes are drained at once.** Reading stdout to EOF and only then reading stderr deadlocks the moment the child writes more than a 64 KiB pipe buffer to stderr before closing stdout — a panic, a debug build, a TLS dump. The child blocks writing, Pulse blocks reading, neither returns.
+- **Reading never stops early.** Past the 512 KiB ceiling the bytes are dropped but the pipe is still drained; a reader that walks away is the same deadlock wearing a different hat.
+- **A 15-second deadline that `terminate()`s**, and the whole thing on a global queue rather than the cooperative pool — blocking work parked on a cooperative thread takes one of a core-width pool with it.
+
+`VolcengineProcessTests` produces both failures for real: a child that floods stderr with 1 MiB, and one that never exits.
 
 ```
 { "items": [ { "product": "coding-plan" | "agent-plan"
@@ -45,6 +51,8 @@ Three things in that shape are traps, all of them recorded by CodexBar before th
 - **`updated_at` ships as both seconds and milliseconds** across versions. Told apart by magnitude at 1e11 — 1e11 seconds is the year 5138 and 1e11 milliseconds is 1973, so nothing real is near the boundary. `reset_at` gets the same treatment and may also be an ISO string.
 - **A product bucket can fail on its own**, arriving with an `error` and no `periods`. It is skipped, not fatal: rejecting the reply would lose the plans that *did* answer.
 - **`percent` is what is used**, not what is left. No inversion here, unlike [antigravity.md](antigravity.md).
+
+A non-zero exit is classified from **stderr only, on whole phrases**. Matching `"auth"` as a substring reads `arkcli`'s own help text — where `auth` is a subcommand — as "not signed in", so a CLI too old or too new for `usage plan --format json` was answered with a remedy that succeeds and changes nothing, for ever.
 
 ### The signed API
 

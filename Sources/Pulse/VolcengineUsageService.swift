@@ -37,7 +37,7 @@ import Foundation
 struct VolcengineUsageService: Sendable {
     /// Carries an `Unavailability` through a `Result` without making that
     /// shared enum an `Error` for the whole app's benefit.
-    private struct Refusal: Error {
+    struct Refusal: Error, Equatable {
         let reason: ProviderUsage.Unavailability
     }
 
@@ -91,7 +91,7 @@ struct VolcengineUsageService: Sendable {
         }
 
         let output: Data
-        switch Self.run(binary, ["usage", "plan", "--format", "json"]) {
+        switch await Self.run(binary, ["usage", "plan", "--format", "json"]) {
         case .success(let data): output = data
         case .failure(let refusal): return .unavailable(.volcengine, reason: refusal.reason)
         }
@@ -137,13 +137,58 @@ struct VolcengineUsageService: Sendable {
             .map { URL(fileURLWithPath: $0) }
     }
 
-    /// Runs it with a ceiling on both time and output.
+    /// How long `arkcli` gets, and how much of its output is kept.
     ///
-    /// **Both matter.** This is on the refresh pass, so a CLI waiting on a
-    /// login prompt would stall every other provider behind it; and a command
-    /// that decides to stream would be read into memory for ever. A timeout
-    /// here is a stale reading, which the cache already knows how to show.
-    private static func run(_ binary: URL, _ arguments: [String]) -> Result<Data, Refusal> {
+    /// Both are real limits, and the comment that claimed them before this was
+    /// written was the only thing enforcing either. See the two failure modes
+    /// below — neither is hypothetical, and the first one stops the refresh
+    /// loop for *every* provider, not just this one.
+    private static let deadline: TimeInterval = 15
+    private static let outputCeiling = 512 * 1024
+
+    /// Runs it with a ceiling on both time and output, off the cooperative
+    /// pool.
+    ///
+    /// Three things this has to get right, and the first version got none of
+    /// them:
+    ///
+    /// 1. **Both pipes are drained at once.** Reading stdout to EOF and only
+    ///    then reading stderr deadlocks the moment the child writes more than
+    ///    a pipe buffer (64 KiB) to stderr before closing stdout — a panic, a
+    ///    debug build, a TLS dump. The child blocks writing, we block reading,
+    ///    and neither ever returns.
+    /// 2. **Reading never stops early.** Past `outputCeiling` the bytes are
+    ///    dropped but the pipe is still drained, because a reader that walks
+    ///    away is the same deadlock wearing a different hat.
+    /// 3. **It runs on a global queue, not the cooperative pool.** This is
+    ///    blocking work called from an `async` function; parked on a
+    ///    cooperative thread it takes one of a core-width pool with it, and a
+    ///    few of those stop Swift concurrency across the whole app.
+    ///
+    /// A pass that never finishes never calls `scheduleNext`, so a hang here
+    /// is not "Volcengine is slow" — it is the rail freezing until something
+    /// else happens to call `refresh`.
+    /// Internal, and the deadline is a parameter, so the two failures this
+    /// exists to survive can actually be produced in a test: a child that
+    /// floods stderr, and one that never finishes. Neither is observable by
+    /// reading the code — the first version looked fine.
+    static func run(
+        _ binary: URL,
+        _ arguments: [String],
+        deadline: TimeInterval = deadline
+    ) async -> Result<Data, Refusal> {
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: blocking(binary, arguments, deadline: deadline))
+            }
+        }
+    }
+
+    private static func blocking(
+        _ binary: URL,
+        _ arguments: [String],
+        deadline: TimeInterval
+    ) -> Result<Data, Refusal> {
         let process = Process()
         process.executableURL = binary
         process.arguments = arguments
@@ -162,20 +207,55 @@ struct VolcengineUsageService: Sendable {
             return .failure(Refusal(reason: .volcengineCLIMissing))
         }
 
-        let data = out.fileHandleForReading.readDataToEndOfFile()
-        let problem = String(data: err.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        let collected = Collected()
+        let readers = DispatchGroup()
+        for (pipe, isStandardOutput) in [(out, true), (err, false)] {
+            readers.enter()
+            DispatchQueue.global(qos: .utility).async {
+                defer { readers.leave() }
+                while true {
+                    let chunk = pipe.fileHandleForReading.availableData
+                    if chunk.isEmpty { return }
+                    collected.append(chunk, toStandardOutput: isStandardOutput, ceiling: outputCeiling)
+                }
+            }
+        }
+
+        if readers.wait(timeout: .now() + deadline) == .timedOut {
+            // Killing it closes the pipes, which is what lets the readers
+            // finish; without that they would outlive this call.
+            process.terminate()
+            _ = readers.wait(timeout: .now() + 2)
+            process.waitUntilExit()
+            return .failure(Refusal(reason: .unreachable))
+        }
+
         process.waitUntilExit()
+        let (data, problem) = collected.taken()
 
         guard process.terminationStatus == 0 else {
-            // The one failure worth telling apart, because the remedy is a
-            // command rather than a bug report.
-            let text = (problem + " " + (String(data: data, encoding: .utf8) ?? "")).lowercased()
-            let signedOut = ["auth", "login", "unauthorized", "credential", "not signed in"]
-                .contains { text.contains($0) }
-            return .failure(Refusal(reason: signedOut ? .volcengineSignInRequired : .unreadableReply))
+            return .failure(Refusal(reason: Self.reason(forExitOf: problem)))
         }
 
         return .success(data)
+    }
+
+    /// Why a non-zero exit happened, as far as it can honestly be told.
+    ///
+    /// **Read from stderr only, and matched on whole words.** The first
+    /// version searched stdout as well and matched `"auth"` as a substring —
+    /// which appears in `authentication`, `authority`, and in `arkcli`'s own
+    /// help text, where `auth` is a top-level subcommand. So an `arkcli` too
+    /// old or too new for `usage plan --format json` printed its usage,
+    /// exited non-zero, and was reported as "arkcli isn't signed in. Run
+    /// `arkcli auth login`." — a remedy that succeeds and changes nothing,
+    /// for ever.
+    static func reason(forExitOf stderr: String) -> ProviderUsage.Unavailability {
+        let phrases = ["not signed in", "not logged in", "unauthorized", "unauthenticated",
+                       "auth login", "please login", "please log in", "login required",
+                       "credentials expired", "token expired"]
+        let text = stderr.lowercased()
+        return phrases.contains(where: text.contains) ? .volcengineSignInRequired : .unreadableReply
     }
 
     // MARK: - The signed API
@@ -529,5 +609,32 @@ extension VolcengineUsageService {
             // honest signal is its own figure reaching its own ceiling.
             isExhausted: used >= 1
         )
+    }
+}
+
+/// The two pipes' bytes, written from two queues and read once after both have
+/// finished. The lock is what makes that safe; the `DispatchGroup` is what
+/// makes "after both have finished" true.
+private final class Collected: @unchecked Sendable {
+    private let lock = NSLock()
+    private var standardOutput = Data()
+    private var standardError = Data()
+
+    func append(_ chunk: Data, toStandardOutput: Bool, ceiling: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        // Past the ceiling the bytes are dropped, never the reading — see
+        // `VolcengineUsageService.blocking`.
+        if toStandardOutput {
+            if standardOutput.count < ceiling { standardOutput.append(chunk) }
+        } else if standardError.count < ceiling {
+            standardError.append(chunk)
+        }
+    }
+
+    func taken() -> (output: Data, problem: String) {
+        lock.lock()
+        defer { lock.unlock() }
+        return (standardOutput, String(data: standardError, encoding: .utf8) ?? "")
     }
 }

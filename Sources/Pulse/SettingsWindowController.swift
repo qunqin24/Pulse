@@ -37,6 +37,10 @@ final class SettingsWindowController {
         self.window = window
         window.title = String.localized("Pulse Settings")
 
+        // The system may have taken the grant away since launch, and this
+        // window is the only place Pulse reports it.
+        alerts.refreshAuthorization()
+
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         window.center()

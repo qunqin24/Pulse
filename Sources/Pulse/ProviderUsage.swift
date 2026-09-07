@@ -229,13 +229,13 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// rather than shown as zero: reading a page is reading someone's
         /// layout, and a layout can change.
         case ollamaPageChanged
-        /// No key has been entered for a provider that needs one.
         /// Volcengine's CLI isn't on this Mac. Named rather than shared,
         /// because the remedy is a specific command and the alternative — an
         /// access key pair — is a different thing to be told about.
         case volcengineCLIMissing
         /// It is installed and has never been signed in, or the session went.
         case volcengineSignInRequired
+        /// No key has been entered for a provider that needs one.
         case apiKeyMissing
         /// There is a key, and the service refused it.
         case apiKeyRefused

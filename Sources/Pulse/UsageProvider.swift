@@ -166,6 +166,17 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Whether this provider's figures only move while the tool is being
+    /// *used*, so old ones mean idleness rather than a fault.
+    ///
+    /// Claude Code alone, and it is the status line: a **push**, not a pull.
+    /// Its capture is marked stale ten minutes after the last response, which
+    /// is what "nobody has run Claude Code since lunch" looks like. Every
+    /// other route asks a server on every pass, so a stale reading there is a
+    /// fetch that failed. Read by `AlertMemory` — see
+    /// [Docs/notifications.md](../../Docs/notifications.md).
+    var reportsOnlyWhenUsed: Bool { self == .claudeCode }
+
     /// Whether Pulse needs an API key from the user for this one.
     ///
     /// The others borrow a login their own CLI stored. OpenCode stores one too,
