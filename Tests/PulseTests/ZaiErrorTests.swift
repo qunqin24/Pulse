@@ -94,3 +94,78 @@ struct ZaiErrorTests {
         }
     }
 }
+
+/// The success path, at last held against a real payload.
+///
+/// Captured from `open.bigmodel.cn` on 2026-09-07 with a live Coding Plan key
+/// (a Lite subscription, freshly bought and untouched). Until this existed the
+/// mapping from `limits[]` to rings had never been run against anything but
+/// invented JSON — the refusals were measured and the answer was not.
+///
+/// The payload carries no secret: quota counts, a reset stamp and a tier name.
+@Suite("GLM Coding Plan quota")
+struct ZaiQuotaTests {
+    private static func windows() throws -> [UsageWindow] {
+        let url = try #require(
+            Bundle.module.url(forResource: "glm-coding-plan-quota", withExtension: "json", subdirectory: "Fixtures")
+        )
+        let reply = try JSONDecoder().decode(ZaiUsageService.Reply.self, from: try Data(contentsOf: url))
+        return ZaiUsageService.windows(from: try #require(reply.data?.limits), provider: .glmCoding)
+    }
+
+    @Test("Both limits are read, shortest first")
+    func twoWindows() throws {
+        let windows: [UsageWindow] = try Self.windows()
+        #expect(windows.count == 2)
+        #expect(windows.map(\.kind) == [.fiveHour, .weekly])
+    }
+
+    @Test("`unit` and `number` are a real duration, not a sort key")
+    func durations() throws {
+        let windows: [UsageWindow] = try Self.windows()
+        // unit 3 is hours, unit 6 is weeks — 5 hours and 1 week, both stated
+        // by the service, so the window clock and the forecast may divide.
+        #expect(windows[0].windowSeconds == 5 * 3_600)
+        #expect(windows[1].windowSeconds == 7 * 86_400)
+        let statedLengths = windows.allSatisfy(\.reportsLength)
+        #expect(statedLengths)
+    }
+
+    @Test("An untouched plan reads as nothing used, not as no reading")
+    func freshPlanIsZero() throws {
+        let windows: [UsageWindow] = try Self.windows()
+        // `usage` and `remaining` are equal, so the spend is zero — and zero
+        // is a reading. The distinction matters: a missing figure has to stay
+        // nil rather than draw a full green ring.
+        let allZero = windows.allSatisfy { $0.usedFraction == 0 }
+        let noneSpent = windows.allSatisfy { !$0.isExhausted }
+        #expect(allZero)
+        #expect(noneSpent)
+    }
+
+    @Test("The reset stamp is milliseconds, and only one limit has one")
+    func resetTimes() throws {
+        let windows: [UsageWindow] = try Self.windows()
+        #expect(windows[0].resetsAt == nil)
+        #expect(windows[1].resetsAt == Date(timeIntervalSince1970: 1_789_373_585.999))
+    }
+
+    @Test("The tier is named from `level`, which is the key this account uses")
+    func planName() throws {
+        let url = try #require(
+            Bundle.module.url(forResource: "glm-coding-plan-quota", withExtension: "json", subdirectory: "Fixtures")
+        )
+        let reply = try JSONDecoder().decode(ZaiUsageService.Reply.self, from: try Data(contentsOf: url))
+        // Five keys are accepted because different tiers use different ones.
+        #expect(reply.data?.planLabel == "lite")
+    }
+
+    @Test("Ids are unique, so a pinned window stays resolvable")
+    func idsAreUnique() throws {
+        let windows: [UsageWindow] = try Self.windows()
+        let ids = windows.map(\.id)
+        // Two limits of the same type differing only in duration — the index
+        // is in the id because a collision leaves a pin unresolvable.
+        #expect(Set(ids).count == ids.count)
+    }
+}
