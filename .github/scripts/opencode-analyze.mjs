@@ -10,11 +10,13 @@ import {
   NDJSON_AGGREGATE_MAX,
   NDJSON_LINE_MAX,
   PINNED_CLI_VERSION,
+  SNAPSHOT_DIR,
   assertPinnedLock,
   assertTrustedToolSources,
   buildChildEnv,
   buildPrompt,
   cloneResult,
+  copySnapshotInto,
   envHasForbiddenKeys,
   extractCompletedAssistantText,
   isMain,
@@ -34,6 +36,7 @@ export async function runAnalyze({
   outputPath = path.resolve("triage-result.json"),
   spawnImpl = spawn,
   binaryPath,
+  snapshotPath = path.resolve(SNAPSHOT_DIR),
 } = {}) {
   const writeFailure = () => {
     writeJsonAtomic(outputPath, cloneResult(FIXED_FAILURE));
@@ -59,7 +62,11 @@ export async function runAnalyze({
 
     const nodeModules = path.join(workspace, ".github", "opencode", "node_modules");
     const binary = binaryPath || resolveOpencodeBinary(nodeModules);
+    // The sandbox is the model's project root, and the only tree it may read.
+    // Everything else on this machine — the API key's auth.json included — is
+    // outside it, which is what `external_directory: deny` is there to hold.
     const sandbox = fs.mkdtempSync(path.join(os.tmpdir(), "pulse-triage-sandbox-"));
+    copySnapshotInto(snapshotPath, sandbox);
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "pulse-triage-home-"));
     const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), "pulse-triage-tmp-"));
     const xdg = {
@@ -121,9 +128,15 @@ export async function runAnalyze({
     const result = rejectIfSecretReflected(parseModelJson(text), apiKey);
     writeJsonAtomic(outputPath, result);
     return { result, version: PINNED_CLI_VERSION };
-  } catch {
+  } catch (error) {
     writeFailure();
-    return { result: cloneResult(FIXED_FAILURE), reason: "failed" };
+    // Issue #13 posted the fixed failure with nothing in the log to say why.
+    // BotError messages are fixed literals from this repo — no model text, no
+    // reporter text, no secret — so the reason is safe to print. Anything else
+    // could carry a path or a response body and stays unprinted.
+    const reason = error instanceof BotError ? error.message : "failed";
+    console.error(`analyze failed: ${reason}`);
+    return { result: cloneResult(FIXED_FAILURE), reason };
   }
 }
 

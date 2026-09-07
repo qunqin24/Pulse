@@ -42,6 +42,17 @@ jobs:
       - name: Stage trusted tools
         run: node .github/scripts/opencode-stage-tools.mjs
 
+      - name: Stage repository snapshot
+        run: node .github/scripts/opencode-stage-repo.mjs
+
+      - name: Upload repository snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: triage-repo
+          path: repo-snapshot/
+          retention-days: 1
+          if-no-files-found: error
+
       - name: Upload trusted tools
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -71,7 +82,7 @@ jobs:
     needs: collect
     if: vars.OPENCODE_BOT_ENABLED == 'true' && needs.collect.outputs.disposition == 'analyze' && ((github.event_name == 'issues' && github.event.action == 'opened') || (github.event_name == 'issues' && github.event.action == 'edited' && !github.event.issue.pull_request && github.event.sender.type != 'Bot' && !contains(github.event.sender.login, '[bot]') && github.event.sender.login == github.event.issue.user.login && (github.event.changes.title || github.event.changes.body)) || (github.event_name == 'issue_comment' && github.event.action == 'created' && !github.event.issue.pull_request && github.event.comment.user.type != 'Bot' && !contains(github.event.comment.user.login, '[bot]') && (github.event.comment.user.login == github.event.issue.user.login || contains(format('|{0}|', github.event.comment.user.login), '|qunqin24|'))) || (github.event_name == 'pull_request_target' && github.event.pull_request.base.repo.full_name == 'qunqin24/Pulse' && !contains(format('|{0}|', github.event.pull_request.user.login), '|qunqin24|')))
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     permissions: {}
     steps:
       - name: Setup Node
@@ -91,6 +102,12 @@ jobs:
         with:
           name: triage-input
           path: .
+
+      - name: Download repository snapshot
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: triage-repo
+          path: repo-snapshot
 
       - name: Install pinned CLI
         working-directory: .github/opencode

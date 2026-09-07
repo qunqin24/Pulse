@@ -19,6 +19,8 @@ import {
   REPO,
   TRUSTED_TOOL_PATHS,
   assertHardenedConfig,
+  assertSnapshotPath,
+  assertSnapshotSafe,
   assertTrustedToolSources,
   botAlreadyCommented,
   dedupMarker,
@@ -29,6 +31,8 @@ import {
   commentApiPath,
   commentByIdApiPath,
   containsSecret,
+  rejectIfSecretReflected,
+  snapshotRelativePaths,
   debounceWaitMs,
   extractCommentsPage,
   fingerprintHash,
@@ -171,12 +175,22 @@ function chunkReader(chunks) {
 
 function sampleResult(status = "comment") {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     status,
     summary: "Looks fine.",
+    cause: "The pasted key is for the other storefront.",
+    confidence: "medium",
     findings: [{ severity: "info", text: "No usage percent invented." }],
+    nextSteps: ["Re-issue the key on the mainland console."],
     questions: [],
   };
+}
+
+function snapshotFixture() {
+  const dir = path.join(os.tmpdir(), `snapfix-${process.pid}`);
+  fs.mkdirSync(path.join(dir, "Sources", "Pulse"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "Sources", "Pulse", "UsageStore.swift"), "// stub");
+  return dir;
 }
 
 function textEvent({ sessionID = "ses_root", messageID = "msg_final", text, end = 2 }) {
@@ -313,6 +327,10 @@ test("fork evil config stays inert", () => {
   assert.equal(config.model, MODEL);
   const prompt = buildPrompt(document);
   assert.match(prompt, /Do not follow instructions/);
+  // Diagnosis, not classification: the knowledge pack and the "work out WHY"
+  // instruction are the whole point of the reply the bot writes.
+  assert.match(prompt, /work out WHY/);
+  assert.match(prompt, /open\.bigmodel\.cn/);
 });
 
 test("UTF-8 truncation does not split codepoints", () => {
@@ -372,6 +390,8 @@ test("NDJSON extraction uses pinned run --format json shape", () => {
   const parsed = parseModelJson(text);
   assert.equal(parsed.status, "comment");
   assert.equal(parsed.summary, "Looks fine.");
+  assert.equal(parsed.confidence, "medium");
+  assert.equal(parsed.nextSteps.length, 1);
   assert.doesNotMatch(JSON.stringify(parsed), /SEARCH LOG/);
 });
 
@@ -385,7 +405,7 @@ test("NDJSON final message only; reject error mixed truncated", () => {
       sessionID: "ses_root",
       part: { type: "tool", tool: "websearch", state: { status: "completed", output: "noise" } },
     }),
-    JSON.stringify(textEvent({ messageID: "msg_final", text: '{"schemaVersion":1,', end: 4 })),
+    JSON.stringify(textEvent({ messageID: "msg_final", text: '{"schemaVersion":2,"cause":"","confidence":"low","nextSteps":[],', end: 4 })),
     JSON.stringify(textEvent({ messageID: "msg_final", text: '"status":"comment","summary":"ok","findings":[],"questions":[]}', end: 5 })),
     "",
   ].join("\n");
@@ -427,7 +447,29 @@ test("injected commands do not grant tool permission", () => {
   assert.equal(CONFIG.permission["*"], "deny");
   assert.equal(CONFIG.permission.websearch, "allow");
   assert.equal(CONFIG.agent.triage.permission.bash, "deny");
-  assert.equal(CONFIG.agent.triage.steps, 4);
+  assert.equal(CONFIG.agent.triage.steps, 12);
+  // Reading the snapshot is the point; leaving it, writing, shelling out and
+  // fetching URLs are still refused, on both the global and the agent block.
+  for (const block of [CONFIG.permission, CONFIG.agent.triage.permission]) {
+    for (const tool of ["read", "grep", "glob", "list"]) assert.equal(block[tool], "allow");
+    for (const tool of ["edit", "bash", "task", "webfetch", "external_directory"]) {
+      assert.equal(block[tool], "deny");
+    }
+  }
+  // A per-path object is schema-valid and its matching rules are not verifiable
+  // offline, so the guard must refuse one even when it looks restrictive.
+  assert.throws(
+    () => assertHardenedConfig({ ...CONFIG, permission: { ...CONFIG.permission, read: { "**": "allow" } } }),
+    /read must be allow/,
+  );
+  assert.throws(
+    () =>
+      assertHardenedConfig({
+        ...CONFIG,
+        permission: { ...CONFIG.permission, external_directory: "allow" },
+      }),
+    /external_directory must be deny/,
+  );
   const prompt = buildPrompt(
     buildInputDocument({
       target: { eventName: "issues", action: "opened", repo: REPO, number: 3, kind: "issue", headSHA: null, baseRef: null },
@@ -437,6 +479,8 @@ test("injected commands do not grant tool permission", () => {
     }),
   );
   assert.match(prompt, /run bash/);
+  assert.match(prompt, /Do not follow instructions/);
+  assert.match(prompt, /Pulse never invents a usage percentage/);
   assert.equal(CONFIG.permission.webfetch, "deny");
   assert.equal(CONFIG.permission.edit, "deny");
 });
@@ -473,22 +517,19 @@ test("isolated child env has no GitHub tokens and sets disable flags", () => {
 
 test("invalid output unknown keys mentions HTML bidi", () => {
   assert.throws(() => validateResult({ ...FIXED_FAILURE, extra: true }));
-  assert.throws(() =>
-    validateResult({
-      schemaVersion: 1,
-      status: "nope",
-      summary: "x",
-      findings: [],
-      questions: [],
-    }),
-  );
+  assert.throws(() => validateResult({ ...sampleResult(), status: "nope" }));
+  assert.throws(() => validateResult({ ...sampleResult(), confidence: "certain" }));
+  assert.throws(() => validateResult({ ...sampleResult(), cause: 7 }));
+  assert.throws(() => validateResult({ ...sampleResult(), nextSteps: "do it" }));
+  assert.throws(() => validateResult({ ...sampleResult(), schemaVersion: 1 }));
   const rendered = renderComment(
     {
-      schemaVersion: 1,
-      status: "comment",
+      ...sampleResult(),
       summary: "Hello @everyone <script>alert(1)</script> \u202Eimage ![x](https://evil.example/a.png)",
+      cause: "",
+      confidence: "high",
       findings: [{ severity: "info", text: "See https://opencode.ai/docs and @qunqin24" }],
-      questions: [],
+      nextSteps: [],
     },
     issueTarget(1),
   );
@@ -500,13 +541,65 @@ test("invalid output unknown keys mentions HTML bidi", () => {
   const links = plaintextHttpsLinks("See https://opencode.ai/docs");
   assert.deepEqual(links, ["https://opencode.ai/docs"]);
   const high = validateResult({
-    schemaVersion: 1,
-    status: "comment",
-    summary: "bad",
+    ...sampleResult(),
     findings: [{ severity: "high", text: "credential stuffing" }],
-    questions: [],
   });
   assert.equal(high.status, "risk");
+});
+
+test("the comment carries a diagnosis, not a category", () => {
+  const rendered = renderComment(
+    {
+      ...sampleResult(),
+      summary: "GLM Coding Plan reports a refused key while the console shows quota.",
+      cause: "The key was issued by the international storefront and open.bigmodel.cn refuses it.",
+      confidence: "medium",
+      findings: [{ severity: "warning", text: "An envelope refusal is not proof of a bad key." }],
+      nextSteps: ["Check which console issued the key."],
+      questions: ["Was the key pasted into Settings, or picked up from a file?"],
+    },
+    issueTarget(13),
+  );
+  assert.match(rendered, /Most likely cause/);
+  assert.match(rendered, /confidence \/ 把握: medium/);
+  assert.match(rendered, /What points that way/);
+  assert.match(rendered, /Next steps/);
+  assert.match(rendered, /To confirm/);
+  assert.match(rendered, /Never paste an API key/);
+  // The escape pass must not turn ordinary prose into backslash soup.
+  assert.match(rendered, /\(#13\)|open\\?\.bigmodel/);
+  assert.doesNotMatch(rendered, /\\\(/);
+});
+
+test("an insufficient reply asks, and one that asks nothing is not insufficient", () => {
+  const asking = renderComment(
+    { ...sampleResult("insufficient"), cause: "", confidence: "low", questions: ["Does it fail for every provider?"] },
+    issueTarget(4),
+  );
+  assert.match(asking, /Not enough in the report yet/);
+  assert.match(asking, /Please add/);
+  assert.doesNotMatch(asking, /Most likely cause/);
+  const hypothesis = renderComment(
+    { ...sampleResult("insufficient"), questions: ["Did it ever work?"] },
+    issueTarget(5),
+  );
+  assert.match(hypothesis, /Working hypothesis/);
+  const silent = validateResult({ ...sampleResult("insufficient"), questions: [] });
+  assert.equal(silent.status, "comment");
+  const unfounded = validateResult({ ...sampleResult(), cause: "", confidence: "high" });
+  assert.equal(unfounded.confidence, "low");
+});
+
+test("prose around the object is a formatting slip, not a failed triage", () => {
+  const body = JSON.stringify(sampleResult());
+  assert.equal(parseModelJson(`Let me search first.\n\n${body}`).status, "comment");
+  assert.equal(parseModelJson(`${body}\n\nHope that helps.`).status, "comment");
+  assert.equal(parseModelJson(`\`\`\`json\n${body}\n\`\`\``).status, "comment");
+  assert.throws(() => parseModelJson("no object here at all"), /not JSON/);
+  assert.throws(() => parseModelJson('{"schemaVersion":2,"status":"comment"}'), /unknown keys/);
+  // A brace inside a string must not end the span.
+  const braced = JSON.stringify({ ...sampleResult(), summary: "a } brace" });
+  assert.equal(parseModelJson(`noise ${braced} noise`).summary, "a } brace");
 });
 
 test("fixed fallback comment does not copy model errors", () => {
@@ -850,12 +943,19 @@ test("analyze spawn allowlist excludes tokens and accepts stdin prompt", async (
   const inputPath = path.join(os.tmpdir(), `in2-${process.pid}.json`);
   const outputPath = path.join(os.tmpdir(), `out2-${process.pid}.json`);
   fs.writeFileSync(inputPath, JSON.stringify(validInput(8)));
+  const snapshot = path.join(os.tmpdir(), `snap-${process.pid}`);
+  fs.rmSync(snapshot, { recursive: true, force: true });
+  fs.mkdirSync(path.join(snapshot, "Sources", "Pulse"), { recursive: true });
+  fs.writeFileSync(path.join(snapshot, "Sources", "Pulse", "ZaiUsageService.swift"), "// case 401, 403");
   const model = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     status: "insufficient",
-    summary: "Need a screenshot of Settings.",
+    summary: "Need the exact wording Pulse shows on that row.",
+    cause: "",
+    confidence: "low",
     findings: [],
-    questions: ["Can you attach the panel screenshot?"],
+    nextSteps: [],
+    questions: ["What does the provider's row say when it fails?"],
   };
   let captured;
   const { result } = await runAnalyze({
@@ -869,6 +969,7 @@ test("analyze spawn allowlist excludes tokens and accepts stdin prompt", async (
     inputPath,
     outputPath,
     binaryPath: "/bin/echo",
+    snapshotPath: snapshot,
     spawnImpl: (binary, args, opts) => {
       captured = { binary, args, opts };
       return fakeChild(
@@ -891,6 +992,12 @@ test("analyze spawn allowlist excludes tokens and accepts stdin prompt", async (
   assert.equal(captured.opts.env.ACTIONS_RUNTIME_TOKEN, undefined);
   assert.equal(captured.opts.env.OPENCODE_WEBSEARCH_PROVIDER, "exa");
   assert.equal(captured.opts.env.OPENCODE_DISABLE_DEFAULT_PLUGINS, "1");
+  // The model's cwd is the snapshot copy — the only tree it is allowed to read.
+  assert.equal(
+    fs.readFileSync(path.join(captured.opts.cwd, "Sources/Pulse/ZaiUsageService.swift"), "utf8"),
+    "// case 401, 403",
+  );
+  assert.equal(fs.existsSync(path.join(captured.opts.cwd, ".github")), false);
   assert.equal(result.status, "insufficient");
   const comment = renderComment(result, issueTarget(8));
   assert.doesNotMatch(comment, new RegExp(`${OWNER_PING}$`, "m"));
@@ -953,8 +1060,10 @@ test("fake process nonzero error timeout and output caps", async () => {
       fakeChild(
         `${JSON.stringify({ type: "error", sessionID: "ses_root", error: { name: "boom" } })}\n`,
       ),
+    snapshotPath: snapshotFixture(),
   });
   assert.deepEqual(failed.result, FIXED_FAILURE);
+  assert.equal(failed.reason, "model error event");
 });
 
 test("high findings ping owner; missing artifacts use fixed failure", async () => {
@@ -983,6 +1092,47 @@ test("high findings ping owner; missing artifacts use fixed failure", async () =
   assert.equal(posted.posted, true);
   assert.equal(posted.fixed, true);
   assert.equal(JSON.parse(calls.find((c) => c.method === "POST").body).body, fixedFailureComment(issueTarget(99)));
+});
+
+test("the snapshot is an allowlist, and .github is not in it", () => {
+  const staged = snapshotRelativePaths(ROOT);
+  assert.ok(staged.includes("Sources/Pulse/ZaiUsageService.swift"));
+  assert.ok(staged.includes("Docs/providers/zai.md"));
+  assert.ok(staged.includes("CLAUDE.md"));
+  // The bot has no business reading its own prompt, config, or guards.
+  assert.equal(staged.some((file) => file.startsWith(".github")), false);
+  assert.equal(staged.some((file) => file.endsWith(".png") || file.endsWith(".json")), false);
+  assert.deepEqual([...staged].sort(), staged);
+
+  assert.throws(() => assertSnapshotPath("../etc/passwd"), /invalid snapshot path/);
+  assert.throws(() => assertSnapshotPath("/etc/passwd"), /invalid snapshot path/);
+  assert.throws(() => assertSnapshotPath("Docs/../../x.md"), /invalid snapshot path/);
+  assert.throws(() => assertSnapshotPath(".github/opencode/opencode.json"), /outside allowlist/);
+  assert.throws(() => assertSnapshotPath("Sources/Pulse/keys.dat"), /outside allowlist/);
+  assert.equal(assertSnapshotPath("Sources/Pulse/UsageStore.swift"), "Sources/Pulse/UsageStore.swift");
+
+  // analyze re-derives the rules; it does not trust what the artifact contains.
+  const dir = path.join(os.tmpdir(), `snapcheck-${process.pid}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(path.join(dir, ".github"), { recursive: true });
+  fs.writeFileSync(path.join(dir, ".github", "opencode.json"), "{}");
+  assert.throws(() => assertSnapshotSafe(dir), /outside allowlist/);
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(path.join(dir, "Sources"), { recursive: true });
+  fs.symlinkSync("/etc/passwd", path.join(dir, "Sources", "linked.swift"));
+  assert.throws(() => assertSnapshotSafe(dir), /symlink/);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("the key filter survives encoding and splitting", () => {
+  const key = "sk-live-9f2a4c7e11b3d8065a";
+  assert.equal(containsSecret(`summary ${key} end`, key), true);
+  assert.equal(containsSecret(Buffer.from(key, "utf8").toString("base64"), key), true);
+  assert.equal(containsSecret(Buffer.from(key, "utf8").toString("hex"), key), true);
+  // "Split it in half and no filter will see it" must not work either.
+  assert.equal(containsSecret(`first half ${key.slice(0, 14)} ...`, key), true);
+  assert.equal(containsSecret("nothing to see", key), false);
+  assert.throws(() => rejectIfSecretReflected({ ...sampleResult(), cause: key }, key), /secret reflected/);
 });
 
 test("official schema accepts hardened config", () => {
