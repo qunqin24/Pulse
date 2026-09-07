@@ -955,11 +955,11 @@ struct SettingsView: View {
             SettingsGroup(String.localized("Usage history")) {
                 SettingsRow(
                     loadingHistory == account.provider
-                        ? String.localized("Reading logs")
+                        ? Self.loadingHistoryTitle(for: account.provider)
                         : String.localized("No history yet"),
                     subtitle: loadingHistory == account.provider
                         ? nil
-                        : String.localized("Nothing has been logged on this Mac yet, so there is no history to add up.")
+                        : Self.emptyHistoryReason(for: account.provider)
                 ) {
                     if loadingHistory == account.provider {
                         ProgressView().controlSize(.small)
@@ -1036,6 +1036,25 @@ struct SettingsView: View {
     /// storefronts, and a key from the wrong console is refused with no hint
     /// as to why, so those two name the site instead of leaving the user to
     /// guess which of the two they signed up for.
+    /// Both halves of the empty state have to name the **right** source.
+    ///
+    /// A history read from the provider's own statistics has nothing to do
+    /// with this Mac, and saying "nothing has been logged on this Mac" about
+    /// it sends somebody looking for a log directory that was never going to
+    /// exist. `Provider.keepsLocalTranscripts` is the question, not
+    /// `providesHistory`: the latter is true for both sources.
+    private static func emptyHistoryReason(for provider: Provider) -> String {
+        provider.keepsLocalTranscripts
+            ? .localized("Nothing has been logged on this Mac yet, so there is no history to add up.")
+            : .localized("This account hasn't used anything yet, so there is nothing to chart.")
+    }
+
+    private static func loadingHistoryTitle(for provider: Provider) -> String {
+        provider.keepsLocalTranscripts
+            ? .localized("Reading logs")
+            : .localized("Asking \(provider.displayName)")
+    }
+
     private static func keySubtitle(for provider: Provider) -> String {
         switch provider {
         case _ where provider.usesSessionCookie:
