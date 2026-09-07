@@ -230,6 +230,12 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// layout, and a layout can change.
         case ollamaPageChanged
         /// No key has been entered for a provider that needs one.
+        /// Volcengine's CLI isn't on this Mac. Named rather than shared,
+        /// because the remedy is a specific command and the alternative — an
+        /// access key pair — is a different thing to be told about.
+        case volcengineCLIMissing
+        /// It is installed and has never been signed in, or the session went.
+        case volcengineSignInRequired
         case apiKeyMissing
         /// There is a key, and the service refused it.
         case apiKeyRefused
@@ -263,6 +269,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")
             case .ollamaSessionExpired: .localized("The Ollama session expired. Sign in again and add it.")
             case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")
+            case .volcengineCLIMissing: .localized("Install arkcli and run `arkcli auth login`, or add access keys in Settings.")
+            case .volcengineSignInRequired: .localized("arkcli isn't signed in. Run `arkcli auth login`.")
             case .apiKeyMissing: .localized("Add an API key in Settings.")
             case .apiKeyRefused: .localized("That key was refused. Check it in Settings.")
             case .unreachable: .localized("The service didn't respond.")

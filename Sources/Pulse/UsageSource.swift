@@ -71,6 +71,13 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             // Never shown: `options(for:)` doesn't offer it, and `source(for:)`
             // won't return it for anything but Claude Code.
             .localized("Use the endpoint when possible, the other route when not.")
+        case (.endpoint, .volcengine):
+            .localized("Signs Volcengine's usage API with the access keys you entered.")
+        case (.tooling, .volcengine):
+            .localized("Asks arkcli, using the login it already saved.")
+        case (.desktopApp, .volcengine):
+            // Never shown: `options(for:)` offers it to Claude Code alone.
+            .localized("Use the endpoint when possible, the other route when not.")
         case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
              (_, .minimax), (_, .minimaxCN), (_, .copilot):
             // Never shown either — one route, and it needs a key.

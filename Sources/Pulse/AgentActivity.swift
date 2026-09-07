@@ -175,7 +175,8 @@ enum AgentActivity {
                 }
 
             case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
+             .volcengine:
                 // None of these leaves transcripts Pulse reads, so nothing
                 // ever gets this far.
                 return .finished
@@ -276,7 +277,8 @@ enum AgentActivity {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: nil
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
+             .volcengine: nil
         }
     }
 }

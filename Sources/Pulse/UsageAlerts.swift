@@ -302,7 +302,10 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
              .codexNotInstalled, .antigravityNotRunning, .cursorSignInRequired,
              .grokSignInRequired, .grokBotNotIncluded, .notSignedIn,
-             .ollamaSessionMissing, .apiKeyMissing:
+             .ollamaSessionMissing, .apiKeyMissing,
+             // Both are "install it and sign in", which stays true until
+             // somebody does, so neither is an outage to be told about.
+             .volcengineCLIMissing, .volcengineSignInRequired:
             false
         }
     }

@@ -324,3 +324,11 @@
 "Reset order" = "重置顺序";
 "Back to the order Pulse ships with." = "恢复成 Pulse 默认的排列。";
 "Reset" = "重置";
+
+/* 火山引擎方舟 */
+"Install arkcli and run `arkcli auth login`, or add access keys in Settings." = "请安装 arkcli 并执行 `arkcli auth login`，或在设置里填入访问密钥。";
+"arkcli isn't signed in. Run `arkcli auth login`." = "arkcli 还没登录。执行 `arkcli auth login`。";
+"Signs Volcengine's usage API with the access keys you entered." = "用你填的访问密钥签名调用火山引擎的用量接口。";
+"Asks arkcli, using the login it already saved." = "调用 arkcli，用它已经保存的登录。";
+"Access keys" = "访问密钥";
+"AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "格式为 AccessKeyID:SecretAccessKey，来自火山引擎。可不填——走 arkcli 不需要。加密保存在本机。";

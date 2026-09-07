@@ -1,0 +1,12 @@
+{
+  "ResponseMetadata": { "RequestId": "fixture" },
+  "Result": {
+    "Status": "Active",
+    "UpdateTimestamp": 1788773400,
+    "QuotaUsage": [
+      { "Level": "weekly", "Percent": 41.5, "ResetTimestamp": 1789085506 },
+      { "Level": "5h", "Percent": 12, "ResetTimestamp": 1788780000 },
+      { "Level": "fortnightly", "Percent": 3, "ResetTimestamp": 1789085506 }
+    ]
+  }
+}

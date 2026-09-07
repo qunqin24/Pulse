@@ -1005,6 +1005,11 @@ struct SettingsView: View {
             .localized("From platform.minimax.io. Stored encrypted on this Mac.")
         case .minimaxCN:
             .localized("From platform.minimaxi.com. Stored encrypted on this Mac.")
+        // The one field holding two secrets. Says the format, because a pair
+        // pasted the wrong way round fails as a signature mismatch — a 403
+        // with nothing in it to suggest what went wrong.
+        case .volcengine:
+            .localized("AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }
@@ -1110,7 +1115,9 @@ struct SettingsView: View {
                 SettingsRow(
                     account.provider.usesSessionCookie
                         ? String.localized("Session cookie")
-                        : String.localized("API key"),
+                        : account.provider.usesKeyPair
+                            ? String.localized("Access keys")
+                            : String.localized("API key"),
                     subtitle: Self.keySubtitle(for: account.provider)
                 ) {
                     HStack(spacing: 8) {

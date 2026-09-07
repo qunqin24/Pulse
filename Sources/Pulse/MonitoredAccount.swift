@@ -75,7 +75,7 @@ extension Provider {
         // from the editor's own stored login and a second account has no
         // editor behind it. Grok Bot needs nothing but the token.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine: false
         }
     }
 }

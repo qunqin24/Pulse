@@ -324,3 +324,11 @@
 "Reset order" = "Reset order";
 "Back to the order Pulse ships with." = "Back to the order Pulse ships with.";
 "Reset" = "Reset";
+
+/* Volcengine / Volcengine Ark */
+"Install arkcli and run `arkcli auth login`, or add access keys in Settings." = "Install arkcli and run `arkcli auth login`, or add access keys in Settings.";
+"arkcli isn't signed in. Run `arkcli auth login`." = "arkcli isn't signed in. Run `arkcli auth login`.";
+"Signs Volcengine's usage API with the access keys you entered." = "Signs Volcengine's usage API with the access keys you entered.";
+"Asks arkcli, using the login it already saved." = "Asks arkcli, using the login it already saved.";
+"Access keys" = "Access keys";
+"AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.";

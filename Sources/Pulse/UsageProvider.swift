@@ -20,6 +20,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case copilot
     case grok
     case grokBot
+    case volcengine
 
     var id: String { rawValue }
 
@@ -51,6 +52,12 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // different bill from the SuperGrok pool above, under a name people
         // already use for it. See `GrokBotUsageService`.
         case .grokBot: "Grok Bot"
+        // The official name. Volcengine is the platform, Ark (方舟) the model
+        // service on it, and Doubao the model — the plan is sold as the Ark
+        // Coding Plan, and the account, the keys and the CLI are all
+        // Volcengine's. Naming it for the model would name the one part of
+        // that chain the ring is not about.
+        case .volcengine: "Volcengine"
         }
     }
 
@@ -77,6 +84,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // The parent brand's mark rather than Grok's own, which is the one
         // thing that tells the two apart on a rail carrying both.
         case .grokBot: "xai"
+        case .volcengine: "volcengine"
         }
     }
 
@@ -98,7 +106,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // ledger cannot read it yet. False here means "no history shown",
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
+             .volcengine: false
         }
     }
 
@@ -108,7 +117,18 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and Cursor have exactly one route each — a server one of them runs
     /// itself, a login the other one stored — so it is stated rather than
     /// offered.
-    var hasSourceChoice: Bool { keepsLocalTranscripts }
+    /// **Not `keepsLocalTranscripts`**, which it used to be. The two happened
+    /// to agree while only the CLIs had a choice, and reading one for the other
+    /// is the kind of coincidence that breaks silently: Volcengine has two routes
+    /// and no transcripts, and would have been given a stated route it does not
+    /// have instead of the picker it needs.
+    var hasSourceChoice: Bool {
+        switch self {
+        case .claudeCode, .codex, .volcengine: true
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
+        }
+    }
 
     /// The one route this provider has, named for the settings row that
     /// states it rather than offering a picker. Nil where the row is never
@@ -141,7 +161,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Either a choice of routes, or a key the user pastes: both are asked
         // about elsewhere, so there is nothing here to state.
         case .claudeCode, .codex, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
             nil
         }
     }
@@ -152,8 +172,17 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool {
-        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN].contains(self)
+        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine].contains(self)
     }
+
+    /// Whether the pasted credential is a **pair** rather than one token.
+    ///
+    /// Volcengine signs with an access key id and a secret, so Volcengine's field
+    /// takes `AccessKeyID:SecretAccessKey`. One field rather than two because
+    /// the whole store, the whole settings row and the whole "is it set" test
+    /// are built around one string per provider — and because it is optional
+    /// anyway: `arkcli` is the other route and needs nothing pasted at all.
+    var usesKeyPair: Bool { self == .volcengine }
 
     /// Whether what the user pastes is a browser session rather than an API
     /// key. Ollama has no quota API at all — the figures are read from its

@@ -1,0 +1,8 @@
+{
+  "Result": {
+    "AFPFiveHour": { "Quota": 1000, "Used": 250, "ResetTime": 1788780000 },
+    "AFPWeekly": { "Quota": 20000, "Used": 0, "ResetTime": 1789085506 },
+    "AFPMonthly": { "Quota": 0, "Used": 0, "ResetTime": 0 },
+    "AFPDaily": { "Quota": 500, "Used": 100, "ResetTime": 1788800000 }
+  }
+}

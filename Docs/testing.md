@@ -17,12 +17,16 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
+| `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
+| `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 
 ## What is not, and why
 
 **No UI tests.** The panel is an accessory `NSPanel` whose hover cannot be driven by synthesised events — `hitTest` and synthetic `NSEvent`s both reported a handle as perfectly reachable while real clicks were being dropped, which is the lesson in [ui/input.md](ui/input.md). A UI test here would report the same thing.
 
 **No live provider calls.** Every route needs somebody's real credential and answers differently by plan. Fixtures are captured by hand from a real reply and committed; the capture is recorded in that provider's page.
+
+**A fixture written from another project's parser is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; a captured one replaces them the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
 
 **No network, no clock, no disk in a rule test.** `AlertMemory.alerts` takes `now` as an argument for exactly this reason. `UsageCache.init(file:)` takes a path for exactly this reason. Anything that has to reach for a real one is not a rule test.
 

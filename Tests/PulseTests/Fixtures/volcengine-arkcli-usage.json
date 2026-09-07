@@ -1,0 +1,42 @@
+{
+  "viewer": { "auth_method": "sso" },
+  "items": [
+    {
+      "product": "coding-plan",
+      "subscribed": true,
+      "updated_at": 1788773400000,
+      "periods": [
+        { "label": "weekly", "percent": 41.5, "reset_at": "2026-09-11T06:11:46Z" },
+        { "label": "5h", "percent": 12, "reset_at": 1788780000 },
+        { "label": "monthly", "percent": 8.25, "reset_at": "2026-10-01T00:00:00Z" }
+      ]
+    },
+    {
+      "product": "agent-plan",
+      "subscribed": true,
+      "updated_at": 1788773100,
+      "periods": [
+        { "label": "5h", "percent": 100, "reset_at": 1788780000 }
+      ]
+    },
+    {
+      "product": "coding-plan-team",
+      "subscribed": false,
+      "periods": [
+        { "label": "weekly", "percent": 99, "reset_at": null }
+      ]
+    },
+    {
+      "product": "agent-plan-team",
+      "subscribed": true,
+      "error": "team usage is temporarily unavailable"
+    },
+    {
+      "product": "some-future-plan",
+      "subscribed": true,
+      "periods": [
+        { "label": "weekly", "percent": 50, "reset_at": null }
+      ]
+    }
+  ]
+}
