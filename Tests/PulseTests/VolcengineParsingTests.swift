@@ -264,8 +264,11 @@ struct VolcengineProcessTests {
 
     @Test("A grandchild holding the pipes does not hold the call")
     func grandchildDoesNotHoldTheCall() async throws {
-        // The child exits immediately but leaves a background process with the
-        // write ends. Nothing may stay blocked on that.
+        // The child exits immediately but leaves a background process holding
+        // the write ends. What is guaranteed is that **this call returns** —
+        // not that the grandchild dies: `Process` cannot put the child in its
+        // own process group, so `stop()` kills the child and nothing below it.
+        // Asserting a bounded return is asserting what the code promises.
         let started = ContinuousClock.now
         _ = await VolcengineUsageService.run(
             Self.shell, ["-c", "(sleep 30) & printf done; exit 0"], deadline: 2

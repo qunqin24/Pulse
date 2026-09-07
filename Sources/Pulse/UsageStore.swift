@@ -415,11 +415,11 @@ final class UsageStore {
             // so it is where a pass is most likely to be disowned, and it was
             // the one place that wrote straight into `usage` with no check at
             // all. Every one of these went over a newer reading.
-            var fetchedExtras: [(String, ProviderUsage)] = []
+            var fetchedExtras: [(String, ProviderUsage, ProviderUsage)] = []
             for account in extras {
                 let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
                 guard pass == self.currentPass else { return }
-                fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw)))
+                fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw), raw))
             }
 
 
@@ -428,31 +428,31 @@ final class UsageStore {
             // over newer ones and clear flags that now belong elsewhere.
             guard pass == self.currentPass else { return }
 
-            for (id, usage) in fetchedExtras { self.commit(usage, for: id) }
+            for (id, usage, raw) in fetchedExtras { self.commit(usage, raw: raw, for: id) }
 
             // Only what was actually fetched is written back. A provider that
             // is off the rail was never asked, so its slot here would be
             // overwritten with a stale cache entry every automatic pass —
             // quietly undoing the deliberate refresh its own settings pane
             // offers, a minute or two after the user pressed it.
-            for (provider, fetched) in [
-                (Provider.codex, fetchedCodex),
-                (.claudeCode, fetchedClaude),
-                (.antigravity, fetchedAntigravity),
-                (.openCodeGo, fetchedOpenCode),
-                (.kimiCode, fetchedKimi),
-                (.cursor, fetchedCursor),
-                (.ollamaCloud, fetchedOllama),
-                (.zai, fetchedZai),
-                (.glmCoding, fetchedGLM),
-                (.minimax, fetchedMiniMax),
-                (.minimaxCN, fetchedMiniMaxCN),
-                (.copilot, fetchedCopilot),
-                (.grok, fetchedGrok),
-                (.grokBot, fetchedGrokBot),
-                (.volcengine, fetchedVolcengine),
+            for (provider, fetched, raw) in [
+                (Provider.codex, fetchedCodex, rawCodex),
+                (.claudeCode, fetchedClaude, rawClaude),
+                (.antigravity, fetchedAntigravity, rawAntigravity),
+                (.openCodeGo, fetchedOpenCode, rawOpenCode),
+                (.kimiCode, fetchedKimi, rawKimi),
+                (.cursor, fetchedCursor, rawCursor),
+                (.ollamaCloud, fetchedOllama, rawOllama),
+                (.zai, fetchedZai, rawZai),
+                (.glmCoding, fetchedGLM, rawGLM),
+                (.minimax, fetchedMiniMax, rawMiniMax),
+                (.minimaxCN, fetchedMiniMaxCN, rawMiniMaxCN),
+                (.copilot, fetchedCopilot, rawCopilot),
+                (.grok, fetchedGrok, rawGrok),
+                (.grokBot, fetchedGrokBot, rawGrokBot),
+                (.volcengine, fetchedVolcengine, rawVolcengine),
             ] where wanted.contains(provider) {
-                self.commit(fetched, for: AccountKey(provider).id)
+                self.commit(fetched, raw: raw, for: AccountKey(provider).id)
             }
             self.isRefreshing = false
             self.refreshStartedAt = nil
@@ -570,7 +570,7 @@ final class UsageStore {
             guard pass == self.currentPass else { return }
 
             let fetched = await UsageCache.shared.reconciled(raw)
-            self.commit(fetched, for: account.id)
+            self.commit(fetched, raw: raw, for: account.id)
 
             if previous?.windows != fetched.windows {
                 self.signals.lastChange = Date()
@@ -659,10 +659,33 @@ final class UsageStore {
     /// directly: neither is something Pulse has just observed, and running the
     /// restored cache through the alert rules would announce a fortnight of
     /// crossings the moment the app opened.
-    private func commit(_ fetched: ProviderUsage, for id: String) {
+    private func commit(_ fetched: ProviderUsage, raw: ProviderUsage, for id: String) {
         usage[id] = fetched
         guard let alerts, let account = AccountKey(id: id) else { return }
-        alerts.observe(fetched, as: account)
+        // Both: the panel shows the reconciled reading, and the alert rules
+        // need the answer the service actually gave — `reconciled` swaps a
+        // failure for cached figures, which loses the reason with it.
+        alerts.observe(fetched, raw: raw, as: account)
+    }
+
+    /// Runs the alert rules over the readings already in hand.
+    ///
+    /// Turning the threshold on — or lowering it — is a moment where a limit
+    /// can already be over the line, and the documented behaviour is that such
+    /// a limit is announced *once, immediately*. Without this it waited for the
+    /// next pass, which on the adaptive interval is up to half an hour: the
+    /// setting looked broken to anyone who switched it on to check.
+    ///
+    /// Only `.live` readings, and each is its own raw fetch — a cached or
+    /// unavailable one has nothing to witness and must not be dressed up as a
+    /// successful pass.
+    func reconsiderAlerts() {
+        guard let alerts else { return }
+        for account in settings.shownAccounts {
+            let reading = usage(for: account)
+            guard case .live = reading.state else { continue }
+            alerts.observe(reading, raw: reading, as: account)
+        }
     }
 
     func usage(for account: AccountKey) -> ProviderUsage {

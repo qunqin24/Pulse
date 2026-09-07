@@ -421,6 +421,9 @@ struct SettingsView: View {
                         set: {
                             settings.alertThreshold = $0
                             alerts.requestAuthorizationIfNeeded()
+                            // A limit already over the line is announced once,
+                            // now — not at some point in the next half hour.
+                            store.reconsiderAlerts()
                         }
                     )) {
                         ForEach(AlertThreshold.allCases) { threshold in
@@ -443,6 +446,9 @@ struct SettingsView: View {
                         set: {
                             settings.alertsOnReset = $0
                             alerts.requestAuthorizationIfNeeded()
+                            // A limit already over the line is announced once,
+                            // now — not at some point in the next half hour.
+                            store.reconsiderAlerts()
                         }
                     ))
                     .labelsHidden()
@@ -463,6 +469,9 @@ struct SettingsView: View {
                         set: {
                             settings.alertsOnFailure = $0
                             alerts.requestAuthorizationIfNeeded()
+                            // A limit already over the line is announced once,
+                            // now — not at some point in the next half hour.
+                            store.reconsiderAlerts()
                         }
                     ))
                     .labelsHidden()
@@ -1104,7 +1113,20 @@ struct SettingsView: View {
                         }
                     }
                 }
-            } else if account.provider.usesAPIKey {
+            }
+
+            // **Its own `if`, not the tail of that chain.** A provider can want
+            // both a route picker *and* a credential — Volcengine does: the
+            // `arkcli` route needs nothing pasted and the signed-endpoint route
+            // needs an access key pair. Chained behind `hasSourceChoice` the
+            // field was never drawn at all, so the endpoint route it belongs to
+            // could not be configured from Settings by any means. A divider
+            // where both are shown, and none where the picker was not.
+            if account.provider.hasSourceChoice, account.provider.usesAPIKey {
+                SettingsRowDivider()
+            }
+
+            if account.provider.usesAPIKey {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
                 // What this provider wants is not always a key. Ollama has no

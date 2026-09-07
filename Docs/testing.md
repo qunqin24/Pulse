@@ -13,6 +13,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | Suite | Covers |
 |---|---|
 | `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate. [notifications.md](notifications.md) |
+| `AlertsThroughTheCacheTests` | The same rules reached the way production reaches them: service → `UsageCache.reconciled` → state machine |
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
@@ -24,6 +25,8 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 ## What is not, and why
 
 **No UI tests.** The panel is an accessory `NSPanel` whose hover cannot be driven by synthesised events — `hitTest` and synthetic `NSEvent`s both reported a handle as perfectly reachable while real clicks were being dropped, which is the lesson in [ui/input.md](ui/input.md). A UI test here would report the same thing.
+
+**A rule test is not a chain test.** `AlertMemoryTests` hands the state machine readings directly, and two rounds of review missed a defect that lives *between* the service and the machine: the cache swaps a failure for cached figures and the reason is gone with it. Where a rule depends on something upstream, test it through that thing.
 
 **No live provider calls.** Every route needs somebody's real credential and answers differently by plan. Fixtures are captured by hand from a real reply and committed; the capture is recorded in that provider's page.
 

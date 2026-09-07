@@ -23,7 +23,7 @@ One rule for all four rather than sound only for the consequential two. macOS of
 
 ## Rules that are not obvious
 
-**A first sighting starts at nothing announced**, so a limit already past the line is said once, immediately. The other way round was tried and is wrong: someone who switches this on at 93% of their week gets silence and then a wall, which is the feature failing at the only job it has. The burst that rule was guarding against does not exist at the scale it imagined — this is at most one notification per limit, ever, and only for limits already over the chosen line.
+**A first sighting starts at nothing announced**, so a limit already past the line is said once, immediately — including at the moment the setting is switched on or the threshold lowered, which is what `UsageStore.reconsiderAlerts()` is for. Left to the next pass it was up to half an hour of silence, from a setting somebody had just turned on to check. The other way round was tried and is wrong: someone who switches this on at 93% of their week gets silence and then a wall, which is the feature failing at the only job it has. The burst that rule was guarding against does not exist at the scale it imagined — this is at most one notification per limit, ever, and only for limits already over the chosen line.
 
 The copy is a **status, not an event** — "92% used", never "just passed 90%" — so it stays true whenever it is read, including for a figure that has been true for days.
 

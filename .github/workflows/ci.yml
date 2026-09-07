@@ -76,6 +76,13 @@ jobs:
           fi
           echo "Clean."
 
+      # The rules, the cache reconciliation and the provider parsers. Added
+      # with the test target and left out of CI at first, which meant the one
+      # thing that could catch a regression in them ran only when somebody
+      # remembered to run it.
+      - name: Tests
+        run: swift test -Xswiftc -swift-version -Xswiftc 6
+
       # Proves the thing that actually ships can be assembled, not just that
       # the sources compile.
       - name: Assemble Pulse.app

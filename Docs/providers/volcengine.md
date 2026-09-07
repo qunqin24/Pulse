@@ -39,6 +39,8 @@ Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead o
 
 `VolcengineProcessTests` produces each failure for real: a child that floods stderr with 1 MiB, one that ignores SIGTERM, one that closes its pipes and keeps running, and one that leaves a grandchild holding the write ends.
 
+**What is not guaranteed: the process tree.** `stop()` kills the child, and `Process` cannot put that child in its own group — killing ours would take Pulse with it. A backgrounded grandchild outlives the call. It holds nothing of Pulse's by then (the handlers are cleared and the `Pipe` goes with the call), `arkcli` is not known to daemonise, and the alternative is hand-rolled `posix_spawn` with `POSIX_SPAWN_SETPGROUP` — which is where both of this function's earlier bugs came from. The test asserts a bounded *return*, which is what the code promises.
+
 ```
 { "items": [ { "product": "coding-plan" | "agent-plan"
                         | "coding-plan-team" | "agent-plan-team",
@@ -53,6 +55,8 @@ Three things in that shape are traps, all of them recorded by CodexBar before th
 - **`updated_at` ships as both seconds and milliseconds** across versions. Told apart by magnitude at 1e11 — 1e11 seconds is the year 5138 and 1e11 milliseconds is 1973, so nothing real is near the boundary. `reset_at` gets the same treatment and may also be an ISO string.
 - **A product bucket can fail on its own**, arriving with an `error` and no `periods`. It is skipped, not fatal: rejecting the reply would lose the plans that *did* answer.
 - **`percent` is what is used**, not what is left. No inversion here, unlike [antigravity.md](antigravity.md).
+
+A credential that is present but not a pair reports `.apiKeyRefused`, not `.apiKeyMissing` and not a silent fall-through to the CLI: "what you typed is wrong" and "you typed nothing" have opposite remedies, and quietly using `arkcli` instead could answer with a different account's figures. When both signed actions fail, an explicit refusal outranks a transport failure for the same reason — `.unreachable` is the one state `.automatic` falls through to the CLI on.
 
 A non-zero exit is classified from **stderr only, on whole phrases**. Matching `"auth"` as a substring reads `arkcli`'s own help text — where `auth` is a subcommand — as "not signed in", so a CLI too old or too new for `usage plan --format json` was answered with a remedy that succeeds and changes nothing, for ever.
 

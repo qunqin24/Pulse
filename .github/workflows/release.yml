@@ -78,6 +78,12 @@ jobs:
             exit 1
           fi
 
+      # A tag publishes to everyone who has the app installed. The tests are
+      # the last thing standing between a regression in the rules and a
+      # Sparkle update, so they run here too rather than only on push.
+      - name: Tests
+        run: swift test -Xswiftc -swift-version -Xswiftc 6
+
       # The disk image carries the install instructions on its window, so it is
       # the download people should get; the zip is there for anything that
       # would rather have an archive.

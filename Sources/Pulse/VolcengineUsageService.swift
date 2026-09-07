@@ -42,12 +42,18 @@ struct VolcengineUsageService: Sendable {
     }
 
     private let credentials: VolcengineSigner.Credentials?
+    /// Something was pasted and it is not a pair. Told apart from nothing
+    /// pasted, because the remedies are opposite: one is "fill this in", the
+    /// other is "what you filled in is wrong".
+    private let hasUnreadableKey: Bool
 
     /// The pasted field is one string holding two secrets, split on the first
     /// colon: `AccessKeyID:SecretAccessKey`. Split on the *first* so a secret
     /// containing a colon survives.
     init(enteredKey: String?) {
         credentials = Self.credentials(from: enteredKey)
+        let entered = enteredKey?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        hasUnreadableKey = credentials == nil && !entered.isEmpty
     }
 
     static func credentials(from entered: String?) -> VolcengineSigner.Credentials? {
@@ -65,13 +71,21 @@ struct VolcengineUsageService: Sendable {
     func fetch(source: UsageSource) async -> ProviderUsage {
         switch source {
         case .endpoint:
-            guard let credentials else { return .unavailable(.volcengine, reason: .apiKeyMissing) }
+            guard let credentials else {
+                return .unavailable(.volcengine, reason: hasUnreadableKey ? .apiKeyRefused : .apiKeyMissing)
+            }
             return await signed(credentials)
 
         case .tooling:
             return await cli()
 
         case .automatic, .desktopApp:
+            // A field with something in it that is not a pair is a mistake to
+            // be told about, not a reason to quietly use a different route —
+            // and possibly a different account.
+            if credentials == nil, hasUnreadableKey {
+                return .unavailable(.volcengine, reason: .apiKeyRefused)
+            }
             guard let credentials else { return await cli() }
 
             let keyed = await signed(credentials)
@@ -248,6 +262,14 @@ struct VolcengineUsageService: Sendable {
         /// SIGTERM, then SIGKILL, then give up — each bounded. `terminate()`
         /// alone is a request, and a CLI with a stuck graceful-shutdown path
         /// is exactly the thing being escaped from.
+        /// Kills the child. **Not the tree** — `Process` cannot put the child in
+        /// its own process group, and killing ours would take Pulse with it. A
+        /// grandchild that has been backgrounded outlives this call holding its
+        /// own copy of the pipe write ends; it no longer holds anything of
+        /// ours, since the handlers are cleared and the `Pipe` goes with the
+        /// call. `arkcli` is not known to daemonise, and the alternative is
+        /// hand-rolled `posix_spawn` with `POSIX_SPAWN_SETPGROUP` — which is
+        /// where the two bugs in this function came from the first two times.
         func stop() {
             process.terminate()
             guard exited.wait(timeout: .now() + 2) == .timedOut else { return }
@@ -321,8 +343,17 @@ struct VolcengineUsageService: Sendable {
         // A refusal on *both* is a refusal; a refusal on one plan the account
         // simply doesn't hold is not, and must not take the other's figures
         // down with it.
-        if case .failure(let refusal) = codingResult, case .failure = agentResult {
-            return .unavailable(.volcengine, reason: refusal.reason)
+        if case .failure(let coding) = codingResult, case .failure(let agent) = agentResult {
+            // **The more authoritative refusal wins.** Taking whichever came
+            // first reported a network failure while the other action had said
+            // the keys were refused — and `.unreachable` is the one state
+            // `.automatic` falls through to the CLI on, so a wrong key could
+            // be answered with another account's figures.
+            let reasons = [coding.reason, agent.reason]
+            let refused: ProviderUsage.Unavailability? = reasons.first {
+                $0 == .apiKeyRefused || $0 == .rateLimited
+            }
+            return .unavailable(.volcengine, reason: refused ?? coding.reason)
         }
 
         let windows = ((try? codingResult.get()) ?? []) + ((try? agentResult.get()) ?? [])

@@ -61,6 +61,7 @@ struct AlertMemoryTests {
     private func run(
         _ memory: inout AlertMemory,
         _ reading: ProviderUsage,
+        raw: ProviderUsage? = nil,
         threshold: AlertThreshold = .ninety,
         announcesReset: Bool = true,
         announcesFailure: Bool = true,
@@ -69,6 +70,7 @@ struct AlertMemoryTests {
     ) -> [UsageAlert] {
         memory.alerts(
             for: reading,
+            raw: (raw ?? reading).state,
             as: Self.account,
             threshold: threshold,
             announcesReset: announcesReset,
@@ -395,5 +397,142 @@ struct AlertMemoryTests {
         ))
         #expect(alerts.count == 1)
         #expect(alerts.first?.window?.id == "weekly")
+    }
+}
+
+/// The rules as they are actually reached: service → `UsageCache.reconciled` →
+/// state machine. `AlertMemoryTests` feeds the machine directly, which is how
+/// two rounds of review missed that the cache **replaces a failure with the
+/// last good figures** and destroys the reason on the way past.
+@Suite("Alerts through the cache")
+struct AlertsThroughTheCacheTests {
+    private static let account = AccountKey(.antigravity)
+
+    private static func cache() -> UsageCache {
+        UsageCache(
+            file: FileManager.default.temporaryDirectory
+                .appending(path: "pulse-alerts-chain-\(UUID().uuidString).json")
+        )
+    }
+
+    private static func live(used: Double) -> ProviderUsage {
+        ProviderUsage(
+            account: account,
+            windows: [UsageWindow(
+                id: "5h",
+                kind: .fiveHour,
+                scope: nil,
+                usedFraction: used,
+                windowSeconds: 5 * 3_600,
+                // Far enough out that the cache does not drop it as reset.
+                resetsAt: Date().addingTimeInterval(4 * 3_600)
+            )],
+            observedAt: Date().addingTimeInterval(-2 * 3_600),
+            state: .live,
+            plan: nil,
+            creditBalance: nil
+        )
+    }
+
+    private func alerts(
+        _ memory: inout AlertMemory,
+        shown: ProviderUsage,
+        raw: ProviderUsage
+    ) -> [UsageAlert] {
+        memory.alerts(
+            for: shown,
+            raw: raw.state,
+            as: Self.account,
+            threshold: .ninety,
+            announcesReset: true,
+            announcesFailure: true,
+            staleMeansFailure: true,
+            now: Date()
+        )
+    }
+
+    @Test("Quitting Antigravity is not an outage, however old the cached figures get")
+    func quittingIsNotAnOutage() async {
+        let cache = Self.cache()
+        var memory = AlertMemory()
+
+        // One good reading, banked. Its figures are two hours old.
+        let good = Self.live(used: 0.4)
+        _ = alerts(&memory, shown: await cache.reconciled(good), raw: good)
+
+        // Now the app is closed. The service says so — a reason the rules
+        // deliberately spare — and the cache hands on those two-hour-old
+        // figures marked `.stale`, which is right for the panel and used to be
+        // read here as "the last few checks didn't get through".
+        let closed = ProviderUsage.unavailable(Self.account, reason: .antigravityNotRunning)
+        for _ in 1...6 {
+            let shown = await cache.reconciled(closed)
+            #expect(shown.state == .stale, "the cache should still be standing in")
+            #expect(alerts(&memory, shown: shown, raw: closed).isEmpty)
+        }
+    }
+
+    @Test("A real outage behind the same cache still alerts")
+    func realOutageStillAlerts() async {
+        let cache = Self.cache()
+        var memory = AlertMemory()
+
+        let good = Self.live(used: 0.4)
+        _ = alerts(&memory, shown: await cache.reconciled(good), raw: good)
+
+        // Identical shape on the panel — cached figures, marked stale — and a
+        // completely different cause.
+        let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
+        var produced: [UsageAlert] = []
+        for _ in 1...3 {
+            produced += alerts(&memory, shown: await cache.reconciled(down), raw: down)
+        }
+
+        #expect(produced.map(\.kind) == [.unreadable(.unreachable)])
+    }
+
+    @Test("An answer with no limits in it ends a run of failures")
+    func answeredBreaksTheRun() async {
+        var memory = AlertMemory()
+        let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
+        let answered = ProviderUsage.unavailable(Self.account, reason: .noLimitsReported)
+
+        _ = alerts(&memory, shown: down, raw: down)
+        _ = alerts(&memory, shown: down, raw: down)
+        // The provider replied. It can be reached, so the run is over — this
+        // used to be skipped, neither counting nor clearing, and the next
+        // failure completed a "three in a row" that had been interrupted.
+        #expect(alerts(&memory, shown: answered, raw: answered).isEmpty)
+        #expect(alerts(&memory, shown: down, raw: down).isEmpty)
+        #expect(alerts(&memory, shown: down, raw: down).isEmpty)
+        #expect(alerts(&memory, shown: down, raw: down).count == 1)
+    }
+
+    @Test("And it clears the mark, so the next outage is reported")
+    func answeredClearsTheReportedMark() async {
+        var memory = AlertMemory()
+        let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
+        let answered = ProviderUsage.unavailable(Self.account, reason: .noLimitsReported)
+
+        for _ in 1...3 { _ = alerts(&memory, shown: down, raw: down) }
+        _ = alerts(&memory, shown: answered, raw: answered)
+
+        var produced: [UsageAlert] = []
+        for _ in 1...3 { produced += alerts(&memory, shown: down, raw: down) }
+        #expect(produced.count == 1, "reportedFailure stayed true and silenced the next outage")
+    }
+
+    @Test("Cached figures never drive the limit rules, whatever the panel shows")
+    func cachedFiguresDoNotAnnounce() async {
+        let cache = Self.cache()
+        var memory = AlertMemory()
+
+        let high = Self.live(used: 0.95)
+        #expect(alerts(&memory, shown: await cache.reconciled(high), raw: high).count == 1)
+
+        // The fetch failed; the panel shows the banked 95% again. Nothing new
+        // has been witnessed, so nothing may be said.
+        let down = ProviderUsage.unavailable(Self.account, reason: .unreachable)
+        #expect(alerts(&memory, shown: await cache.reconciled(down), raw: down).isEmpty)
     }
 }

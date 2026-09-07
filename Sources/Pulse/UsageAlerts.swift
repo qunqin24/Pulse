@@ -149,6 +149,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
     /// witness, which is the one thing the rules here exist to prevent.
     mutating func alerts(
         for reading: ProviderUsage,
+        raw rawState: ProviderUsage.State,
         as account: AccountKey,
         threshold: AlertThreshold,
         announcesReset: Bool,
@@ -172,15 +173,30 @@ struct AlertMemory: Codable, Sendable, Equatable {
             produced.append(UsageAlert(account: account, kind: .unreadable(reason), window: nil))
         }
 
-        switch reading.state {
-        case .live:
+        /// The provider answered. Whatever it said, it can be reached.
+        func succeeded() {
             record.failures = 0
             record.reportedFailure = false
+        }
+
+        // **Classified on the *raw* fetch, not on what is being shown.**
+        // `UsageCache.reconciled` replaces a failed fetch with the last good
+        // figures marked `.stale`, which is right for the panel and destroys
+        // the evidence here: quitting Antigravity produced
+        // `.antigravityNotRunning` — a reason the rules deliberately spare —
+        // and the cache handed on a `.stale` reading that aged into "the last
+        // few checks didn't get through" about an app that had simply been
+        // closed. The tests missed it because they fed the state machine
+        // directly; the live path goes service → cache → here.
+        switch rawState {
+        case .live:
+            succeeded()
 
         case .stale:
-            // Judged on age, not on the fact of being stale — see
-            // `stalenessBeforeSaying`. A reading with no date at all cannot be
-            // vouched for either way, and the cache never banks one without.
+            // A service that reports its own staleness rather than a cache
+            // standing in for it — Claude Code's status-line capture is the
+            // only one. Judged on the age of the figures, and only where
+            // staleness can mean failure at all.
             guard staleMeansFailure,
                   let observedAt = reading.observedAt,
                   now.timeIntervalSince(observedAt) > Self.stalenessBeforeSaying
@@ -188,14 +204,11 @@ struct AlertMemory: Codable, Sendable, Equatable {
             countFailure(nil)
 
         case .unavailable(let reason):
-            // Unavailable is not automatically a failure. "No key has been
-            // entered" and "this plan doesn't include Grok Bot" are steady
-            // states, complete answers, and true for as long as nobody changes
-            // anything — being told about them on a timer is nagging, not news.
-            // They neither count against the account nor clear a run of real
-            // failures already under way.
-            guard Self.isFailure(reason) else { break }
-            countFailure(reason)
+            switch Self.standing(of: reason) {
+            case .failure: countFailure(reason)
+            case .answered: succeeded()
+            case .neutral: break
+            }
         }
 
         // **Limits are judged on live readings only.** A stale reading carries
@@ -203,7 +216,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // already recorded here — and a figure that falls is how a reset is
         // detected. Running the cache through these rules would announce a
         // reset every time the network hiccuped.
-        guard case .live = reading.state, threshold != .off else {
+        guard case .live = rawState, case .live = reading.state, threshold != .off else {
             accounts[account.id] = record
             return produced
         }
@@ -295,35 +308,50 @@ struct AlertMemory: Codable, Sendable, Equatable {
         return nil
     }
 
-    /// Whether a reading that produced no figures counts against the account.
+    /// What a reading with no figures in it does to a run of failures.
     ///
+    /// **Three outcomes, not two.** Splitting only into "counts" and "doesn't"
+    /// left a *successful* answer — the provider replied and has no limits to
+    /// report — neither counting nor clearing, so it could sit in the middle of
+    /// a run of real failures without breaking it, and could leave
+    /// `reportedFailure` stuck true so the next genuine outage said nothing.
+    enum Standing {
+        /// Something that was working has stopped.
+        case failure
+        /// The provider answered. Whatever else is true, it can be reached.
+        case answered
+        /// Neither: a setup step nobody has taken, or an app that is not open.
+        /// True until somebody acts, so it is not news — and not evidence
+        /// about whether the provider can be reached either.
+        case neutral
+    }
+
     /// The question is "did something that was working stop", not "is there
-    /// anything to show". Everything listed here is either a credential that
-    /// has gone bad or a request that did not get through; everything left out
-    /// is a setup step nobody has taken, or a complete answer that happens to
-    /// contain no numbers.
-    private static func isFailure(_ reason: ProviderUsage.Unavailability) -> Bool {
+    /// anything to show".
+    static func standing(of reason: ProviderUsage.Unavailability) -> Standing {
         switch reason {
         case .claudeLoginExpired, .claudeDesktopKeyRefused, .claudeDesktopSessionExpired,
              .cursorLoginExpired, .grokLoginExpired, .signedOut, .apiKeyRefused,
              .ollamaSessionExpired, .ollamaPageChanged,
              .unreachable, .unreadableReply, .rateLimited, .serverError,
-             .codexServerFailed:
-            true
+             .codexServerFailed, .volcengineSignInRequired:
+            .failure
 
-        // Never set up, never signed in, nothing to report, or an app that
-        // simply is not running. All of them true until somebody does
-        // something, and none of them worth a banner on a timer.
-        case .loading, .notConnected, .awaitingResponse, .noLimitsReported,
+        // The provider replied. "No limits on this plan" and "your Cursor plan
+        // doesn't include Grok Bot" are complete answers, and an answer ends
+        // an outage as surely as a figure does.
+        case .noLimitsReported, .grokBotNotIncluded:
+            .answered
+
+        // Never set up, never signed in, or an app that simply is not
+        // running. All of them true until somebody does something, and none
+        // of them worth a banner on a timer.
+        case .loading, .notConnected, .awaitingResponse,
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
-             .cursorSignInRequired,
-             .grokSignInRequired, .grokBotNotIncluded, .notSignedIn,
-             .ollamaSessionMissing, .apiKeyMissing,
-             // Both are "install it and sign in", which stays true until
-             // somebody does, so neither is an outage to be told about.
-             .volcengineCLIMissing, .volcengineSignInRequired:
-            false
+             .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
+             .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing:
+            .neutral
         }
     }
 }
@@ -432,7 +460,11 @@ final class UsageAlerts {
     }
 
     /// A reading has landed. Decide what it is worth saying, and say it.
-    func observe(_ reading: ProviderUsage, as account: AccountKey) {
+    ///
+    /// `raw` is what the provider's service actually returned, before
+    /// `UsageCache.reconciled` swapped a failure for the last good figures.
+    /// The panel needs the reconciled one; the rules need both.
+    func observe(_ reading: ProviderUsage, raw: ProviderUsage, as account: AccountKey) {
         // Nothing switched on means no work and, more to the point, **no
         // file**: without this the memory was written on the first pass of
         // every launch — measured — and a run of failures was counted up for a
@@ -442,6 +474,7 @@ final class UsageAlerts {
         let before = memory
         let alerts = memory.alerts(
             for: reading,
+            raw: raw.state,
             as: account,
             threshold: settings.alertThreshold,
             announcesReset: settings.alertsOnReset,
