@@ -118,6 +118,17 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Whether a spending history can be shown for this provider at all.
+    ///
+    /// **Not the same question as `keepsLocalTranscripts`**, which it used to
+    /// be. Two different sources answer it: the CLIs leave session files on
+    /// this Mac, and Z.ai and 智谱 publish the account's own statistics — the
+    /// endpoint their console draws its charts from. The second is the better
+    /// data (it covers every machine) and the poorer (one token total per
+    /// model, so nothing can be priced), which is what `UsageLedger.Origin`
+    /// exists to keep straight.
+    var providesHistory: Bool { keepsLocalTranscripts || self == .zai || self == .glmCoding }
+
     /// Whether the route to this provider's figures is a choice.
     ///
     /// The two CLIs can each be read two ways, which is a setting. Antigravity

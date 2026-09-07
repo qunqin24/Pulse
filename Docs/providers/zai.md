@@ -11,6 +11,25 @@ They are one company’s international and mainland storefronts, answering the s
 
 **The rings are named for the two shops, not for the product** — that is issue #13. They were `Z.ai` and `GLM Coding Plan`; but **z.ai sells its plan under the name "GLM Coding Plan" too**, so an international subscriber picked the row literally called that, pasted a z.ai key, and had it sent to BigModel. The company is the one thing that differs and the one thing a buyer knows, so it is the whole name — and neither row keeps the ambiguous one.
 
+## Usage history
+
+`GET {host}/api/monitor/usage/model-usage?startTime=…&endTime=…` — the endpoint the console's own charts are drawn from, and the second way a history reaches Pulse. Same host and same bearer as the quota call.
+
+```
+data.x_time         [String]  bucket labels
+data.tokensUsage    [Int]     aligned to x_time
+data.modelDataList  [{ modelName, tokensUsage: [Int] }]
+data.granularity    "hourly" | "daily"
+```
+
+**The server picks the granularity from the span**, and refuses a long one. Measured: 2 days → hourly (65 points), 7 days → hourly (185), 30 days → daily (31), **90 days → `code 500`**. `historyDays` is 30 for that reason, and hourly labels are folded into days because the card is a day-by-day chart. Both label shapes (`yyyy-MM-dd HH:mm` and `yyyy-MM-dd`) arrive, so neither is assumed. Times are sent as plain **local wall-clock** — no zone, no `T`.
+
+**It is the better data and the poorer.** Better because it is the account's, covering every machine, where a transcript scan sees only this Mac. Poorer because it gives one token total per model with no split between input, output and cache — so nothing in it can be priced. `UsageLedger.Origin.providerStatistics` carries that: the card drops its money column, prints the token count as the headline figure instead of a confident `$0.00`, and swaps the provenance line. The estimated-value card is left off entirely (`Provider.keepsLocalTranscripts` still gates that; `providesHistory` is the wider question).
+
+A history of all zeroes is treated as no history — a chart of nothing is worse than no card. That is what a freshly bought plan answers.
+
+Only the mainland host was measured. `api.z.ai` is enabled on the same code path.
+
 ## Refusals arrive as HTTP 200
 
 The verdict is in the envelope, so the status line says nothing and `problem(_:)` is the whole of what the user is told. Measured against both live hosts on 2026-09-07:

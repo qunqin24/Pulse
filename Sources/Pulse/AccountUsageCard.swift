@@ -125,20 +125,33 @@ struct AccountUsageCard: View {
         .padding(16)
     }
 
+    /// The money is the big figure where there is money, and the tokens are
+    /// where there isn't.
+    ///
+    /// **Not a zero.** A provider's own statistics give one token total per
+    /// model, which no price list can turn into a cost — and `Self.money(0)`
+    /// renders a confident "$0.00" for work that certainly cost something.
+    /// The figure that is actually known takes the top line instead.
     private func figure(_ label: String, cost: Double, tokens: Int) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
 
-            Text(Self.money(cost))
-                .font(.system(size: 17, weight: .semibold))
-                .monospacedDigit()
+            if ledger.origin == .localTranscripts {
+                Text(Self.money(cost))
+                    .font(.system(size: 17, weight: .semibold))
+                    .monospacedDigit()
 
-            Text(String.localized("\(TokenCount.short(tokens)) tokens"))
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
+                Text(String.localized("\(TokenCount.short(tokens)) tokens"))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            } else {
+                Text(String.localized("\(TokenCount.short(tokens)) tokens"))
+                    .font(.system(size: 17, weight: .semibold))
+                    .monospacedDigit()
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -190,9 +203,15 @@ struct AccountUsageCard: View {
     /// believe otherwise.
     private var footnote: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(localized: "Counted from this Mac's \(provider.displayName) logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged.")
+            if ledger.origin == .providerStatistics {
+                // A different provenance needs different words: this one is
+                // the account's, not this Mac's, and it carries no money.
+                Text(localized: "Reported by \(provider.displayName) for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost.")
+            } else {
+                Text(localized: "Counted from this Mac's \(provider.displayName) logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged.")
+            }
 
-            if !ledger.unpricedModels.isEmpty {
+            if !ledger.unpricedModels.isEmpty, ledger.origin == .localTranscripts {
                 Text(String.localized("No published price for \(ledger.unpricedModels.joined(separator: ", ")), so those tokens are counted but not costed."))
             }
         }

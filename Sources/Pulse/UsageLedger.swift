@@ -69,6 +69,23 @@ struct UsageLedger: Sendable, Equatable {
     }
 
     /// Ascending by date, gaps closed so the chart reads as a calendar.
+    /// Where the figures came from, which decides what may be said about
+    /// them.
+    ///
+    /// The two are not interchangeable. Transcripts are this Mac's alone and
+    /// carry the input, output and cache counts a price list needs; a
+    /// provider's own statistics cover every machine on the account and give
+    /// one token total per model, which cannot be priced. A card that showed
+    /// money for the second would be inventing it.
+    enum Origin: Sendable, Equatable {
+        /// Scanned from the CLI's session files on this Mac.
+        case localTranscripts
+        /// Asked of the provider, so it covers the whole account.
+        case providerStatistics
+    }
+
+    var origin: Origin = .localTranscripts
+
     let days: [LedgerDay]
     let earliest: Date?
     /// Models seen in the logs that models.dev has no price for.

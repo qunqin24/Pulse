@@ -868,8 +868,14 @@ struct SettingsView: View {
             // transcripts belong to whichever account the CLI is signed in to,
             // which is not this one, so showing them here would report one
             // account's spending under another's name.
-            if provider.keepsLocalTranscripts, account.isPrimary {
-                estimatedValue(for: account)
+            if provider.providesHistory, account.isPrimary {
+                // The estimate is money, and money needs the token split only
+                // a transcript carries. A provider whose history comes from
+                // its own statistics has tokens and nothing to price them
+                // with, so the estimate is left off rather than shown at zero.
+                if provider.keepsLocalTranscripts {
+                    estimatedValue(for: account)
+                }
 
                 history(for: account)
             }
@@ -971,6 +977,16 @@ struct SettingsView: View {
 
         loadingHistory = provider
         defer { loadingHistory = nil }
+
+        // Asked of the provider rather than scanned off disk. Their own
+        // statistics cover the whole account, so there is nothing local to
+        // read and nothing to cache between panes.
+        if provider == .zai || provider == .glmCoding {
+            let key = APIKeyStore.key(for: provider)
+            ledgers[provider] = await ZaiUsageService(provider: provider, enteredKey: key).history()
+                ?? .empty
+            return
+        }
 
         // Refreshed rather than reused: the session running right now is
         // appending to a log as this is read, and only that file is re-parsed.

@@ -338,3 +338,6 @@
 "Second limit inside the ring" = "显示第二条限额";
 "A thinner ring for the next-fullest limit, where a provider has one." = "在圆环内侧显示第二条限额，仅当服务商提供多条时可用。";
 "That key works. The account has no Coding Plan running on it." = "密钥是有效的，这个账号名下没有生效中的 Coding Plan。";
+
+/* 来自服务商官方统计的用量历史 */
+"Reported by %@ for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost." = "由 %@ 按账号统计，涵盖你使用它的所有设备。仅统计 token 数量——所依据的数据无法折算成金额。";

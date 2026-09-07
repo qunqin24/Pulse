@@ -311,3 +311,144 @@ struct ZaiUsageService: Sendable {
         }
     }
 }
+
+// MARK: - Usage statistics
+
+extension ZaiUsageService {
+    /// The account's own token history, from the statistics endpoint the
+    /// console draws its charts from.
+    ///
+    /// **Better data than a transcript scan, and less of it.** It covers every
+    /// machine the account is used on rather than this Mac alone — but it
+    /// reports one token total per model per bucket, with no split between
+    /// input, output and cache, so nothing here can be priced. The ledger it
+    /// builds says so through `origin`, and the card drops its money column.
+    ///
+    /// Measured against `open.bigmodel.cn` on 2026-09-07. The server picks the
+    /// granularity from the span — hourly up to about a week, daily beyond —
+    /// and **refuses a span of 90 days** with a 500, so the window asked for
+    /// has to stay inside what it will answer.
+    static let historyDays = 30
+
+    struct Statistics: Decodable, Sendable {
+        struct Payload: Decodable, Sendable {
+            /// Bucket labels, `yyyy-MM-dd HH:mm` when hourly and `yyyy-MM-dd`
+            /// when daily. The server chooses; the label's own shape is what
+            /// says which, so neither is assumed.
+            let xTime: [String]?
+            let tokensUsage: [Int]?
+            let modelDataList: [Series]?
+
+            enum CodingKeys: String, CodingKey {
+                case xTime = "x_time"
+                case tokensUsage, modelDataList
+            }
+        }
+
+        struct Series: Decodable, Sendable {
+            let modelName: String?
+            let tokensUsage: [Int]?
+        }
+
+        let success: Bool?
+        let code: Int?
+        let data: Payload?
+    }
+
+    func history() async -> UsageLedger? {
+        guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) ?? Self.storedKey(for: provider)
+        else { return nil }
+
+        let now = Date()
+        var request = URLRequest(url: Self.statisticsURL(from: now, days: Self.historyDays))
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 20
+
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let reply = try? JSONDecoder().decode(Statistics.self, from: data),
+              reply.success == true, reply.code == 200,
+              let payload = reply.data
+        else { return nil }
+
+        return Self.ledger(from: payload)
+    }
+
+    /// The span, in the shape the service wants: local wall-clock, no zone,
+    /// seconds included, percent-encoded by `URLComponents`.
+    static func statisticsURL(from now: Date, days: Int, host: String? = nil) -> URL {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -days, to: now) ?? now)
+
+        var components = URLComponents(string: "\(host ?? "https://open.bigmodel.cn")/api/monitor/usage/model-usage")!
+        components.queryItems = [
+            URLQueryItem(name: "startTime", value: formatter.string(from: start)),
+            URLQueryItem(name: "endTime", value: formatter.string(from: now))
+        ]
+        return components.url!
+    }
+
+    /// Buckets into days, because the card is a day-by-day chart and the
+    /// server may have answered in hours.
+    static func ledger(from payload: Statistics.Payload) -> UsageLedger? {
+        guard let labels = payload.xTime, !labels.isEmpty else { return nil }
+
+        let totals = payload.tokensUsage ?? []
+        var byDay: [Date: Int] = [:]
+        var modelsByDay: [Date: [String: Int]] = [:]
+
+        for (index, label) in labels.enumerated() {
+            guard let day = Self.day(from: label) else { continue }
+
+            if index < totals.count, totals[index] > 0 {
+                byDay[day, default: 0] += totals[index]
+            }
+            for series in payload.modelDataList ?? [] {
+                guard let name = series.modelName,
+                      let counts = series.tokensUsage,
+                      index < counts.count,
+                      counts[index] > 0
+                else { continue }
+                modelsByDay[day, default: [:]][name, default: 0] += counts[index]
+            }
+        }
+
+        guard !byDay.isEmpty else { return nil }
+
+        let days = byDay.keys.sorted().map { day in
+            LedgerDay(
+                date: day,
+                tokens: byDay[day] ?? 0,
+                // No cost, and no pretending: these tokens are counted and
+                // cannot be priced from what the service reports.
+                cost: 0,
+                unpricedTokens: byDay[day] ?? 0,
+                models: modelsByDay[day] ?? [:]
+            )
+        }
+
+        return UsageLedger(
+            origin: .providerStatistics,
+            days: days,
+            earliest: days.first?.date,
+            unpricedModels: [],
+            modelNames: [:],
+            // Rate-window spend is a transcript thing: it needs the moment
+            // work happened, and a day bucket cannot answer it.
+            slots: []
+        )
+    }
+
+    /// `2026-08-31 14:00` and `2026-08-31` both land on the same day.
+    static func day(from label: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.date(from: String(label.prefix(10)))
+    }
+}

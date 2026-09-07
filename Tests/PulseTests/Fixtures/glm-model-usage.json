@@ -1,0 +1,16 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "success": true,
+  "data": {
+    "granularity": "hourly",
+    "x_time": ["2026-09-05 22:00", "2026-09-05 23:00", "2026-09-06 00:00", "2026-09-06 01:00", "2026-09-07 09:00"],
+    "modelCallCount": [3, 1, 0, 4, 2],
+    "tokensUsage": [1200, 400, 0, 5000, 900],
+    "modelDataList": [
+      { "modelName": "glm-4.6", "tokensUsage": [1000, 400, 0, 4200, 900] },
+      { "modelName": "glm-4-flash", "tokensUsage": [200, 0, 0, 800, 0] }
+    ],
+    "totalUsage": { "totalModelCallCount": 10, "totalTokensUsage": 7500, "modelSummaryList": [] }
+  }
+}
