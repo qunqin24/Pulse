@@ -22,7 +22,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.kimiCode` | Kimi Code | `kimi` | Pasted key | no | pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
-| `.glmCoding` | 智谱 | `zhipu` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
+| `.glmCoding` | 智谱 | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
 | `.minimax` | MiniMax | `minimax` | Pasted key | no | pasted key | no | none |
 | `.minimaxCN` | MiniMax CN | `minimax` | Pasted key | no | pasted key | no | none |
 | `.copilot` | GitHub Copilot | `github` | GitHub device login; token in `keys.dat` | no | sign-in | no | none |
