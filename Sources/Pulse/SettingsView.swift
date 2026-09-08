@@ -524,7 +524,7 @@ struct SettingsView: View {
             SettingsGroup(String.localized("Celebrations")) {
                 SettingsRow(
                     String.localized("Celebrate a reset"),
-                    subtitle: String.localized("Full-screen ribbons, named for the provider.")
+                    subtitle: String.localized("Full-screen ribbons and a sound, named for the provider.")
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.celebratesReset },

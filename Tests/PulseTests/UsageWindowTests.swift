@@ -100,6 +100,39 @@ struct SecondWindowTests {
         #expect(Self.usage([]).secondWindow() == nil)
     }
 
+    @Test("Cursor's ring follows Cursor Models, not the overflow pool")
+    func cursorHeadlineIsTheIncludedPool() {
+        let usage = ProviderUsage(
+            account: AccountKey(.cursor),
+            windows: [
+                UsageWindow(
+                    id: "cursorModels",
+                    kind: .monthly,
+                    scope: "Cursor Models",
+                    usedFraction: 0.25,
+                    windowSeconds: 30 * 86_400,
+                    resetsAt: nil,
+                    reportsLength: false
+                ),
+                UsageWindow(
+                    id: "otherModels",
+                    kind: .monthly,
+                    scope: "Other Models",
+                    usedFraction: 0.95,
+                    windowSeconds: 30 * 86_400,
+                    resetsAt: nil,
+                    reportsLength: false
+                ),
+            ],
+            observedAt: Date(),
+            state: .live,
+            plan: "Ultra",
+            creditBalance: nil
+        )
+        #expect(usage.headlineWindow()?.id == "cursorModels")
+        #expect(usage.headlineWindow(preferring: "otherModels")?.id == "otherModels")
+    }
+
     @Test("It is the fullest of the rest, never the one already on the ring")
     func nextFullest() {
         let usage = Self.usage([

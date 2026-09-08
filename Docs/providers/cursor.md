@@ -31,6 +31,8 @@ What the plan includes is **two pools, not one**, which is how Cursor’s own ac
 
 Spending past the first eats into the second. The first cut of this shipped a single combined window and was wrong for the reason a combined figure is always wrong: it cannot say which of the two is about to run out.
 
+The rail's automatic ring follows **Cursor Models**, not whichever pool is fullest as a percentage. Other Models is a much smaller overflow lane ($22.50 against $450 on the measured account): 95% used there is a few dollars, while Composer still has most of its pool. Pinning in Settings still wins.
+
 **Those fields are percentages, not fractions** — 0.0267 means 0.0267%, not 2.67%. Settled by arithmetic rather than taken on trust. **Historical evidence:** on an account 12¢ in, the three percentages implied pools of $450 and $22.50, summing to $472.50 matching `totalPercentUsed` to the cent.
 
 **`plan.used` / `plan.limit` is a different denominator and must not sit beside them** — plan cash value ($20 on Pro) against pools worth hundreds, so a third bar reads as a contradiction. It is used for the extra-spend limit, as the fallback when an account reports no pools at all, and as `creditBalance` (`plan.remaining` is a real balance, not an allowance — which is why this provider reports one and Antigravity does not). A team account’s `pooled` / `onDemand` stand in for the individual pair.

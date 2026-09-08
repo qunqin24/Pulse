@@ -340,7 +340,7 @@
 "This limit has reset." = "这条限额已经重置。";
 "Celebrations" = "庆祝";
 "Celebrate a reset" = "限额重置时播放彩带";
-"Full-screen ribbons, named for the provider." = "全屏彩带，并标出是哪一家。";
+"Full-screen ribbons and a sound, named for the provider." = "全屏彩带和一声提示，并标出是哪一家。";
 
 /* 设置侧边栏搜索 */
 "Search" = "搜索";

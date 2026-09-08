@@ -13,7 +13,9 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 - **Settings and Quit on the details card enlarge under the pointer**, and the cursor becomes a hand, so they stay hittable at Tiny. A first version of that overlay was a hole in the transparent window — the click landed on the page behind Pulse. The control now claims the point itself.
 
-- **A limit coming back can throw ribbons across the screen.** Off until you turn it on, under Settings › General › Celebrations. The overlay names the provider, so two of them resetting in the same hour are not a mystery. It is not a notification: no permission dialog, and it still works in a `swift run` build. Same evidence as the reset banner — the provider's date moved, or the figure dropped forty points — whether or not you were warned on the way up.
+- **A limit coming back can throw ribbons across the screen.** Off until you turn it on, under Settings › General › Celebrations. The overlay names the provider and plays the system Hero sound. Five-hour sessions do not count — they roll several times a day. Codex pushing `resetsAt` by a few minutes on every poll is not a refill either.
+
+- **Cursor's ring follows Cursor Models**, not the tiny Other Models overflow pool that looks spent as a percentage while Composer still has most of its allowance.
 
 - **Qoder's Add-on Credits now shows when it resets.** That bar is a second JSON document with no date of its own; Team Plan's reset is the one the usage page prints on both, so Pulse copies it across.
 

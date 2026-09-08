@@ -19,14 +19,16 @@ struct AlertMemoryTests {
         _ id: String = "weekly",
         used: Double,
         resetsAt: Date? = nil,
-        exhausted: Bool = false
+        exhausted: Bool = false,
+        kind: UsageWindow.Kind = .weekly,
+        windowSeconds: Int = 7 * 86_400
     ) -> UsageWindow {
         UsageWindow(
             id: id,
-            kind: .weekly,
+            kind: kind,
             scope: nil,
             usedFraction: used,
-            windowSeconds: 7 * 86_400,
+            windowSeconds: windowSeconds,
             resetsAt: resetsAt,
             isExhausted: exhausted
         )
@@ -283,6 +285,163 @@ struct AlertMemoryTests {
         var memory = AlertMemory()
         _ = run(&memory, Self.live(Self.window(used: 0.50)), threshold: .off, celebratesReset: true)
         #expect(run(&memory, Self.live(Self.window(used: 0.44)), threshold: .off, celebratesReset: true).isEmpty)
+    }
+
+    @Test("A reset clock that slides while usage holds is not a refill")
+    func slidingClockIsNotAReset() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.55, resetsAt: first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        // Codex's 5-hour session pushes resetsAt as you use it. Minutes later
+        // is a new clock, not a new tank.
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.57, resetsAt: first.addingTimeInterval(180))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+    }
+
+    @Test("A forty-point drop that rebounds, with the same reset time, is not a refill")
+    func transientDropIsNotAReset() {
+        var memory = AlertMemory()
+        let boundary = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.80, resetsAt: boundary)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        // Codex has read 0% used for one sample without the window turning over.
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: boundary)),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.80, resetsAt: boundary)),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+    }
+
+    @Test("A forty-point drop with an unchanged reset time is a refill only once it holds")
+    func persistentDropWithSameClockConfirms() {
+        var memory = AlertMemory()
+        let boundary = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.80, resetsAt: boundary)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: boundary)),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: boundary)),
+                threshold: .off,
+                celebratesReset: true
+            ).map(\.kind) == [.celebration]
+        )
+    }
+
+    @Test("A drop together with a new reset time is a refill on the first sample")
+    func dropAndMovedClockFiresImmediately() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.80, resetsAt: first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: first.addingTimeInterval(7 * 86_400))),
+                threshold: .off,
+                celebratesReset: true
+            ).map(\.kind) == [.celebration]
+        )
+    }
+
+    @Test("A forty-point drop with a clock that only slid a few minutes is not a refill")
+    func smallClockSlideWithADropIsStillPending() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.80, resetsAt: first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        // Codex pushes resetsAt by the refresh interval on every poll.
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: first.addingTimeInterval(11 * 60))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.80, resetsAt: first.addingTimeInterval(22 * 60))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+    }
+
+    @Test("A five-hour session rolling over does not throw ribbons")
+    func sessionResetIsNotACelebration() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        let session = { (used: Double, resetsAt: Date) in
+            Self.window(
+                "session",
+                used: used,
+                resetsAt: resetsAt,
+                kind: .fiveHour,
+                windowSeconds: 5 * 3_600
+            )
+        }
+        _ = run(
+            &memory,
+            Self.live(session(0.80, first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(session(0.0, first.addingTimeInterval(5 * 3_600))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
     }
 
     // MARK: - Failures
