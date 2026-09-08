@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/qunqin24/Pulse/releases/latest"><img src="https://img.shields.io/github/v/release/qunqin24/Pulse?color=black" alt="最新版本"></a>
+  <a href="https://github.com/harrisliangsu/Pulse/releases/latest"><img src="https://img.shields.io/github/v/release/harrisliangsu/Pulse?color=black" alt="最新版本"></a>
   <img src="https://img.shields.io/badge/macOS-14.0%2B%20Sonoma-333333?logo=apple" alt="macOS 14+">
-  <a href="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml"><img src="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml/badge.svg" alt="构建状态"></a>
+  <a href="https://github.com/harrisliangsu/Pulse/actions/workflows/ci.yml"><img src="https://github.com/harrisliangsu/Pulse/actions/workflows/ci.yml/badge.svg" alt="构建状态"></a>
   <img src="https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white" alt="Swift 6.0">
   <a href="LICENSE"><img src="https://img.shields.io/badge/许可-Apache%202.0-blue" alt="开源许可"></a>
 </p>
@@ -91,7 +91,7 @@ Pulse 仅呈现各服务上报的数字，绝不依靠本地 Token 粗略估算�
 
 ## 安装与快速上手
 
-1. 前往 [Releases](https://github.com/qunqin24/Pulse/releases/latest) 下载最新的 **`Pulse-x.y.z.dmg`**。
+1. 前往 [Releases](https://github.com/harrisliangsu/Pulse/releases/latest) 下载最新的 **`Pulse-x.y.z.dmg`**。
 2. 打开安装镜像，将 **Pulse** 拖拽至「应用程序（Applications）」文件夹即可。
 
 > [!NOTE]
@@ -122,7 +122,7 @@ Pulse 采用现代化 Swift 6 和原生 SwiftUI 构建，无沉重依赖。
 
 ```bash
 # 克隆仓库
-git clone https://github.com/qunqin24/Pulse.git
+git clone https://github.com/harrisliangsu/Pulse.git
 cd Pulse
 
 # 直接编译并运行

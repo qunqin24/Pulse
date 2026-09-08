@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/qunqin24/Pulse/releases/latest"><img src="https://img.shields.io/github/v/release/qunqin24/Pulse?color=black" alt="Latest Release"></a>
+  <a href="https://github.com/harrisliangsu/Pulse/releases/latest"><img src="https://img.shields.io/github/v/release/harrisliangsu/Pulse?color=black" alt="Latest Release"></a>
   <img src="https://img.shields.io/badge/macOS-14.0%2B%20Sonoma-333333?logo=apple" alt="macOS 14+">
-  <a href="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml"><img src="https://github.com/qunqin24/Pulse/actions/workflows/ci.yml/badge.svg" alt="CI Build"></a>
+  <a href="https://github.com/harrisliangsu/Pulse/actions/workflows/ci.yml"><img src="https://github.com/harrisliangsu/Pulse/actions/workflows/ci.yml/badge.svg" alt="CI Build"></a>
   <img src="https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white" alt="Swift 6.0">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache%202.0-blue" alt="License"></a>
 </p>
@@ -91,7 +91,7 @@ Pulse shows the figures each service reports. It never guesses percentages from 
 
 ## Installation
 
-1. Download the latest **`Pulse-x.y.z.dmg`** from [Releases](https://github.com/qunqin24/Pulse/releases/latest).
+1. Download the latest **`Pulse-x.y.z.dmg`** from [Releases](https://github.com/harrisliangsu/Pulse/releases/latest).
 2. Open the disk image and drag **Pulse** into your `Applications` folder.
 
 > [!NOTE]
@@ -122,7 +122,7 @@ Pulse is built using native Swift and SwiftUI without heavy external dependencie
 
 ```bash
 # Clone the repository
-git clone https://github.com/qunqin24/Pulse.git
+git clone https://github.com/harrisliangsu/Pulse.git
 cd Pulse
 
 # Build and run directly
