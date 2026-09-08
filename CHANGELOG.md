@@ -7,6 +7,10 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.0.9
+
+- **Updates now come from this repository.** Copies installed from GitHub 1.0.8 will be offered this build in the app. The same Codex reset, Cursor Models ring, and celebration sound as 1.0.8.
+
 ## 1.0.8
 
 - **The floating rail can be tiny, and it can be light.** Size now has a fourth step below Small, for sitting on a page without covering a line of it. Appearance is one control: Dark, Light, Auto, or Glass — glass is not a second switch sitting on top of Light. Light is a pale rail with a hairline, not a white hole and not the black bar that punches through homework.
