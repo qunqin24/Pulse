@@ -285,21 +285,28 @@ struct AlertMemory: Codable, Sendable, Equatable {
             var memory = seen ?? Window()
 
             if let seen {
-                let movedOn = window.resetsAt.map { new in
-                    // A minute of slack: a reset time is often rounded, and a
-                    // second of jitter is not a new window.
-                    seen.resetsAt.map { new.timeIntervalSince($0) > 60 } ?? false
-                } ?? false
+                let jump: TimeInterval = {
+                    guard let new = window.resetsAt, let old = seen.resetsAt else { return 0 }
+                    return new.timeIntervalSince(old)
+                }()
+                // A real turnover jumps by a large share of the window.
+                // Codex (and Spark) push `resetsAt` by a few minutes on every
+                // poll — CodexBar treats that as the same window, not a new
+                // one. A minute of slack was how the ribbons played twice.
+                let significantJump = jump > max(
+                    30 * 60,
+                    TimeInterval(max(window.windowSeconds, 0)) * 0.25
+                )
                 let emptied = seen.fraction - window.usedFraction >= 0.4
                 // Said only when the evidence is unambiguous. A few points of
                 // drift is not a reset: a rolling window — Kimi's week, which
                 // can reset anywhere inside it — slides down without anything
-                // having turned over. A clock that moves forward *without* the
-                // tank emptying is not one either: Codex's 5-hour session
-                // pushes `resetsAt` as you use it. A forty-point drop while
-                // the stated reset time holds still is a glitch until it
-                // shows up twice — Codex has read 0% used without refilling.
-                let confirmed = emptied && movedOn
+                // having turned over. A clock that inches forward *without*
+                // the tank emptying is not one either. A forty-point drop
+                // while the stated reset time holds still (or only slides a
+                // little) is a glitch until it shows up twice — Codex has
+                // read 0% used without refilling.
+                let confirmed = emptied && significantJump
                     || emptied && seen.resetsAt == nil
                     || emptied && window.resetsAt == nil
                     || emptied && seen.pendingReset
@@ -321,7 +328,10 @@ struct AlertMemory: Codable, Sendable, Equatable {
                     }
                     // Ribbons are the opposite: they name the provider so you
                     // can tell who came back, whether or not you were warned.
-                    if celebratesReset {
+                    // Five-hour sessions are excluded: they roll several times
+                    // a day, which is not the weekly/monthly event CodexBar
+                    // plays the fanfare for.
+                    if celebratesReset, window.kind.celebratesReset {
                         produced.append(UsageAlert(account: account, kind: .celebration, window: window))
                     }
                     memory.announced = 0

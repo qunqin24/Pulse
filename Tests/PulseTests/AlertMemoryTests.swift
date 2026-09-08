@@ -19,14 +19,16 @@ struct AlertMemoryTests {
         _ id: String = "weekly",
         used: Double,
         resetsAt: Date? = nil,
-        exhausted: Bool = false
+        exhausted: Bool = false,
+        kind: UsageWindow.Kind = .weekly,
+        windowSeconds: Int = 7 * 86_400
     ) -> UsageWindow {
         UsageWindow(
             id: id,
-            kind: .weekly,
+            kind: kind,
             scope: nil,
             usedFraction: used,
-            windowSeconds: 7 * 86_400,
+            windowSeconds: windowSeconds,
             resetsAt: resetsAt,
             isExhausted: exhausted
         )
@@ -381,6 +383,64 @@ struct AlertMemoryTests {
                 threshold: .off,
                 celebratesReset: true
             ).map(\.kind) == [.celebration]
+        )
+    }
+
+    @Test("A forty-point drop with a clock that only slid a few minutes is not a refill")
+    func smallClockSlideWithADropIsStillPending() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        _ = run(
+            &memory,
+            Self.live(Self.window(used: 0.80, resetsAt: first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        // Codex pushes resetsAt by the refresh interval on every poll.
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.0, resetsAt: first.addingTimeInterval(11 * 60))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(Self.window(used: 0.80, resetsAt: first.addingTimeInterval(22 * 60))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
+        )
+    }
+
+    @Test("A five-hour session rolling over does not throw ribbons")
+    func sessionResetIsNotACelebration() {
+        var memory = AlertMemory()
+        let first = Date(timeIntervalSince1970: 1_800_003_600)
+        let session = { (used: Double, resetsAt: Date) in
+            Self.window(
+                "session",
+                used: used,
+                resetsAt: resetsAt,
+                kind: .fiveHour,
+                windowSeconds: 5 * 3_600
+            )
+        }
+        _ = run(
+            &memory,
+            Self.live(session(0.80, first)),
+            threshold: .off,
+            celebratesReset: true
+        )
+        #expect(
+            run(
+                &memory,
+                Self.live(session(0.0, first.addingTimeInterval(5 * 3_600))),
+                threshold: .off,
+                celebratesReset: true
+            ).isEmpty
         )
     }
 

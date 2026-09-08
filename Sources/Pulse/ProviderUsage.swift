@@ -20,6 +20,17 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         /// week, so this one had nowhere to map.
         case monthly
         case other(seconds: Int)
+
+        /// Ribbons are for a week or a month coming back, not a five-hour
+        /// session rolling over. Codex's session clock moves several times a
+        /// day; celebrating that is how the overlay played when nothing the
+        /// user would call a reset had happened.
+        var celebratesReset: Bool {
+            switch self {
+            case .weekly, .monthly: true
+            case .fiveHour, .spend, .other: false
+            }
+        }
     }
 
     /// Stable across refreshes, so SwiftUI keeps a row's identity while its
@@ -359,12 +370,18 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// The window the rail's ring shows.
     ///
     /// By default the one closest to being used up, so the ring reflects
-    /// whichever limit will actually bite first. A provider can be pinned to a
-    /// particular window in settings; a pin that no longer matches anything —
-    /// a model that stopped being reported, say — quietly reverts to the
-    /// default rather than leaving the ring blank.
+    /// whichever limit will actually bite first — unless the provider names
+    /// an included pool that should lead (Cursor's own models, not the small
+    /// overflow lane). A provider can be pinned to a particular window in
+    /// settings; a pin that no longer matches anything — a model that stopped
+    /// being reported, say — quietly reverts to the default rather than
+    /// leaving the ring blank.
     func headlineWindow(preferring id: String? = nil) -> UsageWindow? {
         if let id, let pinned = windows.first(where: { $0.id == id }) { return pinned }
+        if let preferred = account.provider.preferredHeadlineWindowID,
+           let match = windows.first(where: { $0.id == preferred }) {
+            return match
+        }
         return windows.max { $0.usedFraction < $1.usedFraction }
     }
 
