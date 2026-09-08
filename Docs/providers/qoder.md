@@ -15,18 +15,18 @@ The CLI file under `~/.qoder/.auth` is encrypted and is **not** borrowed. Do not
 
 ## Route
 
-Tried in order, international then China:
+Tried per site (`qoder.com`, then `qoder.com.cn`):
 
-- `GET /api/v2/quota/usage` — CLI snapshot shape (`userQuota`, `org_resource_package`).
-- `GET /api/v2/me/usages/big_model_credits` — dashboard shape (`totalQuota`, `sharedQuota`).
+- `GET /api/v2/me/usages/big_model_credits` — **Team Plan** only (`plan_quota`). Measured 2026-09-08: a Team card of 51 / 6,000 lives here; Add-on Credits do not.
+- `GET /api/v1/me/organization-shared-usages/big_model_credits` — **Add-on Credits**, the member cap on the org pool (`shared_quota.quota_summary`, e.g. 0 / 314,000). `organization_pool` is the org-wide barrel and is **not** drawn: the usage page shows the member cap.
 
 Not a Pulse official-integration claim; the JSON can change.
 
 ## What is shown
 
-- Plan Credits — `totalQuota` / `userQuota`. Monthly sort key, `reportsLength: false`.
-- Add-on Credits — `addOnQuota` when present, scoped “Add-on”.
-- **Shared pack** — `sharedQuota` or `org_resource_package` (`cap` / `used` / `remaining`). This is the member cap on the organisation pool, not the pool itself. No cap means no ring: Pulse does not invent a percentage for an unlimited shared pack.
+- Team Plan — `plan_quota` / `total_quota` / `userQuota`. Monthly sort key, `reportsLength: false`.
+- Personal resource pack — `resource_package_quota` when its limit is above zero.
+- Add-on Credits — `shared_quota` from the organisation-shared endpoint. No cap means no ring.
 - `userType` is the plan name.
 - Remaining Credits are `creditBalance` when the remaining figure is above zero.
 

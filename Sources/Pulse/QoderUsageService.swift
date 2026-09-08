@@ -14,9 +14,6 @@ import Foundation
 struct QoderUsageService: Sendable {
     let cookie: String?
 
-    private static let international = URL(string: "https://qoder.com/api/v2/me/usages/big_model_credits")!
-    private static let china = URL(string: "https://qoder.com.cn/api/v2/me/usages/big_model_credits")!
-
     func fetch() async -> ProviderUsage {
         guard let raw = cookie.flatMap({ $0.isEmpty ? nil : $0 }) else {
             return .unavailable(.qoder, reason: .qoderSessionMissing)
@@ -28,35 +25,51 @@ struct QoderUsageService: Sendable {
             return .unavailable(.qoder, reason: .qoderSessionMissing)
         }
 
-        // A PAT outlasts a browser session. Cookies are the fallback the
-        // Settings "Read" button still fills, and they do expire.
-        let routes: [(URL, String)] = [
-            (URL(string: "https://qoder.com/api/v2/quota/usage")!, "https://qoder.com"),
-            (Self.international, "https://qoder.com"),
-            (URL(string: "https://qoder.com.cn/api/v2/quota/usage")!, "https://qoder.com.cn"),
-            (Self.china, "https://qoder.com.cn"),
-        ]
-
+        // Team Plan and Add-on Credits are **two JSON documents**.
+        // `…/usages/big_model_credits` is only the plan (the 6,000 on a Team
+        // card). The 314,000 Add-on bar is `…/organization-shared-usages/…`.
+        // Measured 2026-09-08 against a signed-in usage page.
+        let origins = ["https://qoder.com", "https://qoder.com.cn"]
         var sawExpiry = false
-        for (url, origin) in routes {
-            let attempt = await fetch(url: url, origin: origin, token: token, cookie: header)
-            switch attempt {
-            case .success(let usage): return usage
-            case .expired, .missing: sawExpiry = true
-            case .other(let usage): return usage
+        for origin in origins {
+            let planURL = URL(string: "\(origin)/api/v2/me/usages/big_model_credits")!
+            let sharedURL = URL(string: "\(origin)/api/v1/me/organization-shared-usages/big_model_credits")!
+            switch await load(url: planURL, origin: origin, token: token, cookie: header) {
+            case .ok(let plan):
+                var windows = Self.windows(from: plan)
+                if case .ok(let shared) = await load(url: sharedURL, origin: origin, token: token, cookie: header) {
+                    for extra in Self.windows(from: shared) where !windows.contains(where: { $0.id == extra.id }) {
+                        windows.append(extra)
+                    }
+                }
+                guard !windows.isEmpty else {
+                    return .unavailable(.qoder, reason: .noLimitsReported)
+                }
+                return ProviderUsage(
+                    account: AccountKey(.qoder),
+                    windows: windows,
+                    observedAt: Date(),
+                    state: .live,
+                    plan: plan.userType,
+                    creditBalance: nil
+                )
+            case .expired, .missing:
+                sawExpiry = true
+            case .failed(let usage):
+                return usage
             }
         }
         return .unavailable(.qoder, reason: sawExpiry ? .qoderSessionExpired : .unreachable)
     }
 
-    private enum Attempt {
-        case success(ProviderUsage)
+    private enum Load {
+        case ok(Reply)
         case expired
         case missing
-        case other(ProviderUsage)
+        case failed(ProviderUsage)
     }
 
-    private func fetch(url: URL, origin: String, token: String?, cookie: String?) async -> Attempt {
+    private func load(url: URL, origin: String, token: String?, cookie: String?) async -> Load {
         var request = URLRequest(url: url)
         if let token {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -69,34 +82,21 @@ struct QoderUsageService: Sendable {
         request.timeoutInterval = 15
 
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
-            return .other(.unavailable(.qoder, reason: .unreachable))
+            return .failed(.unavailable(.qoder, reason: .unreachable))
         }
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
         case 401, 403: return .expired
         case 404: return .missing
-        case 429: return .other(.unavailable(.qoder, reason: .rateLimited))
-        default: return .other(.unavailable(.qoder, reason: .serverError))
+        case 429: return .failed(.unavailable(.qoder, reason: .rateLimited))
+        default: return .failed(.unavailable(.qoder, reason: .serverError))
         }
 
         guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            return .other(.unavailable(.qoder, reason: .unreadableReply))
+            return .failed(.unavailable(.qoder, reason: .unreadableReply))
         }
-
-        let windows = Self.windows(from: reply)
-        guard !windows.isEmpty else {
-            return .other(.unavailable(.qoder, reason: .noLimitsReported))
-        }
-
-        return .success(ProviderUsage(
-            account: AccountKey(.qoder),
-            windows: windows,
-            observedAt: Date(),
-            state: .live,
-            plan: reply.userType,
-            creditBalance: Self.balance(from: reply)
-        ))
+        return .ok(reply)
     }
 
     /// Internal so a fixture test can hold it. Not a public contract.
@@ -152,6 +152,7 @@ struct QoderUsageService: Sendable {
             }
         }
 
+        let planQuota: Quota?
         let totalQuota: Quota?
         let sharedQuota: Quota?
         let addOnQuota: Quota?
@@ -161,13 +162,15 @@ struct QoderUsageService: Sendable {
         let nextResetAt: Date?
 
         enum CodingKeys: String, CodingKey {
-            case totalQuota, sharedQuota, addOnQuota, userQuota, orgResourcePackage, userType, nextResetAt
-            case total_quota, shared_quota, add_on_quota, user_quota, org_resource_package, user_type, next_reset_at
+            case planQuota, totalQuota, sharedQuota, addOnQuota, userQuota, orgResourcePackage, userType, nextResetAt
+            case plan_quota, total_quota, shared_quota, add_on_quota, user_quota, org_resource_package, user_type, next_reset_at
             case resourcePackageQuota, resource_package_quota
         }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
+            planQuota = try c.decodeIfPresent(Quota.self, forKey: .planQuota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .plan_quota)
             totalQuota = try c.decodeIfPresent(Quota.self, forKey: .totalQuota)
                 ?? c.decodeIfPresent(Quota.self, forKey: .total_quota)
                 ?? c.decodeIfPresent(Quota.self, forKey: .userQuota)
@@ -201,6 +204,10 @@ struct QoderUsageService: Sendable {
                 let seconds = value > 10_000_000_000 ? value / 1_000 : value
                 return Date(timeIntervalSince1970: seconds)
             }
+            if let value = try? c.decode(Int.self, forKey: key) {
+                let seconds = value > 10_000_000_000 ? Double(value) / 1_000 : Double(value)
+                return Date(timeIntervalSince1970: seconds)
+            }
             return nil
         }
     }
@@ -208,13 +215,25 @@ struct QoderUsageService: Sendable {
     /// Internal so a fixture test can hold it. Not a public contract.
     static func windows(from reply: Reply) -> [UsageWindow] {
         [
-            window(id: "qoder.plan", summary: reply.totalQuota?.quotaSummary ?? reply.userQuota?.quotaSummary, resetsAt: reply.nextResetAt),
-            window(id: "qoder.addon", summary: reply.addOnQuota?.quotaSummary, resetsAt: reply.nextResetAt, scope: "Add-on"),
+            window(
+                id: "qoder.plan",
+                summary: reply.planQuota?.quotaSummary
+                    ?? reply.totalQuota?.quotaSummary
+                    ?? reply.userQuota?.quotaSummary,
+                resetsAt: reply.nextResetAt,
+                scope: "Team Plan"
+            ),
+            window(
+                id: "qoder.addon",
+                summary: reply.addOnQuota?.quotaSummary,
+                resetsAt: reply.nextResetAt,
+                scope: "Add-on"
+            ),
             window(
                 id: "qoder.shared",
                 summary: reply.sharedQuota?.quotaSummary ?? reply.orgResourcePackage?.quotaSummary,
                 resetsAt: reply.nextResetAt,
-                scope: "Shared"
+                scope: "Add-on Credits"
             ),
         ].compactMap { $0 }
     }
@@ -240,26 +259,6 @@ struct QoderUsageService: Sendable {
         )
     }
 
-    private static func balance(from reply: Reply) -> String? {
-        let remaining = [
-            reply.totalQuota?.quotaSummary ?? reply.userQuota?.quotaSummary,
-            reply.addOnQuota?.quotaSummary,
-            reply.sharedQuota?.quotaSummary ?? reply.orgResourcePackage?.quotaSummary,
-        ]
-            .compactMap { summary -> Double? in
-                guard let summary, let limit = summary.limitValue, limit > 0 else { return nil }
-                return summary.remainingValue ?? max(limit - (summary.usedValue ?? 0), 0)
-            }
-            .reduce(0, +)
-        guard remaining > 0 else { return nil }
-        let unit = reply.totalQuota?.quotaSummary?.unit
-            ?? reply.sharedQuota?.quotaSummary?.unit
-            ?? "credits"
-        if remaining.rounded() == remaining {
-            return "\(Int(remaining)) \(unit)"
-        }
-        return String(format: "%.2f %@", remaining, unit)
-    }
 }
 
 /// Retain cookies that can authenticate a Qoder dashboard request.
