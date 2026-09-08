@@ -19,6 +19,13 @@ struct SettingsView: View {
     /// Read from the CLIs' own transcripts, which takes long enough on a cold
     /// start to be worth holding on to while the window is open.
     @State private var ledgers: [Provider: UsageLedger] = [:]
+    /// Providers whose history could not be read this time round.
+    ///
+    /// A failed read and an account that has never been used both arrive as an
+    /// empty ledger, and they must not be said the same way: telling somebody
+    /// their account has no usage — beside a ring that may be showing 80% —
+    /// because the Wi-Fi dropped is the app inventing a reading.
+    @State private var unreadableHistory: Set<Provider> = []
     @State private var codexAccount: CodexAccountUsage?
     @State private var loadingHistory: Provider?
     /// The key field's contents. Seeded from the store when the pane opens;
@@ -968,7 +975,10 @@ struct SettingsView: View {
                         : String.localized("No history yet"),
                     subtitle: loadingHistory == account.provider
                         ? nil
-                        : Self.emptyHistoryReason(for: account.provider)
+                        : Self.emptyHistoryReason(
+                            for: account.provider,
+                            unreadable: unreadableHistory.contains(account.provider)
+                        )
                 ) {
                     if loadingHistory == account.provider {
                         ProgressView().controlSize(.small)
@@ -1002,8 +1012,12 @@ struct SettingsView: View {
             }
 
             let key = APIKeyStore.key(for: provider)
-            ledgers[provider] = await ZaiUsageService(provider: provider, enteredKey: key).history()
-                ?? .empty
+            // `history()` returns nil for an unreachable network, a non-200, a
+            // decode failure and a refusal alike — all of them "we did not
+            // find out", none of them "there is nothing there".
+            let read = await ZaiUsageService(provider: provider, enteredKey: key).history()
+            ledgers[provider] = read ?? .empty
+            if read == nil { unreadableHistory.insert(provider) } else { unreadableHistory.remove(provider) }
             return
         }
 
@@ -1081,8 +1095,15 @@ struct SettingsView: View {
     /// it sends somebody looking for a log directory that was never going to
     /// exist. `Provider.keepsLocalTranscripts` is the question, not
     /// `providesHistory`: the latter is true for both sources.
-    private static func emptyHistoryReason(for provider: Provider) -> String {
-        provider.keepsLocalTranscripts
+    ///
+    /// A read that failed says so. Both sentences below are claims about the
+    /// account, and neither is one Pulse can make when it never got an answer.
+    private static func emptyHistoryReason(for provider: Provider, unreadable: Bool) -> String {
+        if unreadable {
+            return .localized("\(provider.displayName) didn't answer, so there is nothing to chart yet. Try again in a moment.")
+        }
+
+        return provider.keepsLocalTranscripts
             ? .localized("Nothing has been logged on this Mac yet, so there is no history to add up.")
             : .localized("This account hasn't used anything yet, so there is nothing to chart.")
     }

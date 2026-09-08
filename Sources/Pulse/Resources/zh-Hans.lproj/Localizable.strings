@@ -348,3 +348,4 @@
 /* 按模型分组拆分环 */
 "A ring for each model group" = "按模型分组显示";
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini 与第三方模型的额度相互独立，一个环只能跟随用得多的那一边。";
+"%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ 没有返回数据，暂时无法绘制。请稍后重试。";

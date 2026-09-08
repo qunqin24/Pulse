@@ -89,7 +89,12 @@ struct RailSlot: Hashable, Identifiable, Sendable {
     ) -> [RailSlot] {
         accounts.flatMap { account -> [RailSlot] in
             guard isSplit(account) else { return [RailSlot(account)] }
-            let groups = groups(account)
+            // Clamped to what the rail budgeted for. `railSlotCount` reserves
+            // `modelGroupCount` per split account and `PanelMetrics` sizes the
+            // rail from that, so a provider that one day reports a third scope
+            // would draw past the end of the rail and have it sliced off —
+            // which is what happened the first time a seventh account existed.
+            let groups = groups(account).prefix(account.provider.modelGroupCount)
             guard groups.count > 1 else { return [RailSlot(account)] }
             return groups.map { RailSlot(account, group: $0) }
         }
@@ -98,7 +103,14 @@ struct RailSlot: Hashable, Identifiable, Sendable {
     /// The model groups a reading carries, in the order the provider reported
     /// them — not sorted, because that order is the provider's own and is what
     /// its own settings screen shows.
+    /// **All or nothing.** A reading that mixes scoped and unscoped windows
+    /// gets no groups at all, so the account stays whole: splitting it would
+    /// file every window under a scope and leave the unscoped ones belonging
+    /// to no ring, gone from the rail and from every card. A limit that
+    /// silently disappears is worse than a limit sharing a ring.
     static func modelGroups(of usage: ProviderUsage) -> [String] {
+        guard !usage.windows.isEmpty, usage.windows.allSatisfy({ $0.scope != nil }) else { return [] }
+
         var seen: Set<String> = []
         return usage.windows.compactMap { window in
             guard let scope = window.scope, seen.insert(scope).inserted else { return nil }

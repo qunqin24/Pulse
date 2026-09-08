@@ -112,4 +112,40 @@ struct RailSlotTests {
 
         #expect(RailSlot.modelGroups(of: reading).isEmpty)
     }
+
+    /// Splitting a mixed reading would file every window under a scope and
+    /// leave the unscoped ones belonging to no ring — gone from the rail and
+    /// from every card. Staying whole is the honest answer.
+    @Test("A reading that mixes scoped and unscoped windows is not split")
+    func mixedScopesDoNotSplit() {
+        let mixed = usage(antigravity, [
+            window("g5", scope: "Gemini"),
+            window("t5", scope: "Third-party"),
+            window("credits", scope: nil),
+        ])
+
+        #expect(RailSlot.modelGroups(of: mixed).isEmpty)
+
+        let slots = RailSlot.rail(
+            for: [antigravity],
+            isSplit: { _ in true },
+            groups: { _ in RailSlot.modelGroups(of: mixed) }
+        )
+        #expect(slots == [RailSlot(antigravity)])
+    }
+
+    /// The rail's own budget reserves `modelGroupCount` per split account, and
+    /// `PanelMetrics` sizes the rail from that. Drawing more slices the end of
+    /// the rail off.
+    @Test("More groups than the rail budgeted for are not drawn")
+    func groupsBeyondTheBudgetAreDropped() {
+        let slots = RailSlot.rail(
+            for: [antigravity],
+            isSplit: { _ in true },
+            groups: { _ in ["Gemini", "Third-party", "Something new"] }
+        )
+
+        #expect(slots.count == Provider.antigravity.modelGroupCount)
+        #expect(slots.map(\.group) == ["Gemini", "Third-party"])
+    }
 }

@@ -144,10 +144,10 @@ final class FloatingPanelController {
         panel.placement = placement
         // Both capture the two objects they need rather than the controller,
         // which owns the panel they are stored on.
-        panel.railFrame = { [settings, placement] in
+        panel.railFrame = { [settings, store, placement] in
             PanelHitArea.rail(
                 edge: placement.edge,
-                railSize: DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis, docked: placement.isDocked),
+                railSize: DockLayout.size(for: Self.shownSlotCount(settings, store), on: placement.edge.axis, docked: placement.isDocked),
                 railTop: placement.railTop,
                 railLeading: placement.railLeading
             )
@@ -158,11 +158,11 @@ final class FloatingPanelController {
         // rail's ends lose the flare's worth of padding the moment it comes off
         // an edge, and measuring the old state throws the placement off by that
         // much on the frame it changes.
-        panel.railSize = { [settings] edge, docked in
-            DockLayout.size(for: settings.shownAccounts.count, on: edge.axis, docked: docked)
+        panel.railSize = { [settings, store] edge, docked in
+            DockLayout.size(for: Self.shownSlotCount(settings, store), on: edge.axis, docked: docked)
         }
-        panel.grabArea = { [settings, placement] in
-            let size = DockLayout.size(for: settings.shownAccounts.count, on: placement.edge.axis, docked: placement.isDocked)
+        panel.grabArea = { [settings, store, placement] in
+            let size = DockLayout.size(for: Self.shownSlotCount(settings, store), on: placement.edge.axis, docked: placement.isDocked)
             return placement.isRailExpanded
                 ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
                 : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
@@ -257,6 +257,25 @@ final class FloatingPanelController {
     /// switched off, and the placement works in terms of the rail rather than
     /// the window — the window is mostly the empty space the card unfolds
     /// into, and the user has never positioned that.
+    /// How many rings the rail is actually drawing.
+    ///
+    /// **Not `shownAccounts.count`.** A split provider draws two rings from
+    /// one account, so counting accounts sizes every rect below one item short
+    /// of what is on screen — and the shortfall is at the far end, where it
+    /// takes the last ring out of the grab area entirely. The panel window and
+    /// the view have to agree on this number; the view gets it from
+    /// `entries.count`, which is the same list.
+    ///
+    /// Static so the closures storing it on the panel capture the two objects
+    /// they need rather than the controller that owns the panel.
+    private static func shownSlotCount(_ settings: AppSettings, _ store: UsageStore) -> Int {
+        RailSlot.rail(
+            for: settings.shownAccounts,
+            isSplit: settings.isSplit,
+            groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+        ).count
+    }
+
     private func placePanel() {
         // The display it was left on, if that display is still here. A monitor
         // that has been unplugged falls back to one that exists rather than
@@ -270,7 +289,7 @@ final class FloatingPanelController {
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
             panel: Layout.size(for: edge),
-            rail: DockLayout.size(for: settings.shownAccounts.count, on: edge.axis, docked: placement.isDocked)
+            rail: DockLayout.size(for: Self.shownSlotCount(settings, store), on: edge.axis, docked: placement.isDocked)
         )
 
         panel.applyLevel(for: placement.dock)

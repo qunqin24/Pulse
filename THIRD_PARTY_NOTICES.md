@@ -10,7 +10,7 @@ Pulse bundles provider marks derived from [Lobe Icons](https://github.com/lobehu
 - `Sources/Pulse/Resources/kimi.svg`
 - `Sources/Pulse/Resources/ollama.svg`
 - `Sources/Pulse/Resources/zai.svg`
-- `Sources/Pulse/Resources/zhipu.svg`
+- `Sources/Pulse/Resources/qingyan.svg`
 - `Sources/Pulse/Resources/minimax.svg`
 - `Sources/Pulse/Resources/github.svg`
 - `Sources/Pulse/Resources/volcengine.svg`

@@ -348,3 +348,4 @@
 /* Splitting one account's rail ring into one per model group */
 "A ring for each model group" = "A ring for each model group";
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two.";
+"%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ didn't answer, so there is nothing to chart yet. Try again in a moment.";
