@@ -1180,6 +1180,8 @@ struct SettingsView: View {
 
     private static func keySubtitle(for provider: Provider) -> String {
         switch provider {
+        case .qoder:
+            .localized("A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac.")
         case _ where provider.usesSessionCookie:
             .localized("Copied from your browser. Stored encrypted on this Mac.")
         case .zai:
@@ -1314,7 +1316,9 @@ struct SettingsView: View {
                 // calling it an API key would send people looking for one that
                 // does not exist.
                 SettingsRow(
-                    account.provider.usesSessionCookie
+                    account.provider == .qoder
+                        ? String.localized("Token or session")
+                        : account.provider.usesSessionCookie
                         ? String.localized("Session cookie")
                         : account.provider.usesKeyPair
                             ? String.localized("Access keys")

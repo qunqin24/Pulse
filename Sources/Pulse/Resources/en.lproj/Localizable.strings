@@ -213,6 +213,8 @@
 "Uses the Kimi Code login Pulse holds." = "Uses the Kimi Code login Pulse holds.";
 "API key" = "API key";
 "Session cookie" = "Session cookie";
+"Token or session" = "Token or session";
+"A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac." = "A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac.";
 "Read from browser" = "Read from browser";
 "Only %@." = "Only %@.";
 "Only %@. It will ask for the keychain." = "Only %@. It will ask for the keychain.";

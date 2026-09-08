@@ -6,18 +6,27 @@ Extra accounts are not supported. `keepsLocalTranscripts` is false. First-run de
 
 ## Credential
 
-A browser session for `qoder.com` or `qoder.com.cn`, stored in `keys.dat`. Settings offers the same “Read from browser” row as Ollama. The CLI file under `~/.qoder/.auth` is encrypted and is **not** borrowed.
+Two, same store (`keys.dat`):
 
-Do not document how to copy the cookie by hand.
+1. A **personal access token** (`pt-…`). It lasts for the expiry set in the Qoder console. Pulse sends it as `Authorization: Bearer`.
+2. A **browser session** for `qoder.com` or `qoder.com.cn`, filled by Settings → Read from browser. Cookies expire; that is why the token is preferred when the stored string is one.
+
+The CLI file under `~/.qoder/.auth` is encrypted and is **not** borrowed. Do not document how to copy the cookie by hand.
 
 ## Route
 
-`GET https://qoder.com/api/v2/me/usages/big_model_credits` (then `qoder.com.cn` if that session is refused). Cookie header, `Origin` / `Referer` of the matching site. Not a Pulse official-integration claim; the JSON can change.
+Tried in order, international then China:
+
+- `GET /api/v2/quota/usage` — CLI snapshot shape (`userQuota`, `org_resource_package`).
+- `GET /api/v2/me/usages/big_model_credits` — dashboard shape (`totalQuota`, `sharedQuota`).
+
+Not a Pulse official-integration claim; the JSON can change.
 
 ## What is shown
 
-- `totalQuota.quotaSummary` — the plan Credits window (`usedValue` / `limitValue`). Monthly sort key, `reportsLength: false`. Reset from `nextResetAt` when present.
-- `sharedQuota` — a second window when the account has org shared Credits, scoped “Shared”.
+- Plan Credits — `totalQuota` / `userQuota`. Monthly sort key, `reportsLength: false`.
+- Add-on Credits — `addOnQuota` when present, scoped “Add-on”.
+- **Shared pack** — `sharedQuota` or `org_resource_package` (`cap` / `used` / `remaining`). This is the member cap on the organisation pool, not the pool itself. No cap means no ring: Pulse does not invent a percentage for an unlimited shared pack.
 - `userType` is the plan name.
 - Remaining Credits are `creditBalance` when the remaining figure is above zero.
 

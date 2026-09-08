@@ -6,10 +6,11 @@ import Foundation
 /// itself loads is the figure Qoder reports (`usedValue` / `limitValue` and
 /// an optional reset). Pulse does not invent a percentage from local work.
 ///
-/// The credential is a **browser session**, same arrangement as Ollama Cloud:
-/// Settings reads the cookies for `qoder.com` or `qoder.com.cn` and stores
-/// the header in `keys.dat`. The CLI's `~/.qoder/.auth` file is encrypted and
-/// is not borrowed.
+/// Credentials, in this order: a **personal access token** (`pt-…`) if the
+/// stored string is one, otherwise a **browser session** for `qoder.com` /
+/// `qoder.com.cn`. Tokens last for the expiry the console set; cookies expire
+/// and have to be read again. The CLI's `~/.qoder/.auth` file is encrypted
+/// and is not borrowed.
 struct QoderUsageService: Sendable {
     let cookie: String?
 
@@ -17,31 +18,35 @@ struct QoderUsageService: Sendable {
     private static let china = URL(string: "https://qoder.com.cn/api/v2/me/usages/big_model_credits")!
 
     func fetch() async -> ProviderUsage {
-        guard let cookie = cookie.flatMap({ $0.isEmpty ? nil : $0 }) else {
+        guard let raw = cookie.flatMap({ $0.isEmpty ? nil : $0 }) else {
             return .unavailable(.qoder, reason: .qoderSessionMissing)
         }
 
-        guard let header = try? QoderSessionCookie.normalize(cookie) else {
+        let token = QoderSessionCookie.accessToken(in: raw)
+        let header = token == nil ? (try? QoderSessionCookie.normalize(raw)) : nil
+        guard token != nil || header != nil else {
             return .unavailable(.qoder, reason: .qoderSessionMissing)
         }
 
-        let first = await fetch(url: Self.international, origin: "https://qoder.com", cookie: header)
-        switch first {
-        case .success(let usage): return usage
-        case .expired, .missing:
-            break
-        case .other(let usage):
-            return usage
-        }
+        // A PAT outlasts a browser session. Cookies are the fallback the
+        // Settings "Read" button still fills, and they do expire.
+        let routes: [(URL, String)] = [
+            (URL(string: "https://qoder.com/api/v2/quota/usage")!, "https://qoder.com"),
+            (Self.international, "https://qoder.com"),
+            (URL(string: "https://qoder.com.cn/api/v2/quota/usage")!, "https://qoder.com.cn"),
+            (Self.china, "https://qoder.com.cn"),
+        ]
 
-        let second = await fetch(url: Self.china, origin: "https://qoder.com.cn", cookie: header)
-        switch second {
-        case .success(let usage): return usage
-        case .expired, .missing:
-            return .unavailable(.qoder, reason: .qoderSessionExpired)
-        case .other(let usage):
-            return usage
+        var sawExpiry = false
+        for (url, origin) in routes {
+            let attempt = await fetch(url: url, origin: origin, token: token, cookie: header)
+            switch attempt {
+            case .success(let usage): return usage
+            case .expired, .missing: sawExpiry = true
+            case .other(let usage): return usage
+            }
         }
+        return .unavailable(.qoder, reason: sawExpiry ? .qoderSessionExpired : .unreachable)
     }
 
     private enum Attempt {
@@ -51,9 +56,13 @@ struct QoderUsageService: Sendable {
         case other(ProviderUsage)
     }
 
-    private func fetch(url: URL, origin: String, cookie: String) async -> Attempt {
+    private func fetch(url: URL, origin: String, token: String?, cookie: String?) async -> Attempt {
         var request = URLRequest(url: url)
-        request.setValue(cookie, forHTTPHeaderField: "Cookie")
+        if let token {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        } else if let cookie {
+            request.setValue(cookie, forHTTPHeaderField: "Cookie")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue(origin, forHTTPHeaderField: "Origin")
         request.setValue("\(origin)/account/usage", forHTTPHeaderField: "Referer")
@@ -101,13 +110,16 @@ struct QoderUsageService: Sendable {
             enum CodingKeys: String, CodingKey {
                 case usedValue, limitValue, remainingValue, unit
                 case used_value, limit_value, remaining_value
+                case used, total, remaining, cap
             }
 
             init(from decoder: Decoder) throws {
                 let c = try decoder.container(keyedBy: CodingKeys.self)
-                usedValue = Self.number(c, .usedValue) ?? Self.number(c, .used_value)
+                usedValue = Self.number(c, .usedValue) ?? Self.number(c, .used_value) ?? Self.number(c, .used)
                 limitValue = Self.number(c, .limitValue) ?? Self.number(c, .limit_value)
+                    ?? Self.number(c, .total) ?? Self.number(c, .cap)
                 remainingValue = Self.number(c, .remainingValue) ?? Self.number(c, .remaining_value)
+                    ?? Self.number(c, .remaining)
                 unit = try c.decodeIfPresent(String.self, forKey: .unit)
             }
 
@@ -127,28 +139,51 @@ struct QoderUsageService: Sendable {
             }
 
             init(from decoder: Decoder) throws {
-                let c = try decoder.container(keyedBy: CodingKeys.self)
-                quotaSummary = try c.decodeIfPresent(Summary.self, forKey: .quotaSummary)
-                    ?? c.decodeIfPresent(Summary.self, forKey: .quota_summary)
+                // Dashboard JSON wraps figures in quotaSummary. The CLI
+                // snapshot (`org_resource_package`) is flat: cap / used /
+                // remaining. Both are the same Credits the user is asking to see.
+                if let nested = try? decoder.container(keyedBy: CodingKeys.self),
+                   let summary = try nested.decodeIfPresent(Summary.self, forKey: .quotaSummary)
+                    ?? nested.decodeIfPresent(Summary.self, forKey: .quota_summary) {
+                    quotaSummary = summary
+                    return
+                }
+                quotaSummary = try Summary(from: decoder)
             }
         }
 
         let totalQuota: Quota?
         let sharedQuota: Quota?
+        let addOnQuota: Quota?
+        let userQuota: Quota?
+        let orgResourcePackage: Quota?
         let userType: String?
         let nextResetAt: Date?
 
         enum CodingKeys: String, CodingKey {
-            case totalQuota, sharedQuota, userType, nextResetAt
-            case total_quota, shared_quota, user_type, next_reset_at
+            case totalQuota, sharedQuota, addOnQuota, userQuota, orgResourcePackage, userType, nextResetAt
+            case total_quota, shared_quota, add_on_quota, user_quota, org_resource_package, user_type, next_reset_at
+            case resourcePackageQuota, resource_package_quota
         }
 
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
             totalQuota = try c.decodeIfPresent(Quota.self, forKey: .totalQuota)
                 ?? c.decodeIfPresent(Quota.self, forKey: .total_quota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .userQuota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .user_quota)
             sharedQuota = try c.decodeIfPresent(Quota.self, forKey: .sharedQuota)
                 ?? c.decodeIfPresent(Quota.self, forKey: .shared_quota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .orgResourcePackage)
+                ?? c.decodeIfPresent(Quota.self, forKey: .org_resource_package)
+            addOnQuota = try c.decodeIfPresent(Quota.self, forKey: .addOnQuota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .add_on_quota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .resourcePackageQuota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .resource_package_quota)
+            userQuota = try c.decodeIfPresent(Quota.self, forKey: .userQuota)
+                ?? c.decodeIfPresent(Quota.self, forKey: .user_quota)
+            orgResourcePackage = try c.decodeIfPresent(Quota.self, forKey: .orgResourcePackage)
+                ?? c.decodeIfPresent(Quota.self, forKey: .org_resource_package)
             userType = try c.decodeIfPresent(String.self, forKey: .userType)
                 ?? c.decodeIfPresent(String.self, forKey: .user_type)
             nextResetAt = Self.date(c, .nextResetAt) ?? Self.date(c, .next_reset_at)
@@ -173,8 +208,14 @@ struct QoderUsageService: Sendable {
     /// Internal so a fixture test can hold it. Not a public contract.
     static func windows(from reply: Reply) -> [UsageWindow] {
         [
-            window(id: "qoder.plan", summary: reply.totalQuota?.quotaSummary, resetsAt: reply.nextResetAt),
-            window(id: "qoder.shared", summary: reply.sharedQuota?.quotaSummary, resetsAt: reply.nextResetAt, scope: "Shared"),
+            window(id: "qoder.plan", summary: reply.totalQuota?.quotaSummary ?? reply.userQuota?.quotaSummary, resetsAt: reply.nextResetAt),
+            window(id: "qoder.addon", summary: reply.addOnQuota?.quotaSummary, resetsAt: reply.nextResetAt, scope: "Add-on"),
+            window(
+                id: "qoder.shared",
+                summary: reply.sharedQuota?.quotaSummary ?? reply.orgResourcePackage?.quotaSummary,
+                resetsAt: reply.nextResetAt,
+                scope: "Shared"
+            ),
         ].compactMap { $0 }
     }
 
@@ -200,7 +241,11 @@ struct QoderUsageService: Sendable {
     }
 
     private static func balance(from reply: Reply) -> String? {
-        let remaining = [reply.totalQuota?.quotaSummary, reply.sharedQuota?.quotaSummary]
+        let remaining = [
+            reply.totalQuota?.quotaSummary ?? reply.userQuota?.quotaSummary,
+            reply.addOnQuota?.quotaSummary,
+            reply.sharedQuota?.quotaSummary ?? reply.orgResourcePackage?.quotaSummary,
+        ]
             .compactMap { summary -> Double? in
                 guard let summary, let limit = summary.limitValue, limit > 0 else { return nil }
                 return summary.remainingValue ?? max(limit - (summary.usedValue ?? 0), 0)
@@ -223,6 +268,17 @@ struct QoderUsageService: Sendable {
 /// so every well-formed pair from that host is kept — the same safety checks
 /// as Ollama (printable, no injection, a size cap), without guessing a name.
 enum QoderSessionCookie {
+    /// A console PAT (`pt-…`) lasts for the expiry the user set. A cookie
+    /// header always contains `=`.
+    static func accessToken(in raw: String) -> String? {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.lowercased().hasPrefix("bearer ") {
+            return String(trimmed.dropFirst(7)).trimmingCharacters(in: .whitespaces)
+        }
+        if trimmed.hasPrefix("pt-") || trimmed.hasPrefix("jt-") { return trimmed }
+        return nil
+    }
+
     static func normalize(_ input: String) throws -> String {
         guard !input.unicodeScalars.contains(where: { $0.value < 32 || $0.value > 126 }) else {
             throw QoderCookieError.invalid

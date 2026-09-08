@@ -213,6 +213,8 @@
 "Uses the Kimi Code login Pulse holds." = "使用 Pulse 保存的 Kimi Code 登录。";
 "API key" = "API key";
 "Session cookie" = "登录 Cookie";
+"Token or session" = "令牌或登录会话";
+"A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac." = "Qoder 个人令牌更耐用，浏览器登录会过期。加密保存在本机。";
 "Read from browser" = "从浏览器读取";
 "Only %@." = "只从 %@ 读取。";
 "Only %@. It will ask for the keychain." = "只从 %@ 读取，会请求钥匙串授权。";
