@@ -147,7 +147,7 @@ final class FloatingPanelController {
         panel.railFrame = { [settings, store, placement] in
             PanelHitArea.rail(
                 edge: placement.edge,
-                railSize: DockLayout.size(for: Self.shownSlotCount(settings, store), on: placement.edge.axis, docked: placement.isDocked),
+                railSize: DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: placement.edge.axis, docked: placement.isDocked),
                 railTop: placement.railTop,
                 railLeading: placement.railLeading
             )
@@ -159,10 +159,10 @@ final class FloatingPanelController {
         // an edge, and measuring the old state throws the placement off by that
         // much on the frame it changes.
         panel.railSize = { [settings, store] edge, docked in
-            DockLayout.size(for: Self.shownSlotCount(settings, store), on: edge.axis, docked: docked)
+            DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: edge.axis, docked: docked)
         }
         panel.grabArea = { [settings, store, placement] in
-            let size = DockLayout.size(for: Self.shownSlotCount(settings, store), on: placement.edge.axis, docked: placement.isDocked)
+            let size = DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: placement.edge.axis, docked: placement.isDocked)
             return placement.isRailExpanded
                 ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
                 : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
@@ -260,13 +260,18 @@ final class FloatingPanelController {
     /// the view have to agree on this number; the view gets it from
     /// `entries.count`, which is the same list.
     ///
-    /// Static so the closures storing it on the panel capture the two objects
-    /// they need rather than the controller that owns the panel.
-    private static func shownSlotCount(_ settings: AppSettings, _ store: UsageStore) -> Int {
+    /// Static so the closures storing it on the panel capture the objects they
+    /// need rather than the controller that owns the panel — and it takes the
+    /// readings as a function rather than the store so a test can hand it a
+    /// split account without a store to seed.
+    static func shownSlotCount(
+        _ settings: AppSettings,
+        usage: (AccountKey) -> ProviderUsage
+    ) -> Int {
         RailSlot.rail(
             for: settings.shownAccounts,
             isSplit: settings.isSplit,
-            groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+            groups: { RailSlot.modelGroups(of: usage($0)) }
         ).count
     }
 
@@ -296,7 +301,7 @@ final class FloatingPanelController {
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
             panel: Layout.size(for: edge),
-            rail: DockLayout.size(for: Self.shownSlotCount(settings, store), on: edge.axis, docked: placement.isDocked)
+            rail: DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: edge.axis, docked: placement.isDocked)
         )
 
         panel.applyLevel(for: placement.dock)

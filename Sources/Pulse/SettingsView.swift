@@ -129,7 +129,11 @@ struct SettingsView: View {
                 .padding(24)
             }
             .background(.windowBackground)
-            .task(id: pane) { await loadHistory() }
+            // Keyed on the pane **and** whether its account is on. A disabled
+            // account is never asked, and the empty state says so — a sentence
+            // that would otherwise sit under a toggle that now reads "on",
+            // contradicting the control a few rows above it.
+            .task(id: historyKey) { await loadHistory() }
         }
         // No `navigationTitle`: each pane already prints its own heading, and
         // the toolbar would repeat it right above.
@@ -994,6 +998,13 @@ struct SettingsView: View {
         }
     }
 
+    /// What a history read depends on. A change to any of it means the
+    /// sentence on screen is about to describe a read that no longer applies.
+    private var historyKey: String {
+        guard case .account(let account) = pane else { return "\(pane)" }
+        return "\(account.id)|\(settings.isEnabled(account))"
+    }
+
     private func loadHistory() async {
         // History is per provider — it is read from that CLI's transcripts,
         // which do not say which account was signed in at the time.
@@ -1001,7 +1012,11 @@ struct SettingsView: View {
         let provider = account.provider
 
         loadingHistory = provider
-        defer { loadingHistory = nil }
+        // Only if it is still ours. `saveKey` starts an unstructured reload
+        // that no pane switch cancels, so a returning older read would
+        // otherwise drop the spinner the *current* pane is showing and let it
+        // fall through to a sentence about an account nothing has read yet.
+        defer { if loadingHistory == provider { loadingHistory = nil } }
 
         // Asked of the provider rather than scanned off disk. Their own
         // statistics cover the whole account, so there is nothing local to
@@ -1116,7 +1131,11 @@ struct SettingsView: View {
     /// The two original sentences are claims about the account, and neither is
     /// one Pulse can make until a read has actually answered. A read that
     /// failed, or that never happened, says that instead.
-    private static func emptyHistoryReason(for provider: Provider, read: ZaiUsageService.HistoryRead?) -> String {
+    private static func emptyHistoryReason(for provider: Provider, read: ZaiUsageService.HistoryRead?) -> String? {
+        // Nothing read yet, so nothing may be said about the account. This is
+        // the first frame of a pane, before `.task` has even set the spinner.
+        guard let read else { return nil }
+
         switch read {
         case .failed:
             return .localized("\(provider.displayName) didn't answer, so there is nothing to chart yet. Try again in a moment.")
@@ -1124,7 +1143,7 @@ struct SettingsView: View {
             return .localized("Add a key above and Pulse can read this account's history.")
         case .notAsked:
             return .localized("This account is switched off, so Pulse hasn't asked for its history.")
-        case .answered, nil:
+        case .answered:
             break
         }
 

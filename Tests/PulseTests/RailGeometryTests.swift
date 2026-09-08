@@ -8,8 +8,13 @@ import Testing
 /// from the rail's length. When that length was counted in accounts while the
 /// view drew it in slots, the two differed by one the moment a provider was
 /// split — and the shortfall lands at the far end, so the *last* ring was the
-/// one that stopped responding. The counts agree again; these pin the geometry
-/// that makes agreement sufficient, at every edge and both dock states.
+/// one that stopped responding.
+///
+/// Two halves, because the first alone is not enough: the count is what
+/// shipped broken, and geometry asserted on two hand-built numbers cannot
+/// catch a wrong count — the numbers *are* the bug. So `shownSlotCount` is
+/// called here for real, and the rest pins the geometry that makes agreeing on
+/// it sufficient, at every edge and both dock states.
 @Suite("Rail geometry")
 struct RailGeometryTests {
     private static let edges: [PanelEdge] = [.left, .right, .top]
@@ -84,18 +89,58 @@ struct RailGeometryTests {
         }
     }
 
-    /// A rail measured one ring short is what shipped. Pinning it here means a
-    /// future change that reintroduces an account-based count fails a test
-    /// rather than a click.
+    /// The count itself — which is what actually shipped broken.
+    ///
+    /// The window measured its rects from `shownAccounts.count` while the view
+    /// drew `entries.count`; with a split account those differ by one. Asserting
+    /// geometry on two hand-built numbers cannot catch that, because the numbers
+    /// are the bug. This calls the function the window really uses, with a
+    /// reading that really splits, and fails against `shownAccounts.count`.
     @MainActor
-    @Test("A rail measured one ring short cannot reach its last ring")
-    func anUndersizedRailMissesItsLastRing() {
-        // The drawn rail has one more ring than the window was told about.
-        let drawn = 4
-        let area = rail(drawn - 1, .right, docked: true)
-        let centre = ringCentre(drawn - 1, in: rail(drawn, .right, docked: true), .right, docked: true)
+    @Test("The window counts rings, not accounts")
+    func theWindowCountsRingsNotAccounts() {
+        let antigravity = AccountKey(.antigravity)
+        let settings = AppSettings(
+            enabledAccounts: [antigravity.id],
+            splitAccounts: [antigravity.id]
+        )
 
-        #expect(!area.contains(centre))
+        let split = ProviderUsage(
+            account: antigravity,
+            windows: [
+                UsageWindow(id: "g5", kind: .fiveHour, scope: "Gemini", usedFraction: 0.4, windowSeconds: 18_000, resetsAt: nil),
+                UsageWindow(id: "t5", kind: .fiveHour, scope: "Third-party", usedFraction: 0.2, windowSeconds: 18_000, resetsAt: nil),
+            ],
+            observedAt: Date(),
+            state: .live,
+            plan: nil,
+            creditBalance: nil
+        )
+
+        #expect(settings.shownAccounts == [antigravity])
+        // One account, two rings. `shownAccounts.count` would answer 1.
+        #expect(FloatingPanelController.shownSlotCount(settings, usage: { _ in split }) == 2)
+
+        // And the rail the window sizes from is a ring longer for it.
+        let short = DockLayout.size(for: 1, on: .vertical, docked: true)
+        let real = DockLayout.size(for: 2, on: .vertical, docked: true)
+        #expect(real.height > short.height)
+    }
+
+    /// The same account before its first reading lands: nothing to split by, so
+    /// the window counts one — and must go back to two when the reading arrives,
+    /// which is what `PanelPlacement.railLengthChanged()` exists to notice.
+    @MainActor
+    @Test("The count follows the reading, not the settings")
+    func theCountFollowsTheReading() {
+        let antigravity = AccountKey(.antigravity)
+        let settings = AppSettings(
+            enabledAccounts: [antigravity.id],
+            splitAccounts: [antigravity.id]
+        )
+
+        let loading = ProviderUsage.unavailable(antigravity, reason: .loading)
+        #expect(FloatingPanelController.shownSlotCount(settings, usage: { _ in loading }) == 1)
     }
 
     @MainActor
