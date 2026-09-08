@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.8</title>
+            <pubDate>Tue, 08 Sep 2026 02:16:19 -0000</pubDate>
+            <sparkle:version>1.0.8</sparkle:version>
+            <sparkle:shortVersionString>1.0.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.0.8</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.8</h2><ul><li><strong>The interface follows your Mac&#x27;s language.</strong> Pulse now declares that it speaks Chinese, which it always did — the translations shipped, macOS just was not told they existed, so a Mac set to 简体中文 got an English app. If that was you, this update switches over on its own; if you preferred it in English, Settings › Language still overrides. The Chinese copy has been rewritten throughout while we were in there.</li><li><strong>Antigravity can show its two allowances as two rings.</strong> The plan carries one budget for Gemini and a separate one for Claude and GPT, and until now a single ring could only follow whichever was busier — the other went unmentioned unless you hovered. Switch on &quot;A ring for each model group&quot; in Antigravity&#x27;s settings and each gets its own ring, both under the Antigravity icon, both refreshing the one login. Off by default: an extra ring takes room on the rail, and most people want the one number.</li><li><strong>智谱 and z.ai get a usage history</strong>, read from the same statistics the console draws its own charts from. Unlike the history Pulse builds for Claude Code and Codex — which it works out by reading session files on this Mac — this one comes from the account, so it covers every machine you use it on. It counts tokens only: the figures behind it cannot be turned into money, and the card says so rather than printing a confident zero.</li><li><strong>A second limit on the ring.</strong> A thinner ring inside the first shows the next-fullest limit *of the same kind* — the 5-hour beside the weekly it belongs with — so both are readable without hovering. Where a provider splits its allowance by model, the two arcs come from the same allowance wherever it has a second limit to show: pairing one model&#x27;s weekly with another&#x27;s 5-hour would put two unrelated budgets on one mark. Off by default and switched on in Settings; the ring is the thing you read without stopping, and two arcs is twice as much to take in. Where a provider reports only one limit nothing is added.</li><li><strong>The panel no longer slides out from under you as you pick it up.</strong> On a display where the panel is taller than the space under the menu bar — which is most laptops — macOS quietly refuses the position Pulse asks for, and Pulse was then drawing the rail relative to a position the window never had. It jumped about one ring&#x27;s worth on the first frame of a drag. It tracks the pointer exactly now.</li><li><strong>The two GLM Coding Plan rows are now named for the shops</strong> — <strong>z.ai</strong> and <strong>智谱</strong>. They were &quot;Z.ai&quot; and &quot;GLM Coding Plan&quot;, which was a trap: both shops sell the plan under that same name, so anyone on the international plan picked the row named after their product and had their key sent to the mainland service, which of course refused it.</li><li><strong>A refused key now says the key was refused.</strong> These services answer with an ordinary HTTP 200 and put the verdict inside, and Pulse only recognised the English wording and two of the numbers — so the most common mistake of all, a key from the other one of the two shops, came out as &quot;the service returned an error&quot; and sent people looking for an outage that was not happening.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.0.8">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.0.8/Pulse-1.0.8.zip"
+                       length="4627397"
+                       type="application/octet-stream"
+                       sparkle:edSignature="bdyqJoeJDRF9Q5AxS+H9U6gPRXIBuFvefJz8+EimkaD7Oxa5+Jd5uckdBBIlrSHRM2pe1TeRNFuwji4jx5/5Aw==" />
+        </item>
+        <item>
             <title>1.0.7</title>
             <pubDate>Mon, 07 Sep 2026 03:18:09 -0000</pubDate>
             <sparkle:version>1.0.7</sparkle:version>
