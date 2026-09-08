@@ -106,16 +106,26 @@ struct FloatingUsagePanelView: View {
                         .transition(cardReveal(for: index))
                     }
                 }
-                // Moves the rail to where on screen the user dragged it —
-                // **after** the card is hung off it, never before. The card is
+                // **Inside the card's animation, before the rail is moved.**
+                // `.animation(_:value:)` animates everything animatable in its
+                // subtree whenever that value changes — so with the offsets
+                // below inside it, closing a card sprang the rail's *position*
+                // too. Which is exactly what happens on the first frame of a
+                // drag: the card closes, and the rail then chases the pointer
+                // on a spring instead of staying under it. The panel appears
+                // to slide away from the hand carrying it.
+                .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedSlot)
+                // Moves the rail to where on screen the user dragged it.
+                //
+                // **After the card is hung off it, never before.** The card is
                 // aligned to the corner of whatever it is an overlay on, so
                 // padding first anchors it to the corner of the *panel*
                 // instead, and every card is drawn `railTop` too high and
-                // sliced off flat against the window's edge.
+                // sliced off flat against the window's edge. And **outside**
+                // the animation above, never inside: this tracks a pointer.
                 .padding(.top, railTop)
                 .padding(.leading, railLeading)
             }
-            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedSlot)
             // The window's own rects are measured from the rail's length, and
             // that sum is only redone when something asks for it. A reading
             // that splits an account into two rings changes the length with no

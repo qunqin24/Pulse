@@ -18,6 +18,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `RailGeometryTests` | Every ring the rail draws is reachable: each centre inside the rail, the last ring whole rather than clipped, each ring hit-testing to its own slot — across left/right/top and docked/floating. Plus the count itself: `shownSlotCount` is called with a reading that really splits, so a window measuring its rects in accounts rather than rings fails a test instead of a click (verified by reintroducing the bug) |
+| `PanelHoldTests` | Nothing re-places the panel while it is held — including the gap between mouse-down and the first movement, where `isDragging` is still false. [ui/input.md](ui/input.md) |
 | `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |

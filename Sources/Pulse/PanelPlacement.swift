@@ -150,6 +150,14 @@ final class PanelPlacement {
     /// sweeps across the rings, and the rail is not allowed to hide itself out
     /// from under the hand holding it.
     var isDragging = false
+    /// The panel is under a held mouse button, whether or not it has moved yet.
+    ///
+    /// `isDragging` is set on the first *movement*, so it leaves a window
+    /// between mouse-down and that first frame. Moving the panel in that
+    /// window is worse than moving it during a drag: the grab offset was
+    /// measured at mouse-down, so the panel jumps by however far it was moved
+    /// the instant the pointer travels.
+    var isPressed = false
 
     /// Whether the rail is drawn out in full or wound down to its sliver.
     ///
@@ -208,10 +216,13 @@ final class PanelPlacement {
     /// the rail was a ring shorter — leaving the last ring hanging below the
     /// window's edge, drawn where no click can reach it.
     ///
-    /// **Not during a drag**, which is moving the window itself and would be
-    /// fought over the same frame.
+    /// **Not while the panel is held**, which is moving the window itself and
+    /// would be fought over the same frame — and not merely "not while
+    /// dragging": between mouse-down and the first movement the grab offset is
+    /// already measured, so a re-place there makes the panel jump the moment
+    /// the pointer travels.
     func railLengthChanged() {
-        guard !isDragging else { return }
+        guard !isDragging, !isPressed else { return }
         onChange?()
     }
 

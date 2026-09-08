@@ -165,3 +165,61 @@ struct RailGeometryTests {
         }
     }
 }
+
+/// Nothing may move the panel while it is under a held mouse button.
+///
+/// The grab offset is measured at mouse-down, so a re-place between the press
+/// and the first movement does not slide the panel — it makes it *jump* by
+/// that much on the frame the pointer first travels, out from under the hand
+/// carrying it.
+@Suite("Holding the panel")
+struct PanelHoldTests {
+    private func placement(pressed: Bool = false, dragging: Bool = false) -> (PanelPlacement, () -> Int) {
+        let placement = PanelPlacement()
+        placement.isPressed = pressed
+        placement.isDragging = dragging
+
+        final class Counter: @unchecked Sendable { var value = 0 }
+        let counter = Counter()
+        placement.onChange = { counter.value += 1 }
+        return (placement, { counter.value })
+    }
+
+    @Test("A rail-length change re-places the panel when nothing is holding it")
+    func anIdlePanelIsRePlaced() {
+        let (placement, calls) = placement()
+        placement.railLengthChanged()
+
+        #expect(calls() == 1)
+    }
+
+    /// The gap this closes: `isDragging` is only set on the first *movement*.
+    @Test("A held panel is not re-placed, even before it has moved")
+    func aHeldPanelIsLeftAlone() {
+        let (placement, calls) = placement(pressed: true)
+        placement.railLengthChanged()
+
+        #expect(calls() == 0)
+    }
+
+    @Test("A panel being dragged is not re-placed")
+    func aDraggedPanelIsLeftAlone() {
+        let (placement, calls) = placement(pressed: true, dragging: true)
+        placement.railLengthChanged()
+
+        #expect(calls() == 0)
+    }
+
+    @Test("Letting go lets it be re-placed again")
+    func releasingRestoresIt() {
+        let (placement, calls) = placement(pressed: true, dragging: true)
+        placement.railLengthChanged()
+        #expect(calls() == 0)
+
+        placement.isDragging = false
+        placement.isPressed = false
+        placement.railLengthChanged()
+
+        #expect(calls() == 1)
+    }
+}

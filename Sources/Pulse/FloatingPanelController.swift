@@ -421,6 +421,10 @@ private final class FloatingPanel: NSPanel {
         grab = CGSize(width: pointer.x - origin.x, height: pointer.y - origin.y)
         pressedAt = location
         didDrag = false
+        // From here the grab offset is fixed, so nothing may move the panel
+        // until the button comes up — a re-place now is a jump on the first
+        // frame the pointer travels.
+        placement?.isPressed = true
         return true
     }
 
@@ -561,6 +565,7 @@ private final class FloatingPanel: NSPanel {
         pressedAt = nil
         didDrag = false
         placement?.isDragging = false
+        placement?.isPressed = false
         if let click { onClick?(click) }
         return true
     }

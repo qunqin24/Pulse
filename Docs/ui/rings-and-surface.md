@@ -56,6 +56,10 @@ Both rings are the same account: same icon, same tint, same key, same refresh. C
 
 **The budget moves with it.** `AppSettings.railSlotCount` counts a split account as `provider.modelGroupCount` (a fixed 2, not the groups a reading happens to carry, so the rail does not resize when a provider answers one group short) and feeds `PanelMetrics.makeRoom(for:)`. Off by default for the same reason: a second ring costs a slot, and the rail is the whole of the panel when docked.
 
+## What may not be animated
+
+The rail's `railTop` / `railLeading` offsets track a pointer, so they must sit **outside** `.animation(_:value:)`. That modifier animates everything animatable in its subtree whenever its value changes — and with the offsets inside the card's `value: selectedSlot` spring, the first frame of a drag closed the card, which sprang the rail's *position* too: the panel visibly slid away from the hand carrying it. The card's own reveal still animates; the offsets are applied after it, outside.
+
 ## Activity mark
 
 White arc on the empty ring between icon disc and usage stroke — **or just outside the icon disc when the second ring is on**, see above. Core Animation, not `TimelineView`. Reset `spinning` on disappear. [../refresh-and-data.md](../refresh-and-data.md)
