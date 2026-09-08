@@ -157,3 +157,51 @@ struct ZaiHistoryTests {
         #expect(start.contains(" ") && !start.contains("T") && !start.contains("+"))
     }
 }
+
+/// What a history read **found out**, which is not what it found.
+///
+/// An empty chart has several causes and the sentence printed under it is a
+/// claim about the user's account. Collapsing them was shipped twice: first
+/// as "this account hasn't used anything yet" for a dropped connection, then,
+/// fixing that, as "the service didn't answer" for an account with no key and
+/// for one that answered with nothing. Both were caught by review, neither by
+/// a test.
+@Suite("What a history read found out")
+struct ZaiHistoryReadTests {
+    /// No key stored means nothing left this Mac. `storedKey` only ever finds
+    /// files for `.glmCoding`, so `.zai` with no entered key cannot reach the
+    /// network here — this asserts the outcome, and that it is hermetic.
+    @Test("No key is not a failure to reach the service")
+    func noKeyIsNotAFailure() async {
+        let read = await ZaiUsageService(provider: .zai, enteredKey: nil).history()
+
+        guard case .notConfigured = read else {
+            Issue.record("expected .notConfigured, got \(read)")
+            return
+        }
+    }
+
+    @Test("An empty string is no key either")
+    func emptyKeyIsNotAKey() async {
+        let read = await ZaiUsageService(provider: .zai, enteredKey: "").history()
+
+        guard case .notConfigured = read else {
+            Issue.record("expected .notConfigured, got \(read)")
+            return
+        }
+    }
+
+    /// The other half, at the seam that decides it: a successful envelope
+    /// carrying no usable rows is an account with nothing spent in the window,
+    /// and `history()` turns that into `.answered(.empty)` rather than a
+    /// failure. `ledger(from:)` returning nil is what that hinges on.
+    @Test("A successful reply with no rows is an answer, not a failure")
+    func noRowsIsAnAnswer() throws {
+        let empty = ZaiUsageService.Statistics.Payload(xTime: [], tokensUsage: nil, modelDataList: nil)
+        #expect(ZaiUsageService.ledger(from: empty) == nil)
+
+        // Which the caller must read as an empty ledger, not as "no answer".
+        let asRead = ZaiUsageService.ledger(from: empty) ?? .empty
+        #expect(asRead.days.isEmpty)
+    }
+}

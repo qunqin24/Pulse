@@ -271,14 +271,42 @@ final class PanelPlacement {
     /// then centred on it and pushed back inside the visible area if that put
     /// it half off the screen, and whatever that push cost is handed back as
     /// the rail's offset inside the window so the rail itself doesn't move.
+    /// Where the panel goes, and where the rail goes — the second **in screen
+    /// coordinates**, deliberately.
+    ///
+    /// It used to carry the rail's offsets inside the panel instead, which was
+    /// a trap: `frame` is a *request*. The panel is as tall as a rail with
+    /// every account switched on — 1133pt — which is taller than the usable
+    /// area of a laptop display, and AppKit's `constrainFrameRect` pulls such
+    /// a window down so its top stays under the menu bar. Offsets measured
+    /// from the panel's own edges are then relative to a position the window
+    /// never had; everything else measures against the real one, and the drag
+    /// round-tripped the difference through `ratios(forRailAt:)`. 72pt, on the
+    /// first frame the pointer moved.
+    ///
+    /// A screen position cannot be wrong that way. Ask `offsets(forRailTopLeft:
+    /// in:rail:)` for the offsets, **after** setting the frame and with the
+    /// frame the window actually got.
     struct Layout {
         let frame: CGRect
-        /// Where the rail's top edge sits inside the panel, measured down from
-        /// the panel's own top.
-        let railTop: CGFloat
-        /// The same along the other axis, for a rail lying across the top.
-        /// Zero for a rail down a side, which is pinned to one of them.
-        let railLeading: CGFloat
+        /// The rail's top-left corner in screen coordinates.
+        let railOrigin: CGPoint
+    }
+
+    /// Where the rail sits inside a panel that has **this** frame.
+    ///
+    /// Both offsets are clamped so the rail cannot be asked to sit outside the
+    /// window it is drawn in, however far the frame ended up from the one that
+    /// was asked for.
+    static func offsets(
+        forRailTopLeft origin: CGPoint,
+        in frame: CGRect,
+        rail: CGSize
+    ) -> (top: CGFloat, leading: CGFloat) {
+        (
+            top: min(max(frame.maxY - origin.y, 0), max(frame.height - rail.height, 0)),
+            leading: min(max(origin.x - frame.minX, 0), max(frame.width - rail.width, 0))
+        )
     }
 
     /// `topEdge` is where a top-docked rail's own top edge belongs, which is
@@ -305,8 +333,7 @@ final class PanelPlacement {
 
             return Layout(
                 frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),
-                railTop: min(max(windowY + panel.height - railTopY, 0), max(panel.height - rail.height, 0)),
-                railLeading: min(max(railX - windowX, 0), max(panel.width - rail.width, 0))
+                railOrigin: CGPoint(x: railX, y: railTopY)
             )
         }
 
@@ -341,8 +368,8 @@ final class PanelPlacement {
 
         return Layout(
             frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),
-            railTop: min(max(windowY + panel.height - railY - rail.height, 0), max(panel.height - rail.height, 0)),
-            railLeading: 0
+            // The rail's *top*, which is its bottom-left origin plus its run.
+            railOrigin: CGPoint(x: railX, y: railY + rail.height)
         )
     }
 

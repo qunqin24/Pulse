@@ -100,4 +100,4 @@ Ledger notes (verify again after changing the counting; historical independent c
 
 `BudgetEstimate` is **the one inferred number in the app**. Labelled wherever it appears, own settings group, provenance underneath. Withheld when inputs cannot carry it (under ~2% used, logs that start after the window opened, a window scoped to one model). Work on another machine is invisible; the caption says so.
 
-`AccountUsageCard` is settings-only (`.task(id: pane)`), not on the panel loop. Grid of money+tokens together. Codex may also show the account’s lifetime total from its own API, which is larger than this Mac’s logs.
+`AccountUsageCard` is settings-only (`.task(id: historyKey)` — the pane **and** whether its account is on, so enabling one re-reads; `saveKey` also starts one out of band), not on the panel loop. Grid of money+tokens together. Codex may also show the account’s lifetime total from its own API, which is larger than this Mac’s logs.

@@ -18,12 +18,16 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `RailGeometryTests` | Every ring the rail draws is reachable: each centre inside the rail, the last ring whole rather than clipped, each ring hit-testing to its own slot — across left/right/top and docked/floating. Plus the count itself: `shownSlotCount` is called with a reading that really splits, so a window measuring its rects in accounts rather than rings fails a test instead of a click (verified by reintroducing the bug) |
+| `RailOffsetTests` | The rail's offsets measured against the frame the window was **granted**, not the one it asked for — the panel is taller than a laptop's usable screen and AppKit refuses that frame. [ui/panel-geometry.md](ui/panel-geometry.md) |
+| `ZaiHistoryReadTests` | What a history read found *out*: no key is not a failed request, and a successful reply with no rows is an answer |
 | `PanelHoldTests` | Nothing re-places the panel while it is held — including the gap between mouse-down and the first movement, where `isDragging` is still false. [ui/input.md](ui/input.md) |
 | `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `ZaiHistoryTests` | The statistics endpoint's shape → a day-by-day ledger, and what may not be said about it |
+| `SecondWindowTests` | Which limit the second ring shows: the fullest in the headline's own model group, and the fallback when that group holds nothing more |
+| `ZaiQuotaTests` | The GLM Coding Plan quota reply → windows, including a spend of zero being a reading rather than a gap |
 | `ZaiErrorTests` | What the GLM Coding Plan's HTTP-200 refusals mean, from envelopes taken off both live hosts |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 | `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |

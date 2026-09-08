@@ -297,16 +297,32 @@ final class FloatingPanelController {
         else { return }
 
         let edge = placement.edge
+        let railSize = DockLayout.size(
+            for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }),
+            on: edge.axis,
+            docked: placement.isDocked
+        )
         let layout = placement.layout(
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
             panel: Layout.size(for: edge),
-            rail: DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: edge.axis, docked: placement.isDocked)
+            rail: railSize
         )
 
         panel.applyLevel(for: placement.dock)
         panel.setFrame(layout.frame, display: true)
-        placement.setRailOffset(top: layout.railTop, leading: layout.railLeading)
+        // **Measured against the frame the window actually got**, not the one
+        // it was asked for. The panel is as tall as a rail with every account
+        // on, which is taller than a laptop's usable screen, and AppKit will
+        // not hand out a frame that does not fit — so the two halves of the
+        // placement disagreed by however much it refused, and the rail was
+        // drawn that far off.
+        let offsets = PanelPlacement.offsets(
+            forRailTopLeft: layout.railOrigin,
+            in: panel.frame,
+            rail: railSize
+        )
+        placement.setRailOffset(top: offsets.top, leading: offsets.leading)
     }
 }
 
@@ -554,7 +570,16 @@ private final class FloatingPanel: NSPanel {
         )
         applyLevel(for: dock)
         setFrame(layout.frame, display: true)
-        placement.setRailOffset(top: layout.railTop, leading: layout.railLeading)
+        // Same rule as `placePanel`: the frame is a request, and on a screen
+        // the panel does not fit the rail has to be measured against what the
+        // window was actually given, or it slides out from under the pointer
+        // by exactly the difference.
+        let offsets = PanelPlacement.offsets(
+            forRailTopLeft: layout.railOrigin,
+            in: frame,
+            rail: landingRail
+        )
+        placement.setRailOffset(top: offsets.top, leading: offsets.leading)
         return true
     }
 

@@ -22,7 +22,7 @@ struct SettingsView: View {
     /// How each provider's last history read went — kept beside the ledger
     /// rather than folded into it.
     ///
-    /// An empty chart has three causes and they must not be said the same way:
+    /// An empty chart has several causes and they must not be said the same way:
     /// telling somebody their account has no usage, because the Wi-Fi dropped,
     /// beside a ring showing 80%, is the app inventing a reading — and so is
     /// telling them the service failed when no key was ever pasted. Written on
@@ -1130,7 +1130,8 @@ struct SettingsView: View {
     ///
     /// The two original sentences are claims about the account, and neither is
     /// one Pulse can make until a read has actually answered. A read that
-    /// failed, or that never happened, says that instead.
+    /// failed, or that Pulse chose not to make, says that instead; one that
+    /// has not happened *yet* says nothing at all.
     private static func emptyHistoryReason(for provider: Provider, read: ZaiUsageService.HistoryRead?) -> String? {
         // Nothing read yet, so nothing may be said about the account. This is
         // the first frame of a pane, before `.task` has even set the spinner.

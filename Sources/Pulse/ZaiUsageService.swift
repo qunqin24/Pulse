@@ -362,7 +362,7 @@ extension ZaiUsageService {
     /// What a history read **found out**, which is not the same question as
     /// what it found.
     ///
-    /// An empty chart has three causes and the sentence printed under it is a
+    /// An empty chart has several causes and the sentence printed under it is a
     /// claim about the user's account, so they cannot share a return value. A
     /// key that was never pasted means nothing was asked; a dropped connection
     /// means nothing came back; an account that has not been used inside the

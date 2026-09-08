@@ -115,6 +115,17 @@ struct FloatingUsagePanelView: View {
                 // on a spring instead of staying under it. The panel appears
                 // to slide away from the hand carrying it.
                 .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedSlot)
+                // The berth growing out of the sliver and back. **Here, on the
+                // thing that actually changes size** — not on the container
+                // outside, which is where it was and which also holds the
+                // offsets below. `isExpanded` flips mid-drag, every time: the
+                // rail comes off its edge (`isDocked`) or the pointer crosses
+                // the content (`isHovered`). Animating from out there took the
+                // rail's *position* with it, so the panel drifted away from
+                // the pointer on a spring the moment it was carried off an
+                // edge. Nothing outside this needs to animate: both states
+                // live in a container pinned to the rail's full size.
+                .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
                 // Moves the rail to where on screen the user dragged it.
                 //
                 // **After the card is hung off it, never before.** The card is
@@ -131,7 +142,6 @@ struct FloatingUsagePanelView: View {
             // that splits an account into two rings changes the length with no
             // setting behind it, so it has to ask.
             .onChange(of: entries.count) { placement.railLengthChanged() }
-            .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
             // The window owns the drag, so this is where the content hears
             // about it: how much of the panel can be grabbed depends on
             // whether the rail is drawn out, which only this side knows.

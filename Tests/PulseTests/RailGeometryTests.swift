@@ -223,3 +223,76 @@ struct PanelHoldTests {
         #expect(calls() == 1)
     }
 }
+
+/// The rail's offsets are measured from the panel's own edges, so they are
+/// only meaningful against the frame the window actually has.
+///
+/// `layout(in:topEdge:panel:rail:)` returns a frame and offsets relative to
+/// it, but the frame is a **request**: the panel is as tall as a rail with
+/// every account switched on — 1133pt — which is taller than the usable area
+/// of a laptop display, and AppKit's `constrainFrameRect` pulls such a window
+/// down so its top stays under the menu bar. The offsets were then expressed
+/// against a position the window never had, and the drag round-tripped that
+/// difference through `ratios(forRailAt:)` — 72pt of it, once, on the first
+/// frame the pointer moved.
+@Suite("Rail offsets against the real frame")
+struct RailOffsetTests {
+    /// A 16" laptop: 1169pt tall, 35pt of menu bar, 72pt of Dock.
+    private let visible = CGRect(x: 0, y: 72, width: 1800, height: 1058)
+    private let panel = CGSize(width: 280.44, height: 1133.24)
+    private let rail = CGSize(width: 52.48, height: 444.44)
+
+    @Test("Offsets put the rail where the layout meant it to be")
+    func offsetsRoundTripAgainstTheGrantedFrame() {
+        let placement = PanelPlacement(dock: .floating, horizontalRatio: 0.8, verticalRatio: 0.44)
+        let layout = placement.layout(in: visible, topEdge: 1134, panel: panel, rail: rail)
+
+        // Granted as asked: the rail's top lands exactly where layout put it.
+        let asGranted = PanelPlacement.offsets(
+            forRailTopLeft: layout.railOrigin, in: layout.frame, rail: rail
+        )
+        #expect(abs(layout.frame.maxY - asGranted.top - layout.railOrigin.y) < 0.01)
+    }
+
+    /// The refusal this suite exists for, with the numbers the probe recorded.
+    @Test("A frame the window was refused does not move the rail")
+    func aRefusedFrameDoesNotMoveTheRail() {
+        let placement = PanelPlacement(dock: .floating, horizontalRatio: 0.8, verticalRatio: 0.44)
+        let layout = placement.layout(in: visible, topEdge: 1134, panel: panel, rail: rail)
+
+        // What AppKit actually grants: the top pinned under the menu bar.
+        let granted = CGRect(
+            x: layout.frame.minX, y: 0,
+            width: 281, height: 1134
+        )
+        #expect(granted.origin.y != layout.frame.origin.y)
+
+        // Measured against the frame the window has, the rail's top is still
+        // the screen position the layout chose.
+        let right = PanelPlacement.offsets(
+            forRailTopLeft: layout.railOrigin, in: granted, rail: rail
+        )
+        #expect(abs(granted.maxY - right.top - layout.railOrigin.y) < 0.01)
+
+        // Measured against the frame that was *asked* for — which is what the
+        // struct used to hand out, and what shipped — the rail lands exactly
+        // the refused distance away. Not a rounding error: 72pt.
+        let wrong = PanelPlacement.offsets(
+            forRailTopLeft: layout.railOrigin, in: layout.frame, rail: rail
+        )
+        #expect(abs(granted.maxY - wrong.top - layout.railOrigin.y) > 70)
+    }
+
+    @Test("The rail is never asked to sit outside the window")
+    func offsetsAreClampedToTheWindow() {
+        let tiny = CGRect(x: 0, y: 0, width: 100, height: 200)
+        let offsets = PanelPlacement.offsets(
+            forRailTopLeft: CGPoint(x: -500, y: 5_000), in: tiny, rail: rail
+        )
+
+        #expect(offsets.top >= 0)
+        #expect(offsets.top <= max(tiny.height - rail.height, 0))
+        #expect(offsets.leading >= 0)
+        #expect(offsets.leading <= max(tiny.width - rail.width, 0))
+    }
+}
