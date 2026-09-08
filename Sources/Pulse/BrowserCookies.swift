@@ -17,7 +17,7 @@ import SQLite3
 /// cheaper and quieter.
 ///
 /// **What it costs is different per browser, and the user has to be told.**
-/// Firefox keeps cookies in plain SQLite and needs no permission at all.
+/// Firefox and Zen keep cookies in plain SQLite and need no permission at all.
 /// Safari's file is inside its container and needs Full Disk Access, which is
 /// granted per application — so a `swift run` build cannot have it and only
 /// the bundled app can. Chromium encrypts its values with a key kept in the
@@ -34,6 +34,7 @@ enum BrowserCookies {
         var id: String { rawValue }
 
         case firefox
+        case zen
         case safari
         case chrome
         case edge
@@ -44,6 +45,7 @@ enum BrowserCookies {
         var name: String {
             switch self {
             case .firefox: "Firefox"
+            case .zen: "Zen"
             case .safari: "Safari"
             case .chrome: "Chrome"
             case .edge: "Edge"
@@ -63,7 +65,7 @@ enum BrowserCookies {
         /// never signed in.
         var keychainService: String? {
             switch self {
-            case .firefox, .safari: nil
+            case .firefox, .zen, .safari: nil
             case .chrome: "Chrome Safe Storage"
             case .edge: "Microsoft Edge Safe Storage"
             case .brave: "Brave Safe Storage"
@@ -77,7 +79,7 @@ enum BrowserCookies {
         /// surprise.
         var promptsForKeychain: Bool {
             switch self {
-            case .firefox, .safari: false
+            case .firefox, .zen, .safari: false
             case .chrome, .edge, .brave, .vivaldi, .arc: true
             }
         }
@@ -101,7 +103,8 @@ enum BrowserCookies {
         for browser in browsers {
             let pairs: [(String, String)]
             switch browser {
-            case .firefox: pairs = firefox(host: host)
+            case .firefox: pairs = gecko(host: host, stores: firefoxStores())
+            case .zen: pairs = gecko(host: host, stores: zenStores())
             case .safari: pairs = safari(host: host)
             default: pairs = chromium(browser, host: host)
             }
@@ -121,6 +124,7 @@ enum BrowserCookies {
         let installed = browsers.filter { browser in
             switch browser {
             case .firefox: !firefoxStores().isEmpty
+            case .zen: !zenStores().isEmpty
             case .safari: !safariStores().isEmpty
             default: !chromiumStores(browser).isEmpty
             }
@@ -147,6 +151,7 @@ enum BrowserCookies {
         return switch bundle {
         case "com.apple.Safari", "com.apple.SafariTechnologyPreview": .safari
         case "org.mozilla.firefox", "org.mozilla.firefoxdeveloperedition": .firefox
+        case "app.zen-browser.zen", "app.zen-browser.zen.nightly", "app.zen-browser.zen-twilight": .zen
         case "com.google.Chrome", "com.google.Chrome.canary": .chrome
         case "com.microsoft.edgemac", "com.microsoft.edgemac.Beta": .edge
         case "com.brave.Browser", "com.brave.Browser.beta": .brave
@@ -161,7 +166,21 @@ enum BrowserCookies {
     private static var home: URL { URL(fileURLWithPath: NSHomeDirectory()) }
 
     private static func firefoxStores() -> [URL] {
-        let root = home.appending(path: "Library/Application Support/Firefox/Profiles")
+        geckoStores(under: "Firefox")
+    }
+
+    /// Zen is a Firefox fork. Profiles live under `zen/Profiles` on macOS
+    /// (and occasionally `Zen` / `ZenBrowser`). Same `cookies.sqlite`, no
+    /// keychain.
+    private static func zenStores() -> [URL] {
+        var seen = Set<String>()
+        return ["zen", "Zen", "ZenBrowser"].flatMap { geckoStores(under: $0) }.filter {
+            seen.insert($0.path).inserted
+        }
+    }
+
+    private static func geckoStores(under folder: String) -> [URL] {
+        let root = home.appending(path: "Library/Application Support/\(folder)/Profiles")
         let profiles = (try? FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
         return profiles
             .map { $0.appending(path: "cookies.sqlite") }
@@ -183,7 +202,7 @@ enum BrowserCookies {
         case .brave: support.appending(path: "BraveSoftware/Brave-Browser")
         case .vivaldi: support.appending(path: "Vivaldi")
         case .arc: support.appending(path: "Arc/User Data")
-        case .firefox, .safari: nil
+        case .firefox, .zen, .safari: nil
         }
     }
 
@@ -198,10 +217,10 @@ enum BrowserCookies {
             .filter { FileManager.default.fileExists(atPath: $0.path) }
     }
 
-    // MARK: - Firefox: plain SQLite, no permission at all
+    // MARK: - Firefox / Zen: plain SQLite, no permission at all
 
-    private static func firefox(host: String) -> [(String, String)] {
-        for store in firefoxStores() {
+    private static func gecko(host: String, stores: [URL]) -> [(String, String)] {
+        for store in stores {
             let rows = query(
                 store,
                 "SELECT name, value FROM moz_cookies WHERE host = ? OR host = ? OR host LIKE ?",
