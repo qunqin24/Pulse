@@ -36,6 +36,17 @@ Click starts a provider-scoped refresh. `UsageStore.isRefreshing` : the usage ar
 
 A click is matched against **displayed** order: `orderedProviders.filter(isEnabled)`, not `Provider.allCases`.
 
+## Settings and Quit from the panel
+
+The panel never becomes key, so the menu-bar extras' ⌘, / ⌘Q do not reach it. Do not install a global key monitor for ⌘Q: that would quit whichever app is frontmost *and* Pulse.
+
+Two ways that do work:
+
+- **Right-click (or Control-click) the rail or sliver** — `FloatingPanel.sendEvent` pops an AppKit menu with Settings… and Quit Pulse. SwiftUI `.contextMenu` needs a key window; this panel is not one.
+- **Gear and power on the details card header** — the card is not the grab area, so the click reaches SwiftUI. They take no extra card height; the title truncates.
+
+The menu-bar extra stays. These are the same two actions, reachable without hunting the extra.
+
 ## Settings fields
 
 Click-away ending editing is `SettingsWindow.sendEvent`, geometry vs the field, never `hitTest`. [settings.md](settings.md).

@@ -98,6 +98,9 @@ struct UsageDetailCard: View {
     /// at the card's centre — it has to be placed independently to keep aiming
     /// at the selected ring.
     let pointerCenter: CGFloat
+    /// The panel is never key, so Settings and Quit on the menu bar extras
+    /// are a hunt. These ride the card header: they take no extra height.
+    var openSettings: (() -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
@@ -221,7 +224,27 @@ struct UsageDetailCard: View {
                 .foregroundStyle(.primary)
 
             Spacer(minLength: 0)
+
+            if let openSettings {
+                headerButton("gearshape", label: String.localized("Settings…"), action: openSettings)
+                headerButton("power", label: String.localized("Quit Pulse")) {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
         }
+    }
+
+    private func headerButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: DetailCardLayout.headerIconSize * 0.9, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.55))
+                .frame(width: DetailCardLayout.headerIconSize, height: DetailCardLayout.headerIconSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(label)
+        .accessibilityLabel(label)
     }
 }
 
@@ -357,7 +380,8 @@ private struct PulseProgressStyle: ProgressViewStyle {
     UsageDetailCard(
         usage: .unavailable(.claudeCode, reason: .loading),
         edge: .right,
-        pointerCenter: DetailCardLayout.estimatedHeight / 2
+        pointerCenter: DetailCardLayout.estimatedHeight / 2,
+        openSettings: {}
     )
     .padding(40)
     .background(.gray)

@@ -75,10 +75,15 @@ final class FloatingPanelController {
     /// window itself; this class reads it when first placing the panel.
     private let placement: PanelPlacement
 
-    init(store: UsageStore, settings: AppSettings, placement: PanelPlacement) {
+    /// Opens Settings from the rail's context menu and the card's gear.
+    /// The panel never becomes key, so the menu-bar shortcuts do not reach it.
+    private let openSettings: () -> Void
+
+    init(store: UsageStore, settings: AppSettings, placement: PanelPlacement, openSettings: @escaping () -> Void) {
         self.store = store
         self.settings = settings
         self.placement = placement
+        self.openSettings = openSettings
 
         // The sliver has to be reachable without leaving the rail, or hiding
         // and showing chase each other forever. It is geometry, so it can be
@@ -105,7 +110,12 @@ final class FloatingPanelController {
         configurePanel()
 
         let hostingView = NSHostingView(
-            rootView: FloatingUsagePanelView(store: store, settings: settings, placement: placement)
+            rootView: FloatingUsagePanelView(
+                store: store,
+                settings: settings,
+                placement: placement,
+                openSettings: openSettings
+            )
         )
         hostingView.sizingOptions = []
         hostingView.frame = NSRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height)
@@ -167,6 +177,7 @@ final class FloatingPanelController {
                 ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
                 : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
         }
+        panel.onOpenSettings = openSettings
         panel.onClick = { [settings, placement, store] point in
             guard placement.isRailExpanded else { return }
             // The rail draws them in the user's order, so a click has to be
@@ -400,6 +411,9 @@ private final class FloatingPanel: NSPanel {
     /// A short press that ended without moving the panel. The controller maps
     /// it to a provider ring; empty rail space remains drag-only.
     var onClick: ((CGPoint) -> Void)?
+    /// Settings from a right-click on the rail. The panel is never key, so
+    /// the menu-bar ⌘, does not land here.
+    var onOpenSettings: (() -> Void)?
     var placement: PanelPlacement?
 
     /// Where on the rail the pointer took hold, so the panel doesn't jump to
@@ -411,11 +425,51 @@ private final class FloatingPanel: NSPanel {
 
     override func sendEvent(_ event: NSEvent) {
         switch event.type {
+        case .rightMouseDown where popAppMenu(event): return
+        case .leftMouseDown where event.modifierFlags.contains(.control) && popAppMenu(event): return
         case .leftMouseDown where begin(event): return
         case .leftMouseDragged where carry(): return
         case .leftMouseUp where finish(): return
         default: super.sendEvent(event)
         }
+    }
+
+    /// Right-click (and Control-click) on the rail or sliver. SwiftUI
+    /// `.contextMenu` needs a key window; this panel never is one.
+    @discardableResult
+    private func popAppMenu(_ event: NSEvent) -> Bool {
+        let location = local(event)
+        guard let area = grabArea?(), area.contains(location) else { return false }
+
+        let menu = NSMenu()
+        let settingsItem = NSMenuItem(
+            title: String.localized("Settings…"),
+            action: #selector(openSettingsFromMenu),
+            keyEquivalent: ""
+        )
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
+        let quitItem = NSMenuItem(
+            title: String.localized("Quit Pulse"),
+            action: #selector(quitFromMenu),
+            keyEquivalent: ""
+        )
+        quitItem.target = self
+        menu.addItem(quitItem)
+
+        if let view = contentView {
+            NSMenu.popUpContextMenu(menu, with: event, for: view)
+        }
+        return true
+    }
+
+    @objc private func openSettingsFromMenu() {
+        onOpenSettings?()
+    }
+
+    @objc private func quitFromMenu() {
+        NSApplication.shared.terminate(nil)
     }
 
     private func begin(_ event: NSEvent) -> Bool {
