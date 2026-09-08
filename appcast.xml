@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.0.9</title>
+            <pubDate>Tue, 08 Sep 2026 09:44:46 -0000</pubDate>
+            <sparkle:version>1.0.9</sparkle:version>
+            <sparkle:shortVersionString>1.0.9</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/harrisliangsu/Pulse/releases/tag/v1.0.9</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.0.9</h2><ul><li><strong>Updates now come from this repository.</strong> Copies installed from GitHub 1.0.8 will be offered this build in the app. The same Codex reset, Cursor Models ring, and celebration sound as 1.0.8.</li></ul><p><a href="https://github.com/harrisliangsu/Pulse/releases/tag/v1.0.9">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/harrisliangsu/Pulse/releases/download/v1.0.9/Pulse-1.0.9.zip"
+                       length="4808436"
+                       type="application/octet-stream"
+                       sparkle:edSignature="6XV5zaGEAd7CdGJc3tu0KyGgcCIcvKFL7OiUjFhhrKhClD2v1Yi+bOoeawNRx6QcqdDqR7fN/AXUQsOeDtkECA==" />
+        </item>
+        <item>
             <title>1.0.8</title>
             <pubDate>Tue, 08 Sep 2026 09:08:48 -0000</pubDate>
             <sparkle:version>1.0.8</sparkle:version>
