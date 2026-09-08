@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// Which route a provider's figures are read by.
 ///
@@ -195,6 +196,7 @@ enum RefreshInterval: Int, CaseIterable, Identifiable, Sendable {
 /// scale together — they are computed from the same constants, which is what
 /// keeps them from drifting apart.
 enum PanelSize: String, CaseIterable, Identifiable, Sendable {
+    case tiny
     case small
     case standard
     case large
@@ -205,9 +207,11 @@ enum PanelSize: String, CaseIterable, Identifiable, Sendable {
 
     /// Deliberately modest steps. The panel sits over the user's work all day;
     /// "large" is meant to be readable from further away, not to take over the
-    /// side of the display.
+    /// side of the display. "Tiny" is the other end: a rail that can sit on a
+    /// page of work without covering a line of it.
     var scale: CGFloat {
         switch self {
+        case .tiny: 0.68
         case .small: 0.82
         case .standard: 1
         case .large: 1.22
@@ -216,11 +220,49 @@ enum PanelSize: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
+        case .tiny: .localized("Tiny")
         case .small: .localized("Small")
         case .standard: .localized("Standard")
         case .large: .localized("Large")
         }
     }
+}
+
+/// The floating rail's colour when it is a solid surface, not glass.
+///
+/// Dark is the default and stays it: a black rail is legible over anything.
+/// Light exists because that same black, parked on a page of work all day,
+/// is a hole in the page. System follows the Mac. Glass ignores this and
+/// takes its cue from whatever is behind it.
+enum PanelAppearance: String, CaseIterable, Identifiable, Sendable {
+    case dark
+    case light
+    case system
+
+    static let `default` = PanelAppearance.dark
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dark: .localized("Dark")
+        case .light: .localized("Light")
+        case .system: .localized("Auto")
+        }
+    }
+
+    /// What the panel's content should treat as its colour scheme.
+    func resolved(matching system: ColorScheme) -> ColorScheme {
+        switch self {
+        case .dark: .dark
+        case .light: .light
+        case .system: system
+        }
+    }
+
+    /// Solid fill when glass is off. Not pure white: a white rail on a white
+    /// page disappears, and the panel has no window shadow to give it an edge.
+    static let lightFill = Color(red: 0.94, green: 0.94, blue: 0.95)
 }
 
 /// How much air there is between the rings.

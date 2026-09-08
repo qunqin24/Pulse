@@ -32,10 +32,11 @@ enum DockLayout {
     /// looked for it, reaching 6pt down a full rail.
     ///
     /// Measured with the real font — `.system(size:weight:.medium,
-    /// design:.rounded)`, `.monospacedDigit()` — at all three sizes, and
-    /// rounded **up**: 15.6/16.0/15.6 for the height, 36.9/37.0/37.8 for the
-    /// width. Anything drawn on the panel that needs a budget gets it this
-    /// way, never by eye.
+    /// design:.rounded)`, `.monospacedDigit()` — at the sizes that existed
+    /// when this was written, and rounded **up**: 15.6/16.0/15.6 for the
+    /// height, 36.9/37.0/37.8 for the width. Tiny scales those same budgets;
+    /// over-budgeting is slack, under-budgeting squeezes. Anything drawn on
+    /// the panel that needs a budget gets it this way, never by eye.
     static var percentTextHeight: CGFloat { 16 * PanelMetrics.scale }
     static var percentTextWidth: CGFloat { 38 * PanelMetrics.scale }
     /// Gap between the ring+label items, along the rail.

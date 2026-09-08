@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 @testable import Pulse
 
@@ -15,6 +16,24 @@ import Testing
 /// catch a wrong count — the numbers *are* the bug. So `shownSlotCount` is
 /// called here for real, and the rest pins the geometry that makes agreeing on
 /// it sufficient, at every edge and both dock states.
+@Suite("Panel size and appearance")
+struct PanelChromeTests {
+    @Test("Tiny is a distinct step below small")
+    func tinyIsBelowSmall() {
+        #expect(PanelSize.tiny.scale < PanelSize.small.scale)
+        #expect(PanelSize.small.scale < PanelSize.standard.scale)
+        #expect(PanelSize.standard.scale < PanelSize.large.scale)
+    }
+
+    @Test("Appearance pins or follows the Mac")
+    func appearanceResolves() {
+        #expect(PanelAppearance.dark.resolved(matching: .light) == .dark)
+        #expect(PanelAppearance.light.resolved(matching: .dark) == .light)
+        #expect(PanelAppearance.system.resolved(matching: .light) == .light)
+        #expect(PanelAppearance.system.resolved(matching: .dark) == .dark)
+    }
+}
+
 @Suite("Rail geometry")
 struct RailGeometryTests {
     private static let edges: [PanelEdge] = [.left, .right, .top]

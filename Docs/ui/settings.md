@@ -18,6 +18,8 @@ Group order in the general pane: **Floating panel → Notifications → Celebrat
 
 The usage-interval group is named **Refresh**, not Updates.
 
+The **Floating panel** group includes **Size** (tiny / small / standard / large) and **Appearance** (dark / light / auto). Appearance is the solid rail; Liquid Glass ignores it. Tiny is a smaller scale of the same budgets, not a different layout.
+
 The **Notifications** group's three controls are not independent of each other: the reset toggle is greyed out while the threshold is Off, because a reset is only announced for a window that was warned about, and every control is greyed out in an unbundled build. Its subtitle reports `UNAuthorizationStatus`, not the switches. Rules: [../notifications.md](../notifications.md).
 
 **Celebrations** is a fourth switch, not a fourth notification. Full-screen ribbons when a limit turns over, with the account's name on them so two providers resetting in the same hour are not mistaken for each other. Off by default. It does not go through `UNUserNotificationCenter`, so it is not greyed out in a `swift run` build and does not ask for a grant. It is not tied to "Warn at": a window that never passed the line still gets ribbons. Same unambiguous-reset evidence as the notification, one overlay per account per pass.

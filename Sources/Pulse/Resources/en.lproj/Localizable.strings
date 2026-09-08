@@ -166,9 +166,15 @@
 "Tight" = "Tight";
 "Loose" = "Loose";
 "Size of the rail on screen." = "Size of the rail on screen.";
+"Tiny" = "Tiny";
 "Small" = "Small";
 "Standard" = "Standard";
 "Large" = "Large";
+"Appearance" = "Appearance";
+"Dark, light, or match the Mac." = "Dark, light, or match the Mac.";
+"Dark" = "Dark";
+"Light" = "Light";
+"Auto" = "Auto";
 
 /* Launch at login */
 "Open at login" = "Open at login";
@@ -177,7 +183,7 @@
 
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
-"Frosted glass instead of solid black." = "Frosted glass instead of solid black.";
+"Frosted glass instead of a solid rail." = "Frosted glass instead of a solid rail.";
 "Drag it by a ring while this is on." = "Drag it by a ring while this is on.";
 "Open Antigravity to see its usage." = "Open Antigravity to see its usage.";
 "Asks the language server Antigravity runs while it is open." = "Asks the language server Antigravity runs while it is open.";

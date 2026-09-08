@@ -260,7 +260,7 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    .frame(width: 220, alignment: .trailing)
                     .disabled(!settings.isPanelVisible)
                 }
 
@@ -276,6 +276,26 @@ struct SettingsView: View {
                     )) {
                         ForEach(RailSpacing.allCases) { spacing in
                             Text(spacing.title).tag(spacing)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Appearance"),
+                    subtitle: String.localized("Dark, light, or match the Mac.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.panelAppearance },
+                        set: { settings.panelAppearance = $0 }
+                    )) {
+                        ForEach(PanelAppearance.allCases) { appearance in
+                            Text(appearance.title).tag(appearance)
                         }
                     }
                     .labelsHidden()
@@ -715,7 +735,7 @@ struct SettingsView: View {
 
     /// The catch only applies while it is on, so it is only said then.
     private var glassSubtitle: String {
-        let base = String.localized("Frosted glass instead of solid black.")
+        let base = String.localized("Frosted glass instead of a solid rail.")
         guard settings.usesGlass else { return base }
         // A full stop in Chinese is full-width and carries its own trailing
         // space; adding another leaves a visible gap mid-sentence.

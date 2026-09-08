@@ -49,7 +49,7 @@ A floating landing works out its **own** side rather than reading `placement.edg
 - `sideRailShowsPercentages` default on; `topRailShowsPercentages` default off. Width stays `DockLayout.width` either way (flare/corners). Both flags live on `PanelMetrics` and in `.id(...)`.
 - Left dock mirrors the panel. Floating silhouette is a true capsule with **circular** ends (squircle ends flatten into a lozenge at this width). Asymmetric chrome must handle both edges **and** both dock states.
 - `labelAboveRing` (default off) does not change rail size but **does** move the ring inside the item. `DockLayout.ringOffsetInItem(on:)` is the one number drawing and hit testing share.
-- `PanelSize` small/standard/large → `PanelMetrics.scale`. All dock and card measurements read it.
+- `PanelSize` tiny/small/standard/large → `PanelMetrics.scale`. All dock and card measurements read it. Tiny is for sitting on a page of work without covering a line of it.
 - `showsSecondRing` (default off) changes nothing outside the ring's own circle — it moves the activity mark and shrinks the icon disc, both budgets. [rings-and-surface.md](rings-and-surface.md)
 
 Hit-testing geometry (sliver ⊂ rail, clicks on the circle): [input.md](input.md). Constant-as-budget rules: [../development.md](../development.md).

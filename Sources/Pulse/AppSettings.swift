@@ -364,7 +364,19 @@ final class AppSettings {
         }
     }
 
-    /// Liquid Glass instead of flat black for the panel's surfaces.
+    /// The floating rail's colour when it is a solid surface.
+    ///
+    /// Dark stays the default. Light is for sitting on a page of work without
+    /// punching a black hole in it. System follows the Mac. Glass ignores
+    /// this: the material picks its own appearance from what is behind it.
+    var panelAppearance: PanelAppearance {
+        didSet {
+            guard panelAppearance != oldValue else { return }
+            UserDefaults.standard.set(panelAppearance.rawValue, forKey: Key.panelAppearance)
+        }
+    }
+
+    /// Liquid Glass instead of a solid rail for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and
     /// glass takes on whatever is behind it — see `PanelSurface`.
@@ -549,6 +561,7 @@ final class AppSettings {
         panelSize: PanelSize = .default,
         railSpacing: RailSpacing = .default,
         usesGlass: Bool = false,
+        panelAppearance: PanelAppearance = .default,
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true,
         labelAboveRing: Bool = false,
@@ -577,6 +590,7 @@ final class AppSettings {
         self.panelSize = panelSize
         self.railSpacing = railSpacing
         self.usesGlass = usesGlass
+        self.panelAppearance = panelAppearance
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
         self.labelAboveRing = labelAboveRing
@@ -806,6 +820,8 @@ final class AppSettings {
             railSpacing: defaults.string(forKey: Key.railSpacing)
                 .flatMap(RailSpacing.init(rawValue:)) ?? .default,
             usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
+            panelAppearance: defaults.string(forKey: Key.panelAppearance)
+                .flatMap(PanelAppearance.init(rawValue:)) ?? .default,
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
@@ -907,6 +923,7 @@ final class AppSettings {
         static let panelSize = "settings.panelSize"
         static let railSpacing = "settings.railSpacing"
         static let usesGlass = "settings.usesGlass"
+        static let panelAppearance = "settings.panelAppearance"
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let labelAboveRing = "settings.labelAboveRing"

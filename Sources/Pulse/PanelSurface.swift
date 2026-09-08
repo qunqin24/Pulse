@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// What the panel's shapes are filled with: flat black, or Liquid Glass.
+/// What the panel's shapes are filled with: a solid rail, or Liquid Glass.
 ///
-/// Black is the default and stays it. The panel sits over whatever the user is
-/// working on all day, and a solid surface is the one that is legible over
-/// anything — glass takes on the colour and busyness of whatever happens to be
-/// behind it, which is lovely over a photo and hard work over a code editor.
-/// So it is offered rather than assumed.
+/// Dark (flat black) is the default and stays it. The panel sits over
+/// whatever the user is working on all day, and a solid surface is the one
+/// that is legible over anything — glass takes on the colour and busyness of
+/// whatever happens to be behind it, which is lovely over a photo and hard
+/// work over a code editor. Light is the same solid idea in the other
+/// direction: a black bar parked on a page of work is a hole in the page.
+/// So both are offered rather than assumed.
 ///
 /// No scrim is laid over the glass, deliberately. Apple's guidance is that the
 /// material manages its own legibility — it shifts tint and dynamic range, and
@@ -21,6 +23,7 @@ struct PanelSurface<S: Shape>: View {
     /// Tints the surface when a limit is close enough to matter. Nil leaves it
     /// neutral.
     var tint: Color?
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         // Deliberately hit-testable, and the panel cannot be dragged without
@@ -46,7 +49,16 @@ struct PanelSurface<S: Shape>: View {
         if usesGlass {
             glass
         } else {
-            shape.fill(tint ?? .black)
+            let fill = tint ?? (colorScheme == .light ? PanelAppearance.lightFill : .black)
+            shape.fill(fill)
+                .overlay {
+                    // The panel has no window shadow. A light rail on a light
+                    // page needs a hairline or it vanishes; dark on dark does
+                    // not, and a tinted sliver is already an edge.
+                    if tint == nil, colorScheme == .light {
+                        shape.stroke(Color.black.opacity(0.12), lineWidth: 0.6)
+                    }
+                }
         }
     }
 
