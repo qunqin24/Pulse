@@ -43,7 +43,7 @@ The panel never becomes key, so the menu-bar extras' ⌘, / ⌘Q do not reach it
 Two ways that do work:
 
 - **Right-click (or Control-click) the rail or sliver** — `FloatingPanel.sendEvent` pops an AppKit menu with Settings… and Quit Pulse. SwiftUI `.contextMenu` needs a key window; this panel is not one.
-- **Gear and power on the details card header** — the card is not the grab area, so the click reaches SwiftUI. They take no extra card height; the title truncates. Hover enlarge and the pointing-hand cursor use `PointerHand` (`.activeAlways` tracking area, `hitTest` nil so the button still receives the click) — not `.onHover`.
+- **Gear and power on the details card header** — the card is not the grab area. A SwiftUI `Button` is not enough: this window is transparent, so a tracking overlay that returns nil from `hitTest` is a hole and the press lands on the page behind. `PointerHand` claims the point, accepts the first click while another app is frontmost, and fires the action. Hover enlarge and the pointing-hand cursor use the same view (`.activeAlways` tracking area) — not `.onHover`. They take no extra card height; the title truncates.
 
 The menu-bar extra stays. These are the same two actions, reachable without hunting the extra.
 

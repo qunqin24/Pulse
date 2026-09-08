@@ -59,29 +59,39 @@ struct PointerEntryReporter: NSViewRepresentable {
     }
 }
 
-/// Pointing-hand cursor and a hover flag for a control on the floating panel.
+/// Pointing-hand cursor, hover, and the click for a control on the floating
+/// panel.
 ///
-/// `.onHover` is silent here (the panel never becomes key). Clicks on the
-/// details card belong to SwiftUI, so `hitTest` returns nil and the button
-/// underneath still receives them. Tracking still fires: it is the area, not
-/// the hit test, that decides enter and leave.
+/// `.onHover` is silent here (the panel never becomes key). A SwiftUI
+/// `Button` is the wrong tool: this window is transparent, so a tracking
+/// overlay that returns nil from `hitTest` is a hole — the press lands on
+/// whatever is behind Pulse. This view **claims** the point, takes the first
+/// click while another app is frontmost (`acceptsFirstMouse`), and fires
+/// `onClick` itself.
 struct PointerHand: NSViewRepresentable {
     var onHover: (Bool) -> Void = { _ in }
+    var onClick: () -> Void
 
     func makeNSView(context: Context) -> HandView {
         let view = HandView()
         view.onHover = onHover
+        view.onClick = onClick
         return view
     }
 
     func updateNSView(_ view: HandView, context: Context) {
         view.onHover = onHover
+        view.onClick = onClick
     }
 
     final class HandView: NSView {
         var onHover: (Bool) -> Void = { _ in }
+        var onClick: () -> Void = {}
+        private var pressedInside = false
 
-        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+        override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+        override var mouseDownCanMoveWindow: Bool { false }
 
         override func updateTrackingAreas() {
             super.updateTrackingAreas()
@@ -107,6 +117,18 @@ struct PointerHand: NSViewRepresentable {
 
         override func cursorUpdate(with event: NSEvent) {
             NSCursor.pointingHand.set()
+        }
+
+        override func mouseDown(with event: NSEvent) {
+            pressedInside = true
+        }
+
+        override func mouseUp(with event: NSEvent) {
+            defer { pressedInside = false }
+            guard pressedInside else { return }
+            let local = convert(event.locationInWindow, from: nil)
+            guard bounds.contains(local) else { return }
+            onClick()
         }
     }
 }
