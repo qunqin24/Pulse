@@ -10,7 +10,7 @@ This is not a catalogue of secrets. Client ids below are public (they ship in ev
 
 | What | Where | Who renews it |
 |---|---|---|
-| Pasted API key or Ollama session cookie | `keys.dat` (`APIKeyStore`) | Nobody. User pastes or re-reads the browser. |
+| Pasted API key, or Ollama / Qoder session cookie | `keys.dat` (`APIKeyStore`) | Nobody. User pastes or re-reads the browser. |
 | Copilot GitHub token | `keys.dat` as well (`keepsOwnCredential`) | Sign in again. Device tokens here are not the CLI refresh path. |
 | Extra-account logins (Claude Code, Codex, Grok, Grok Bot, Kimi Code) | `accounts.dat` (`AccountCredentialStore`) | `UsageStore.fetchAdded` via `OAuthLogin.refresh` for the OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. Kimi Code’s **primary** subscription login lives here too. |
 | Kimi Code subscription login (primary) | `accounts.dat` as well, keyed by the primary `kimiCode` account | `KimiCodeUsageService` via `OAuthLogin.refresh`. Access ~15 minutes; refresh ~30 days and **rotates**. A pasted console key still lives in `keys.dat` and wins when both exist. |

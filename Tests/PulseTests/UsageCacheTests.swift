@@ -75,7 +75,7 @@ struct UsageCacheTests {
         _ = await cache.reconciled(Self.live([Self.window(used: 0.4, resetsAt: Self.soon)], at: Date()))
 
         for reason: ProviderUsage.Unavailability in [
-            .apiKeyMissing, .ollamaSessionMissing, .signedOut,
+            .apiKeyMissing, .ollamaSessionMissing, .qoderSessionMissing, .signedOut,
             .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused,
             .kimiSignInRequired, .kimiLoginExpired
         ] {

@@ -342,7 +342,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
         switch reason {
         case .claudeLoginExpired, .claudeDesktopKeyRefused, .claudeDesktopSessionExpired,
              .cursorLoginExpired, .grokLoginExpired, .kimiLoginExpired, .signedOut, .apiKeyRefused,
-             .ollamaSessionExpired, .ollamaPageChanged,
+             .ollamaSessionExpired, .ollamaPageChanged, .qoderSessionExpired,
              .unreachable, .unreadableReply, .rateLimited, .serverError,
              .codexServerFailed:
             .failure
@@ -367,7 +367,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
              .cursorSignInRequired, .grokSignInRequired, .kimiSignInRequired, .notSignedIn,
-             .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
+             .ollamaSessionMissing, .qoderSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
              .volcengineSignInRequired:
             .neutral
         }

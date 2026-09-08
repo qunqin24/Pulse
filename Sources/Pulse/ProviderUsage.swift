@@ -240,6 +240,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// key, and the three ways that can fail are worth telling apart.
         case ollamaSessionMissing
         case ollamaSessionExpired
+        /// Qoder's Credits are read with a browser session, same as Ollama,
+        /// so a missing or refused session is a setup step rather than a key.
+        case qoderSessionMissing
+        case qoderSessionExpired
         /// The page was fetched and did not contain the two figures. Reported
         /// rather than shown as zero: reading a page is reading someone's
         /// layout, and a layout can change.
@@ -297,6 +301,8 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .notSignedIn: .localized("Sign in from Settings to see usage.")
             case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")
             case .ollamaSessionExpired: .localized("The Ollama session expired. Sign in again and add it.")
+            case .qoderSessionMissing: .localized("Add a Qoder session in Settings.")
+            case .qoderSessionExpired: .localized("The Qoder session expired. Sign in again and add it.")
             case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")
             case .volcengineCLIMissing: .localized("Install arkcli and run `arkcli auth login`, or add access keys in Settings.")
             case .volcengineSignInRequired: .localized("arkcli isn't signed in. Run `arkcli auth login`.")

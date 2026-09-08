@@ -21,6 +21,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case grok
     case grokBot
     case volcengine
+    case qoder
 
     var id: String { rawValue }
 
@@ -65,6 +66,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Volcengine's. Naming it for the model would name the one part of
         // that chain the ring is not about.
         case .volcengine: "Volcengine"
+        case .qoder: "Qoder"
         }
     }
 
@@ -95,6 +97,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // thing that tells the two apart on a rail carrying both.
         case .grokBot: "xai"
         case .volcengine: "volcengine"
+        case .qoder: "qoder"
         }
     }
 
@@ -117,7 +120,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
-             .volcengine: false
+             .volcengine, .qoder: false
         }
     }
 
@@ -163,7 +166,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .claudeCode, .codex, .volcengine, .kimiCode: true
         case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot, .qoder: false
         }
     }
 
@@ -198,7 +201,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Either a choice of routes, or a key the user pastes: both are asked
         // about elsewhere, so there is nothing here to state.
         case .claudeCode, .codex, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine, .qoder:
             nil
         }
     }
@@ -209,7 +212,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool {
-        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine].contains(self)
+        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine, .qoder].contains(self)
     }
 
     /// Whether the pasted credential is a **pair** rather than one token.
@@ -226,7 +229,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// signed-in settings page — so a session is the only credential there is,
     /// and calling it an API key in Settings would send people looking for one
     /// that does not exist.
-    var usesSessionCookie: Bool { self == .ollamaCloud }
+    var usesSessionCookie: Bool { self == .ollamaCloud || self == .qoder }
 
     /// Whether this provider can report anything at all without being set up.
     ///
@@ -352,6 +355,15 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // has no such file, so it is never detected — nothing to find.
         if ZaiUsageService.storedKey(for: .glmCoding) != nil {
             found.insert(.glmCoding)
+        }
+
+        let qoderApps = ["/Applications/Qoder.app",
+                         "/Applications/Qoder IDE.app",
+                         home.appending(path: "Applications/Qoder.app").path,
+                         home.appending(path: "Applications/Qoder IDE.app").path]
+        if qoderApps.contains(where: manager.fileExists(atPath:))
+            || manager.fileExists(atPath: home.appending(path: ".qoder").path) {
+            found.insert(.qoder)
         }
 
         return found

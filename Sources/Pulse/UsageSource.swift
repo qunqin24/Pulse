@@ -133,6 +133,8 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
         case (_, .ollamaCloud):
             // Never shown: one route, and it reads a page rather than an API.
             .localized("Reads your quota from Ollama's own settings page.")
+        case (_, .qoder):
+            .localized("Reads Qoder Credits from the signed-in account page.")
         case (_, .antigravity):
             // Never shown — Antigravity has one route, so settings states it
             // rather than offering a choice. See `Provider.hasSourceChoice`.

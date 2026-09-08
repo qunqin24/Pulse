@@ -11,10 +11,10 @@ import SQLite3
 /// else is dropped before it leaves this file. Nothing is stored here; what
 /// comes back goes straight into the caller's own encrypted store.
 ///
-/// This exists because Ollama has no quota API at all: the figures come from a
-/// signed-in page, so a browser session is the only credential there is. Every
-/// other provider in Pulse borrows a login its own tool stored, which is
-/// cheaper and quieter, and none of them needs this.
+/// This exists because some providers have no token Pulse can borrow: Ollama
+/// Cloud and Qoder both report usage through a signed-in website session.
+/// Every other provider in Pulse borrows a login its own tool stored, which is
+/// cheaper and quieter.
 ///
 /// **What it costs is different per browser, and the user has to be told.**
 /// Firefox keeps cookies in plain SQLite and needs no permission at all.

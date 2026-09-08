@@ -111,6 +111,8 @@ final class UsageStore {
             .notSignedIn
         } else if account.provider == .kimiCode {
             .kimiSignInRequired
+        } else if account.provider == .qoder {
+            .qoderSessionMissing
         } else if account.provider.usesSessionCookie {
             .ollamaSessionMissing
         } else {
@@ -141,7 +143,7 @@ final class UsageStore {
         for provider in Provider.allCases where provider.keepsOwnCredential {
             let account = AccountKey(provider)
             guard case .unavailable(let reason) = usage[account.id]?.state,
-                  [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused,
+                  [.loading, .apiKeyMissing, .ollamaSessionMissing, .qoderSessionMissing, .apiKeyRefused,
                    .signedOut, .notSignedIn, .kimiSignInRequired, .kimiLoginExpired]
                     .contains(reason)
             else { continue }
@@ -310,6 +312,7 @@ final class UsageStore {
         let openCode = OpenCodeGoUsageService(enteredKey: apiKeys[.openCodeGo])
         let kimi = KimiCodeUsageService(enteredKey: apiKeys[.kimiCode])
         let ollama = OllamaCloudUsageService(cookie: apiKeys[.ollamaCloud])
+        let qoder = QoderUsageService(cookie: apiKeys[.qoder])
         let zai = ZaiUsageService(provider: .zai, enteredKey: apiKeys[.zai])
         let glm = ZaiUsageService(provider: .glmCoding, enteredKey: apiKeys[.glmCoding])
         let minimax = MiniMaxUsageService(provider: .minimax, enteredKey: apiKeys[.minimax])
@@ -345,6 +348,9 @@ final class UsageStore {
             async let ollamaUsage = wanted.contains(.ollamaCloud)
                 ? await ollama.fetch()
                 : ProviderUsage.unavailable(.ollamaCloud, reason: .loading)
+            async let qoderUsage = wanted.contains(.qoder)
+                ? await qoder.fetch()
+                : ProviderUsage.unavailable(.qoder, reason: .loading)
             async let kimiUsage = wanted.contains(.kimiCode)
                 ? await kimi.fetch(source: kimiSource)
                 : ProviderUsage.unavailable(.kimiCode, reason: .loading)
@@ -376,6 +382,7 @@ final class UsageStore {
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
             let (rawKimi, rawCursor, rawOllama) = await (kimiUsage, cursorUsage, ollamaUsage)
+            let rawQoder = await qoderUsage
             let (rawZai, rawGLM) = await (zaiUsage, glmUsage)
             let (rawMiniMax, rawMiniMaxCN) = await (minimaxUsage, minimaxCNUsage)
             let (rawCopilot, rawGrok, rawGrokBot) = await (copilotUsage, grokUsage, grokBotUsage)
@@ -401,6 +408,7 @@ final class UsageStore {
             let fetchedKimi = await UsageCache.shared.reconciled(rawKimi)
             let fetchedCursor = await UsageCache.shared.reconciled(rawCursor)
             let fetchedOllama = await UsageCache.shared.reconciled(rawOllama)
+            let fetchedQoder = await UsageCache.shared.reconciled(rawQoder)
             let fetchedZai = await UsageCache.shared.reconciled(rawZai)
             let fetchedGLM = await UsageCache.shared.reconciled(rawGLM)
             let fetchedMiniMax = await UsageCache.shared.reconciled(rawMiniMax)
@@ -446,6 +454,7 @@ final class UsageStore {
                 (.kimiCode, fetchedKimi, rawKimi),
                 (.cursor, fetchedCursor, rawCursor),
                 (.ollamaCloud, fetchedOllama, rawOllama),
+                (.qoder, fetchedQoder, rawQoder),
                 (.zai, fetchedZai, rawZai),
                 (.glmCoding, fetchedGLM, rawGLM),
                 (.minimax, fetchedMiniMax, rawMiniMax),
@@ -477,6 +486,7 @@ final class UsageStore {
                 (.kimiCode, fetchedKimi),
                 (.cursor, fetchedCursor),
                 (.ollamaCloud, fetchedOllama),
+                (.qoder, fetchedQoder),
                 (.zai, fetchedZai),
                 (.glmCoding, fetchedGLM),
                 (.minimax, fetchedMiniMax),
@@ -531,6 +541,7 @@ final class UsageStore {
         let openCode = OpenCodeGoUsageService(enteredKey: key)
         let kimi = KimiCodeUsageService(enteredKey: key)
         let ollama = OllamaCloudUsageService(cookie: key)
+        let qoder = QoderUsageService(cookie: key)
         let zai = ZaiUsageService(provider: provider, enteredKey: key)
         let minimax = MiniMaxUsageService(provider: provider, enteredKey: key)
         let volcengine = VolcengineUsageService(enteredKey: key)
@@ -555,6 +566,8 @@ final class UsageStore {
                 raw = await kimi.fetch(source: source)
             case .ollamaCloud:
                 raw = await ollama.fetch()
+            case .qoder:
+                raw = await qoder.fetch()
             case .zai, .glmCoding:
                 raw = await zai.fetch()
             case .minimax, .minimaxCN:
@@ -638,7 +651,7 @@ final class UsageStore {
         case .kimiCode: await kimi.fetch(account: account, token: credentials.accessToken)
         // Nothing else can be signed in to, so nothing else gets here.
         case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine, .qoder:
             .unavailable(account, reason: .loading)
         }
     }

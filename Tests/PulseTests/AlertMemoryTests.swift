@@ -285,7 +285,7 @@ struct AlertMemoryTests {
         for reason: ProviderUsage.Unavailability in [
             .apiKeyMissing, .notSignedIn, .antigravityNotRunning, .grokBotNotIncluded,
             .noLimitsReported, .loading, .codexNotInstalled, .volcengineSignInRequired,
-            .kimiSignInRequired
+            .kimiSignInRequired, .qoderSessionMissing
         ] {
             var memory = AlertMemory()
             for _ in 1...5 {
@@ -298,7 +298,7 @@ struct AlertMemoryTests {
     func badCredentialsAreFailures() {
         for reason: ProviderUsage.Unavailability in [
             .claudeLoginExpired, .cursorLoginExpired, .grokLoginExpired,
-            .kimiLoginExpired, .signedOut, .apiKeyRefused, .serverError
+            .kimiLoginExpired, .qoderSessionExpired, .signedOut, .apiKeyRefused, .serverError
         ] {
             var memory = AlertMemory()
             _ = run(&memory, Self.unavailable(reason))

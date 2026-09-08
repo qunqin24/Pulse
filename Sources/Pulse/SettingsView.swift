@@ -767,9 +767,22 @@ struct SettingsView: View {
             // Off the main thread: this opens a database or two and may ask
             // the keychain, and the settings window should not freeze while it
             // does.
-            let found = await Task.detached(priority: .userInitiated) {
-                BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
-                    try? OllamaSessionCookie.normalize($0)
+            let found: BrowserCookies.Found? = await Task.detached(priority: .userInitiated) {
+                switch account.provider {
+                case .qoder:
+                    let hosts = ["qoder.com", "www.qoder.com", "qoder.com.cn", "www.qoder.com.cn"]
+                    for host in hosts {
+                        if let session = BrowserCookies.session(forHost: host, allowing: browsers, keep: {
+                            try? QoderSessionCookie.normalize($0)
+                        }) {
+                            return session
+                        }
+                    }
+                    return BrowserCookies.Found?.none
+                default:
+                    return BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
+                        try? OllamaSessionCookie.normalize($0)
+                    }
                 }
             }.value
 
@@ -780,7 +793,9 @@ struct SettingsView: View {
                 return
             }
 
-            sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
+            sessionMessage = account.provider == .qoder
+                ? String.localized("No Qoder session found. Sign in at qoder.com first.")
+                : String.localized("No Ollama session found. Sign in at ollama.com first.")
         }
     }
 

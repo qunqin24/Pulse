@@ -164,7 +164,7 @@ enum OAuthLogin {
                     deviceFlow: .standard(code: URL(string: "https://auth.kimi.com/api/oauth/device_authorization")!)
                 )
             case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grokBot, .volcengine:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grokBot, .volcengine, .qoder:
                 nil
             }
         }
