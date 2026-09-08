@@ -173,16 +173,25 @@ final class FloatingPanelController {
             // matched against that order — `PanelHitArea.provider` maps a
             // position to an index, and the enum's order is not what is on
             // screen once anything has been moved.
-            let accounts = settings.shownAccounts
-            guard let account = PanelHitArea.account(
+            // Slots, not accounts: a split provider draws two rings from one
+            // account, so indexing the rail by account count aims the click at
+            // the wrong ring from the split onwards.
+            let slots = RailSlot.rail(
+                for: settings.shownAccounts,
+                isSplit: settings.isSplit,
+                groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+            )
+            guard let slot = PanelHitArea.slot(
                 at: point,
                 edge: placement.edge,
-                accounts: accounts,
+                slots: slots,
                 railTop: placement.railTop,
                 railLeading: placement.railLeading,
                 docked: placement.isDocked
             ) else { return }
-            store.refresh(account)
+            // The refresh is still the account's: both rings of a split
+            // provider come from one reading.
+            store.refresh(slot.account)
         }
     }
 

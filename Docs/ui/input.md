@@ -17,7 +17,7 @@ Two `NSViewRepresentable` backgrounds:
 
 The sliver’s tracking area cannot be the only way `isHovered` gets set: a floating panel dragged onto an edge docks with `isHovered` still false and snaps shut in the hand. `pointerMoved` sets it from the same test that decides when to hide.
 
-`PanelHitArea.stripIsContainedInRail()` asserts the sliver never pokes outside the rail’s hit area (or leave-rail lands on the sliver, which shows the rail, which hides it). Bound is rail capacity / accounts, not `Provider.allCases.count`. Run from `FloatingPanelController.init` once metrics are settled.
+`PanelHitArea.stripIsContainedInRail()` asserts the sliver never pokes outside the rail’s hit area (or leave-rail lands on the sliver, which shows the rail, which hides it). Bound is rail capacity / slots, not `Provider.allCases.count`. Run from `FloatingPanelController.init` once metrics are settled.
 
 ## Drag belongs to the window
 
@@ -30,7 +30,7 @@ The window is handed **two** rects: `grabArea` (rail, or sliver when collapsed) 
 
 ## Ring click vs ring drag
 
-Same window-level path. `FloatingPanel` records the press, marks a drag only after a real `leftMouseDragged`, reports a click on mouse-up otherwise. `PanelHitArea.provider(at:)` accepts only the visible circle; labels and berth gaps stay drag-only.
+Same window-level path. `FloatingPanel` records the press, marks a drag only after a real `leftMouseDragged`, reports a click on mouse-up otherwise. `PanelHitArea.slot(at:)` accepts only the visible circle; labels and berth gaps stay drag-only. It indexes **slots**, not accounts — a split provider draws two rings from one login, so counting accounts aims every click after the split at the wrong ring. The controller builds the same list the panel draws from, through `RailSlot.rail(for:isSplit:groups:)`.
 
 Click starts a provider-scoped refresh. `UsageStore.isRefreshing` : the usage arc **dims but does not move**; a short bright segment travels around. Do not rotate the usage arc (at 0% there is no arc; at 95% a rotated arc looks still; it also takes the gauge away). Travelling mark is usage colour, not white (white is the CLI-activity mark). Hold at least 650ms so a local read still registers. Keep the physical click here; `sendEvent` takes the press before SwiftUI. Default accessibility action can still live on the ring.
 

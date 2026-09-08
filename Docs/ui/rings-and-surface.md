@@ -42,6 +42,18 @@ Claude Code falls out of the same rule: its five-hour and weekly limits are unsc
 
 The percent label under the ring still follows the **outer** limit only. Two figures in that space is a change to `DockLayout.percentTextWidth`, which is a budget the whole rail is measured from.
 
+## One ring per model group
+
+`AppSettings.splitAccounts`, default off, per account, and offered only where `Provider.splitsByModelGroup` is true — Antigravity alone. Its plan carries a Gemini allowance and a separate one for Claude and GPT, reported as two `scope`s of one login. They are independent budgets, so a single ring can only show the busier one and silently drop the other.
+
+**The rail is slots, not accounts.** `RailSlot.rail(for:isSplit:groups:)` is the one place that order is decided, and both the panel's `entries` and `PanelHitArea.slot(at:)` go through it. They have to agree: a ring drawn at one position and refreshed from another is a fault nobody reports clearly. Each slot carries its account plus an optional group; `id` is `account@group`, so SwiftUI keeps the two rings apart.
+
+**A split account keeps its single slot until a reading actually carries more than one group.** Before the first answer there is nothing to split by, and one ring that becomes two a second later beats two empty ones that may never fill. Groups come back in the provider's own reported order, not sorted — that order is what Antigravity's own screen shows.
+
+Both rings are the same account: same icon, same tint, same key, same refresh. Clicking either refreshes the login, because one reading feeds both. What differs is the windows — `windows.filter { $0.scope == group }` — and the title, which appends the group so VoiceOver and the card do not read out the same thing twice.
+
+**The budget moves with it.** `AppSettings.railSlotCount` counts a split account as `provider.modelGroupCount` (a fixed 2, not the groups a reading happens to carry, so the rail does not resize when a provider answers one group short) and feeds `PanelMetrics.makeRoom(for:)`. Off by default for the same reason: a second ring costs a slot, and the rail is the whole of the panel when docked.
+
 ## Activity mark
 
 White arc on the empty ring between icon disc and usage stroke — **or just outside the icon disc when the second ring is on**, see above. Core Animation, not `TimelineView`. Reset `spinning` on disappear. [../refresh-and-data.md](../refresh-and-data.md)

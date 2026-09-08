@@ -69,6 +69,12 @@ So history, money estimate, and activity cannot be built — they need per-model
 
 Antigravity also reports a monthly credit *allowance*, never a balance, which is why `creditBalance` stays nil: an allowance shown there would read as what is left.
 
+## Two allowances, optionally two rings
+
+The plan carries a Gemini allowance and a separate one for Claude and GPT, reported as two `scope`s of one login — the reason `Provider.splitsByModelGroup` exists and names only this provider. The Antigravity pane offers "A ring for each model group", off by default; on, the rail draws one ring per group, both with this provider's icon and both refreshing the same login. The rail-side rules are in [../ui/rings-and-surface.md](../ui/rings-and-surface.md).
+
+`modelGroupCount` is a fixed 2 rather than counted from a reading, so the rail's own budget does not move when a reply arrives one group short.
+
 ## First run
 
 `/Applications/Antigravity.app` or `~/Applications/Antigravity.app`. Not everyone installs into `/Applications`. `Antigravity IDE.app` is deliberately **not** first-run evidence: it is a second product, and the ring it would switch on is the same one — someone with only the IDE turns it on in Settings.

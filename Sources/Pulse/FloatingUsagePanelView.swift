@@ -7,7 +7,11 @@ struct FloatingUsagePanelView: View {
     /// written by the drag handle, so the content mirrors as the panel moves.
     let placement: PanelPlacement
 
-    @State private var selectedAccount: AccountKey?
+    /// Which **ring** the card belongs to, not which account: one account
+     /// can now own two of them. `RailSlot.id` is the account's own id for
+     /// everything that has not been split, so nothing stored before slots
+     /// existed stops matching.
+     @State private var selectedSlot: String?
     /// The card's real laid-out height. Providers report different numbers of
     /// limits, so the card's height isn't knowable up front — and both the
     /// card's placement and the pointer's aim depend on it.
@@ -67,7 +71,7 @@ struct FloatingUsagePanelView: View {
                 // vanishing while another appears in its place.
                 UsageDockView(
                     entries: entries,
-                    selectedAccount: selectedAccount,
+                    selectedSlot: selectedSlot,
                     edge: placement.edge,
                     isDocked: placement.isDocked,
                     isExpanded: isExpanded,
@@ -83,7 +87,7 @@ struct FloatingUsagePanelView: View {
                         UsageDetailCard(
                             usesGlass: settings.usesGlass,
                             usage: selected,
-                            title: settings.label(for: selected.account),
+                            title: selectedTitle ?? "",
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
                             showsForecast: settings.showsForecast,
@@ -111,7 +115,7 @@ struct FloatingUsagePanelView: View {
                 .padding(.top, railTop)
                 .padding(.leading, railLeading)
             }
-            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedAccount)
+            .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedSlot)
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
             // The window owns the drag, so this is where the content hears
             // about it: how much of the panel can be grabbed depends on
@@ -185,29 +189,59 @@ struct FloatingUsagePanelView: View {
     /// Only the providers switched on in settings, so the rail shrinks when
     /// one is turned off.
     private var entries: [RailEntry] {
-        settings.shownAccounts.map { account in
-            let usage = store.usage(for: account)
-            return RailEntry(
-                usage: usage,
-                headline: usage.headlineWindow(preferring: settings.pinnedWindow(for: account)),
-                // Activity is per *provider*: a running CLI belongs to whichever
-                // account it happens to be signed in to, and the transcripts do
-                // not say which. Every account of that provider shows the mark.
-                isRunning: store.isRunning(account.provider),
-                isRefreshing: store.isRefreshing(account),
-                tint: settings.ringTint(for: account),
-                // Nil unless it is switched on *and* the window says enough to
-                // work it out — a reset time on its own is not enough.
-                elapsed: settings.showsWindowClock
-                    ? usage.headlineWindow(preferring: settings.pinnedWindow(for: account))?
-                        .elapsedFraction(at: minute)
-                    : nil,
-                second: settings.showsSecondRing
-                    ? usage.secondWindow(preferring: settings.pinnedWindow(for: account))
-                    : nil,
-                showsRemaining: settings.showsRemaining
+        RailSlot.rail(
+            for: settings.shownAccounts,
+            isSplit: settings.isSplit,
+            groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+        ).map { slot in
+            let usage = store.usage(for: slot.account)
+            return entry(
+                for: slot,
+                usage: slot.group.map { Self.usage(usage, keeping: $0) } ?? usage
             )
         }
+    }
+
+    /// The same reading with only one group's limits in it, so every figure
+    /// downstream — the ring, the card, the second ring — is about that group
+    /// and nothing else.
+    private static func usage(_ usage: ProviderUsage, keeping group: String) -> ProviderUsage {
+        ProviderUsage(
+            account: usage.account,
+            windows: usage.windows.filter { $0.scope == group },
+            observedAt: usage.observedAt,
+            state: usage.state,
+            plan: usage.plan,
+            creditBalance: usage.creditBalance
+        )
+    }
+
+    private func entry(for slot: RailSlot, usage: ProviderUsage) -> RailEntry {
+        let account = slot.account
+        let label = settings.label(for: account)
+        let pinned = settings.pinnedWindow(for: account)
+
+        return RailEntry(
+            usage: usage,
+            headline: usage.headlineWindow(preferring: pinned),
+            // Activity is per *provider*: a running CLI belongs to whichever
+            // account it happens to be signed in to, and the transcripts do
+            // not say which. Every account of that provider shows the mark.
+            isRunning: store.isRunning(account.provider),
+            isRefreshing: store.isRefreshing(account),
+            tint: settings.ringTint(for: account),
+            slot: slot,
+            // The group after the name, so two rings of one provider are told
+            // apart by the one thing that differs between them.
+            title: slot.group.map { "\(label) · \($0)" } ?? label,
+            // Nil unless it is switched on *and* the window says enough to
+            // work it out — a reset time on its own is not enough.
+            elapsed: settings.showsWindowClock
+                ? usage.headlineWindow(preferring: pinned)?.elapsedFraction(at: minute)
+                : nil,
+            second: settings.showsSecondRing ? usage.secondWindow(preferring: pinned) : nil,
+            showsRemaining: settings.showsRemaining
+        )
     }
 
     /// The rail's size for what is actually being shown. The panel window
@@ -243,12 +277,18 @@ struct FloatingUsagePanelView: View {
     private var railLeading: CGFloat { placement.railLeading }
 
     private var selectedUsage: ProviderUsage? {
-        entries.first { $0.usage.account == selectedAccount }?.usage
+        entries.first { $0.id == selectedSlot }?.usage
+    }
+
+    /// The card's heading. A split account's rings each name their group, so
+    /// two cards of one provider are told apart.
+    private var selectedTitle: String? {
+        entries.first { $0.id == selectedSlot }?.title
     }
 
     private var selectedIndex: Int? {
-        guard let selectedAccount else { return nil }
-        return entries.firstIndex { $0.usage.account == selectedAccount }
+        guard let selectedSlot else { return nil }
+        return entries.firstIndex { $0.id == selectedSlot }
     }
 
     /// Where a ring's centre sits **along** the rail, in the coordinate space
@@ -336,9 +376,9 @@ struct FloatingUsagePanelView: View {
     }
 
     /// Opens a provider's details when the pointer arrives on its ring.
-    private func select(_ account: AccountKey) {
-        guard !placement.isDragging, selectedAccount != account else { return }
-        selectedAccount = account
+    private func select(_ entry: RailEntry) {
+        guard !placement.isDragging, selectedSlot != entry.id else { return }
+        selectedSlot = entry.id
 
         // Opening a card is the clearest sign these numbers are being read,
         // which is what the automatic refresh interval paces itself against.
@@ -434,8 +474,8 @@ struct FloatingUsagePanelView: View {
 
     /// Closes the details once the pointer is off the panel entirely.
     private func deselect() {
-        guard selectedAccount != nil else { return }
-        selectedAccount = nil
+        guard selectedSlot != nil else { return }
+        selectedSlot = nil
     }
 }
 
@@ -474,15 +514,15 @@ enum PanelHitArea {
     /// The provider ring under a point in the panel's top-left coordinate
     /// space. Only the circle is clickable: the label and the empty berth keep
     /// their existing meaning as drag surface.
-    static func account(
+    static func slot(
         at point: CGPoint,
         edge: PanelEdge,
-        accounts: [AccountKey],
+        slots: [RailSlot],
         railTop: CGFloat,
         railLeading: CGFloat,
         docked: Bool
-    ) -> AccountKey? {
-        let size = DockLayout.size(for: accounts.count, on: edge.axis, docked: docked)
+    ) -> RailSlot? {
+        let size = DockLayout.size(for: slots.count, on: edge.axis, docked: docked)
         let rail = rail(edge: edge, railSize: size, railTop: railTop, railLeading: railLeading)
         guard rail.contains(point) else { return nil }
 
@@ -491,7 +531,7 @@ enum PanelHitArea {
         let radius = DockLayout.ringDiameter / 2 * 1.08
         let across = DockLayout.ringCentreAcross(on: edge.axis)
 
-        for (index, account) in accounts.enumerated() {
+        for (index, slot) in slots.enumerated() {
             let along = DockLayout.firstRingAlong(docked: docked, on: edge.axis)
                 + CGFloat(index) * DockLayout.ringStep(on: edge.axis)
             let centre = edge.isVertical
@@ -500,7 +540,7 @@ enum PanelHitArea {
 
             let dx = point.x - centre.x
             let dy = point.y - centre.y
-            if dx * dx + dy * dy <= radius * radius { return account }
+            if dx * dx + dy * dy <= radius * radius { return slot }
         }
 
         return nil

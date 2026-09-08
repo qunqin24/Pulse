@@ -56,7 +56,7 @@ final class AppSettings {
             guard extraAccounts != oldValue else { return }
             // Before the change is announced: whoever reacts is about to
             // measure the panel, and the rail is now longer than it was.
-            PanelMetrics.makeRoom(for: allAccounts.count)
+            PanelMetrics.makeRoom(for: railSlotCount)
             let data = try? JSONEncoder().encode(extraAccounts)
             UserDefaults.standard.set(data, forKey: Key.extraAccounts)
             onChange?()
@@ -474,6 +474,47 @@ final class AppSettings {
         }
     }
 
+    /// Accounts whose limits are drawn as one ring per model group, as ids.
+    ///
+    /// Off for everyone by default. Only a provider that actually reports more
+    /// than one group can be split — `Provider.splitsByModelGroup` — and today
+    /// that is Antigravity alone: its plan carries a Gemini allowance and a
+    /// separate one for Claude and GPT, and a single ring can only ever show
+    /// the worse of the two.
+    var splitAccounts: Set<String> {
+        didSet {
+            guard splitAccounts != oldValue else { return }
+            // The rail is about to get longer. Before the change is announced,
+            // so whoever re-measures the panel sees the size it will be.
+            PanelMetrics.makeRoom(for: railSlotCount)
+            UserDefaults.standard.set(Array(splitAccounts), forKey: Key.splitAccounts)
+            onChange?()
+        }
+    }
+
+    func isSplit(_ account: AccountKey) -> Bool {
+        account.provider.splitsByModelGroup && splitAccounts.contains(account.id)
+    }
+
+    func setSplit(_ split: Bool, for account: AccountKey) {
+        var updated = splitAccounts
+        if split { updated.insert(account.id) } else { updated.remove(account.id) }
+        splitAccounts = updated
+    }
+
+    /// How many rings the rail has to have room for.
+    ///
+    /// **Every account, not only the shown ones** — the same rule the count
+    /// this replaces followed, because the panel keeps its maximum frame while
+    /// the rail shrinks inside it. A split account is counted for the groups it
+    /// can produce rather than the groups a reading happens to carry, so the
+    /// budget does not move when a provider answers with one group short.
+    var railSlotCount: Int {
+        allAccounts.reduce(0) { total, account in
+            total + (isSplit(account) ? account.provider.modelGroupCount : 1)
+        }
+    }
+
     /// Called after any change that the AppKit side has to react to — showing
     /// or hiding the panel, or resizing it because the rail got shorter.
     var onChange: (() -> Void)?
@@ -501,6 +542,7 @@ final class AppSettings {
         showsRemaining: Bool = false,
         showsForecast: Bool = false,
         showsSecondRing: Bool = false,
+        splitAccounts: Set<String> = [],
         alertThreshold: AlertThreshold = .default,
         alertsOnReset: Bool = false,
         alertsOnFailure: Bool = false
@@ -527,6 +569,7 @@ final class AppSettings {
         self.showsRemaining = showsRemaining
         self.showsForecast = showsForecast
         self.showsSecondRing = showsSecondRing
+        self.splitAccounts = splitAccounts
         self.alertThreshold = alertThreshold
         self.alertsOnReset = alertsOnReset
         self.alertsOnFailure = alertsOnFailure
@@ -754,6 +797,7 @@ final class AppSettings {
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
             showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
             showsSecondRing: defaults.object(forKey: Key.showsSecondRing) as? Bool ?? false,
+            splitAccounts: Set(defaults.stringArray(forKey: Key.splitAccounts) ?? []),
             alertThreshold: (defaults.object(forKey: Key.alertThreshold) as? Int)
                 .flatMap(AlertThreshold.init(rawValue:)) ?? .default,
             alertsOnReset: defaults.object(forKey: Key.alertsOnReset) as? Bool ?? false,
@@ -766,7 +810,7 @@ final class AppSettings {
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
         PanelMetrics.showForecast(settings.showsForecast)
-        PanelMetrics.makeRoom(for: settings.allAccounts.count)
+        PanelMetrics.makeRoom(for: settings.railSlotCount)
         return settings
     }
 
@@ -853,6 +897,7 @@ final class AppSettings {
         static let showsRemaining = "settings.showsRemaining"
         static let showsForecast = "settings.showsForecast"
         static let showsSecondRing = "settings.showsSecondRing"
+        static let splitAccounts = "settings.splitAccounts"
         static let alertThreshold = "settings.alertThreshold"
         static let alertsOnReset = "settings.alertsOnReset"
         static let alertsOnFailure = "settings.alertsOnFailure"

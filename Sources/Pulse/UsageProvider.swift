@@ -118,6 +118,22 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Whether this provider's limits can be drawn as one ring per model
+    /// group.
+    ///
+    /// Antigravity alone: its plan carries a Gemini allowance and a separate
+    /// one for Claude and GPT, reported as two `scope`s of one login. They are
+    /// independent budgets — spending one says nothing about the other — so a
+    /// single ring can only show the worse of the two and silently drop the
+    /// other. Every other provider reports one pool, or several that are
+    /// facets of one.
+    var splitsByModelGroup: Bool { self == .antigravity }
+
+    /// How many rings a split account can produce. Fixed rather than counted
+    /// from a reading, so the rail's own budget does not move when a provider
+    /// answers with one group short.
+    var modelGroupCount: Int { splitsByModelGroup ? 2 : 1 }
+
     /// Whether a spending history can be shown for this provider at all.
     ///
     /// **Not the same question as `keepsLocalTranscripts`**, which it used to

@@ -344,3 +344,7 @@
 "This account hasn't used anything yet, so there is nothing to chart." = "这个账号还没有产生用量，暂时没有可统计的记录。";
 "Asking %@" = "正在向 %@ 查询";
 "Last 7 days" = "最近 7 天";
+
+/* 按模型分组拆分环 */
+"A ring for each model group" = "按模型分组显示";
+"Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini 与第三方模型的额度相互独立，一个环只能跟随用得多的那一边。";

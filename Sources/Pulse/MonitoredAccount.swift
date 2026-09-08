@@ -42,6 +42,71 @@ struct AccountKey: Hashable, Codable, Sendable, Identifiable {
     }
 }
 
+/// One ring on the rail.
+///
+/// **Not the same thing as an account**, and that is the whole point. A ring
+/// has always been an account, because every provider reported one pool of
+/// limits per login. Antigravity reports two that have nothing to do with each
+/// other — a Gemini allowance and one for Claude and GPT — from a single
+/// login, and folding them into one ring throws away whichever is not the
+/// worse.
+///
+/// So the rail is drawn from slots, and an account contributes one of them or,
+/// where its limits are split by model group, one per group. Everything that
+/// is genuinely about the *account* — the credential, the refresh, the pinned
+/// window, the chosen colour, the settings pane — still keys on `AccountKey`.
+/// Only what is drawn and what is pointed at keys on this.
+struct RailSlot: Hashable, Identifiable, Sendable {
+    let account: AccountKey
+    /// The model group this ring is for, or nil for an unsplit account.
+    let group: String?
+
+    init(_ account: AccountKey, group: String? = nil) {
+        self.account = account
+        self.group = group
+    }
+
+    /// **An account's unsplit slot keeps the account's own id**, so a stored
+    /// order, a hover, or a selection written before this existed still
+    /// matches. The suffix cannot collide with an added account's, which uses
+    /// `#`, because a group is only ever appended to an id that is already
+    /// whole.
+    var id: String { group.map { "\(account.id)@\($0)" } ?? account.id }
+
+    /// The rail, in order. **One place**, because the panel draws from it and
+    /// the click handler indexes into it — and a ring that is drawn at one
+    /// position and refreshed from another is the kind of fault nobody
+    /// reports clearly.
+    ///
+    /// A split account keeps its single slot until a reading actually carries
+    /// more than one group: before the first answer there is nothing to split
+    /// by, and one ring that becomes two a second later is better than two
+    /// empty ones that may never fill.
+    static func rail(
+        for accounts: [AccountKey],
+        isSplit: (AccountKey) -> Bool,
+        groups: (AccountKey) -> [String]
+    ) -> [RailSlot] {
+        accounts.flatMap { account -> [RailSlot] in
+            guard isSplit(account) else { return [RailSlot(account)] }
+            let groups = groups(account)
+            guard groups.count > 1 else { return [RailSlot(account)] }
+            return groups.map { RailSlot(account, group: $0) }
+        }
+    }
+
+    /// The model groups a reading carries, in the order the provider reported
+    /// them — not sorted, because that order is the provider's own and is what
+    /// its own settings screen shows.
+    static func modelGroups(of usage: ProviderUsage) -> [String] {
+        var seen: Set<String> = []
+        return usage.windows.compactMap { window in
+            guard let scope = window.scope, seen.insert(scope).inserted else { return nil }
+            return scope
+        }
+    }
+}
+
 /// An account beyond the first, which exists only because Pulse was signed in
 /// to it. The first account of every provider is implicit — it is whatever
 /// that tool already stored — so only these need remembering.

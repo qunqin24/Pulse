@@ -253,6 +253,12 @@ struct RailEntry: Identifiable, Equatable {
     /// How much of the headline window's clock has run, or nil to leave the
     /// outer arc off — either because the setting is off, or because this
     /// window doesn't report enough to work it out.
+    /// Which ring this is. An unsplit account's slot keeps the account's own
+    /// id, so nothing stored before slots existed stops matching.
+    var slot: RailSlot
+    /// What the card calls it: the account's label, and the model group after
+    /// it where an account has been split into one ring per group.
+    var title: String
     var elapsed: Double?
     /// The next-fullest limit, when the second ring is switched on and this
     /// provider reports more than one.
@@ -262,7 +268,7 @@ struct RailEntry: Identifiable, Equatable {
     /// from this and doesn't otherwise see the settings.
     var showsRemaining: Bool = false
 
-    var id: String { usage.account.id }
+    var id: String { slot.id }
 }
 
 /// The rail, in whatever state it is currently in — full, collapsed to a
@@ -274,7 +280,7 @@ struct RailEntry: Identifiable, Equatable {
 /// animated, with the rings fading in once it has opened enough to hold them.
 struct UsageDockView: View {
     let entries: [RailEntry]
-    let selectedAccount: AccountKey?
+    let selectedSlot: String?
     let edge: PanelEdge
     /// Fused to a screen edge, or standing free on the desktop. Only the
     /// silhouette changes: docked it flares into the edge, floating it closes
@@ -290,7 +296,7 @@ struct UsageDockView: View {
     /// Called as the pointer arrives on a provider's ring. The details flyout
     /// follows the pointer rather than a click, so this is what drives
     /// selection. Leaving is handled by `PanelPointerWatcher`, not here.
-    let onEnter: (AccountKey) -> Void
+    let onEnter: (RailEntry) -> Void
     /// The accessibility/default action for a provider ring. Physical clicks
     /// are resolved by `FloatingPanel`, which owns mouse input ahead of SwiftUI.
     var onRefresh: (AccountKey) -> Void = { _ in }
@@ -377,11 +383,11 @@ struct UsageDockView: View {
             ForEach(entries) { entry in
                 UsageDockItem(
                     entry: entry,
-                    isSelected: selectedAccount == entry.usage.account,
+                    isSelected: selectedSlot == entry.slot.id,
                     isInteractive: isExpanded,
                     showsPercentage: DockLayout.showsPercentages(on: edge.axis),
-                    onEnter: { onEnter(entry.usage.account) },
-                    onRefresh: { onRefresh(entry.usage.account) }
+                    onEnter: { onEnter(entry) },
+                    onRefresh: { onRefresh(entry.slot.account) }
                 )
                 // **Every item takes exactly the length it was budgeted.**
                 // `DockLayout` decides the rail's size before SwiftUI lays
@@ -438,7 +444,10 @@ private struct UsageDockItem: View {
             if isInteractive { PointerEntryReporter(onEnter: onEnter) }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(String.localized("\(usage.provider.displayName) usage"))
+        // The entry's title, not the provider's name: a split provider draws
+        // two rings from one login, and named by the provider alone VoiceOver
+        // reads out the same thing twice.
+        .accessibilityLabel(String.localized("\(entry.title) usage"))
         .accessibilityValue(accessibilityValue)
         .accessibilityHint(String.localized("Activate to refresh usage."))
         .accessibilityAddTraits(.isButton)
@@ -720,9 +729,14 @@ struct DockBerthShape: Shape {
 #Preview("Dock") {
     UsageDockView(
         entries: Provider.allCases.map {
-            RailEntry(usage: .unavailable($0, reason: .loading), headline: nil)
+            RailEntry(
+                usage: .unavailable($0, reason: .loading),
+                headline: nil,
+                slot: RailSlot(AccountKey($0)),
+                title: $0.displayName
+            )
         },
-        selectedAccount: AccountKey(.claudeCode),
+        selectedSlot: RailSlot(AccountKey(.claudeCode)).id,
         edge: .right,
         onEnter: { _ in }
     )

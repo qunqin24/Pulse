@@ -802,6 +802,15 @@ struct SettingsView: View {
 
                 ringWindowRow(for: account)
 
+                // Only where there is more than one budget to split. Every
+                // other provider reports one pool, and a switch that promises
+                // a second ring it can never draw is worse than no switch.
+                if provider.splitsByModelGroup {
+                    SettingsRowDivider()
+
+                    splitRow(for: account)
+                }
+
                 SettingsRowDivider()
 
                 SettingsRow(
@@ -1037,6 +1046,25 @@ struct SettingsView: View {
             .labelsHidden()
             .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
             .disabled(usage.windows.isEmpty)
+        }
+    }
+
+    /// One ring per model group, for the one provider that has more than one.
+    ///
+    /// Off by default. It costs a slot on the rail, and the rail is the whole
+    /// of the panel when it is docked — a user who has not asked for a second
+    /// ring should not find the first one narrower for it.
+    private func splitRow(for account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("A ring for each model group"),
+            subtitle: String.localized("Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two.")
+        ) {
+            Toggle("", isOn: Binding(
+                get: { settings.isSplit(account) },
+                set: { settings.setSplit($0, for: account) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
         }
     }
 
