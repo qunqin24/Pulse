@@ -12,7 +12,7 @@ This is not a catalogue of secrets. Client ids below are public (they ship in ev
 |---|---|---|
 | Pasted API key or Ollama session cookie | `keys.dat` (`APIKeyStore`) | Nobody. User pastes or re-reads the browser. |
 | Copilot GitHub token | `keys.dat` as well (`keepsOwnCredential`) | Sign in again. Device tokens here are not the CLI refresh path. |
-| Extra-account logins (Claude Code, Codex, Grok, Grok Bot) | `accounts.dat` (`AccountCredentialStore`) | `UsageStore.fetchAdded` via `OAuthLogin.refresh` for the three OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. |
+| Extra-account logins (Claude Code, Codex, Grok, Grok Bot, Kimi Code) | `accounts.dat` (`AccountCredentialStore`) | `UsageStore.fetchAdded` via `OAuthLogin.refresh` for the OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. Kimi Code’s **primary** subscription login lives here too. |
 | Kimi Code subscription login (primary) | `accounts.dat` as well, keyed by the primary `kimiCode` account | `KimiCodeUsageService` via `OAuthLogin.refresh`. Access ~15 minutes; refresh ~30 days and **rotates**. A pasted console key still lives in `keys.dat` and wins when both exist. |
 
 Both files are AES-GCM boxes in Pulse’s Application Support folder, owner-only, key derived from this Mac rather than stored. `LocalSecrets` is shared so there is one copy of the crypto; a different derived key per purpose means a box from one store cannot be opened by the other.
@@ -134,7 +134,7 @@ RFC 8628 against `auth.kimi.com`. Public client id from the Kimi Code CLI (`17e5
 
 Tokens live in `accounts.dat` under `AccountKey(.kimiCode)`, not `keys.dat`, because this is a full OAuth login with a rotating refresh token and the paste field already occupies that store. Pulse does **not** read or write `~/.kimi-code/credentials/kimi-code.json`. Copying that refresh token would sign the CLI out the next time either side renewed.
 
-A pasted console key still wins. Extra accounts are not offered.
+A pasted console key still wins. Extra accounts use the same device-code login and never the pasted key.
 
 ## Grok Bot extras — Cursor web login, not OAuth
 

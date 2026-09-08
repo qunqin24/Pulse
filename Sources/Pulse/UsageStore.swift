@@ -419,7 +419,7 @@ final class UsageStore {
             // all. Every one of these went over a newer reading.
             var fetchedExtras: [(String, ProviderUsage, ProviderUsage)] = []
             for account in extras {
-                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
+                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot, kimi: kimi)
                 guard pass == self.currentPass else { return }
                 fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw), raw))
             }
@@ -534,10 +534,10 @@ final class UsageStore {
         let minimax = MiniMaxUsageService(provider: provider, enteredKey: key)
         let volcengine = VolcengineUsageService(enteredKey: key)
 
-        Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
+        Task { [codex, claudeCode, antigravity, cursor, grok, grokBot, kimi] in
             let raw: ProviderUsage
             if !account.isPrimary {
-                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
+                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot, kimi: kimi)
             } else {
             switch provider {
             case .codex:
@@ -607,7 +607,8 @@ final class UsageStore {
         claudeCode: ClaudeCodeUsageService,
         codex: CodexUsageService,
         grok: GrokUsageService,
-        grokBot: GrokBotUsageService
+        grokBot: GrokBotUsageService,
+        kimi: KimiCodeUsageService
     ) async -> ProviderUsage {
         guard var credentials = AccountCredentialStore.credentials(for: account) else {
             return .unavailable(account, reason: .signedOut)
@@ -633,8 +634,9 @@ final class UsageStore {
         case .codex: await codex.fetch(account: account, credentials: credentials)
         case .grok: await grok.fetch(account: account, token: credentials.accessToken)
         case .grokBot: await grokBot.fetch(account: account, token: credentials.accessToken)
+        case .kimiCode: await kimi.fetch(account: account, token: credentials.accessToken)
         // Nothing else can be signed in to, so nothing else gets here.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+        case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
             .unavailable(account, reason: .loading)
         }

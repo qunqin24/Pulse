@@ -19,7 +19,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.antigravity` | Antigravity | `antigravity` | Loopback language server while the app is open | no | one, named | no | `Antigravity.app` |
 | `.cursor` | Cursor | `cursor` | Cookie built from the editor’s stored token | no (deliberate) | one, named | no | Cursor `state.vscdb` login |
 | `.openCodeGo` | OpenCode Go | `opencode` | Pasted key, else OpenCode’s `auth.json` | no | pasted / found key | no | OpenCode stored key |
-| `.kimiCode` | Kimi Code | `kimi` | Pasted key, or Pulse device-code login | no | pasted / sign-in | no | none — stays off until switched on |
+| `.kimiCode` | Kimi Code | `kimi` | Pasted key, or Pulse device-code login | yes | pasted / sign-in | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
 | `.glmCoding` | 智谱 | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
@@ -104,7 +104,7 @@ An added Grok account is not shown the CLI-login row: `fetchAdded` never touches
 
 ### Extra accounts
 
-`supportsMultipleAccounts` is **Claude Code, Codex, Grok, and Grok Bot** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift).
+`supportsMultipleAccounts` is **Claude Code, Codex, Grok, Grok Bot, and Kimi Code** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift).
 
 A provider’s first account id is the provider’s raw value. That is the migration: stored preferences and cache files keep matching. Making an upgrade look like a fresh install has already cost a release.
 

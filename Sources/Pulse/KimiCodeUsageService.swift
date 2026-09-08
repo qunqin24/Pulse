@@ -30,74 +30,83 @@ struct KimiCodeUsageService: Sendable {
 
     func fetch() async -> ProviderUsage {
         if let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) {
-            return await fetch(token: key, refused: .apiKeyRefused)
+            return await fetch(token: key, refused: .apiKeyRefused, account: AccountKey(.kimiCode))
         }
-        return await fetchSignedIn()
+        return await fetchSignedIn(AccountKey(.kimiCode), missing: .kimiSignInRequired, expired: .kimiLoginExpired)
+    }
+
+    /// An account Pulse signed in to itself. Never looks at a pasted key —
+    /// that key belongs to the primary, which is a different subscription.
+    func fetch(account: AccountKey, token: String) async -> ProviderUsage {
+        await fetch(token: token, refused: .signedOut, account: account)
     }
 
     /// Pulse's own login, renewed here because nothing else will. The access
     /// token lasts about fifteen minutes (measured); the adaptive interval
     /// can be longer than that, so a pass that does not renew is a pass that
     /// reports signed-out for a still-valid account.
-    private func fetchSignedIn() async -> ProviderUsage {
-        let account = AccountKey(.kimiCode)
+    private func fetchSignedIn(
+        _ account: AccountKey,
+        missing: ProviderUsage.Unavailability,
+        expired: ProviderUsage.Unavailability
+    ) async -> ProviderUsage {
         guard var credentials = AccountCredentialStore.credentials(for: account) else {
-            return .unavailable(.kimiCode, reason: .kimiSignInRequired)
+            return .unavailable(account, reason: missing)
         }
 
         if !credentials.isFresh {
-            guard let renewed = await renew(credentials) else {
-                return .unavailable(.kimiCode, reason: .kimiLoginExpired)
+            guard let renewed = await renew(credentials, for: account) else {
+                return .unavailable(account, reason: expired)
             }
             credentials = renewed
         }
 
-        let first = await fetch(token: credentials.accessToken, refused: .kimiLoginExpired)
-        if case .unavailable(.kimiLoginExpired) = first.state {
+        let first = await fetch(token: credentials.accessToken, refused: expired, account: account)
+        if case .unavailable(let reason) = first.state, reason == expired {
             // Still marked fresh, but the host refused it — clock skew, or a
             // revocation. One renewal is the difference between "sign in
             // again" and a token that had a few seconds left.
-            guard let renewed = await renew(credentials) else { return first }
-            return await fetch(token: renewed.accessToken, refused: .kimiLoginExpired)
+            guard let renewed = await renew(credentials, for: account) else { return first }
+            return await fetch(token: renewed.accessToken, refused: expired, account: account)
         }
         return first
     }
 
-    private func renew(_ credentials: AccountCredentials) async -> AccountCredentials? {
+    private func renew(_ credentials: AccountCredentials, for account: AccountKey) async -> AccountCredentials? {
         guard let renewed = try? await OAuthLogin.refresh(credentials, for: .kimiCode) else {
             return nil
         }
-        AccountCredentialStore.renewed(renewed, for: AccountKey(.kimiCode))
+        AccountCredentialStore.renewed(renewed, for: account)
         return renewed
     }
 
-    private func fetch(token: String, refused: ProviderUsage.Unavailability) async -> ProviderUsage {
+    private func fetch(token: String, refused: ProviderUsage.Unavailability, account: AccountKey) async -> ProviderUsage {
         var request = URLRequest(url: Self.endpoint)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
-            return .unavailable(.kimiCode, reason: .unreachable)
+            return .unavailable(account, reason: .unreachable)
         }
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(.kimiCode, reason: refused)
-        case 429: return .unavailable(.kimiCode, reason: .rateLimited)
-        default: return .unavailable(.kimiCode, reason: .serverError)
+        case 401, 403: return .unavailable(account, reason: refused)
+        case 429: return .unavailable(account, reason: .rateLimited)
+        default: return .unavailable(account, reason: .serverError)
         }
 
         guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            return .unavailable(.kimiCode, reason: .unreadableReply)
+            return .unavailable(account, reason: .unreadableReply)
         }
 
         let windows = Self.windows(from: reply)
         guard !windows.isEmpty else {
-            return .unavailable(.kimiCode, reason: .noLimitsReported)
+            return .unavailable(account, reason: .noLimitsReported)
         }
 
         return ProviderUsage(
-            account: AccountKey(.kimiCode),
+            account: account,
             windows: windows,
             observedAt: Date(),
             state: .live,

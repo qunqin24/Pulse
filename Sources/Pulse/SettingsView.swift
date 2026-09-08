@@ -48,10 +48,9 @@ struct SettingsView: View {
     @State private var githubTask: Task<Void, Never>?
     @State private var githubError: String?
     /// Bumped after Kimi Code's Pulse-owned login is written or forgotten, so
-    /// the Connection row redraws. `AccountCredentialStore` is a file, not
+    /// the Accounts row redraws. `AccountCredentialStore` is a file, not
     /// something SwiftUI can observe.
     @State private var kimiLoginTick = 0
-    @State private var kimiError: String?
     /// What the last look through the browsers found.
     @State private var sessionMessage: String?
     /// Held so it can be called off. A device-code sign-in polls for fifteen
@@ -1279,71 +1278,6 @@ struct SettingsView: View {
                 }
             }
 
-            if account.provider == .kimiCode, account.isPrimary {
-                // Subscription sign-in, not a pasted key. The same endpoint
-                // accepts both; the key field below is for anyone who already
-                // has one. Consent names Kimi Code, not Pulse.
-                // `kimiLoginTick` is the observation; the file itself is not.
-                let signedIn = {
-                    _ = kimiLoginTick
-                    return AccountCredentialStore.credentials(for: account) != nil
-                }()
-                SettingsRow(
-                    String.localized("Kimi Code account"),
-                    subtitle: kimiError
-                        ?? (signedIn
-                            ? (savedKey.isEmpty
-                                ? String.localized("Signed in. Pulse holds a login for this Mac.")
-                                : String.localized("Signed in. The API key below is used instead."))
-                            : String.localized("Opens Kimi Code's own page. Pulse only reads usage."))
-                ) {
-                    if signingIn == .kimiCode {
-                        Button(String.localized("Cancel")) {
-                            signInTask?.cancel()
-                            signInTask = nil
-                            signingIn = nil
-                            devicePrompt = nil
-                            kimiError = nil
-                        }
-                    } else if signedIn {
-                        Button(String.localized("Sign out")) {
-                            _ = AccountCredentialStore.set(nil, for: account)
-                            kimiLoginTick += 1
-                            kimiError = nil
-                            store.refresh(account)
-                        }
-                    } else {
-                        Button(String.localized("Sign in…")) {
-                            signIn(to: .kimiCode, addingAccount: false)
-                        }
-                    }
-                }
-
-                if signingIn == .kimiCode, let devicePrompt {
-                    SettingsRowDivider()
-                    SettingsRow(
-                        String.localized("Code"),
-                        subtitle: devicePrompt.prefilled
-                            ? String.localized("Already on the page. Sign in there first if asked, then approve it.")
-                            : String.localized("Copied. Sign in there first if asked, then paste it.")
-                    ) {
-                        HStack(spacing: 10) {
-                            Text(devicePrompt.userCode)
-                                .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                                .textSelection(.enabled)
-
-                            Button(String.localized("Copy")) { copy(devicePrompt.userCode) }
-
-                            Button(String.localized("Open page")) {
-                                NSWorkspace.shared.open(devicePrompt.verificationURL)
-                            }
-                        }
-                    }
-                }
-
-                SettingsRowDivider()
-            }
-
             // **Its own `if`, not the tail of that chain.** A provider can want
             // both a route picker *and* a credential — Volcengine does: the
             // `arkcli` route needs nothing pasted and the signed-endpoint route
@@ -1463,6 +1397,47 @@ struct SettingsView: View {
         return account.isPrimary && account.provider.soleRoute != nil
     }
 
+    private var kimiSignedIn: Bool {
+        _ = kimiLoginTick
+        return AccountCredentialStore.credentials(for: AccountKey(.kimiCode)) != nil
+    }
+
+    /// The primary Kimi Code subscription, signed in the same way Codex extras
+    /// are: a device-code button in Accounts, not a key in Connection.
+    @ViewBuilder
+    private func kimiPrimaryAccountRow(_ account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("Kimi Code account"),
+            subtitle: signInError
+                ?? (kimiSignedIn
+                    ? (savedKey.isEmpty
+                        ? String.localized("Signed in. Pulse holds a login for this Mac.")
+                        : String.localized("Signed in. The API key in Connection is used instead."))
+                    : String.localized("Opens Kimi Code's own page. Pulse only reads usage."))
+        ) {
+            if signingIn == .kimiCode, !kimiSignedIn {
+                Button(String.localized("Cancel")) {
+                    signInTask?.cancel()
+                    signInTask = nil
+                    signingIn = nil
+                    devicePrompt = nil
+                    signInError = nil
+                }
+            } else if kimiSignedIn {
+                Button(String.localized("Sign out")) {
+                    _ = AccountCredentialStore.set(nil, for: account)
+                    kimiLoginTick += 1
+                    signInError = nil
+                    store.refresh(account)
+                }
+            } else {
+                Button(String.localized("Sign in…")) {
+                    signIn(to: .kimiCode, addingAccount: false)
+                }
+            }
+        }
+    }
+
     /// Signing in to another subscription of the same provider, and getting
     /// rid of one.
     ///
@@ -1475,6 +1450,17 @@ struct SettingsView: View {
         if account.provider.supportsMultipleAccounts {
             SettingsGroup(String.localized("Accounts")) {
                 if account.isPrimary {
+                    if account.provider == .kimiCode {
+                        kimiPrimaryAccountRow(account)
+                    }
+
+                    // Codex-shaped extras. Kimi hides this until the primary
+                    // subscription is signed in, so the first Sign in… cannot
+                    // be mistaken for adding a second ring.
+                    if account.provider != .kimiCode || kimiSignedIn {
+                        if account.provider == .kimiCode {
+                            SettingsRowDivider()
+                        }
                     SettingsRow(
                         String.localized("Add another account"),
                         // The one thing someone should know before they start:
@@ -1491,6 +1477,7 @@ struct SettingsView: View {
                                 devicePrompt = nil
                             }
                         }
+                    }
                     }
 
                     // While a device-code sign-in is waiting, the code is the
@@ -1618,11 +1605,7 @@ struct SettingsView: View {
     /// holds the tokens the same way, but there is no second ring to create.
     private func signIn(to provider: Provider, addingAccount: Bool = true) {
         signingIn = provider
-        if addingAccount {
-            signInError = nil
-        } else {
-            kimiError = nil
-        }
+        signInError = nil
 
         signInTask = Task {
             defer {
@@ -1679,24 +1662,19 @@ struct SettingsView: View {
                 } else {
                     let primary = AccountKey(provider)
                     guard AccountCredentialStore.set(credentials, for: primary) else {
-                        kimiError = String.localized("Couldn't save the login on this Mac.")
+                        signInError = String.localized("Couldn't save the login on this Mac.")
                         return
                     }
                     kimiLoginTick += 1
                     store.refresh(primary)
                 }
             } catch let failure as OAuthLogin.Failure {
-                if !Task.isCancelled {
-                    if addingAccount { signInError = failure.message } else { kimiError = failure.message }
-                }
+                if !Task.isCancelled { signInError = failure.message }
             } catch is CancellationError {
                 // Cancelling is not a failure, and nothing about it belongs in
                 // a pane that may already be showing the next attempt.
             } catch {
-                if !Task.isCancelled {
-                    let message = String.localized("Sign-in was cancelled.")
-                    if addingAccount { signInError = message } else { kimiError = message }
-                }
+                if !Task.isCancelled { signInError = String.localized("Sign-in was cancelled.") }
             }
         }
     }

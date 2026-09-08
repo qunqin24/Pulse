@@ -2,7 +2,7 @@
 
 Service: [`KimiCodeUsageService.swift`](../../Sources/Pulse/KimiCodeUsageService.swift). Sign-in: [authentication.md](authentication.md).
 
-Extra accounts are not supported. `keepsLocalTranscripts` is false. No first-run detection: a subscription login Pulse has never driven, and no pasted key, stays off until switched on in Settings.
+Extra accounts are supported, same device-code path as Codex extras. `keepsLocalTranscripts` is false. No first-run detection: a subscription login Pulse has never driven, and no pasted key, stays off until switched on in Settings.
 
 ## Credential
 
@@ -13,7 +13,7 @@ Two, same endpoint, in this order:
 
 A subscriber who never creates a console key uses (2). Someone who already pasted a key keeps using it.
 
-Never signed in and no key: `.kimiSignInRequired`. Pulse’s login will not refresh: `.kimiLoginExpired`. A pasted key the host refuses stays `.apiKeyRefused`.
+Never signed in and no key: `.kimiSignInRequired`. Pulse’s login will not refresh: `.kimiLoginExpired`. A pasted key the host refuses stays `.apiKeyRefused`. An extra account whose login is gone is `.signedOut`.
 
 ## Route
 

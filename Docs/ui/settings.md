@@ -46,4 +46,4 @@ A **Reset order** row closes the group, disabled unless `hasCustomOrder` — whi
 
 A first account that needs a credential Pulse hasn’t got is seeded with the reason, not `.loading`. `loadAPIKeys` rewrites that only over a placeholder.
 
-Extra-account UI is only for `supportsMultipleAccounts` (Claude Code, Codex, Grok, Grok Bot). Kimi Code’s subscription sign-in is on the **primary** pane, next to the optional API key field. How sign-in works: [../providers/README.md](../providers/README.md).
+Extra-account UI is only for `supportsMultipleAccounts` (Claude Code, Codex, Grok, Grok Bot, Kimi Code). Kimi Code also signs the **primary** subscription in from that same Accounts group; the API key stays under Connection and is optional. How sign-in works: [../providers/README.md](../providers/README.md).

@@ -59,4 +59,4 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no linter. **`
 
 ## Current facts (verify in code if they matter)
 
-Fifteen `Provider` cases. Extra accounts: Claude Code, Codex, Grok, Grok Bot (`supportsMultipleAccounts`). Adaptive refresh is a **one-shot** timer, **2–30 minutes** (`AdaptiveRefresh.floor` 120s / `ceiling` 1800s) — not a 60s loop. Liquid Glass drag: historical “material swallows input” diagnosis is **uncertain**; current approach is a hit-testable `PanelSurface` plus window `sendEvent`. Real-input verification is not claimed. Settings still say to drag by a ring while glass is on.
+Fifteen `Provider` cases. Extra accounts: Claude Code, Codex, Grok, Grok Bot, Kimi Code (`supportsMultipleAccounts`). Adaptive refresh is a **one-shot** timer, **2–30 minutes** (`AdaptiveRefresh.floor` 120s / `ceiling` 1800s) — not a 60s loop. Liquid Glass drag: historical “material swallows input” diagnosis is **uncertain**; current approach is a hit-testable `PanelSurface` plus window `sendEvent`. Real-input verification is not claimed. Settings still say to drag by a ring while glass is on.

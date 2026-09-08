@@ -51,7 +51,7 @@ Pulse 是一个停靠在屏幕边缘的小巧悬浮监视器。它展示各服�
 - **原生质感**：提供沉稳耐看的纯黑底板，macOS 26+ 更可选原生 **Liquid Glass（流动玻璃）** 材质。
 
 ### 多账号管理与本地消费账本
-- **多账号并行**：支持同一服务绑定多个订阅（Claude Code、Codex、Grok、Grok Bot），并排查看并自定义标签。
+- **多账号并行**：支持同一服务绑定多个订阅（Claude Code、Codex、Grok、Grok Bot、Kimi Code），并排查看并自定义标签。
 - **本地消费历史**：直接解析本地 CLI 会话日志，基于官方公开 API 价格折算历史总消费，并估算限额窗口的实际价值。
 - **十五个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、Z.ai、GLM Coding Plan、MiniMax（国际与国内），以及火山引擎。
 - **可脚本化**：`Pulse --json` 输出最近一次读数——套餐、每条限额、重置时间，以及数字有多旧——可接 tmux、sketchybar、Raycast 或 shell 提示符。它只读缓存不发请求，高频轮询也不花代价。

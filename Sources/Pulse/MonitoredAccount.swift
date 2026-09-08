@@ -153,12 +153,12 @@ extension Provider {
         // Grok Bot is signed in to through Cursor's own login page rather
         // than by OAuth — a second allowance is a second Cursor account. See
         // `CursorWebLogin`.
-        case .claudeCode, .codex, .grok, .grokBot: true
+        case .claudeCode, .codex, .grok, .grokBot, .kimiCode: true
         // **Cursor itself is not on this list, and that is not an oversight.**
         // The same sign-in would work, but Cursor's usage summary is read
         // from the editor's own stored login and a second account has no
         // editor behind it. Grok Bot needs nothing but the token.
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+        case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine: false
         }
     }

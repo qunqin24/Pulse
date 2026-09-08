@@ -260,7 +260,7 @@
 "Kimi Code account" = "Kimi Code account";
 "Opens Kimi Code's own page. Pulse only reads usage." = "Opens Kimi Code's own page. Pulse only reads usage.";
 "Signed in. Pulse holds a login for this Mac." = "Signed in. Pulse holds a login for this Mac.";
-"Signed in. The API key below is used instead." = "Signed in. The API key below is used instead.";
+"Signed in. The API key in Connection is used instead." = "Signed in. The API key in Connection is used instead.";
 "From the Kimi Code console. Optional if you sign in. Stored encrypted on this Mac." = "From the Kimi Code console. Optional if you sign in. Stored encrypted on this Mac.";
 "Sign in to Kimi Code in Settings, or paste an API key." = "Sign in to Kimi Code in Settings, or paste an API key.";
 "Kimi Code's saved login expired. Sign in again in Settings." = "Kimi Code's saved login expired. Sign in again in Settings.";
