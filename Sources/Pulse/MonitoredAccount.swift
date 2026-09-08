@@ -89,13 +89,20 @@ struct RailSlot: Hashable, Identifiable, Sendable {
     ) -> [RailSlot] {
         accounts.flatMap { account -> [RailSlot] in
             guard isSplit(account) else { return [RailSlot(account)] }
-            // Clamped to what the rail budgeted for. `railSlotCount` reserves
-            // `modelGroupCount` per split account and `PanelMetrics` sizes the
-            // rail from that, so a provider that one day reports a third scope
-            // would draw past the end of the rail and have it sliced off —
-            // which is what happened the first time a seventh account existed.
-            let groups = groups(account).prefix(account.provider.modelGroupCount)
-            guard groups.count > 1 else { return [RailSlot(account)] }
+            let groups = groups(account)
+
+            // More groups than the rail budgeted for: stay whole. `railSlotCount`
+            // reserves `modelGroupCount` per split account and `PanelMetrics`
+            // sizes the rail from that, so drawing a third would run past the end
+            // of the rail and have it sliced off — what happened the first time a
+            // seventh account existed. Taking the first two instead would file
+            // the third group's limits under no ring at all, which is the silent
+            // loss `modelGroups(of:)` refuses two lines below. One ring showing
+            // the busiest of three is worse than two rings; it is not worse than
+            // a limit nobody can see.
+            guard groups.count > 1, groups.count <= account.provider.modelGroupCount else {
+                return [RailSlot(account)]
+            }
             return groups.map { RailSlot(account, group: $0) }
         }
     }

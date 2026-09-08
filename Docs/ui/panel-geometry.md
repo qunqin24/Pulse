@@ -43,7 +43,7 @@ A floating landing works out its **own** side rather than reading `placement.edg
 
 ## Flare, sliver, labels, scale
 
-- `DockLayout.endPadding(docked:)`: floating loses the flare’s worth of padding so *visible* breathing room matches docked. Anything measuring the rail (ring centres, `PanelHitArea.account`) must be told docked vs not.
+- `DockLayout.endPadding(docked:)`: floating loses the flare’s worth of padding so *visible* breathing room matches docked. Anything measuring the rail (ring centres, `PanelHitArea.slot`) must be told docked vs not.
 - Auto-collapse to a 6pt sliver (`AppSettings.autoCollapse`, default on) **only while docked**. Off the edge it stays open. The sliver **is** `DockBerthShape` at `openness` 0 (`animatableData`), not a second view. Layout stays at full rail size so the card’s geometry does not change. Rings keep tracking areas only while expanded (`isInteractive`).
 - The sliver takes usage colour past the warning threshold.
 - `sideRailShowsPercentages` default on; `topRailShowsPercentages` default off. Width stays `DockLayout.width` either way (flare/corners). Both flags live on `PanelMetrics` and in `.id(...)`.

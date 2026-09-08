@@ -116,6 +116,11 @@ struct FloatingUsagePanelView: View {
                 .padding(.leading, railLeading)
             }
             .animation(.spring(response: 0.34, dampingFraction: 0.82), value: selectedSlot)
+            // The window's own rects are measured from the rail's length, and
+            // that sum is only redone when something asks for it. A reading
+            // that splits an account into two rings changes the length with no
+            // setting behind it, so it has to ask.
+            .onChange(of: entries.count) { placement.railLengthChanged() }
             .animation(.spring(response: 0.32, dampingFraction: 0.86), value: isExpanded)
             // The window owns the drag, so this is where the content hears
             // about it: how much of the panel can be grabbed depends on

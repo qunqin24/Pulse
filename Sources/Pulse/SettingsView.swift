@@ -19,13 +19,16 @@ struct SettingsView: View {
     /// Read from the CLIs' own transcripts, which takes long enough on a cold
     /// start to be worth holding on to while the window is open.
     @State private var ledgers: [Provider: UsageLedger] = [:]
-    /// Providers whose history could not be read this time round.
+    /// How each provider's last history read went — kept beside the ledger
+    /// rather than folded into it.
     ///
-    /// A failed read and an account that has never been used both arrive as an
-    /// empty ledger, and they must not be said the same way: telling somebody
-    /// their account has no usage — beside a ring that may be showing 80% —
-    /// because the Wi-Fi dropped is the app inventing a reading.
-    @State private var unreadableHistory: Set<Provider> = []
+    /// An empty chart has three causes and they must not be said the same way:
+    /// telling somebody their account has no usage, because the Wi-Fi dropped,
+    /// beside a ring showing 80%, is the app inventing a reading — and so is
+    /// telling them the service failed when no key was ever pasted. Written on
+    /// **every** path that touches `ledgers`, so it cannot describe a read
+    /// other than the most recent one.
+    @State private var historyReads: [Provider: ZaiUsageService.HistoryRead] = [:]
     @State private var codexAccount: CodexAccountUsage?
     @State private var loadingHistory: Provider?
     /// The key field's contents. Seeded from the store when the pane opens;
@@ -783,6 +786,9 @@ struct SettingsView: View {
         store.loadAPIKeys()
         // And a key is only worth entering if something tries it now.
         store.refresh(account)
+        // Including the history, which otherwise keeps saying there is no key
+        // until the pane is left and come back to.
+        Task { await loadHistory() }
     }
 
     private func accountPane(_ account: AccountKey) -> some View {
@@ -977,7 +983,7 @@ struct SettingsView: View {
                         ? nil
                         : Self.emptyHistoryReason(
                             for: account.provider,
-                            unreadable: unreadableHistory.contains(account.provider)
+                            read: historyReads[account.provider]
                         )
                 ) {
                     if loadingHistory == account.provider {
@@ -1008,22 +1014,33 @@ struct SettingsView: View {
             // turned off.
             guard settings.isEnabled(account) else {
                 ledgers[provider] = .empty
+                // Nothing was asked, and the empty state has to say so rather
+                // than report on a request that never happened.
+                historyReads[provider] = .notAsked
                 return
             }
 
             let key = APIKeyStore.key(for: provider)
-            // `history()` returns nil for an unreachable network, a non-200, a
-            // decode failure and a refusal alike — all of them "we did not
-            // find out", none of them "there is nothing there".
             let read = await ZaiUsageService(provider: provider, enteredKey: key).history()
-            ledgers[provider] = read ?? .empty
-            if read == nil { unreadableHistory.insert(provider) } else { unreadableHistory.remove(provider) }
+
+            // A pane switch cancels this task, and a cancelled request comes
+            // back looking exactly like a failed one. Recording it would leave
+            // "didn't answer" on a provider that was never given the chance to.
+            guard !Task.isCancelled else { return }
+
+            historyReads[provider] = read
+            ledgers[provider] = if case .answered(let ledger) = read { ledger } else { .empty }
             return
         }
 
         // Refreshed rather than reused: the session running right now is
         // appending to a log as this is read, and only that file is re-parsed.
-        ledgers[provider] = await UsageLedgerReader.shared.ledger(for: provider, refresh: true)
+        let scanned = await UsageLedgerReader.shared.ledger(for: provider, refresh: true)
+        guard !Task.isCancelled else { return }
+        ledgers[provider] = scanned
+        // Reading this Mac's own files always answers, even when the answer is
+        // that there is nothing there.
+        historyReads[provider] = .answered(scanned)
 
         if provider == .codex {
             codexAccount = await store.codexAccountUsage()
@@ -1096,11 +1113,19 @@ struct SettingsView: View {
     /// exist. `Provider.keepsLocalTranscripts` is the question, not
     /// `providesHistory`: the latter is true for both sources.
     ///
-    /// A read that failed says so. Both sentences below are claims about the
-    /// account, and neither is one Pulse can make when it never got an answer.
-    private static func emptyHistoryReason(for provider: Provider, unreadable: Bool) -> String {
-        if unreadable {
+    /// The two original sentences are claims about the account, and neither is
+    /// one Pulse can make until a read has actually answered. A read that
+    /// failed, or that never happened, says that instead.
+    private static func emptyHistoryReason(for provider: Provider, read: ZaiUsageService.HistoryRead?) -> String {
+        switch read {
+        case .failed:
             return .localized("\(provider.displayName) didn't answer, so there is nothing to chart yet. Try again in a moment.")
+        case .notConfigured:
+            return .localized("Add a key above and Pulse can read this account's history.")
+        case .notAsked:
+            return .localized("This account is switched off, so Pulse hasn't asked for its history.")
+        case .answered, nil:
+            break
         }
 
         return provider.keepsLocalTranscripts

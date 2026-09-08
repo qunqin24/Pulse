@@ -200,6 +200,21 @@ final class PanelPlacement {
     /// uses it to reposition the panel.
     var onChange: (() -> Void)?
 
+    /// The rail got longer or shorter without any setting changing.
+    ///
+    /// It can now: a split provider draws a ring per model group, so the first
+    /// reading after launch turns one ring into two. Where the rail sits inside
+    /// the panel is worked out from its length, and that sum was last done when
+    /// the rail was a ring shorter — leaving the last ring hanging below the
+    /// window's edge, drawn where no click can reach it.
+    ///
+    /// **Not during a drag**, which is moving the window itself and would be
+    /// fought over the same frame.
+    func railLengthChanged() {
+        guard !isDragging else { return }
+        onChange?()
+    }
+
     /// Changes where the panel should sit, and asks for it to be moved there.
     func update(dock: PanelDock, horizontalRatio: Double? = nil, verticalRatio: Double? = nil) {
         record(

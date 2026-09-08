@@ -134,18 +134,34 @@ struct RailSlotTests {
         #expect(slots == [RailSlot(antigravity)])
     }
 
-    /// The rail's own budget reserves `modelGroupCount` per split account, and
-    /// `PanelMetrics` sizes the rail from that. Drawing more slices the end of
-    /// the rail off.
-    @Test("More groups than the rail budgeted for are not drawn")
-    func groupsBeyondTheBudgetAreDropped() {
+    /// The rail's own budget reserves `modelGroupCount` per split account and
+    /// `PanelMetrics` sizes the rail from that, so a third group cannot be
+    /// drawn. Taking the first two would leave the third belonging to no ring
+    /// and gone from every card, so the account stays whole instead.
+    @Test("More groups than the rail budgeted for leaves the account whole")
+    func tooManyGroupsStayWhole() {
         let slots = RailSlot.rail(
             for: [antigravity],
             isSplit: { _ in true },
             groups: { _ in ["Gemini", "Third-party", "Something new"] }
         )
 
+        #expect(slots == [RailSlot(antigravity)])
+        // Not silently truncated to the budget.
+        #expect(slots.count != Provider.antigravity.modelGroupCount)
+    }
+
+    /// The invariant the panel window depends on: what the controller measures
+    /// its rects from and what the view draws are the same list, so a click
+    /// lands on the ring it looks like it landed on.
+    @Test("Exactly the budgeted number of groups is what splits")
+    func theBudgetedCountSplits() {
+        let slots = RailSlot.rail(
+            for: [antigravity],
+            isSplit: { _ in true },
+            groups: { _ in ["Gemini", "Third-party"] }
+        )
+
         #expect(slots.count == Provider.antigravity.modelGroupCount)
-        #expect(slots.map(\.group) == ["Gemini", "Third-party"])
     }
 }

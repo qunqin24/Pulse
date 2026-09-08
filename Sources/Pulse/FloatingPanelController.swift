@@ -170,7 +170,7 @@ final class FloatingPanelController {
         panel.onClick = { [settings, placement, store] point in
             guard placement.isRailExpanded else { return }
             // The rail draws them in the user's order, so a click has to be
-            // matched against that order — `PanelHitArea.provider` maps a
+            // matched against that order — `PanelHitArea.slot` maps a
             // position to an index, and the enum's order is not what is on
             // screen once anything has been moved.
             // Slots, not accounts: a split provider draws two rings from one
@@ -251,12 +251,6 @@ final class FloatingPanelController {
         ]
     }
 
-    /// Parks the panel where it was last left.
-    ///
-    /// The rail's size is passed in because it shortens when a provider is
-    /// switched off, and the placement works in terms of the rail rather than
-    /// the window — the window is mostly the empty space the card unfolds
-    /// into, and the user has never positioned that.
     /// How many rings the rail is actually drawing.
     ///
     /// **Not `shownAccounts.count`.** A split provider draws two rings from
@@ -276,6 +270,19 @@ final class FloatingPanelController {
         ).count
     }
 
+    /// Parks the panel where it was last left.
+    ///
+    /// The rail's size is passed in because it changes under the placement —
+    /// a provider switched off shortens it, and a split account's first
+    /// reading lengthens it — and the placement works in terms of the rail
+    /// rather than the window, which is mostly the empty space the card
+    /// unfolds into and which the user has never positioned.
+    ///
+    /// **Everything that can change the rail's length has to reach here.**
+    /// Settings go through `settingsChanged()`; a reading that splits an
+    /// account into two rings has no setting behind it and arrives through
+    /// `PanelPlacement.railLengthChanged()`. Miss one and the window's rects
+    /// stay measured against a rail that is no longer that long.
     private func placePanel() {
         // The display it was left on, if that display is still here. A monitor
         // that has been unplugged falls back to one that exists rather than

@@ -349,3 +349,5 @@
 "A ring for each model group" = "A ring for each model group";
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two.";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ didn't answer, so there is nothing to chart yet. Try again in a moment.";
+"Add a key above and Pulse can read this account's history." = "Add a key above and Pulse can read this account's history.";
+"This account is switched off, so Pulse hasn't asked for its history." = "This account is switched off, so Pulse hasn't asked for its history.";

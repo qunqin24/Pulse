@@ -349,3 +349,5 @@
 "A ring for each model group" = "按模型分组显示";
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini 与第三方模型的额度相互独立，一个环只能跟随用得多的那一边。";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ 没有返回数据，暂时无法绘制。请稍后重试。";
+"Add a key above and Pulse can read this account's history." = "在上方填入密钥，即可读取该账号的用量历史。";
+"This account is switched off, so Pulse hasn't asked for its history." = "该账号已关闭，Pulse 没有去读取它的用量历史。";

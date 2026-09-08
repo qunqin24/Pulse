@@ -359,9 +359,31 @@ extension ZaiUsageService {
         let data: Payload?
     }
 
-    func history() async -> UsageLedger? {
+    /// What a history read **found out**, which is not the same question as
+    /// what it found.
+    ///
+    /// An empty chart has three causes and the sentence printed under it is a
+    /// claim about the user's account, so they cannot share a return value. A
+    /// key that was never pasted means nothing was asked; a dropped connection
+    /// means nothing came back; an account that has not been used inside the
+    /// window is a complete, correct answer that happens to be empty. Saying
+    /// any of those three in place of another is the app reporting something
+    /// it did not witness.
+    enum HistoryRead: Sendable {
+        /// The service answered. The ledger may still be empty — that is a
+        /// real answer about an account with no usage in the window.
+        case answered(UsageLedger)
+        /// No key stored, so nothing left this Mac.
+        case notConfigured
+        /// The account is switched off, so Pulse deliberately did not ask.
+        case notAsked
+        /// The request did not get through, or came back unreadable.
+        case failed
+    }
+
+    func history() async -> HistoryRead {
         guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) ?? Self.storedKey(for: provider)
-        else { return nil }
+        else { return .notConfigured }
 
         let now = Date()
         var request = URLRequest(url: Self.statisticsURL(from: now, days: Self.historyDays, host: host))
@@ -374,9 +396,13 @@ extension ZaiUsageService {
               let reply = try? JSONDecoder().decode(Statistics.self, from: data),
               reply.success == true, reply.code == 200,
               let payload = reply.data
-        else { return nil }
+        else { return .failed }
 
-        return Self.ledger(from: payload)
+        // The envelope said success, so this **is** an answer. `ledger(from:)`
+        // returns nil when the payload carries no usable rows, which for a
+        // successful reply means an account with nothing spent in the window —
+        // an empty ledger, not a failure to read one.
+        return .answered(Self.ledger(from: payload) ?? .empty)
     }
 
     /// The span, in the shape the service wants: local wall-clock, no zone,
