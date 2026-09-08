@@ -94,6 +94,32 @@ struct AlertMemory: Codable, Sendable, Equatable {
         /// The reading the previous pass saw, so a turnover can be spotted.
         var fraction = 0.0
         var resetsAt: Date?
+        /// A candidate turnover waiting for a second live reading.
+        ///
+        /// Codex can briefly report 0% used without the window having turned
+        /// over. Firing on that one sample is how the ribbons played when
+        /// nothing had reset. A drop while the stated reset time holds still
+        /// has to show up twice; a clock that merely slides is not a refill.
+        var pendingReset = false
+
+        enum CodingKeys: String, CodingKey {
+            case announced, fraction, resetsAt, pendingReset
+        }
+
+        init(announced: Int = 0, fraction: Double = 0, resetsAt: Date? = nil, pendingReset: Bool = false) {
+            self.announced = announced
+            self.fraction = fraction
+            self.resetsAt = resetsAt
+            self.pendingReset = pendingReset
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            announced = try container.decodeIfPresent(Int.self, forKey: .announced) ?? 0
+            fraction = try container.decodeIfPresent(Double.self, forKey: .fraction) ?? 0
+            resetsAt = try container.decodeIfPresent(Date.self, forKey: .resetsAt)
+            pendingReset = try container.decodeIfPresent(Bool.self, forKey: .pendingReset) ?? false
+        }
     }
 
     struct Account: Codable, Sendable, Equatable {
@@ -264,14 +290,19 @@ struct AlertMemory: Codable, Sendable, Equatable {
                     // second of jitter is not a new window.
                     seen.resetsAt.map { new.timeIntervalSince($0) > 60 } ?? false
                 } ?? false
-                // Said only when the evidence is unambiguous. `fell` alone is
-                // not: a rolling window — Kimi's week, which can reset anywhere
-                // inside it — slides down a few points at a time without
-                // anything having reset, and announcing that is worse than
-                // staying quiet. A reset time that has moved forward is the
-                // provider saying so; a figure that has dropped by forty points
-                // has not slid, it has turned over.
-                let unambiguous = movedOn || seen.fraction - window.usedFraction >= 0.4
+                let emptied = seen.fraction - window.usedFraction >= 0.4
+                // Said only when the evidence is unambiguous. A few points of
+                // drift is not a reset: a rolling window — Kimi's week, which
+                // can reset anywhere inside it — slides down without anything
+                // having turned over. A clock that moves forward *without* the
+                // tank emptying is not one either: Codex's 5-hour session
+                // pushes `resetsAt` as you use it. A forty-point drop while
+                // the stated reset time holds still is a glitch until it
+                // shows up twice — Codex has read 0% used without refilling.
+                let confirmed = emptied && movedOn
+                    || emptied && seen.resetsAt == nil
+                    || emptied && window.resetsAt == nil
+                    || emptied && seen.pendingReset
 
                 // **The step is cleared by the same evidence that would
                 // announce, not by the drop alone.** Clearing on any 5-point
@@ -281,7 +312,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
                 // again at 93, for as long as it wobbled. "At most one
                 // notification per limit" was written on the tin and was not
                 // what it did.
-                if unambiguous {
+                if confirmed {
                     // And only for a limit that was worth mentioning on the way
                     // up. "Your 5-hour window reset" about a window that never
                     // got past 12% is a notification about nothing.
@@ -294,7 +325,21 @@ struct AlertMemory: Codable, Sendable, Equatable {
                         produced.append(UsageAlert(account: account, kind: .celebration, window: window))
                     }
                     memory.announced = 0
+                    memory.pendingReset = false
+                    memory.fraction = window.usedFraction
+                    memory.resetsAt = window.resetsAt
+                } else if emptied {
+                    // Hold the *pre-drop* baseline so a rebound is compared
+                    // against the high figure, not against the glitch.
+                    memory.pendingReset = true
+                } else {
+                    memory.pendingReset = false
+                    memory.fraction = window.usedFraction
+                    memory.resetsAt = window.resetsAt
                 }
+            } else {
+                memory.fraction = window.usedFraction
+                memory.resetsAt = window.resetsAt
             }
 
             if threshold != .off,
@@ -310,8 +355,6 @@ struct AlertMemory: Codable, Sendable, Equatable {
                 )
             }
 
-            memory.fraction = window.usedFraction
-            memory.resetsAt = window.resetsAt
             record.windows[window.id] = memory
         }
 
