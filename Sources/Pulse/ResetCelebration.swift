@@ -17,6 +17,9 @@ final class ResetCelebration {
     private var name = ""
     private var ribbons: [Ribbon] = []
     private var playing = false
+    /// Held so the clip is not deallocated mid-play. CodexBar uses a short
+    /// fanfare with the ribbons; `Hero` is the system sound that job uses.
+    private var sound: NSSound?
 
     func play(name: String) {
         queue.append(name)
@@ -61,6 +64,9 @@ final class ResetCelebration {
             panel.orderFrontRegardless()
             return panel
         }
+
+        sound = NSSound(named: "Hero")
+        sound?.play()
 
         playTask = Task { [weak self] in
             let start = Date()

@@ -25,6 +25,16 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
 
     var id: String { rawValue }
 
+    /// When set, the rail's automatic ring follows this window rather than
+    /// whichever is fullest. Cursor's "Other Models" is a small overflow
+    /// pool: as a percentage it looks spent long before Composer does.
+    var preferredHeadlineWindowID: String? {
+        switch self {
+        case .cursor: "cursorModels"
+        default: nil
+        }
+    }
+
     /// Product names, left untranslated.
     var displayName: String {
         switch self {

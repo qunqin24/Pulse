@@ -39,7 +39,7 @@ SwiftUI tree inside the panel: `FloatingUsagePanelView` → `UsageDockView` (rai
 - Each provider pane has its own refresh control. A switched-off provider is **not** fetched on the timer; a deliberate press on its pane still can.
 - Where a provider has more than one route, which one is used is `AppSettings.source(for:)` (`UsageSource`). `.automatic` is the default: take the primary route when it can, fall back when it cannot. Pinning reports failure instead of quietly answering from elsewhere. Which routes exist: [providers/README.md](providers/README.md).
 - Colour means usage, not brand (`UsageTint`, optional per-account `RingTint`). Spent colour still wins. Spent comes from the **provider’s flags**, not from crossing 100%. See [ui/rings-and-surface.md](ui/rings-and-surface.md).
-- The rail ring shows one window: closest to limit, or a pin (`AppSettings.pinnedWindows`). Resolved at display time.
+- The rail ring shows one window: closest to limit, or the provider's included pool when it names one (Cursor Models), or a pin (`AppSettings.pinnedWindows`). Resolved at display time.
 
 `AccountKey` is provider plus which account. The primary account’s id is the provider’s `rawValue` so stored prefs and cache files need no migration. Extra accounts: Claude Code, Codex, Grok, Grok Bot, Kimi Code (`supportsMultipleAccounts`). How those logins work: [providers/README.md](providers/README.md).
 
