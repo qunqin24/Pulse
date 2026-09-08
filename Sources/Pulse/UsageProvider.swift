@@ -161,8 +161,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// have instead of the picker it needs.
     var hasSourceChoice: Bool {
         switch self {
-        case .claudeCode, .codex, .volcengine: true
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+        case .claudeCode, .codex, .volcengine, .kimiCode: true
+        case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
         }
     }

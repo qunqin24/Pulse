@@ -69,19 +69,34 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
     }
 
     var title: String {
-        switch self {
-        case .automatic: .localized("Automatic")
-        case .endpoint: .localized("Usage endpoint")
-        case .tooling: .localized("Provider tooling")
-        case .desktopApp: .localized("Desktop app")
+        title(for: nil)
+    }
+
+    /// Kimi's two routes are a pasted key and a Pulse-held login, not an
+    /// "endpoint" and "tooling". Asked with the generic titles, the picker
+    /// looked like Codex's and the card still said the key was refused.
+    func title(for provider: Provider?) -> String {
+        switch (self, provider) {
+        case (.automatic, _): .localized("Automatic")
+        case (.endpoint, .kimiCode): .localized("API key")
+        case (.tooling, .kimiCode): .localized("Signed-in account")
+        case (.endpoint, _): .localized("Usage endpoint")
+        case (.tooling, _): .localized("Provider tooling")
+        case (.desktopApp, _): .localized("Desktop app")
         }
     }
 
     /// What the tooling route actually is, which differs per provider.
     func detail(for provider: Provider) -> String {
         switch (self, provider) {
+        case (.automatic, .kimiCode):
+            .localized("Use the signed-in account when possible, the API key when not.")
         case (.automatic, _):
             .localized("Use the endpoint when possible, the other route when not.")
+        case (.endpoint, .kimiCode):
+            .localized("Uses the key you entered.")
+        case (.tooling, .kimiCode):
+            .localized("Uses the Kimi Code login Pulse holds.")
         case (.endpoint, .claudeCode):
             .localized("Reads your account's limits with the login Claude Code saved.")
         case (.endpoint, .codex):
@@ -100,10 +115,10 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             .localized("Signs Volcengine's usage API with the access keys you entered.")
         case (.tooling, .volcengine):
             .localized("Asks arkcli, using the login it already saved.")
-        case (.desktopApp, .volcengine):
+        case (.desktopApp, .volcengine), (.desktopApp, .kimiCode):
             // Never shown: `options(for:)` offers it to Claude Code alone.
             .localized("Use the endpoint when possible, the other route when not.")
-        case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
+        case (_, .openCodeGo), (_, .zai), (_, .glmCoding),
              (_, .minimax), (_, .minimaxCN), (_, .copilot):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")

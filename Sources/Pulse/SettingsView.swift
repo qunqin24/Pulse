@@ -1220,7 +1220,7 @@ struct SettingsView: View {
                         ForEach(UsageSource.options(for: account).filter {
                             $0 != .desktopApp || ClaudeDesktopSession.isAvailable || source == .desktopApp
                         }) { option in
-                            Text(option.title).tag(option)
+                            Text(option.title(for: account.provider)).tag(option)
                         }
                     }
                     .labelsHidden()
@@ -1285,11 +1285,12 @@ struct SettingsView: View {
             // field was never drawn at all, so the endpoint route it belongs to
             // could not be configured from Settings by any means. A divider
             // where both are shown, and none where the picker was not.
-            if account.provider.hasSourceChoice, account.provider.usesAPIKey {
+            if account.provider.hasSourceChoice, account.provider.usesAPIKey,
+               !(account.provider == .kimiCode && source == .tooling) {
                 SettingsRowDivider()
             }
 
-            if account.provider.usesAPIKey {
+            if account.provider.usesAPIKey, !(account.provider == .kimiCode && source == .tooling) {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
                 // What this provider wants is not always a key. Ollama has no
@@ -1391,6 +1392,10 @@ struct SettingsView: View {
     /// Whether `connection(for:)` has anything to put in its card — the same
     /// four questions it asks, answered before the heading is drawn.
     private func hasConnectionControls(for account: AccountKey) -> Bool {
+        // An added Kimi account is Pulse's own login and nothing else — a
+        // picker or key field there would configure a route fetchAdded
+        // never takes.
+        if account.provider == .kimiCode, !account.isPrimary { return false }
         if account.provider.hasSourceChoice { return true }
         if account.provider == .copilot { return true }
         if account.provider.usesAPIKey { return true }
@@ -1410,9 +1415,9 @@ struct SettingsView: View {
             String.localized("Kimi Code account"),
             subtitle: signInError
                 ?? (kimiSignedIn
-                    ? (savedKey.isEmpty
-                        ? String.localized("Signed in. Pulse holds a login for this Mac.")
-                        : String.localized("Signed in. The API key in Connection is used instead."))
+                    ? (settings.source(for: account) == .endpoint
+                        ? String.localized("Signed in. The API key in Connection is used instead.")
+                        : String.localized("Signed in. Pulse holds a login for this Mac."))
                     : String.localized("Opens Kimi Code's own page. Pulse only reads usage."))
         ) {
             if signingIn == .kimiCode, !kimiSignedIn {

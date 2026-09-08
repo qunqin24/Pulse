@@ -37,5 +37,8 @@ struct KimiCodeTests {
         #expect(OAuthLogin.usesDeviceCode(.kimiCode))
         #expect(OAuthLogin.Configuration.of(.kimiCode)?.clientID == "17e5f671-d194-4dfb-9706-5516cb48c098")
         #expect(Provider.kimiCode.supportsMultipleAccounts)
+        #expect(Provider.kimiCode.hasSourceChoice)
+        #expect(UsageSource.endpoint.title(for: .kimiCode) == String.localized("API key"))
+        #expect(UsageSource.tooling.title(for: .kimiCode) == String.localized("Signed-in account"))
     }
 }

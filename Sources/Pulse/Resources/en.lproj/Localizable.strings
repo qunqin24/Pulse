@@ -208,6 +208,9 @@
 "Once a day. Updates are offered, never installed on their own." = "Once a day. Updates are offered, never installed on their own.";
 "Couldn't reach the update feed." = "Couldn't reach the update feed.";
 "Uses the key you entered." = "Uses the key you entered.";
+"Signed-in account" = "Signed-in account";
+"Use the signed-in account when possible, the API key when not." = "Use the signed-in account when possible, the API key when not.";
+"Uses the Kimi Code login Pulse holds." = "Uses the Kimi Code login Pulse holds.";
 "API key" = "API key";
 "Session cookie" = "Session cookie";
 "Read from browser" = "Read from browser";

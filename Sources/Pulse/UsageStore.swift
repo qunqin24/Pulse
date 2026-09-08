@@ -317,6 +317,7 @@ final class UsageStore {
         let copilot = CopilotUsageService(token: apiKeys[.copilot])
         let volcengine = VolcengineUsageService(enteredKey: apiKeys[.volcengine])
         let volcengineSource = settings.source(for: AccountKey(.volcengine))
+        let kimiSource = settings.source(for: AccountKey(.kimiCode))
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
@@ -345,7 +346,7 @@ final class UsageStore {
                 ? await ollama.fetch()
                 : ProviderUsage.unavailable(.ollamaCloud, reason: .loading)
             async let kimiUsage = wanted.contains(.kimiCode)
-                ? await kimi.fetch()
+                ? await kimi.fetch(source: kimiSource)
                 : ProviderUsage.unavailable(.kimiCode, reason: .loading)
             async let zaiUsage = wanted.contains(.zai)
                 ? await zai.fetch()
@@ -551,7 +552,7 @@ final class UsageStore {
             case .openCodeGo:
                 raw = await openCode.fetch()
             case .kimiCode:
-                raw = await kimi.fetch()
+                raw = await kimi.fetch(source: source)
             case .ollamaCloud:
                 raw = await ollama.fetch()
             case .zai, .glmCoding:

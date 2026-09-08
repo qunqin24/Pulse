@@ -19,7 +19,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.antigravity` | Antigravity | `antigravity` | Loopback language server while the app is open | no | one, named | no | `Antigravity.app` |
 | `.cursor` | Cursor | `cursor` | Cookie built from the editor’s stored token | no (deliberate) | one, named | no | Cursor `state.vscdb` login |
 | `.openCodeGo` | OpenCode Go | `opencode` | Pasted key, else OpenCode’s `auth.json` | no | pasted / found key | no | OpenCode stored key |
-| `.kimiCode` | Kimi Code | `kimi` | Pasted key, or Pulse device-code login | yes | pasted / sign-in | no | none — stays off until switched on |
+| `.kimiCode` | Kimi Code | `kimi` | Pasted key, or Pulse device-code login | yes | sign-in / pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
 | `.glmCoding` | 智谱 | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
@@ -94,7 +94,7 @@ Keys are read once per launch rather than once per refresh (`UsageStore.loadAPIK
 
 ### Source choice
 
-Only Claude Code and Codex have `hasSourceChoice` (tied to `keepsLocalTranscripts`). `.automatic` is the default: endpoint when it can, the other route when it cannot. Pinning means a failure is *reported* rather than quietly answered from elsewhere.
+`hasSourceChoice` is Claude Code, Codex, Volcengine, and Kimi Code. `.automatic` is the default. Pinning means a failure is *reported* rather than quietly answered from elsewhere. Kimi’s automatic prefers the signed-in account over a leftover API key.
 
 `.desktopApp` is offered only on the **primary** Claude Code account. An added account’s picker must not offer a route `fetchAdded` would ignore.
 

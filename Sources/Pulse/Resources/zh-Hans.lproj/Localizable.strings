@@ -208,6 +208,9 @@
 "Once a day. Updates are offered, never installed on their own." = "每天一次。只提示，不会自己装。";
 "Couldn't reach the update feed." = "连不上更新源。";
 "Uses the key you entered." = "使用你填入的 key。";
+"Signed-in account" = "已登录的账号";
+"Use the signed-in account when possible, the API key when not." = "能登录就走登录，否则用 API key。";
+"Uses the Kimi Code login Pulse holds." = "使用 Pulse 保存的 Kimi Code 登录。";
 "API key" = "API key";
 "Session cookie" = "登录 Cookie";
 "Read from browser" = "从浏览器读取";

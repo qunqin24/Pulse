@@ -6,12 +6,15 @@ Extra accounts are supported, same device-code path as Codex extras. `keepsLocal
 
 ## Credential
 
-Two, same endpoint, in this order:
+Two, same endpoint. Settings **Read usage from** picks which:
 
-1. A key pasted in Settings, kept in `keys.dat`. It wins.
-2. A device-code login Pulse drove itself, kept in `accounts.dat` under the primary `kimiCode` account. Pulse renews it. The official CLI’s `~/.kimi-code/credentials/` file is **not** read and **not** written — using that refresh token would rotate it and sign the CLI out.
+1. **Automatic** (default) — Pulse’s device-code login when one is stored, otherwise the pasted key. A leftover key that the host refuses must not hide a working subscription login.
+2. **API key** — `keys.dat` only.
+3. **Signed-in account** — `accounts.dat` under the primary `kimiCode` account only.
 
-A subscriber who never creates a console key uses (2). Someone who already pasted a key keeps using it.
+Pulse renews its own login. The official CLI’s `~/.kimi-code/credentials/` file is **not** read and **not** written — using that refresh token would rotate it and sign the CLI out.
+
+A subscriber who never creates a console key uses (1) or (3). Pin (2) if the key is the one you want read.
 
 Never signed in and no key: `.kimiSignInRequired`. Pulse’s login will not refresh: `.kimiLoginExpired`. A pasted key the host refuses stays `.apiKeyRefused`. An extra account whose login is gone is `.signedOut`.
 

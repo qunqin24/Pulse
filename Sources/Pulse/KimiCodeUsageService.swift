@@ -2,14 +2,15 @@ import Foundation
 
 /// Kimi Code's limits, from its own usage endpoint.
 ///
-/// Two credentials, same `GET /usages`, in this order:
+/// Two credentials, same `GET /usages`. Settings picks the route:
 ///
-/// 1. **A key pasted into Settings.** It wins, because someone who typed a
-///    key meant that one to be used.
-/// 2. **A device-code login Pulse drove itself**, stored in
-///    `AccountCredentialStore`. Subscription users sign in this way rather
-///    than creating a console key. Pulse renews its own refresh token, so a
-///    rotation cannot sign the official CLI out.
+/// - `.automatic` — Pulse's device-code login when one is stored, otherwise
+///   the pasted key. A leftover key that the host refuses must not hide a
+///   working subscription login.
+/// - `.endpoint` — the pasted key only.
+/// - `.tooling` — the login Pulse holds only.
+///
+/// Extra accounts always use the token Pulse stored for that slot.
 ///
 /// The reply has **two kinds of limit in it and they are not the same figure**:
 ///
@@ -28,11 +29,28 @@ struct KimiCodeUsageService: Sendable {
 
     private static let endpoint = URL(string: "https://api.kimi.com/coding/v1/usages")!
 
-    func fetch() async -> ProviderUsage {
-        if let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) {
-            return await fetch(token: key, refused: .apiKeyRefused, account: AccountKey(.kimiCode))
+    func fetch(source: UsageSource = .automatic) async -> ProviderUsage {
+        let account = AccountKey(.kimiCode)
+        let key = enteredKey.flatMap { $0.isEmpty ? nil : $0 }
+        let hasLogin = AccountCredentialStore.credentials(for: account) != nil
+
+        switch source {
+        case .endpoint:
+            guard let key else {
+                return .unavailable(account, reason: .apiKeyMissing)
+            }
+            return await fetch(token: key, refused: .apiKeyRefused, account: account)
+        case .tooling, .desktopApp:
+            return await fetchSignedIn(account, missing: .kimiSignInRequired, expired: .kimiLoginExpired)
+        case .automatic:
+            if hasLogin {
+                return await fetchSignedIn(account, missing: .kimiSignInRequired, expired: .kimiLoginExpired)
+            }
+            if let key {
+                return await fetch(token: key, refused: .apiKeyRefused, account: account)
+            }
+            return .unavailable(account, reason: .kimiSignInRequired)
         }
-        return await fetchSignedIn(AccountKey(.kimiCode), missing: .kimiSignInRequired, expired: .kimiLoginExpired)
     }
 
     /// An account Pulse signed in to itself. Never looks at a pasted key —
