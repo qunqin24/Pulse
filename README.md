@@ -51,9 +51,9 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 - **macOS Aesthetic**: Classic solid obsidian surface or native **Liquid Glass** on macOS 26+.
 
 ### Multi-Account & Local Ledger
-- **Multi-Account Support**: Monitor multiple subscriptions for the same provider (Claude Code, Codex, Grok, Grok Bot) side-by-side with custom labels.
+- **Multi-Account Support**: Monitor multiple subscriptions for the same provider (Claude Code, Codex, Grok, Grok Bot, Kimi Code) side-by-side with custom labels.
 - **On-Device Spending History**: Reconstructs your historical token expenditures from local CLI session transcripts, calculated against published API prices.
-- **Fifteen Providers**: Claude Code, Codex, Antigravity, Cursor, GitHub Copilot, Grok, Grok Bot, OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax (intl. and mainland), and Volcengine.
+- **Sixteen Providers**: Claude Code, Codex, Antigravity, Cursor, GitHub Copilot, Grok, Grok Bot, OpenCode Go, Kimi Code, Ollama Cloud, Qoder, Z.ai, GLM Coding Plan, MiniMax (intl. and mainland), and Volcengine.
 - **Scriptable**: `Pulse --json` prints the last readings — plan, every limit, reset times, and how old the figures are — for tmux, sketchybar, Raycast, or a shell prompt. It reads the cache and never fetches, so polling it costs nothing.
 - **Privacy First**: No Pulse servers, no Pulse account, and no telemetry. Requests go to the providers you already use (and follow macOS system proxy settings).
 
@@ -79,11 +79,12 @@ Pulse shows the figures each service reports. It never guesses percentages from 
 | **Grok Bot** | Cursor dashboard API | The xAI quota included with Cursor subscriptions |
 | **GitHub Copilot** | GitHub Device Code authentication | Requests minimal `read:user` scope; never accesses repositories |
 | **OpenCode Go** | API key or existing OpenCode CLI credentials | Fully configurable in Settings |
-| **Kimi Code** | Direct API key | Configured via Settings |
+| **Kimi Code** | Kimi Code device-code sign-in, or a pasted API key | Subscription login from Settings; console key still works |
 | **Z.ai** | Direct API key | International storefront (`api.z.ai`) |
 | **GLM Coding Plan** | Direct API key or saved GLM tooling credentials | Mainland storefront (`open.bigmodel.cn`) |
 | **MiniMax / MiniMax CN** | Direct API key | Supports international (`minimax.io`) & mainland (`minimaxi.com`) |
 | **Ollama Cloud** | Browser session cookie | Read locally from browser. See [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
+| **Qoder** | Browser session cookie | Plan Credits from the signed-in dashboard. See [Docs/providers/qoder.md](Docs/providers/qoder.md) |
 
 ---
 

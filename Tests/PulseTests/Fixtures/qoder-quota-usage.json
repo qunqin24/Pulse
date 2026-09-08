@@ -1,0 +1,17 @@
+{
+  "userType": "pro",
+  "userQuota": {
+    "used": 400,
+    "total": 2000,
+    "remaining": 1600,
+    "unit": "credits"
+  },
+  "org_resource_package": {
+    "cap": 2000,
+    "used": 10,
+    "remaining": 1990,
+    "percentage": 0.5,
+    "available": true,
+    "unit": "credits"
+  }
+}

@@ -1,10 +1,16 @@
 import Foundation
 
-/// Kimi Code's limits, from its own documented usage endpoint.
+/// Kimi Code's limits, from its own usage endpoint.
 ///
-/// Reached with a key the user pastes into Settings, kept encrypted on this Mac —
-/// the same arrangement as OpenCode Go, and for now without the fallback to a
-/// credential another tool stored.
+/// Two credentials, same `GET /usages`. Settings picks the route:
+///
+/// - `.automatic` — Pulse's device-code login when one is stored, otherwise
+///   the pasted key. A leftover key that the host refuses must not hide a
+///   working subscription login.
+/// - `.endpoint` — the pasted key only.
+/// - `.tooling` — the login Pulse holds only.
+///
+/// Extra accounts always use the token Pulse stored for that slot.
 ///
 /// The reply has **two kinds of limit in it and they are not the same figure**:
 ///
@@ -23,37 +29,102 @@ struct KimiCodeUsageService: Sendable {
 
     private static let endpoint = URL(string: "https://api.kimi.com/coding/v1/usages")!
 
-    func fetch() async -> ProviderUsage {
-        guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) else {
-            return .unavailable(.kimiCode, reason: .apiKeyMissing)
+    func fetch(source: UsageSource = .automatic) async -> ProviderUsage {
+        let account = AccountKey(.kimiCode)
+        let key = enteredKey.flatMap { $0.isEmpty ? nil : $0 }
+        let hasLogin = AccountCredentialStore.credentials(for: account) != nil
+
+        switch source {
+        case .endpoint:
+            guard let key else {
+                return .unavailable(account, reason: .apiKeyMissing)
+            }
+            return await fetch(token: key, refused: .apiKeyRefused, account: account)
+        case .tooling, .desktopApp:
+            return await fetchSignedIn(account, missing: .kimiSignInRequired, expired: .kimiLoginExpired)
+        case .automatic:
+            if hasLogin {
+                return await fetchSignedIn(account, missing: .kimiSignInRequired, expired: .kimiLoginExpired)
+            }
+            if let key {
+                return await fetch(token: key, refused: .apiKeyRefused, account: account)
+            }
+            return .unavailable(account, reason: .kimiSignInRequired)
+        }
+    }
+
+    /// An account Pulse signed in to itself. Never looks at a pasted key —
+    /// that key belongs to the primary, which is a different subscription.
+    func fetch(account: AccountKey, token: String) async -> ProviderUsage {
+        await fetch(token: token, refused: .signedOut, account: account)
+    }
+
+    /// Pulse's own login, renewed here because nothing else will. The access
+    /// token lasts about fifteen minutes (measured); the adaptive interval
+    /// can be longer than that, so a pass that does not renew is a pass that
+    /// reports signed-out for a still-valid account.
+    private func fetchSignedIn(
+        _ account: AccountKey,
+        missing: ProviderUsage.Unavailability,
+        expired: ProviderUsage.Unavailability
+    ) async -> ProviderUsage {
+        guard var credentials = AccountCredentialStore.credentials(for: account) else {
+            return .unavailable(account, reason: missing)
         }
 
+        if !credentials.isFresh {
+            guard let renewed = await renew(credentials, for: account) else {
+                return .unavailable(account, reason: expired)
+            }
+            credentials = renewed
+        }
+
+        let first = await fetch(token: credentials.accessToken, refused: expired, account: account)
+        if case .unavailable(let reason) = first.state, reason == expired {
+            // Still marked fresh, but the host refused it — clock skew, or a
+            // revocation. One renewal is the difference between "sign in
+            // again" and a token that had a few seconds left.
+            guard let renewed = await renew(credentials, for: account) else { return first }
+            return await fetch(token: renewed.accessToken, refused: expired, account: account)
+        }
+        return first
+    }
+
+    private func renew(_ credentials: AccountCredentials, for account: AccountKey) async -> AccountCredentials? {
+        guard let renewed = try? await OAuthLogin.refresh(credentials, for: .kimiCode) else {
+            return nil
+        }
+        AccountCredentialStore.renewed(renewed, for: account)
+        return renewed
+    }
+
+    private func fetch(token: String, refused: ProviderUsage.Unavailability, account: AccountKey) async -> ProviderUsage {
         var request = URLRequest(url: Self.endpoint)
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
-            return .unavailable(.kimiCode, reason: .unreachable)
+            return .unavailable(account, reason: .unreachable)
         }
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(.kimiCode, reason: .apiKeyRefused)
-        case 429: return .unavailable(.kimiCode, reason: .rateLimited)
-        default: return .unavailable(.kimiCode, reason: .serverError)
+        case 401, 403: return .unavailable(account, reason: refused)
+        case 429: return .unavailable(account, reason: .rateLimited)
+        default: return .unavailable(account, reason: .serverError)
         }
 
         guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            return .unavailable(.kimiCode, reason: .unreadableReply)
+            return .unavailable(account, reason: .unreadableReply)
         }
 
         let windows = Self.windows(from: reply)
         guard !windows.isEmpty else {
-            return .unavailable(.kimiCode, reason: .noLimitsReported)
+            return .unavailable(account, reason: .noLimitsReported)
         }
 
         return ProviderUsage(
-            account: AccountKey(.kimiCode),
+            account: account,
             windows: windows,
             observedAt: Date(),
             state: .live,
@@ -66,7 +137,8 @@ struct KimiCodeUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal so a fixture test can hold it. Not a public contract.
+    struct Reply: Decodable {
         struct Detail: Decodable {
             let limit: String?
             let used: String?
@@ -92,7 +164,8 @@ struct KimiCodeUsageService: Sendable {
         let limits: [Limit]?
     }
 
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    /// Internal so a fixture test can hold it. Not a public contract.
+    static func windows(from reply: Reply) -> [UsageWindow] {
         var found: [UsageWindow] = []
 
         // The timed windows first, named by the length the service states.
@@ -186,7 +259,7 @@ struct KimiCodeUsageService: Sendable {
     /// "LEVEL_INTERMEDIATE" → "Intermediate". An unfamiliar tier is passed
     /// through tidied rather than blanked: an unknown name still beats none,
     /// and it is the only clue left when a new tier appears.
-    private static func planName(_ level: String?) -> String? {
+    static func planName(_ level: String?) -> String? {
         guard let level, !level.isEmpty else { return nil }
 
         let bare = level.hasPrefix("LEVEL_") ? String(level.dropFirst("LEVEL_".count)) : level

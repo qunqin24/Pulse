@@ -1,0 +1,20 @@
+{
+  "userType": "pro",
+  "totalQuota": {
+    "quotaSummary": {
+      "usedValue": 400,
+      "limitValue": 2000,
+      "remainingValue": 1600,
+      "unit": "credits"
+    }
+  },
+  "sharedQuota": {
+    "quotaSummary": {
+      "usedValue": 50,
+      "limitValue": 500,
+      "remainingValue": 450,
+      "unit": "credits"
+    }
+  },
+  "nextResetAt": "2026-10-01T00:00:00Z"
+}

@@ -74,7 +74,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         store.start()
 
-        let controller = FloatingPanelController(store: store, settings: settings, placement: placement)
+        let controller = FloatingPanelController(
+            store: store,
+            settings: settings,
+            placement: placement,
+            openSettings: { [weak self] in self?.showSettings() }
+        )
         panelController = controller
 
         settings.onChange = { [weak self] in

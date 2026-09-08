@@ -1,6 +1,6 @@
 # Providers
 
-Pulse tracks **fifteen** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
+Pulse tracks **sixteen** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
 
 This directory is the home for routes, credentials, cookies, extra logins, and the failure lessons that belong to those. Current service code is authoritative. Historical measurements and “do not repeat” notes are labelled as such. Nothing here claims a runtime test of a live account.
 
@@ -19,7 +19,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.antigravity` | Antigravity | `antigravity` | Loopback language server while the app is open | no | one, named | no | `Antigravity.app` |
 | `.cursor` | Cursor | `cursor` | Cookie built from the editor’s stored token | no (deliberate) | one, named | no | Cursor `state.vscdb` login |
 | `.openCodeGo` | OpenCode Go | `opencode` | Pasted key, else OpenCode’s `auth.json` | no | pasted / found key | no | OpenCode stored key |
-| `.kimiCode` | Kimi Code | `kimi` | Pasted key | no | pasted key | no | none — stays off until switched on |
+| `.kimiCode` | Kimi Code | `kimi` | Pasted key, or Pulse device-code login | yes | sign-in / pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
 | `.glmCoding` | 智谱 | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
@@ -29,8 +29,9 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.grok` | Grok | `grok` | Borrow `~/.grok/auth.json`; Pulse OAuth for extras | yes | one, named (primary) | no | `~/.grok` exists |
 | `.grokBot` | Grok Bot | `xai` | Cursor cookie; Cursor web login for extras | yes | one, named (primary) | no | **standalone** `Grok Bot.app` only |
 | `.volcengine` | Volcengine | `volcengine` | `arkcli`'s own login, else a pasted `AK:SK` pair | no | arkcli / signed endpoint | no | none — stays off until switched on |
+| `.qoder` | Qoder | `qoder` | Browser session cookie (not an API key) | no | session | no | `Qoder.app` / `Qoder IDE.app` / `~/.qoder` |
 
-Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md).
+Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md), [qoder.md](qoder.md).
 
 Z.ai and GLM Coding Plan share [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsageService.swift). MiniMax and MiniMax CN share [`MiniMaxUsageService.swift`](../../Sources/Pulse/MiniMaxUsageService.swift). Two rings, two accounts, two keys — not a region switch inside one provider.
 
@@ -78,13 +79,13 @@ Offer-once, `Key.hasRun` / `Key.offeredProviders`, empty-rail vs empty provider 
 
 Shared drop/age/24h/cold-start rules: [`../refresh-and-data.md`](../refresh-and-data.md).
 
-Do not paper over `.apiKeyMissing`, `.ollamaSessionMissing`, `.signedOut`, `.claudeDesktopNotSignedIn`, or `.claudeDesktopKeyRefused`. Claude Code’s status-line capture is marked `.live` for ten minutes (`freshFor`) even when an endpoint reading taken later exists — reconciliation is by `observedAt`, not by which route called itself live. See [claude-code.md](claude-code.md).
+Do not paper over `.apiKeyMissing`, `.ollamaSessionMissing`, `.qoderSessionMissing`, `.signedOut`, `.claudeDesktopNotSignedIn`, `.claudeDesktopKeyRefused`, `.kimiSignInRequired`, or `.kimiLoginExpired`. Claude Code’s status-line capture is marked `.live` for ten minutes (`freshFor`) even when an endpoint reading taken later exists — reconciliation is by `observedAt`, not by which route called itself live. See [claude-code.md](claude-code.md).
 
 ### Keys and logins Pulse keeps
 
 Not the same question as “does Settings draw a paste field”.
 
-- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN. Ollama’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist.
+- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Qoder, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN. Ollama and Qoder’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist. Kimi Code **also** offers a device-code sign-in; the paste field stays for anyone who already has a console key.
 - `keepsOwnCredential` — Pulse stores something in `keys.dat`: the paste providers **plus Copilot**. Reading `usesAPIKey` where *storage* was meant left a signed-in Copilot account reporting “sign in again”: the token was saved and then never loaded for the fetch.
 - Extra-account OAuth / Cursor web logins live in `accounts.dat`, not `keys.dat`. See [authentication.md](authentication.md).
 
@@ -94,7 +95,7 @@ Keys are read once per launch rather than once per refresh (`UsageStore.loadAPIK
 
 ### Source choice
 
-Only Claude Code and Codex have `hasSourceChoice` (tied to `keepsLocalTranscripts`). `.automatic` is the default: endpoint when it can, the other route when it cannot. Pinning means a failure is *reported* rather than quietly answered from elsewhere.
+`hasSourceChoice` is Claude Code, Codex, Volcengine, and Kimi Code. `.automatic` is the default. Pinning means a failure is *reported* rather than quietly answered from elsewhere. Kimi’s automatic prefers the signed-in account over a leftover API key.
 
 `.desktopApp` is offered only on the **primary** Claude Code account. An added account’s picker must not offer a route `fetchAdded` would ignore.
 
@@ -104,7 +105,7 @@ An added Grok account is not shown the CLI-login row: `fetchAdded` never touches
 
 ### Extra accounts
 
-`supportsMultipleAccounts` is **Claude Code, Codex, Grok, and Grok Bot** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift).
+`supportsMultipleAccounts` is **Claude Code, Codex, Grok, Grok Bot, and Kimi Code** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift).
 
 A provider’s first account id is the provider’s raw value. That is the migration: stored preferences and cache files keep matching. Making an upgrade look like a fresh install has already cost a release.
 

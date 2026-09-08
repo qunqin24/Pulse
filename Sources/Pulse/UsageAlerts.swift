@@ -341,8 +341,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
     static func standing(of reason: ProviderUsage.Unavailability) -> Standing {
         switch reason {
         case .claudeLoginExpired, .claudeDesktopKeyRefused, .claudeDesktopSessionExpired,
-             .cursorLoginExpired, .grokLoginExpired, .signedOut, .apiKeyRefused,
-             .ollamaSessionExpired, .ollamaPageChanged,
+             .cursorLoginExpired, .grokLoginExpired, .kimiLoginExpired, .signedOut, .apiKeyRefused,
+             .ollamaSessionExpired, .ollamaPageChanged, .qoderSessionExpired,
              .unreachable, .unreadableReply, .rateLimited, .serverError,
              .codexServerFailed:
             .failure
@@ -366,8 +366,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
         case .loading, .notConnected, .awaitingResponse,
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
              .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
-             .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
-             .ollamaSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
+             .cursorSignInRequired, .grokSignInRequired, .kimiSignInRequired, .notSignedIn,
+             .ollamaSessionMissing, .qoderSessionMissing, .apiKeyMissing, .volcengineCLIMissing,
              .volcengineSignInRequired:
             .neutral
         }

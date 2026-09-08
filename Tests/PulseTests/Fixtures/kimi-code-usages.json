@@ -1,0 +1,35 @@
+{
+  "usage": {
+    "limit": "100",
+    "used": "25",
+    "remaining": "75",
+    "resetTime": "2026-09-10T19:35:55.727165Z"
+  },
+  "limits": [
+    {
+      "window": {
+        "duration": 300,
+        "timeUnit": "TIME_UNIT_MINUTE"
+      },
+      "detail": {
+        "limit": "100",
+        "used": "11",
+        "remaining": "89",
+        "resetTime": "2026-09-08T03:35:55.727165Z"
+      }
+    }
+  ],
+  "user": {
+    "membership": {
+      "level": "LEVEL_ADVANCED"
+    }
+  },
+  "authentication": {
+    "method": "METHOD_ACCESS_TOKEN",
+    "scope": "FEATURE_CODING"
+  },
+  "totalQuota": {},
+  "parallel": {
+    "limit": "30"
+  }
+}

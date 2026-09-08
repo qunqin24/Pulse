@@ -213,6 +213,15 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// while it is used and nothing renews it for Pulse, so the remedy is
         /// to use Grok, exactly as with Cursor.
         case grokLoginExpired
+        /// Kimi Code's subscription login has never been driven from Pulse,
+        /// and no API key has been pasted either. Its own case rather than
+        /// `.apiKeyMissing`, which tells a subscriber to go looking for a
+        /// key they do not need.
+        case kimiSignInRequired
+        /// Pulse held a Kimi Code login and it will no longer refresh. The
+        /// remedy is to sign in again in Settings — not to paste a key, and
+        /// not to run the CLI. Pulse does not borrow the CLI's refresh token.
+        case kimiLoginExpired
         /// A plan that simply does not include Grok Bot. Not a failure to
         /// report anything — a complete answer, and "no limits reported"
         /// would send someone looking for a fault that is not there.
@@ -231,6 +240,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// key, and the three ways that can fail are worth telling apart.
         case ollamaSessionMissing
         case ollamaSessionExpired
+        /// Qoder's Credits are read with a browser session, same as Ollama,
+        /// so a missing or refused session is a setup step rather than a key.
+        case qoderSessionMissing
+        case qoderSessionExpired
         /// The page was fetched and did not contain the two figures. Reported
         /// rather than shown as zero: reading a page is reading someone's
         /// layout, and a layout can change.
@@ -281,11 +294,15 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .cursorLoginExpired: .localized("Cursor's saved login was refused. Open Cursor to renew it.")
             case .grokSignInRequired: .localized("Sign in to Grok to see usage.")
             case .grokLoginExpired: .localized("Grok's saved login expired. Use Grok to renew it.")
+            case .kimiSignInRequired: .localized("Sign in to Kimi Code in Settings, or paste an API key.")
+            case .kimiLoginExpired: .localized("Kimi Code's saved login expired. Sign in again in Settings.")
             case .grokBotNotIncluded: .localized("This Cursor plan doesn't include Grok Bot.")
             case .signedOut: .localized("Sign in to this account again in Settings.")
             case .notSignedIn: .localized("Sign in from Settings to see usage.")
             case .ollamaSessionMissing: .localized("Add an Ollama session in Settings.")
             case .ollamaSessionExpired: .localized("The Ollama session expired. Sign in again and add it.")
+            case .qoderSessionMissing: .localized("Add a Qoder session in Settings.")
+            case .qoderSessionExpired: .localized("The Qoder session expired. Sign in again and add it.")
             case .ollamaPageChanged: .localized("Ollama's page has changed and can no longer be read.")
             case .volcengineCLIMissing: .localized("Install arkcli and run `arkcli auth login`, or add access keys in Settings.")
             case .volcengineSignInRequired: .localized("arkcli isn't signed in. Run `arkcli auth login`.")

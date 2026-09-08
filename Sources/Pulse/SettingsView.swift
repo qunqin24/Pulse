@@ -47,6 +47,10 @@ struct SettingsView: View {
     @State private var githubPrompt: GitHubDeviceLogin.Prompt?
     @State private var githubTask: Task<Void, Never>?
     @State private var githubError: String?
+    /// Bumped after Kimi Code's Pulse-owned login is written or forgotten, so
+    /// the Accounts row redraws. `AccountCredentialStore` is a file, not
+    /// something SwiftUI can observe.
+    @State private var kimiLoginTick = 0
     /// What the last look through the browsers found.
     @State private var sessionMessage: String?
     /// Held so it can be called off. A device-code sign-in polls for fifteen
@@ -763,9 +767,22 @@ struct SettingsView: View {
             // Off the main thread: this opens a database or two and may ask
             // the keychain, and the settings window should not freeze while it
             // does.
-            let found = await Task.detached(priority: .userInitiated) {
-                BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
-                    try? OllamaSessionCookie.normalize($0)
+            let found: BrowserCookies.Found? = await Task.detached(priority: .userInitiated) {
+                switch account.provider {
+                case .qoder:
+                    let hosts = ["qoder.com", "www.qoder.com", "qoder.com.cn", "www.qoder.com.cn"]
+                    for host in hosts {
+                        if let session = BrowserCookies.session(forHost: host, allowing: browsers, keep: {
+                            try? QoderSessionCookie.normalize($0)
+                        }) {
+                            return session
+                        }
+                    }
+                    return BrowserCookies.Found?.none
+                default:
+                    return BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
+                        try? OllamaSessionCookie.normalize($0)
+                    }
                 }
             }.value
 
@@ -776,7 +793,9 @@ struct SettingsView: View {
                 return
             }
 
-            sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
+            sessionMessage = account.provider == .qoder
+                ? String.localized("No Qoder session found. Sign in at qoder.com first.")
+                : String.localized("No Ollama session found. Sign in at ollama.com first.")
         }
     }
 
@@ -1161,6 +1180,8 @@ struct SettingsView: View {
 
     private static func keySubtitle(for provider: Provider) -> String {
         switch provider {
+        case .qoder:
+            .localized("A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac.")
         case _ where provider.usesSessionCookie:
             .localized("Copied from your browser. Stored encrypted on this Mac.")
         case .zai:
@@ -1176,6 +1197,8 @@ struct SettingsView: View {
         // with nothing in it to suggest what went wrong.
         case .volcengine:
             .localized("AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.")
+        case .kimiCode:
+            .localized("From the Kimi Code console. Optional if you sign in. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }
@@ -1214,7 +1237,7 @@ struct SettingsView: View {
                         ForEach(UsageSource.options(for: account).filter {
                             $0 != .desktopApp || ClaudeDesktopSession.isAvailable || source == .desktopApp
                         }) { option in
-                            Text(option.title).tag(option)
+                            Text(option.title(for: account.provider)).tag(option)
                         }
                     }
                     .labelsHidden()
@@ -1279,11 +1302,12 @@ struct SettingsView: View {
             // field was never drawn at all, so the endpoint route it belongs to
             // could not be configured from Settings by any means. A divider
             // where both are shown, and none where the picker was not.
-            if account.provider.hasSourceChoice, account.provider.usesAPIKey {
+            if account.provider.hasSourceChoice, account.provider.usesAPIKey,
+               !(account.provider == .kimiCode && source == .tooling) {
                 SettingsRowDivider()
             }
 
-            if account.provider.usesAPIKey {
+            if account.provider.usesAPIKey, !(account.provider == .kimiCode && source == .tooling) {
                 // Takes precedence over the key OpenCode saved for itself —
                 // see OpenCodeGoUsageService for why that way round.
                 // What this provider wants is not always a key. Ollama has no
@@ -1292,7 +1316,9 @@ struct SettingsView: View {
                 // calling it an API key would send people looking for one that
                 // does not exist.
                 SettingsRow(
-                    account.provider.usesSessionCookie
+                    account.provider == .qoder
+                        ? String.localized("Token or session")
+                        : account.provider.usesSessionCookie
                         ? String.localized("Session cookie")
                         : account.provider.usesKeyPair
                             ? String.localized("Access keys")
@@ -1385,10 +1411,55 @@ struct SettingsView: View {
     /// Whether `connection(for:)` has anything to put in its card — the same
     /// four questions it asks, answered before the heading is drawn.
     private func hasConnectionControls(for account: AccountKey) -> Bool {
+        // An added Kimi account is Pulse's own login and nothing else — a
+        // picker or key field there would configure a route fetchAdded
+        // never takes.
+        if account.provider == .kimiCode, !account.isPrimary { return false }
         if account.provider.hasSourceChoice { return true }
         if account.provider == .copilot { return true }
         if account.provider.usesAPIKey { return true }
         return account.isPrimary && account.provider.soleRoute != nil
+    }
+
+    private var kimiSignedIn: Bool {
+        _ = kimiLoginTick
+        return AccountCredentialStore.credentials(for: AccountKey(.kimiCode)) != nil
+    }
+
+    /// The primary Kimi Code subscription, signed in the same way Codex extras
+    /// are: a device-code button in Accounts, not a key in Connection.
+    @ViewBuilder
+    private func kimiPrimaryAccountRow(_ account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("Kimi Code account"),
+            subtitle: signInError
+                ?? (kimiSignedIn
+                    ? (settings.source(for: account) == .endpoint
+                        ? String.localized("Signed in. The API key in Connection is used instead.")
+                        : String.localized("Signed in. Pulse holds a login for this Mac."))
+                    : String.localized("Opens Kimi Code's own page. Pulse only reads usage."))
+        ) {
+            if signingIn == .kimiCode, !kimiSignedIn {
+                Button(String.localized("Cancel")) {
+                    signInTask?.cancel()
+                    signInTask = nil
+                    signingIn = nil
+                    devicePrompt = nil
+                    signInError = nil
+                }
+            } else if kimiSignedIn {
+                Button(String.localized("Sign out")) {
+                    _ = AccountCredentialStore.set(nil, for: account)
+                    kimiLoginTick += 1
+                    signInError = nil
+                    store.refresh(account)
+                }
+            } else {
+                Button(String.localized("Sign in…")) {
+                    signIn(to: .kimiCode, addingAccount: false)
+                }
+            }
+        }
     }
 
     /// Signing in to another subscription of the same provider, and getting
@@ -1403,6 +1474,17 @@ struct SettingsView: View {
         if account.provider.supportsMultipleAccounts {
             SettingsGroup(String.localized("Accounts")) {
                 if account.isPrimary {
+                    if account.provider == .kimiCode {
+                        kimiPrimaryAccountRow(account)
+                    }
+
+                    // Codex-shaped extras. Kimi hides this until the primary
+                    // subscription is signed in, so the first Sign in… cannot
+                    // be mistaken for adding a second ring.
+                    if account.provider != .kimiCode || kimiSignedIn {
+                        if account.provider == .kimiCode {
+                            SettingsRowDivider()
+                        }
                     SettingsRow(
                         String.localized("Add another account"),
                         // The one thing someone should know before they start:
@@ -1419,6 +1501,7 @@ struct SettingsView: View {
                                 devicePrompt = nil
                             }
                         }
+                    }
                     }
 
                     // While a device-code sign-in is waiting, the code is the
@@ -1540,7 +1623,11 @@ struct SettingsView: View {
     }
 
     /// Runs the browser sign-in, then keeps whatever came back.
-    private func signIn(to provider: Provider) {
+    ///
+    /// `addingAccount` is the extra-account path: a new slot, jump to its
+    /// pane. Kimi Code's subscription login is the **primary** account — Pulse
+    /// holds the tokens the same way, but there is no second ring to create.
+    private func signIn(to provider: Provider, addingAccount: Bool = true) {
         signingIn = provider
         signInError = nil
 
@@ -1585,16 +1672,26 @@ struct SettingsView: View {
                 } else {
                     credentials = try await OAuthLogin.signIn(to: provider)
                 }
-                // Seeded from whatever the provider said about the account, so
-                // two subscriptions are not both offered as "Codex".
-                let added = settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
-                guard AccountCredentialStore.set(credentials, for: added) else {
-                    settings.removeAccount(added)
-                    signInError = String.localized("Couldn't save the login on this Mac.")
-                    return
+                if addingAccount {
+                    // Seeded from whatever the provider said about the account, so
+                    // two subscriptions are not both offered as "Codex".
+                    let added = settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
+                    guard AccountCredentialStore.set(credentials, for: added) else {
+                        settings.removeAccount(added)
+                        signInError = String.localized("Couldn't save the login on this Mac.")
+                        return
+                    }
+                    store.refresh(added)
+                    pane = .account(added)
+                } else {
+                    let primary = AccountKey(provider)
+                    guard AccountCredentialStore.set(credentials, for: primary) else {
+                        signInError = String.localized("Couldn't save the login on this Mac.")
+                        return
+                    }
+                    kimiLoginTick += 1
+                    store.refresh(primary)
                 }
-                store.refresh(added)
-                pane = .account(added)
             } catch let failure as OAuthLogin.Failure {
                 if !Task.isCancelled { signInError = failure.message }
             } catch is CancellationError {

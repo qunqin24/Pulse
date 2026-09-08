@@ -81,8 +81,9 @@ actor UsageCache {
         // day, while Settings holds an empty field, hides the one thing the
         // user needs told. Reported as it is.
         if case .unavailable(let reason) = fetched.state,
-           [.apiKeyMissing, .ollamaSessionMissing, .signedOut,
-            .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused].contains(reason) {
+           [.apiKeyMissing, .ollamaSessionMissing, .qoderSessionMissing, .signedOut,
+            .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused,
+            .kimiSignInRequired, .kimiLoginExpired].contains(reason) {
             return fetched
         }
 

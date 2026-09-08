@@ -23,6 +23,8 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `PanelHoldTests` | Nothing re-places the panel while it is held — including the gap between mouse-down and the first movement, where `isDragging` is still false. [ui/input.md](ui/input.md) |
 | `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
+| `KimiCodeTests` | A captured `/usages` reply → windows, and that device-code sign-in is configured. [providers/kimi-code.md](providers/kimi-code.md) |
+| `QoderParsingTests` | A captured Credits dashboard reply → plan and shared monthly windows. [providers/qoder.md](providers/qoder.md) |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `ZaiHistoryTests` | The statistics endpoint's shape → a day-by-day ledger, and what may not be said about it |

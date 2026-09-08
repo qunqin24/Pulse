@@ -6,6 +6,7 @@ struct FloatingUsagePanelView: View {
     /// Where the panel is docked. Shared with `FloatingPanelController`, and
     /// written by the drag handle, so the content mirrors as the panel moves.
     let placement: PanelPlacement
+    var openSettings: (() -> Void)? = nil
 
     /// Which **ring** the card belongs to, not which account: one account
      /// can now own two of them. `RailSlot.id` is the account's own id for
@@ -91,7 +92,8 @@ struct FloatingUsagePanelView: View {
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
                             showsForecast: settings.showsForecast,
-                            pointerCenter: pointerCentre(for: index)
+                            pointerCenter: pointerCentre(for: index),
+                            openSettings: openSettings
                         )
                         .fixedSize()
                         .background(
@@ -655,7 +657,7 @@ private struct CardReveal: ViewModifier {
 }
 
 #Preview("Floating panel") {
-    FloatingUsagePanelView(store: UsageStore(settings: AppSettings()), settings: AppSettings(), placement: PanelPlacement())
+    FloatingUsagePanelView(store: UsageStore(settings: AppSettings()), settings: AppSettings(), placement: PanelPlacement(), openSettings: {})
         .frame(
             width: FloatingPanelController.Layout.width,
             height: FloatingPanelController.Layout.height
