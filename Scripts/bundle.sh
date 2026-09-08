@@ -24,7 +24,25 @@ cd "$(dirname "$0")/.."
 VERSION="$(tr -d '[:space:]' < VERSION)"
 APP="build.noindex/Pulse.app"
 BUNDLE_ID="io.github.qunqin24.Pulse"
-FEED_URL="https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast.xml"
+
+# CI sets GITHUB_REPOSITORY; a local build reads origin. That is what makes
+# a fork publish its own updates instead of pointing Sparkle at upstream.
+github_repo() {
+    if [ -n "${GITHUB_REPOSITORY:-}" ]; then
+        printf '%s\n' "$GITHUB_REPOSITORY"
+        return
+    fi
+    local url
+    url="$(git remote get-url origin 2>/dev/null || true)"
+    url="${url#git@github.com:}"
+    url="${url#https://github.com/}"
+    url="${url#ssh://git@github.com/}"
+    url="${url%.git}"
+    printf '%s\n' "$url"
+}
+
+GITHUB_REPO="$(github_repo)"
+FEED_URL="https://raw.githubusercontent.com/${GITHUB_REPO}/main/appcast.xml"
 # Public half of the EdDSA key updates are signed with. Safe to commit — it is
 # what *verifies* an update, and Sparkle refuses anything not signed by its
 # private half. See Scripts/appcast.py.
@@ -102,7 +120,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
          told what to show. -->
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSHumanReadableCopyright</key><string>github.com/qunqin24/Pulse</string>
+    <key>NSHumanReadableCopyright</key><string>github.com/${GITHUB_REPO}</string>
     <key>SUFeedURL</key><string>$FEED_URL</string>
     <key>SUPublicEDKey</key><string>$PUBLIC_KEY</string>
     <!-- Checked on a schedule without asking first. Sparkle would normally put

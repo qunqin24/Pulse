@@ -32,11 +32,39 @@ import changelog  # noqa: E402  — a sibling script, not a package
 ROOT = Path(__file__).resolve().parent.parent
 FEED = ROOT / "appcast.xml"
 
-SKELETON = """<?xml version="1.0" encoding="utf-8"?>
+
+def github_repo() -> str:
+    """owner/name. CI sets GITHUB_REPOSITORY; a local run reads origin."""
+    env = os.environ.get("GITHUB_REPOSITORY", "").strip()
+    if env:
+        return env
+    result = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+    )
+    url = result.stdout.strip()
+    for prefix in ("git@github.com:", "https://github.com/", "ssh://git@github.com/"):
+        if url.startswith(prefix):
+            url = url[len(prefix) :]
+            break
+    if url.endswith(".git"):
+        url = url[:-4]
+    if not url:
+        sys.exit("Could not tell which GitHub repository this is.")
+    return url
+
+
+REPO_SLUG = github_repo()
+REPO = f"https://github.com/{REPO_SLUG}"
+FEED_URL = f"https://raw.githubusercontent.com/{REPO_SLUG}/main/appcast.xml"
+
+SKELETON = f"""<?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
         <title>Pulse</title>
-        <link>https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast.xml</link>
+        <link>{FEED_URL}</link>
         <description>Updates for Pulse.</description>
         <language>en</language>
     </channel>
@@ -84,8 +112,6 @@ def sign(archive: Path) -> tuple[str, str]:
     length = parts["length"].strip('"')
     return signature, length
 
-
-REPO = "https://github.com/qunqin24/Pulse"
 
 # Bookkeeping, not news: the version bump itself and the commit this script's
 # own output produces.
@@ -167,6 +193,12 @@ def main() -> None:
     signature, length = sign(archive)
 
     feed = FEED.read_text() if FEED.exists() else SKELETON
+    feed = re.sub(
+        r"<link>https://raw\.githubusercontent\.com/[^/]+/Pulse/main/appcast\.xml</link>",
+        f"<link>{FEED_URL}</link>",
+        feed,
+        count=1,
+    )
     notes = description(version, previous_version(feed))
 
     item = f"""        <item>

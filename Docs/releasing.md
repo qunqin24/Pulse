@@ -16,6 +16,8 @@ echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
 git tag v1.0.1 && git push && git push origin v1.0.1
 ```
 
+The feed URL and the download links are taken from `GITHUB_REPOSITORY` in CI, or from `origin` on a local Mac. A fork therefore publishes to **its own** Releases and `appcast.xml`, not to upstream's. The Sparkle private key is per-repo (`SPARKLE_PRIVATE_KEY`); a fork needs its own, because the public half is baked into the app at bundle time.
+
 A tag/VERSION mismatch fails the run. A suffix (`v1.1.0-beta.1`) is a GitHub pre-release, excluded from “latest,” so the in-app check ignores it too.
 
 ## CI
