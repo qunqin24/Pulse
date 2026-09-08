@@ -47,6 +47,9 @@ struct UsageAlert: Sendable, Equatable {
         case spent
         /// A window Pulse had already warned about has turned over.
         case reset
+        /// A window turned over and the user asked for ribbons. Not posted
+        /// as a notification — see `ResetCelebration`.
+        case celebration
         /// Several passes in a row failed to produce a current reading. The
         /// reason when there is one; nil when the fetch simply failed and the
         /// cache answered in its place.
@@ -68,6 +71,7 @@ struct UsageAlert: Sendable, Equatable {
         case .approaching(let percent): "approaching-\(percent)"
         case .spent: "spent"
         case .reset: "reset-\(Int(window?.resetsAt?.timeIntervalSince1970 ?? 0))"
+        case .celebration: "celebration-\(Int(window?.resetsAt?.timeIntervalSince1970 ?? 0))"
         case .unreadable: "unreadable"
         }
         return "\(account.id)|\(limit)|\(what)"
@@ -137,7 +141,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
     /// said it.
     ///
     /// **Pure, apart from its own `self`.** Everything it decides comes from
-    /// the reading, the memory, and the three settings; nothing here reads the
+    /// the reading, the memory, and the settings; nothing here reads the
     /// clock, the disk, or the notification centre. That is what makes the
     /// rules below arguable at all.
     /// `staleMeansFailure` is false for a route that only produces a reading
@@ -154,6 +158,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
         threshold: AlertThreshold,
         announcesReset: Bool,
         announcesFailure: Bool,
+        celebratesReset: Bool = false,
         staleMeansFailure: Bool,
         now: Date
     ) -> [UsageAlert] {
@@ -222,7 +227,11 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // already recorded here — and a figure that falls is how a reset is
         // detected. Running the cache through these rules would announce a
         // reset every time the network hiccuped.
-        guard case .live = rawState, case .live = reading.state, threshold != .off,
+        //
+        // Ribbons still need this loop when the threshold is Off: they fire
+        // on the same unambiguous evidence, without a prior warning.
+        guard case .live = rawState, case .live = reading.state,
+              threshold != .off || celebratesReset,
               let observedAt = reading.observedAt,
               now.timeIntervalSince(observedAt) <= UsageCache.maximumAge else {
             accounts[account.id] = record
@@ -279,11 +288,18 @@ struct AlertMemory: Codable, Sendable, Equatable {
                     if announcesReset, seen.announced > 0 {
                         produced.append(UsageAlert(account: account, kind: .reset, window: window))
                     }
+                    // Ribbons are the opposite: they name the provider so you
+                    // can tell who came back, whether or not you were warned.
+                    if celebratesReset {
+                        produced.append(UsageAlert(account: account, kind: .celebration, window: window))
+                    }
                     memory.announced = 0
                 }
             }
 
-            if let step = Self.step(for: window, threshold: threshold), step > memory.announced {
+            if threshold != .off,
+               let step = Self.step(for: window, threshold: threshold),
+               step > memory.announced {
                 memory.announced = step
                 produced.append(
                     UsageAlert(
@@ -376,11 +392,12 @@ struct AlertMemory: Codable, Sendable, Equatable {
 
 /// Turns readings into notifications, and remembers what it has already said.
 ///
-/// **Nothing is posted unless the user asked for it**, and the three switches
-/// are separate because the three things are: a limit filling up is a plan for
-/// the afternoon, a limit coming back is permission to start again, and a
-/// reading that stopped arriving is a fault. Someone can want any one of them
-/// without the others.
+/// **Nothing is posted unless the user asked for it**, and the three
+/// notification switches are separate because the three things are: a limit
+/// filling up is a plan for the afternoon, a limit coming back is permission
+/// to start again, and a reading that stopped arriving is a fault. Someone
+/// can want any one of them without the others. Ribbons are a fourth switch
+/// and not a notification.
 ///
 /// Every one of them asks for the **default sound**, and the mute switch is
 /// macOS's own per-app "Play sound for notifications".
@@ -499,9 +516,17 @@ final class UsageAlerts {
         // Nothing switched on means no work and, more to the point, **no
         // file**: without this the memory was written on the first pass of
         // every launch — measured — and a run of failures was counted up for a
-        // feature nobody had turned on.
-        guard settings.wantsAlerts, authorizationRequest == nil,
-              !Self.isSupported || authorization != .notDetermined else { return }
+        // feature nobody had turned on. Ribbons keep the same file: they need
+        // the previous fraction to know a reset happened.
+        guard settings.wantsAlerts || settings.celebratesReset else { return }
+        // Notices wait for a grant; ribbons do not. A permission dialog in
+        // flight must still not consume a warning, so the notice half stays
+        // out until that returns — and takes the ribbons with it for that
+        // one pass, rather than mark a reset seen and then stay silent.
+        if settings.wantsAlerts {
+            guard authorizationRequest == nil,
+                  !Self.isSupported || authorization != .notDetermined else { return }
+        }
 
         let before = memory
         let alerts = memory.alerts(
@@ -511,6 +536,7 @@ final class UsageAlerts {
             threshold: settings.alertThreshold,
             announcesReset: settings.alertsOnReset,
             announcesFailure: settings.alertsOnFailure,
+            celebratesReset: settings.celebratesReset,
             staleMeansFailure: !settings.source(for: account).reportsOnlyWhenUsed(for: account),
             // The one clock reading in here, taken at the edge and passed in,
             // so the rules themselves stay decidable from their arguments.
@@ -518,12 +544,25 @@ final class UsageAlerts {
         )
 
         if memory != before { save() }
+        playCelebrations(from: alerts)
         // The memory is kept up to date whether or not anything can be posted:
         // a build with no bundle, or a grant that was refused, must not come
         // back later and announce a fortnight of crossings it slept through.
-        guard Self.isSupported, !alerts.isEmpty else { return }
+        guard Self.isSupported else { return }
+        for alert in alerts where alert.kind != .celebration {
+            post(alert)
+        }
+    }
 
-        for alert in alerts { post(alert) }
+    /// One overlay per account per pass. Two of Qoder's bars turning over
+    /// together is one piece of news, named Qoder, not two shows in a row.
+    private func playCelebrations(from alerts: [UsageAlert]) {
+        guard settings.celebratesReset else { return }
+        var seen = Set<AccountKey>()
+        for alert in alerts where alert.kind == .celebration {
+            guard seen.insert(alert.account).inserted else { continue }
+            ResetCelebration.shared.play(name: settings.label(for: alert.account))
+        }
     }
 
     private func post(_ alert: UsageAlert) {
@@ -569,7 +608,7 @@ final class UsageAlerts {
         case .spent:
             return Self.joined(.localized("This limit is spent."), Self.resetSentence(alert.window))
 
-        case .reset:
+        case .reset, .celebration:
             return .localized("This limit has reset.")
         }
     }

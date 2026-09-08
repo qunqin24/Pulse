@@ -36,12 +36,13 @@ struct QoderUsageService: Sendable {
             let sharedURL = URL(string: "\(origin)/api/v1/me/organization-shared-usages/big_model_credits")!
             switch await load(url: planURL, origin: origin, token: token, cookie: header) {
             case .ok(let plan):
-                var windows = Self.windows(from: plan)
-                if case .ok(let shared) = await load(url: sharedURL, origin: origin, token: token, cookie: header) {
-                    for extra in Self.windows(from: shared) where !windows.contains(where: { $0.id == extra.id }) {
-                        windows.append(extra)
-                    }
+                let shared: Reply?
+                if case .ok(let extra) = await load(url: sharedURL, origin: origin, token: token, cookie: header) {
+                    shared = extra
+                } else {
+                    shared = nil
                 }
+                let windows = Self.windows(from: plan, shared: shared)
                 guard !windows.isEmpty else {
                     return .unavailable(.qoder, reason: .noLimitsReported)
                 }
@@ -214,6 +215,23 @@ struct QoderUsageService: Sendable {
 
     /// Internal so a fixture test can hold it. Not a public contract.
     static func windows(from reply: Reply) -> [UsageWindow] {
+        windows(from: reply, shared: nil)
+    }
+
+    /// Team Plan and Add-on Credits are two JSON documents. The shared one
+    /// has no `nextResetAt`; both bars turn over on the same date, so the
+    /// plan's reset is copied onto any extra window that arrived without one.
+    static func windows(from plan: Reply, shared: Reply?) -> [UsageWindow] {
+        var windows = decodeWindows(plan)
+        if let shared {
+            for extra in decodeWindows(shared) where !windows.contains(where: { $0.id == extra.id }) {
+                windows.append(extra)
+            }
+        }
+        return inheritingReset(windows)
+    }
+
+    private static func decodeWindows(_ reply: Reply) -> [UsageWindow] {
         [
             window(
                 id: "qoder.plan",
@@ -236,6 +254,18 @@ struct QoderUsageService: Sendable {
                 scope: "Add-on Credits"
             ),
         ].compactMap { $0 }
+    }
+
+    /// Add-on Credits is a second document with no reset of its own. The
+    /// usage page shows the same date on both bars (measured 2026-09-08).
+    private static func inheritingReset(_ windows: [UsageWindow]) -> [UsageWindow] {
+        guard let reset = windows.first(where: { $0.resetsAt != nil })?.resetsAt else {
+            return windows
+        }
+        return windows.map { window in
+            guard window.resetsAt == nil else { return window }
+            return window.with(resetsAt: reset)
+        }
     }
 
     private static func window(

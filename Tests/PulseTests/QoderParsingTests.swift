@@ -55,6 +55,24 @@ struct QoderParsingTests {
         #expect(addOn.map(\.id) == ["qoder.shared"])
         #expect(addOn[0].usedFraction == 0)
         #expect(addOn[0].scope == "Add-on Credits")
+        #expect(addOn[0].resetsAt == nil)
+    }
+
+    @Test("Add-on Credits inherits Team Plan's reset")
+    func addOnInheritsPlanReset() throws {
+        let planURL = try #require(
+            Bundle.module.url(forResource: "qoder-plan-credits", withExtension: "json", subdirectory: "Fixtures")
+        )
+        let addOnURL = try #require(
+            Bundle.module.url(forResource: "qoder-shared-credits", withExtension: "json", subdirectory: "Fixtures")
+        )
+        let plan = try JSONDecoder().decode(QoderUsageService.Reply.self, from: Data(contentsOf: planURL))
+        let addOn = try JSONDecoder().decode(QoderUsageService.Reply.self, from: Data(contentsOf: addOnURL))
+        let windows = QoderUsageService.windows(from: plan, shared: addOn)
+        #expect(windows.map(\.id) == ["qoder.plan", "qoder.shared"])
+        #expect(windows[0].resetsAt == Date(timeIntervalSince1970: 1_790_092_800))
+        #expect(windows[1].resetsAt == windows[0].resetsAt)
+        #expect(windows[1].usedFraction == 0)
     }
 
     @Test("A well-formed cookie header is kept")

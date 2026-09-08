@@ -516,6 +516,20 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(String.localized("Celebrations")) {
+                SettingsRow(
+                    String.localized("Celebrate a reset"),
+                    subtitle: String.localized("Full-screen ribbons, named for the provider.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.celebratesReset },
+                        set: { settings.celebratesReset = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
             SettingsGroup(String.localized("Refresh")) {
                 SettingsRow(
                     String.localized("Check every"),

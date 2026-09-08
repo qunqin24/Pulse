@@ -26,7 +26,7 @@ Not a Pulse official-integration claim; the JSON can change.
 
 - Team Plan — `plan_quota` / `total_quota` / `userQuota`. Monthly sort key, `reportsLength: false`.
 - Personal resource pack — `resource_package_quota` when its limit is above zero.
-- Add-on Credits — `shared_quota` from the organisation-shared endpoint. No cap means no ring.
+- Add-on Credits — `shared_quota` from the organisation-shared endpoint. No cap means no ring. That JSON has no `nextResetAt`; Pulse copies Team Plan's reset onto it, because both bars turn over together (the usage page shows the same date on both).
 - `userType` is the plan name.
 - Remaining Credits are `creditBalance` when the remaining figure is above zero.
 

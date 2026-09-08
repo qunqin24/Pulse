@@ -331,6 +331,9 @@
 "%@ left." = "剩余 %@。";
 "This limit is spent." = "这条限额已经用尽。";
 "This limit has reset." = "这条限额已经重置。";
+"Celebrations" = "庆祝";
+"Celebrate a reset" = "限额重置时播放彩带";
+"Full-screen ribbons, named for the provider." = "全屏彩带，并标出是哪一家。";
 
 /* 设置侧边栏搜索 */
 "Search" = "搜索";

@@ -448,8 +448,22 @@ final class AppSettings {
         }
     }
 
+    /// Full-screen ribbons when a limit Pulse is watching turns over.
+    ///
+    /// Off by default, like every other thing Pulse does unprompted. Not a
+    /// notification: it does not go through the notification centre, does not
+    /// need a grant, and is not tied to "warn at". The name on the overlay is
+    /// the account's, so two providers resetting in the same hour are not
+    /// mistaken for each other.
+    var celebratesReset: Bool {
+        didSet {
+            guard celebratesReset != oldValue else { return }
+            UserDefaults.standard.set(celebratesReset, forKey: Key.celebratesReset)
+        }
+    }
+
     /// Whether anything at all would be posted. What decides if permission is
-    /// worth asking for.
+    /// worth asking for. Ribbons are not in here: they are not a notification.
     var wantsAlerts: Bool {
         alertThreshold != .off || alertsOnReset || alertsOnFailure
     }
@@ -545,7 +559,8 @@ final class AppSettings {
         splitAccounts: Set<String> = [],
         alertThreshold: AlertThreshold = .default,
         alertsOnReset: Bool = false,
-        alertsOnFailure: Bool = false
+        alertsOnFailure: Bool = false,
+        celebratesReset: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -573,6 +588,7 @@ final class AppSettings {
         self.alertThreshold = alertThreshold
         self.alertsOnReset = alertsOnReset
         self.alertsOnFailure = alertsOnFailure
+        self.celebratesReset = celebratesReset
     }
 
     /// A stored route the provider doesn't offer resolves to `.automatic`
@@ -801,7 +817,8 @@ final class AppSettings {
             alertThreshold: (defaults.object(forKey: Key.alertThreshold) as? Int)
                 .flatMap(AlertThreshold.init(rawValue:)) ?? .default,
             alertsOnReset: defaults.object(forKey: Key.alertsOnReset) as? Bool ?? false,
-            alertsOnFailure: defaults.object(forKey: Key.alertsOnFailure) as? Bool ?? false
+            alertsOnFailure: defaults.object(forKey: Key.alertsOnFailure) as? Bool ?? false,
+            celebratesReset: defaults.object(forKey: Key.celebratesReset) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -901,6 +918,7 @@ final class AppSettings {
         static let alertThreshold = "settings.alertThreshold"
         static let alertsOnReset = "settings.alertsOnReset"
         static let alertsOnFailure = "settings.alertsOnFailure"
+        static let celebratesReset = "settings.celebratesReset"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

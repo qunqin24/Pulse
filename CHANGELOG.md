@@ -9,6 +9,10 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.8
 
+- **A limit coming back can throw ribbons across the screen.** Off until you turn it on, under Settings › General › Celebrations. The overlay names the provider, so two of them resetting in the same hour are not a mystery. It is not a notification: no permission dialog, and it still works in a `swift run` build. Same evidence as the reset banner — the provider's date moved, or the figure dropped forty points — whether or not you were warned on the way up.
+
+- **Qoder's Add-on Credits now shows when it resets.** That bar is a second JSON document with no date of its own; Team Plan's reset is the one the usage page prints on both, so Pulse copies it across.
+
 - **The interface follows your Mac's language.** Pulse now declares that it speaks Chinese, which it always did — the translations shipped, macOS just was not told they existed, so a Mac set to 简体中文 got an English app. If that was you, this update switches over on its own; if you preferred it in English, Settings › Language still overrides. The Chinese copy has been rewritten throughout while we were in there.
 
 - **Antigravity can show its two allowances as two rings.** The plan carries one budget for Gemini and a separate one for Claude and GPT, and until now a single ring could only follow whichever was busier — the other went unmentioned unless you hovered. Switch on "A ring for each model group" in Antigravity's settings and each gets its own ring, both under the Antigravity icon, both refreshing the one login. Off by default: an extra ring takes room on the rail, and most people want the one number.

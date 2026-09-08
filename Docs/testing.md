@@ -12,7 +12,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 | Suite | Covers |
 |---|---|
-| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate. [notifications.md](notifications.md) |
+| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate, and reset ribbons. [notifications.md](notifications.md) |
 | `AlertsThroughTheCacheTests` | The same rules reached the way production reaches them: service → `UsageCache.reconciled` → state machine |
 | `NotificationAuthorizationTests` | An injected authorization decision, concurrent requests, no warning consumed while a grant is pending, and the foreground delegate selector; no system permission or notification delivery |
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
@@ -24,7 +24,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `KimiCodeTests` | A captured `/usages` reply → windows, and that device-code sign-in is configured. [providers/kimi-code.md](providers/kimi-code.md) |
-| `QoderParsingTests` | A captured Credits dashboard reply → plan and shared monthly windows. [providers/qoder.md](providers/qoder.md) |
+| `QoderParsingTests` | A captured Credits dashboard reply → plan and shared monthly windows, and that Add-on Credits inherits Team Plan's reset. [providers/qoder.md](providers/qoder.md) |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `ZaiHistoryTests` | The statistics endpoint's shape → a day-by-day ledger, and what may not be said about it |
