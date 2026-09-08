@@ -1,0 +1,12 @@
+{
+  "quota_key": "big_model_credits",
+  "shared_quota": {
+    "quota_summary": {
+      "used_value": 0,
+      "limit_value": 314000,
+      "remaining_value": 314000,
+      "usage_percentage": 0,
+      "unit": "credits"
+    }
+  }
+}

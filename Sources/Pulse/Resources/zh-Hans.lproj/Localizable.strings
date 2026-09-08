@@ -166,9 +166,16 @@
 "Tight" = "紧凑";
 "Loose" = "宽松";
 "Size of the rail on screen." = "调整胶囊的整体尺寸。";
+"Tiny" = "极小";
 "Small" = "小";
 "Standard" = "标准";
 "Large" = "大";
+"Appearance" = "外观";
+"Dark, light, match the Mac, or glass." = "深色、浅色、跟随系统，或毛玻璃。";
+"Dark" = "深色";
+"Light" = "浅色";
+"Auto" = "自动";
+"Glass" = "毛玻璃";
 
 /* Launch at login */
 "Open at login" = "开机自启";
@@ -177,7 +184,7 @@
 
 /* Liquid Glass */
 "Liquid Glass" = "毛玻璃";
-"Frosted glass instead of solid black." = "使用半透明材质，替代纯黑背景。";
+"Frosted glass instead of a solid rail." = "用半透明材质，替代实心轨道。";
 "Drag it by a ring while this is on." = "开启后只能按住圆环拖动。";
 "Open Antigravity to see its usage." = "打开 Antigravity 才能读到它的用量。";
 "Asks the language server Antigravity runs while it is open." = "向 Antigravity 打开时运行的语言服务器读取。";
@@ -331,6 +338,9 @@
 "%@ left." = "剩余 %@。";
 "This limit is spent." = "这条限额已经用尽。";
 "This limit has reset." = "这条限额已经重置。";
+"Celebrations" = "庆祝";
+"Celebrate a reset" = "限额重置时播放彩带";
+"Full-screen ribbons, named for the provider." = "全屏彩带，并标出是哪一家。";
 
 /* 设置侧边栏搜索 */
 "Search" = "搜索";

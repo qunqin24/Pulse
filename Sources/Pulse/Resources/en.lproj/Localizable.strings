@@ -166,9 +166,16 @@
 "Tight" = "Tight";
 "Loose" = "Loose";
 "Size of the rail on screen." = "Size of the rail on screen.";
+"Tiny" = "Tiny";
 "Small" = "Small";
 "Standard" = "Standard";
 "Large" = "Large";
+"Appearance" = "Appearance";
+"Dark, light, match the Mac, or glass." = "Dark, light, match the Mac, or glass.";
+"Dark" = "Dark";
+"Light" = "Light";
+"Auto" = "Auto";
+"Glass" = "Glass";
 
 /* Launch at login */
 "Open at login" = "Open at login";
@@ -177,7 +184,7 @@
 
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
-"Frosted glass instead of solid black." = "Frosted glass instead of solid black.";
+"Frosted glass instead of a solid rail." = "Frosted glass instead of a solid rail.";
 "Drag it by a ring while this is on." = "Drag it by a ring while this is on.";
 "Open Antigravity to see its usage." = "Open Antigravity to see its usage.";
 "Asks the language server Antigravity runs while it is open." = "Asks the language server Antigravity runs while it is open.";
@@ -331,6 +338,9 @@
 "%@ left." = "%@ left.";
 "This limit is spent." = "This limit is spent.";
 "This limit has reset." = "This limit has reset.";
+"Celebrations" = "Celebrations";
+"Celebrate a reset" = "Celebrate a reset";
+"Full-screen ribbons, named for the provider." = "Full-screen ribbons, named for the provider.";
 
 /* Settings sidebar search */
 "Search" = "Search";

@@ -364,34 +364,27 @@ final class AppSettings {
         }
     }
 
-    /// Liquid Glass instead of flat black for the panel's surfaces.
+    /// How the floating rail is drawn: dark, light, follow the Mac, or glass.
     ///
-    /// Off by default because a solid surface is legible over anything, and
-    /// glass takes on whatever is behind it — see `PanelSurface`.
-    ///
-    /// **The drag fault this used to carry a warning about was probably never
-    /// the material's.** With glass on, the panel could be dragged by its rings
-    /// and nowhere else; that was read as macOS 26's material swallowing input
-    /// outside SwiftUI's hit-testing chain
-    /// (developer.apple.com/forums/thread/816366), and `.allowsHitTesting(false)`,
-    /// `.disabled(true)` and opaque ink above and below the material were all
-    /// tried against it. The same symptom then turned up on the plain black
-    /// panel, where no material is involved: the surface had been taken out of
-    /// hit testing, so nothing claimed the gaps between the rings and the
-    /// window was never handed the press. Both are fixed by claiming it again
-    /// and taking the drag in `FloatingPanel.sendEvent`, which runs before any
-    /// view — including anything the material installs — sees the event.
-    ///
-    /// Worth keeping from that hunt: `hitTest` and synthesised `NSEvent`s both
-    /// reported the handle as perfectly reachable throughout. Neither can
-    /// answer whether a real click arrives.
-    var usesGlass: Bool {
+    /// One setting. Glass used to be a separate toggle that overrode Light
+    /// without clearing it, so both looked on. Dark stays the default.
+    var panelAppearance: PanelAppearance {
         didSet {
-            guard usesGlass != oldValue else { return }
-            UserDefaults.standard.set(usesGlass, forKey: Key.usesGlass)
-            onChange?()
+            guard panelAppearance != oldValue else { return }
+            UserDefaults.standard.set(panelAppearance.rawValue, forKey: Key.panelAppearance)
+            // Kept in step with the old toggle so a downgrade, or anything
+            // still reading this key, does not resurrect a glass rail on top
+            // of Light.
+            UserDefaults.standard.set(panelAppearance == .glass, forKey: Key.usesGlass)
+            if (oldValue == .glass) != (panelAppearance == .glass) {
+                onChange?()
+            }
         }
     }
+
+    /// Liquid Glass, now a case of `panelAppearance` rather than its own
+    /// switch. Call sites that only care about the material keep this name.
+    var usesGlass: Bool { panelAppearance == .glass }
 
     /// Whether the rail hides down to a sliver when the pointer is elsewhere.
     ///
@@ -448,8 +441,22 @@ final class AppSettings {
         }
     }
 
+    /// Full-screen ribbons when a limit Pulse is watching turns over.
+    ///
+    /// Off by default, like every other thing Pulse does unprompted. Not a
+    /// notification: it does not go through the notification centre, does not
+    /// need a grant, and is not tied to "warn at". The name on the overlay is
+    /// the account's, so two providers resetting in the same hour are not
+    /// mistaken for each other.
+    var celebratesReset: Bool {
+        didSet {
+            guard celebratesReset != oldValue else { return }
+            UserDefaults.standard.set(celebratesReset, forKey: Key.celebratesReset)
+        }
+    }
+
     /// Whether anything at all would be posted. What decides if permission is
-    /// worth asking for.
+    /// worth asking for. Ribbons are not in here: they are not a notification.
     var wantsAlerts: Bool {
         alertThreshold != .off || alertsOnReset || alertsOnFailure
     }
@@ -535,6 +542,7 @@ final class AppSettings {
         panelSize: PanelSize = .default,
         railSpacing: RailSpacing = .default,
         usesGlass: Bool = false,
+        panelAppearance: PanelAppearance = .default,
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true,
         labelAboveRing: Bool = false,
@@ -545,7 +553,8 @@ final class AppSettings {
         splitAccounts: Set<String> = [],
         alertThreshold: AlertThreshold = .default,
         alertsOnReset: Bool = false,
-        alertsOnFailure: Bool = false
+        alertsOnFailure: Bool = false,
+        celebratesReset: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
@@ -561,7 +570,7 @@ final class AppSettings {
         self.autoCollapse = autoCollapse
         self.panelSize = panelSize
         self.railSpacing = railSpacing
-        self.usesGlass = usesGlass
+        self.panelAppearance = usesGlass ? .glass : panelAppearance
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
         self.labelAboveRing = labelAboveRing
@@ -573,6 +582,7 @@ final class AppSettings {
         self.alertThreshold = alertThreshold
         self.alertsOnReset = alertsOnReset
         self.alertsOnFailure = alertsOnFailure
+        self.celebratesReset = celebratesReset
     }
 
     /// A stored route the provider doesn't offer resolves to `.automatic`
@@ -789,7 +799,7 @@ final class AppSettings {
                 .flatMap(PanelSize.init(rawValue:)) ?? .default,
             railSpacing: defaults.string(forKey: Key.railSpacing)
                 .flatMap(RailSpacing.init(rawValue:)) ?? .default,
-            usesGlass: defaults.object(forKey: Key.usesGlass) as? Bool ?? false,
+            panelAppearance: Self.restoredAppearance(from: defaults),
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
@@ -801,7 +811,8 @@ final class AppSettings {
             alertThreshold: (defaults.object(forKey: Key.alertThreshold) as? Int)
                 .flatMap(AlertThreshold.init(rawValue:)) ?? .default,
             alertsOnReset: defaults.object(forKey: Key.alertsOnReset) as? Bool ?? false,
-            alertsOnFailure: defaults.object(forKey: Key.alertsOnFailure) as? Bool ?? false
+            alertsOnFailure: defaults.object(forKey: Key.alertsOnFailure) as? Bool ?? false,
+            celebratesReset: defaults.object(forKey: Key.celebratesReset) as? Bool ?? false
         )
         settings.applyLanguage()
         PanelMetrics.use(settings.panelSize)
@@ -871,6 +882,16 @@ final class AppSettings {
         extraAccounts[index].label = label
     }
 
+    /// Glass used to be a separate toggle. If that key is still on, it wins:
+    /// that is what was actually on screen, even when Light was also selected.
+    private static func restoredAppearance(from defaults: UserDefaults) -> PanelAppearance {
+        if defaults.object(forKey: Key.usesGlass) as? Bool == true {
+            return .glass
+        }
+        return defaults.string(forKey: Key.panelAppearance)
+            .flatMap(PanelAppearance.init(rawValue:)) ?? .default
+    }
+
     private enum Key {
         static let panelVisible = "settings.panelVisible"
         static let extraAccounts = "settings.extraAccounts"
@@ -890,6 +911,7 @@ final class AppSettings {
         static let panelSize = "settings.panelSize"
         static let railSpacing = "settings.railSpacing"
         static let usesGlass = "settings.usesGlass"
+        static let panelAppearance = "settings.panelAppearance"
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let labelAboveRing = "settings.labelAboveRing"
@@ -901,6 +923,7 @@ final class AppSettings {
         static let alertThreshold = "settings.alertThreshold"
         static let alertsOnReset = "settings.alertsOnReset"
         static let alertsOnFailure = "settings.alertsOnFailure"
+        static let celebratesReset = "settings.celebratesReset"
         static let offeredProviders = "settings.offeredProviders"
         static let providerOrder = "settings.providerOrder"
         /// Set the first time Pulse runs on this Mac, and never cleared.

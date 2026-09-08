@@ -14,11 +14,15 @@ A joined sentence needs no extra space after a Chinese full stop (`。`). `glass
 
 While Liquid Glass is on, the caption still says to drag the panel by a ring. That is current UI. The historical “glass swallows input” diagnosis is uncertain; [rings-and-surface.md](rings-and-surface.md).
 
-Group order in the general pane: **Floating panel → Notifications → Refresh → Order → Application → Language**. The two groups that decide what Pulse does *on its own* sit directly under the panel group, above the housekeeping ones. Notifications was added at the bottom, between Refresh and Language, and that was too far down to find — the panel group alone is thirteen rows.
+Group order in the general pane: **Floating panel → Notifications → Celebrations → Refresh → Order → Application → Language**. The two groups that decide what Pulse does *on its own* sit directly under the panel group, above the housekeeping ones. Notifications was added at the bottom, between Refresh and Language, and that was too far down to find — the panel group alone is thirteen rows.
 
 The usage-interval group is named **Refresh**, not Updates.
 
+The **Floating panel** group includes **Size** (tiny / small / standard / large) and **Appearance** (dark / light / auto / glass). One control, not a colour plus a glass switch: glass used to override Light while both looked on. Tiny is a smaller scale of the same budgets, not a different layout. While glass is selected, the subtitle still adds “Drag it by a ring while this is on.”
+
 The **Notifications** group's three controls are not independent of each other: the reset toggle is greyed out while the threshold is Off, because a reset is only announced for a window that was warned about, and every control is greyed out in an unbundled build. Its subtitle reports `UNAuthorizationStatus`, not the switches. Rules: [../notifications.md](../notifications.md).
+
+**Celebrations** is a fourth switch, not a fourth notification. Full-screen ribbons when a limit turns over, with the account's name on them so two providers resetting in the same hour are not mistaken for each other. Off by default. It does not go through `UNUserNotificationCenter`, so it is not greyed out in a `swift run` build and does not ask for a grant. It is not tied to "Warn at": a window that never passed the line still gets ribbons. Same unambiguous-reset evidence as the notification, one overlay per account per pass.
 
 ## Controls
 

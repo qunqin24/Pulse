@@ -2,7 +2,7 @@
 
 Owns: when Pulse posts a system notification, what it says, and what it refuses to say. Settings copy and layout: [ui/settings.md](ui/settings.md). Where readings come from: [refresh-and-data.md](refresh-and-data.md).
 
-Source: [`Sources/Pulse/UsageAlerts.swift`](../Sources/Pulse/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds.
+Source: [`Sources/Pulse/UsageAlerts.swift`](../Sources/Pulse/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Ribbons: `celebratesReset`, drawn by [`ResetCelebration.swift`](../Sources/Pulse/ResetCelebration.swift) — not a notification. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds.
 
 ## What can be said
 
@@ -35,6 +35,8 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 **A reset needs unambiguous evidence.** Two signals: the provider's reset time moved forward by more than a minute, or the share dropped by 40 points or more. A drop of 5 points says nothing — a rolling window (Kimi's week, which can reset anywhere inside it) slides down a few points at a time without anything having reset.
 
+**Ribbons use that same evidence, and nothing else.** `celebratesReset` is a General setting, off by default. It is not a notification: no grant, no `UNUserNotificationCenter`, works in a `swift run` build. It names the account so you can tell who came back. It does **not** require a prior warning, and it is **not** greyed out while "Warn at" is Off. First sighting of a low figure is not a celebration — Pulse has to have seen the window before. Two bars of the same account turning over together is one overlay, not two. Settings copy: [ui/settings.md](ui/settings.md).
+
 **The announced step is cleared by that same evidence, not by the drop.** Clearing it on any 5-point dip re-armed a window that had not reset: 95% → 89% → 93% announced twice, and went on announcing for as long as the figure wobbled across the line. "At most one notification per limit" was on the tin and was not what it did. `oscillationDoesNotReAnnounce` pins it. A reset is also only announced for a window that was mentioned on the way up: "your 5-hour window reset" about a window that never passed 12% is a notification about nothing. That dependency is why the Settings row is greyed out while the threshold is Off.
 
 **A push route going quiet is never a failure.** Claude Code's status line writes only while a session runs, so its capture is marked stale ten minutes after the last response — which says nobody has used Claude Code since lunch, not that a check failed. Counted as an outage it posted *"the last few checks didn't get through"* over a route where every check got through: an alert about something Pulse did not witness. `UsageSource.reportsOnlyWhenUsed(for:)` is the flag, and `AlertMemory` takes it as `staleMeansFailure`.
@@ -59,7 +61,7 @@ Every rule on this page is covered by `AlertMemoryTests` ([testing.md](testing.m
 
 `AlertMemory.alerts(for:as:…)` is pure apart from its own `self` — no disk, no notification centre, and the one clock reading it needs is taken at the edge and passed in as `now`. That is what makes these rules arguable.
 
-`UsageAlerts.observe` returns immediately when `AppSettings.wantsAlerts` is false, so nothing is tracked and no file is written for a feature nobody has switched on. Without that guard the memory was written on the first pass of every launch — measured — and failures were counted up against accounts for nothing.
+`UsageAlerts.observe` returns immediately when `AppSettings.wantsAlerts` is false **and** `celebratesReset` is false, so nothing is tracked and no file is written for a feature nobody has switched on. Ribbons keep the same file: they need the previous fraction to know a reset happened. Without that guard the memory was written on the first pass of every launch — measured — and failures were counted up against accounts for nothing.
 
 ## Permission, and the unbundled build
 

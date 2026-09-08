@@ -226,25 +226,49 @@ struct UsageDetailCard: View {
             Spacer(minLength: 0)
 
             if let openSettings {
-                headerButton("gearshape", label: String.localized("Settings…"), action: openSettings)
-                headerButton("power", label: String.localized("Quit Pulse")) {
+                HeaderIconButton(
+                    systemImage: "gearshape",
+                    label: String.localized("Settings…"),
+                    action: openSettings
+                )
+                HeaderIconButton(
+                    systemImage: "power",
+                    label: String.localized("Quit Pulse")
+                ) {
                     NSApplication.shared.terminate(nil)
                 }
             }
         }
     }
+}
 
-    private func headerButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: DetailCardLayout.headerIconSize * 0.9, weight: .medium))
-                .foregroundStyle(.primary.opacity(0.55))
-                .frame(width: DetailCardLayout.headerIconSize, height: DetailCardLayout.headerIconSize)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(label)
-        .accessibilityLabel(label)
+/// Settings and Quit on the card. `.onHover` is silent on this panel, and a
+/// SwiftUI `Button` under a tracking overlay that declines `hitTest` is a
+/// hole in the transparent window — the press lands on the page behind.
+/// `PointerHand` claims the point and fires the action.
+private struct HeaderIconButton: View {
+    let systemImage: String
+    let label: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        let size = DetailCardLayout.headerIconSize
+        Image(systemName: systemImage)
+            .font(.system(size: size * 0.9, weight: .medium))
+            .foregroundStyle(.primary.opacity(hovering ? 0.95 : 0.55))
+            .frame(width: size, height: size)
+            .scaleEffect(hovering ? 1.32 : 1)
+            .animation(.spring(response: 0.22, dampingFraction: 0.72), value: hovering)
+            .frame(width: size + 16, height: size + 16)
+            .overlay {
+                PointerHand(onHover: { hovering = $0 }, onClick: action)
+            }
+            .help(label)
+            .accessibilityElement()
+            .accessibilityLabel(label)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction(named: Text(verbatim: label), action)
     }
 }
 

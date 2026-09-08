@@ -1,0 +1,32 @@
+{
+  "quota_key": "big_model_credits",
+  "status": "active",
+  "plan_quota": {
+    "quota_summary": {
+      "used_value": 51,
+      "limit_value": 6000,
+      "remaining_value": 5949,
+      "usage_percentage": 1,
+      "unit": "credits"
+    }
+  },
+  "resource_package_quota": {
+    "quota_summary": {
+      "used_value": 0,
+      "limit_value": 0,
+      "remaining_value": 0,
+      "usage_percentage": 0,
+      "unit": "credits"
+    }
+  },
+  "total_quota": {
+    "quota_summary": {
+      "used_value": 51,
+      "limit_value": 6000,
+      "remaining_value": 5949,
+      "usage_percentage": 1,
+      "unit": "credits"
+    }
+  },
+  "nextResetAt": 1790092800000
+}

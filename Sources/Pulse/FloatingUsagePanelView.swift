@@ -166,17 +166,16 @@ struct FloatingUsagePanelView: View {
                     try? await Task.sleep(for: .seconds(60))
                 }
             }
-            // Pinned dark only on the black panel, and pinned through the
-            // *environment* rather than `preferredColorScheme` — the latter is
-            // a window-wide preference, not a view-level override, so it can't
-            // express "this subtree is dark".
+            // Pinned through the *environment* rather than `preferredColorScheme`
+            // — the latter is a window-wide preference, not a view-level
+            // override, so it can't express "this subtree is dark" (or light).
             //
             // Liquid Glass switches between light and dark itself to stay
             // legible against whatever is behind it, so under glass nothing is
             // pinned: the standard `.primary` colours the panel is drawn in
             // follow the appearance the material settled on. Forcing dark is
             // exactly what leaves white text sitting on bright glass.
-            .environment(\.colorScheme, settings.usesGlass ? colorScheme : .dark)
+            .environment(\.colorScheme, pinnedScheme)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(String.localized("Pulse floating usage panel"))
             // Strings and layout constants are both read through plain
@@ -185,7 +184,12 @@ struct FloatingUsagePanelView: View {
             // change. The last one is easy to forget and changes the rail's
             // *thickness*, so leaving it out draws the rings at one size in a
             // berth built for the other.
-            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)-\(settings.showsForecast)")
+            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.panelAppearance.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)-\(settings.showsForecast)")
+    }
+
+    /// What the rail (and everything drawn on it) treats as its scheme.
+    private var pinnedScheme: ColorScheme {
+        settings.panelAppearance.resolved(matching: colorScheme)
     }
 
     /// Whether the rail is drawn out in full.
@@ -658,6 +662,16 @@ private struct CardReveal: ViewModifier {
 
 #Preview("Floating panel") {
     FloatingUsagePanelView(store: UsageStore(settings: AppSettings()), settings: AppSettings(), placement: PanelPlacement(), openSettings: {})
+        .frame(
+            width: FloatingPanelController.Layout.width,
+            height: FloatingPanelController.Layout.height
+        )
+        .background(Color.gray.opacity(0.2))
+}
+
+#Preview("Floating panel, light") {
+    let settings = AppSettings(panelAppearance: .light)
+    return FloatingUsagePanelView(store: UsageStore(settings: settings), settings: settings, placement: PanelPlacement(), openSettings: {})
         .frame(
             width: FloatingPanelController.Layout.width,
             height: FloatingPanelController.Layout.height

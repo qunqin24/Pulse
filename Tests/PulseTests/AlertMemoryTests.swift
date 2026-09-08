@@ -66,6 +66,7 @@ struct AlertMemoryTests {
         threshold: AlertThreshold = .ninety,
         announcesReset: Bool = true,
         announcesFailure: Bool = true,
+        celebratesReset: Bool = false,
         staleMeansFailure: Bool = true,
         now: Date = AlertMemoryTests.now
     ) -> [UsageAlert] {
@@ -76,6 +77,7 @@ struct AlertMemoryTests {
             threshold: threshold,
             announcesReset: announcesReset,
             announcesFailure: announcesFailure,
+            celebratesReset: celebratesReset,
             staleMeansFailure: staleMeansFailure,
             now: now
         )
@@ -252,6 +254,35 @@ struct AlertMemoryTests {
         #expect(run(&memory, Self.live(Self.window(used: 0.10)), announcesReset: false).isEmpty)
         #expect(run(&memory, Self.live(Self.window(used: 0.92)), announcesReset: false)
             .map(\.kind) == [.approaching(percent: 90)])
+    }
+
+    @Test("Ribbons fire on a real reset even when nobody was warned")
+    func celebrationDoesNotNeedAWarning() {
+        var memory = AlertMemory()
+        _ = run(&memory, Self.live(Self.window(used: 0.50)), threshold: .off, celebratesReset: true)
+        #expect(run(&memory, Self.live(Self.window(used: 0.0)), threshold: .off, celebratesReset: true)
+            .map(\.kind) == [.celebration])
+    }
+
+    @Test("The first sighting of a low figure is not a celebration")
+    func firstSightingIsNotACelebration() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.live(Self.window(used: 0.0)), celebratesReset: true).isEmpty)
+    }
+
+    @Test("A warned reset is both a notification and ribbons")
+    func warnedResetAlsoCelebrates() {
+        var memory = AlertMemory()
+        _ = run(&memory, Self.live(Self.window(used: 0.95)), celebratesReset: true)
+        #expect(run(&memory, Self.live(Self.window(used: 0.10)), celebratesReset: true)
+            .map(\.kind) == [.reset, .celebration])
+    }
+
+    @Test("A few points of drift is not a celebration")
+    func smallDropIsNotACelebration() {
+        var memory = AlertMemory()
+        _ = run(&memory, Self.live(Self.window(used: 0.50)), threshold: .off, celebratesReset: true)
+        #expect(run(&memory, Self.live(Self.window(used: 0.44)), threshold: .off, celebratesReset: true).isEmpty)
     }
 
     // MARK: - Failures

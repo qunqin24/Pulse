@@ -56,6 +56,21 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// only this can say so.
     var isExhausted: Bool = false
 
+    /// Same figures with a different reset. Used when a sibling limit stated
+    /// the date and this one did not.
+    func with(resetsAt: Date) -> UsageWindow {
+        UsageWindow(
+            id: id,
+            kind: kind,
+            scope: scope,
+            usedFraction: usedFraction,
+            windowSeconds: windowSeconds,
+            resetsAt: resetsAt,
+            reportsLength: reportsLength,
+            isExhausted: isExhausted
+        )
+    }
+
     /// How much of this window has gone by, 0...1 — the other half of the
     /// reading the rail can show.
     ///

@@ -39,7 +39,7 @@ the morning. What that costs you is stated on the row before you press it:
 - **Chrome, Edge, Brave and Arc keep their key in the login keychain**, so
   macOS will ask once — "Pulse wants to use your confidential information".
   The row says so before you press it.
-- **Firefox** is plain SQLite and asks for nothing.
+- **Firefox and Zen** are plain SQLite and ask for nothing.
 
 **Clear** deletes the saved session. When it expires, sign in again in your
 browser and press **Read from browser** again — Pulse cannot renew a browser
@@ -50,7 +50,7 @@ paste it into issues, pull requests, chat, screenshots or repository files.
 
 ## What is read, and what is not
 
-- **One host.** Firefox and Chromium are queried for `ollama.com`, its
+- **One host.** Firefox, Zen and Chromium are queried for `ollama.com`, its
   dot-form, and its subdomains. Safari's file is a binary format with no query
   language, so the same rule is applied by hand — a suffix match is *not* that
   rule and would have returned `notollama.com` and `evil-ollama.com` alongside

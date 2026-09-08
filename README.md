@@ -47,8 +47,9 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 - **Multi-Monitor Native**: Drag Pulse to any secondary display; it remembers screen placement and gracefully returns if disconnected.
 - **Auto-Collapse**: Automatically folds into a razor-thin sliver when idle to eliminate distraction, glowing red only when quota runs critically low.
 - **Opt-In Notifications**: Off until you turn them on. Get told when a limit passes 75/80/90/95%, when the provider says it is spent, when a window you were warned about comes back, and when several checks in a row fail so the panel is quietly showing older figures. Each thing is said once: a limit already past the line when you switch this on is mentioned straight away, then never again until it resets or gets worse.
+- **Reset ribbons**: A full-screen overlay named for the provider, when a limit turns over. Off until you turn it on in Settings › General. Not a notification, and not tied to being warned on the way up.
 - **Spaces-Friendly**: By default, stays out of your full-screen application Spaces.
-- **macOS Aesthetic**: Classic solid obsidian surface or native **Liquid Glass** on macOS 26+.
+- **macOS Aesthetic**: Dark, light, or native **Liquid Glass** on macOS 26+ — one Appearance control, not two stacked switches. Size from tiny to large.
 
 ### Multi-Account & Local Ledger
 - **Multi-Account Support**: Monitor multiple subscriptions for the same provider (Claude Code, Codex, Grok, Grok Bot, Kimi Code) side-by-side with custom labels.
