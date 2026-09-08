@@ -1,10 +1,15 @@
 import Foundation
 
-/// Kimi Code's limits, from its own documented usage endpoint.
+/// Kimi Code's limits, from its own usage endpoint.
 ///
-/// Reached with a key the user pastes into Settings, kept encrypted on this Mac —
-/// the same arrangement as OpenCode Go, and for now without the fallback to a
-/// credential another tool stored.
+/// Two credentials, same `GET /usages`, in this order:
+///
+/// 1. **A key pasted into Settings.** It wins, because someone who typed a
+///    key meant that one to be used.
+/// 2. **A device-code login Pulse drove itself**, stored in
+///    `AccountCredentialStore`. Subscription users sign in this way rather
+///    than creating a console key. Pulse renews its own refresh token, so a
+///    rotation cannot sign the official CLI out.
 ///
 /// The reply has **two kinds of limit in it and they are not the same figure**:
 ///
@@ -24,12 +29,51 @@ struct KimiCodeUsageService: Sendable {
     private static let endpoint = URL(string: "https://api.kimi.com/coding/v1/usages")!
 
     func fetch() async -> ProviderUsage {
-        guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) else {
-            return .unavailable(.kimiCode, reason: .apiKeyMissing)
+        if let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) {
+            return await fetch(token: key, refused: .apiKeyRefused)
+        }
+        return await fetchSignedIn()
+    }
+
+    /// Pulse's own login, renewed here because nothing else will. The access
+    /// token lasts about fifteen minutes (measured); the adaptive interval
+    /// can be longer than that, so a pass that does not renew is a pass that
+    /// reports signed-out for a still-valid account.
+    private func fetchSignedIn() async -> ProviderUsage {
+        let account = AccountKey(.kimiCode)
+        guard var credentials = AccountCredentialStore.credentials(for: account) else {
+            return .unavailable(.kimiCode, reason: .kimiSignInRequired)
         }
 
+        if !credentials.isFresh {
+            guard let renewed = await renew(credentials) else {
+                return .unavailable(.kimiCode, reason: .kimiLoginExpired)
+            }
+            credentials = renewed
+        }
+
+        let first = await fetch(token: credentials.accessToken, refused: .kimiLoginExpired)
+        if case .unavailable(.kimiLoginExpired) = first.state {
+            // Still marked fresh, but the host refused it — clock skew, or a
+            // revocation. One renewal is the difference between "sign in
+            // again" and a token that had a few seconds left.
+            guard let renewed = await renew(credentials) else { return first }
+            return await fetch(token: renewed.accessToken, refused: .kimiLoginExpired)
+        }
+        return first
+    }
+
+    private func renew(_ credentials: AccountCredentials) async -> AccountCredentials? {
+        guard let renewed = try? await OAuthLogin.refresh(credentials, for: .kimiCode) else {
+            return nil
+        }
+        AccountCredentialStore.renewed(renewed, for: AccountKey(.kimiCode))
+        return renewed
+    }
+
+    private func fetch(token: String, refused: ProviderUsage.Unavailability) async -> ProviderUsage {
         var request = URLRequest(url: Self.endpoint)
-        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
         guard let (data, response) = try? await URLSession.shared.data(for: request) else {
@@ -38,7 +82,7 @@ struct KimiCodeUsageService: Sendable {
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(.kimiCode, reason: .apiKeyRefused)
+        case 401, 403: return .unavailable(.kimiCode, reason: refused)
         case 429: return .unavailable(.kimiCode, reason: .rateLimited)
         default: return .unavailable(.kimiCode, reason: .serverError)
         }
@@ -66,7 +110,8 @@ struct KimiCodeUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal so a fixture test can hold it. Not a public contract.
+    struct Reply: Decodable {
         struct Detail: Decodable {
             let limit: String?
             let used: String?
@@ -92,7 +137,8 @@ struct KimiCodeUsageService: Sendable {
         let limits: [Limit]?
     }
 
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    /// Internal so a fixture test can hold it. Not a public contract.
+    static func windows(from reply: Reply) -> [UsageWindow] {
         var found: [UsageWindow] = []
 
         // The timed windows first, named by the length the service states.
@@ -186,7 +232,7 @@ struct KimiCodeUsageService: Sendable {
     /// "LEVEL_INTERMEDIATE" → "Intermediate". An unfamiliar tier is passed
     /// through tidied rather than blanked: an unknown name still beats none,
     /// and it is the only clue left when a new tier appears.
-    private static func planName(_ level: String?) -> String? {
+    static func planName(_ level: String?) -> String? {
         guard let level, !level.isEmpty else { return nil }
 
         let bare = level.hasPrefix("LEVEL_") ? String(level.dropFirst("LEVEL_".count)) : level

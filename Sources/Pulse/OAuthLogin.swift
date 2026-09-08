@@ -142,7 +142,28 @@ enum OAuthLogin {
                     exchangeCarriesState: false,
                     deviceFlow: .standard(code: URL(string: "https://auth.x.ai/oauth2/device/code")!)
                 )
-            case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+            case .kimiCode:
+                // The Kimi Code CLI's public client. Subscription users sign
+                // in this way rather than pasting a console key; Pulse holds
+                // its own tokens so a refresh cannot rotate the CLI's.
+                // Measured 2026-09-08: `POST …/device_authorization` answers
+                // 200 with only `client_id`, no CLI identity headers.
+                Configuration(
+                    authorize: URL(string: "https://www.kimi.com/code/authorize_device")!,
+                    token: URL(string: "https://auth.kimi.com/api/oauth/token")!,
+                    clientID: "17e5f671-d194-4dfb-9706-5516cb48c098",
+                    // What the issued token carries. Device authorization
+                    // works with or without it; refresh matches the CLI and
+                    // sends none — see `refresh`.
+                    scopes: ["kimi-code"],
+                    fixedPort: nil,
+                    redirectPath: "/callback",
+                    extraAuthorizeItems: [],
+                    sendsJSON: false,
+                    exchangeCarriesState: false,
+                    deviceFlow: .standard(code: URL(string: "https://auth.kimi.com/api/oauth/device_authorization")!)
+                )
+            case .antigravity, .cursor, .openCodeGo, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grokBot, .volcengine:
                 nil
             }
@@ -227,10 +248,13 @@ enum OAuthLogin {
         _ configuration: Configuration,
         at endpoint: URL
     ) async throws -> DevicePrompt {
-        let reply = try await postForm([
-            "client_id": configuration.clientID,
-            "scope": configuration.scopes.joined(separator: " "),
-        ], to: endpoint)
+        // Kimi's own client sends only `client_id`. An empty `scope=` is a
+        // different request from omitting the field, so a provider with no
+        // scopes to ask for leaves it off.
+        var body = ["client_id": configuration.clientID]
+        let scope = configuration.scopes.joined(separator: " ")
+        if !scope.isEmpty { body["scope"] = scope }
+        let reply = try await postForm(body, to: endpoint)
 
         guard
             let code = reply["user_code"] as? String,
@@ -611,12 +635,18 @@ enum OAuthLogin {
     static func refresh(_ credentials: AccountCredentials, for provider: Provider) async throws -> AccountCredentials {
         guard let configuration = Configuration.of(provider) else { throw Failure.unsupported }
 
-        var renewed = try await post([
+        // Kimi's CLI refresh is `client_id` + `grant_type` + `refresh_token`
+        // and nothing else. Sending `scope` here has not been measured against
+        // that host; the others still need it.
+        var body = [
             "grant_type": "refresh_token",
             "refresh_token": credentials.refreshToken,
             "client_id": configuration.clientID,
-            "scope": configuration.scopes.joined(separator: " "),
-        ], to: configuration)
+        ]
+        if provider != .kimiCode {
+            body["scope"] = configuration.scopes.joined(separator: " ")
+        }
+        var renewed = try await post(body, to: configuration)
 
         if renewed.refreshToken.isEmpty { renewed.refreshToken = credentials.refreshToken }
         renewed.accountName = renewed.accountName ?? credentials.accountName
@@ -677,7 +707,7 @@ enum OAuthLogin {
     private static func credentials(from json: [String: Any]) throws -> AccountCredentials {
         guard
             let access = json["access_token"] as? String,
-            let lifetime = json["expires_in"] as? Double
+            let lifetime = lifetime(in: json)
         else { throw Failure.unreadableReply }
 
         return AccountCredentials(
@@ -687,6 +717,16 @@ enum OAuthLogin {
             accountName: accountName(in: json),
             accountID: accountID(in: access)
         )
+    }
+
+    /// `expires_in` arrives as an integer more often than as a float, and
+    /// `JSONSerialization` keeps that distinction. `as? Double` then fails
+    /// and a working token reply is reported as unreadable.
+    private static func lifetime(in json: [String: Any]) -> Double? {
+        if let value = json["expires_in"] as? Double { return value }
+        if let value = json["expires_in"] as? Int { return Double(value) }
+        if let value = json["expires_in"] as? NSNumber { return value.doubleValue }
+        return (json["expires_in"] as? String).flatMap(Double.init)
     }
 
     /// Everything but the unreserved set, which is what a form body wants and

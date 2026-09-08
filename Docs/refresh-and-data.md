@@ -44,7 +44,7 @@ Disabled providers are not fetched. A provider pane can still refresh that accou
 
 - A window whose **reset time has passed is dropped**, not aged. If every window has reset, report the error.
 - 24h cap for windows that never say when they reset.
-- Missing credentials are **not** papered over (`.apiKeyMissing`, `.ollamaSessionMissing`, `.signedOut`, `.claudeDesktopNotSignedIn`, `.claudeDesktopKeyRefused`).
+- Missing credentials are **not** papered over (`.apiKeyMissing`, `.ollamaSessionMissing`, `.signedOut`, `.claudeDesktopNotSignedIn`, `.claudeDesktopKeyRefused`, `.kimiSignInRequired`, `.kimiLoginExpired`).
 - `.live` is not the same as “newest.” A route can mark a capture live for a few minutes while an earlier endpoint reading has a later `observedAt`. `reconciled` prefers the later stamp.
 - `UsageStore.start` paints the cache before the first request so the rail is not blank on a cold start. Cache never undoes a fetch that has already landed.
 

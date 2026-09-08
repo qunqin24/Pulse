@@ -109,6 +109,8 @@ final class UsageStore {
         // And the remedy differs: a sign-in is not a key to paste.
         let reason: ProviderUsage.Unavailability = if account.provider == .copilot {
             .notSignedIn
+        } else if account.provider == .kimiCode {
+            .kimiSignInRequired
         } else if account.provider.usesSessionCookie {
             .ollamaSessionMissing
         } else {
@@ -140,7 +142,7 @@ final class UsageStore {
             let account = AccountKey(provider)
             guard case .unavailable(let reason) = usage[account.id]?.state,
                   [.loading, .apiKeyMissing, .ollamaSessionMissing, .apiKeyRefused,
-                   .signedOut, .notSignedIn]
+                   .signedOut, .notSignedIn, .kimiSignInRequired, .kimiLoginExpired]
                     .contains(reason)
             else { continue }
             usage[account.id] = Self.initialState(for: account)

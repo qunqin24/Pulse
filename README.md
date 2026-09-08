@@ -79,7 +79,7 @@ Pulse shows the figures each service reports. It never guesses percentages from 
 | **Grok Bot** | Cursor dashboard API | The xAI quota included with Cursor subscriptions |
 | **GitHub Copilot** | GitHub Device Code authentication | Requests minimal `read:user` scope; never accesses repositories |
 | **OpenCode Go** | API key or existing OpenCode CLI credentials | Fully configurable in Settings |
-| **Kimi Code** | Direct API key | Configured via Settings |
+| **Kimi Code** | Kimi Code device-code sign-in, or a pasted API key | Subscription login from Settings; console key still works |
 | **Z.ai** | Direct API key | International storefront (`api.z.ai`) |
 | **GLM Coding Plan** | Direct API key or saved GLM tooling credentials | Mainland storefront (`open.bigmodel.cn`) |
 | **MiniMax / MiniMax CN** | Direct API key | Supports international (`minimax.io`) & mainland (`minimaxi.com`) |

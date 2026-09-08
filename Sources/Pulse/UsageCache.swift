@@ -82,7 +82,8 @@ actor UsageCache {
         // user needs told. Reported as it is.
         if case .unavailable(let reason) = fetched.state,
            [.apiKeyMissing, .ollamaSessionMissing, .signedOut,
-            .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused].contains(reason) {
+            .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused,
+            .kimiSignInRequired, .kimiLoginExpired].contains(reason) {
             return fetched
         }
 

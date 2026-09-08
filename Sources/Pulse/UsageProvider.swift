@@ -252,6 +252,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     var canReportWithoutSetup: Bool {
         guard keepsOwnCredential else { return borrowsAnExistingLogin }
         if APIKeyStore.key(for: self) != nil { return true }
+        if self == .kimiCode, AccountCredentialStore.credentials(for: AccountKey(self)) != nil {
+            return true
+        }
 
         // Two of them can find a credential another tool already saved, which
         // counts: nothing has to be pasted for those to work.

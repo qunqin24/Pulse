@@ -6,13 +6,14 @@ Current code: [`OAuthLogin.swift`](../../Sources/Pulse/OAuthLogin.swift), [`Loop
 
 This is not a catalogue of secrets. Client ids below are public (they ship in every copy of those CLIs and plugins). Do not copy refresh tokens, cookies, or `accounts.dat` / `keys.dat` into issues.
 
-## Three kinds of secret, three stores
+## Where those secrets live
 
 | What | Where | Who renews it |
 |---|---|---|
 | Pasted API key or Ollama session cookie | `keys.dat` (`APIKeyStore`) | Nobody. User pastes or re-reads the browser. |
 | Copilot GitHub token | `keys.dat` as well (`keepsOwnCredential`) | Sign in again. Device tokens here are not the CLI refresh path. |
 | Extra-account logins (Claude Code, Codex, Grok, Grok Bot) | `accounts.dat` (`AccountCredentialStore`) | `UsageStore.fetchAdded` via `OAuthLogin.refresh` for the three OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. |
+| Kimi Code subscription login (primary) | `accounts.dat` as well, keyed by the primary `kimiCode` account | `KimiCodeUsageService` via `OAuthLogin.refresh`. Access ~15 minutes; refresh ~30 days and **rotates**. A pasted console key still lives in `keys.dat` and wins when both exist. |
 
 Both files are AES-GCM boxes in Pulse’s Application Support folder, owner-only, key derived from this Mac rather than stored. `LocalSecrets` is shared so there is one copy of the crypto; a different derived key per purpose means a box from one store cannot be opened by the other.
 
@@ -20,11 +21,11 @@ A file that exists but will not decode is **not** empty. Treating it as empty me
 
 Pulse does **not** keep a Keychain item of its own for these. Chromium / Claude Desktop / Safari reads may *prompt* for someone else’s Safe Storage key; that is borrowing, not Pulse storing a secret there.
 
-**Do not say “only OpenCode Go holds a credential” or “Pulse never holds a credential”.** Primary Claude Code, Codex, Cursor, Grok, Grok Bot, and Antigravity borrow another tool’s login. Pulse *does* hold pasted keys, Ollama sessions, Copilot’s token, and every extra-account login.
+**Do not say “only OpenCode Go holds a credential” or “Pulse never holds a credential”.** Primary Claude Code, Codex, Cursor, Grok, Grok Bot, and Antigravity borrow another tool’s login. Pulse *does* hold pasted keys, Ollama sessions, Copilot’s token, Kimi Code’s subscription login, and every extra-account login.
 
 ## Why sign in at all, rather than copy the CLI
 
-Measured: a Codex access token lives on the order of 240 hours; a Claude Code one about five; a Grok CLI token about six hours. Copying the credential would leave the account you are *not* currently using dead within an afternoon. The only way to renew a copied token is the refresh token the CLI is also relying on — which, if the provider rotates it, signs the user out of their own CLI.
+Measured: a Codex access token lives on the order of 240 hours; a Claude Code one about five; a Grok CLI token about six hours; a Kimi Code CLI access token about fifteen minutes, and its refresh token rotates. Copying the credential would leave the account you are *not* currently using dead within an afternoon. The only way to renew a copied token is the refresh token the CLI is also relying on — which, if the provider rotates it, signs the user out of their own CLI.
 
 Pulse’s extra-account login has its own refresh token and does not read or write what the CLI stored. That separation is the reason for signing in.
 
@@ -120,6 +121,20 @@ Pulse cannot register an OAuth app with GitHub, so it drives the VS Code Copilot
 GitHub’s codes last fifteen minutes; polling patience is 900 seconds so Pulse does not report failure while the code on screen is still good.
 
 The token is stored in `keys.dat` (`keepsOwnCredential`), not `accounts.dat`.
+
+## Kimi Code — device code, primary account
+
+RFC 8628 against `auth.kimi.com`. Public client id from the Kimi Code CLI (`17e5f671-d194-4dfb-9706-5516cb48c098`). Consent page names Kimi Code, not Pulse.
+
+- Authorize device: `POST /api/oauth/device_authorization` (form, `client_id`; `scope` is optional).
+- Poll / refresh: `POST /api/oauth/token`.
+- Refresh body is `client_id` + `grant_type` + `refresh_token` only — matching the CLI. Do not send `scope` here.
+- Access ~900s, refresh ~2 592 000s, refresh token **rotates**.
+- `verification_uri_complete` is sent and used (same rule as Grok: Pulse asked for the code itself).
+
+Tokens live in `accounts.dat` under `AccountKey(.kimiCode)`, not `keys.dat`, because this is a full OAuth login with a rotating refresh token and the paste field already occupies that store. Pulse does **not** read or write `~/.kimi-code/credentials/kimi-code.json`. Copying that refresh token would sign the CLI out the next time either side renewed.
+
+A pasted console key still wins. Extra accounts are not offered.
 
 ## Grok Bot extras — Cursor web login, not OAuth
 

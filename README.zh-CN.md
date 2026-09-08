@@ -79,7 +79,7 @@ Pulse 仅呈现各服务上报的数字，绝不依靠本地 Token 粗略估算�
 | **Grok Bot** | Cursor 仪表盘接口 | Cursor 套餐内包含的 xAI 专属额度 |
 | **GitHub Copilot** | GitHub 设备码（Device Code）登录 | 仅申请极窄的 `read:user` 权限，绝不触碰你的仓库代码 |
 | **OpenCode Go** | 设置中填入 API Key，或读取 OpenCode CLI 登录信息 | — |
-| **Kimi Code** | 设置中填入 API Key | — |
+| **Kimi Code** | 设置中设备码登录订阅，或填入 API Key | 订阅用户不必再去控制台建 key |
 | **Z.ai** | 设置中填入 API Key | 智谱国际站（`api.z.ai`），与国内账号独立 |
 | **GLM 编码套餐** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
 | **MiniMax / MiniMax CN** | 设置中填入 API Key | 同时支持国际站（`minimax.io`）与国内站（`minimaxi.com`） |

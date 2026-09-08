@@ -257,6 +257,13 @@
 "GitHub account" = "GitHub 账号";
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "会打开 GitHub 自己的页面。Pulse 只申请读取你的资料，别的都不要。";
 "Signed in. Pulse holds a read-only token for this Mac." = "已登录。Pulse 在本机保存了一个只读令牌。";
+"Kimi Code account" = "Kimi Code 账号";
+"Opens Kimi Code's own page. Pulse only reads usage." = "会打开 Kimi Code 自己的页面。Pulse 只读取用量。";
+"Signed in. Pulse holds a login for this Mac." = "已登录。Pulse 在本机保存了这份登录。";
+"Signed in. The API key below is used instead." = "已登录。下面的 API key 会优先使用。";
+"From the Kimi Code console. Optional if you sign in. Stored encrypted on this Mac." = "在 Kimi Code 控制台获取。已登录则可留空。加密保存在本机。";
+"Sign in to Kimi Code in Settings, or paste an API key." = "在设置里登录 Kimi Code，或粘贴 API key。";
+"Kimi Code's saved login expired. Sign in again in Settings." = "Kimi Code 存的登录已过期。请在设置里重新登录。";
 "The browser didn't come back." = "浏览器没有回来。";
 "Cancel" = "取消";
 "Code" = "验证码";
