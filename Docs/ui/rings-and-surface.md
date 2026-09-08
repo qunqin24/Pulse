@@ -2,9 +2,9 @@
 
 ## Liquid Glass
 
-Optional, **off by default** (`AppSettings.usesGlass`, `PanelSurface`). Dark (flat black) stays the default because a solid rail is legible over anything.
+Optional, **off by default** (`AppSettings.panelAppearance == .glass`, `PanelSurface`). Dark (flat black) stays the default because a solid rail is legible over anything.
 
-Solid colour is `AppSettings.panelAppearance`: **dark / light / system**. Light exists because a black bar parked on a page of work all day is a hole in the page — not pure white (that vanishes on a white page, and the panel has no window shadow), a hairline on the light fill is the edge. System follows the Mac. Glass ignores this and takes its cue from what is behind it.
+`AppSettings.panelAppearance` is **dark / light / system / glass** — one setting. Glass used to be a separate toggle that silently overrode Light. Light exists because a black bar parked on a page of work all day is a hole in the page — not pure white (that vanishes on a white page, and the panel has no window shadow), a hairline on the light fill is the edge. Auto follows the Mac. Glass takes its cue from what is behind it.
 
 - Do **not** scrim the glass. `Glass.tint` is a hue, not a darkening. Content uses `.primary`, not hardcoded white. Pin the chosen scheme **only** when glass is off, via `.environment(\.colorScheme, …)` — not `preferredColorScheme` (window-wide).
 - Do **not** take the surface out of hit testing. `allowsHitTesting(false)` is what stopped gap-dragging. The window takes the drag in `sendEvent` before any view sees the event. [input.md](input.md)

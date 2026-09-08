@@ -31,6 +31,15 @@ struct PanelChromeTests {
         #expect(PanelAppearance.light.resolved(matching: .dark) == .light)
         #expect(PanelAppearance.system.resolved(matching: .light) == .light)
         #expect(PanelAppearance.system.resolved(matching: .dark) == .dark)
+        #expect(PanelAppearance.glass.resolved(matching: .light) == .light)
+        #expect(PanelAppearance.glass.resolved(matching: .dark) == .dark)
+    }
+
+    @Test("Glass is an appearance, not a second switch")
+    func glassIsAnAppearance() {
+        #expect(AppSettings(usesGlass: true).panelAppearance == .glass)
+        #expect(AppSettings(usesGlass: true).usesGlass)
+        #expect(!AppSettings(panelAppearance: .light).usesGlass)
     }
 }
 

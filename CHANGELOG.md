@@ -9,7 +9,9 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 ## 1.0.8
 
-- **The floating rail can be tiny, and it can be light.** Size now has a fourth step below Small, for sitting on a page without covering a line of it. Appearance is Dark, Light, or Auto (follow the Mac). Light is a pale rail with a hairline, not a white hole and not the black bar that punches through homework. Liquid Glass still ignores this and follows whatever is behind it.
+- **The floating rail can be tiny, and it can be light.** Size now has a fourth step below Small, for sitting on a page without covering a line of it. Appearance is one control: Dark, Light, Auto, or Glass — glass is not a second switch sitting on top of Light. Light is a pale rail with a hairline, not a white hole and not the black bar that punches through homework.
+
+- **Settings and Quit on the details card enlarge under the pointer**, and the cursor becomes a hand, so they stay hittable at Tiny.
 
 - **A limit coming back can throw ribbons across the screen.** Off until you turn it on, under Settings › General › Celebrations. The overlay names the provider, so two of them resetting in the same hour are not a mystery. It is not a notification: no permission dialog, and it still works in a `swift run` build. Same evidence as the reset banner — the provider's date moved, or the figure dropped forty points — whether or not you were warned on the way up.
 

@@ -18,7 +18,7 @@ Group order in the general pane: **Floating panel → Notifications → Celebrat
 
 The usage-interval group is named **Refresh**, not Updates.
 
-The **Floating panel** group includes **Size** (tiny / small / standard / large) and **Appearance** (dark / light / auto). Appearance is the solid rail; Liquid Glass ignores it. Tiny is a smaller scale of the same budgets, not a different layout.
+The **Floating panel** group includes **Size** (tiny / small / standard / large) and **Appearance** (dark / light / auto / glass). One control, not a colour plus a glass switch: glass used to override Light while both looked on. Tiny is a smaller scale of the same budgets, not a different layout. While glass is selected, the subtitle still adds “Drag it by a ring while this is on.”
 
 The **Notifications** group's three controls are not independent of each other: the reset toggle is greyed out while the threshold is Off, because a reset is only announced for a window that was warned about, and every control is greyed out in an unbundled build. Its subtitle reports `UNAuthorizationStatus`, not the switches. Rules: [../notifications.md](../notifications.md).
 

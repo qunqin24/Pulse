@@ -171,10 +171,11 @@
 "Standard" = "Standard";
 "Large" = "Large";
 "Appearance" = "Appearance";
-"Dark, light, or match the Mac." = "Dark, light, or match the Mac.";
+"Dark, light, match the Mac, or glass." = "Dark, light, match the Mac, or glass.";
 "Dark" = "Dark";
 "Light" = "Light";
 "Auto" = "Auto";
+"Glass" = "Glass";
 
 /* Launch at login */
 "Open at login" = "Open at login";

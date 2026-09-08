@@ -288,7 +288,7 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Appearance"),
-                    subtitle: String.localized("Dark, light, or match the Mac.")
+                    subtitle: appearanceSubtitle
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.panelAppearance },
@@ -300,22 +300,7 @@ struct SettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
-                    .disabled(!settings.isPanelVisible)
-                }
-
-                SettingsRowDivider()
-
-                SettingsRow(
-                    String.localized("Liquid Glass"),
-                    subtitle: glassSubtitle
-                ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.usesGlass },
-                        set: { settings.usesGlass = $0 }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
+                    .frame(width: 220, alignment: .trailing)
                     .disabled(!settings.isPanelVisible)
                 }
 
@@ -733,12 +718,11 @@ struct SettingsView: View {
         return .localized("Notify when a limit passes this, and again when it is spent.")
     }
 
-    /// The catch only applies while it is on, so it is only said then.
-    private var glassSubtitle: String {
-        let base = String.localized("Frosted glass instead of a solid rail.")
+    /// Glass is one of the appearance cases, not a second switch. The drag
+    /// caption still only applies while glass is actually on.
+    private var appearanceSubtitle: String {
+        let base = String.localized("Dark, light, match the Mac, or glass.")
         guard settings.usesGlass else { return base }
-        // A full stop in Chinese is full-width and carries its own trailing
-        // space; adding another leaves a visible gap mid-sentence.
         let gap = base.hasSuffix("。") ? "" : " "
         return base + gap + .localized("Drag it by a ring while this is on.")
     }

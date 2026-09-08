@@ -228,16 +228,18 @@ enum PanelSize: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// The floating rail's colour when it is a solid surface, not glass.
+/// How the floating rail is drawn: a solid colour, or Liquid Glass.
 ///
-/// Dark is the default and stays it: a black rail is legible over anything.
-/// Light exists because that same black, parked on a page of work all day,
-/// is a hole in the page. System follows the Mac. Glass ignores this and
-/// takes its cue from whatever is behind it.
+/// One setting, not two. Glass used to be a separate toggle that silently
+/// overrode Light, so both looked switched on and only one was showing.
+/// Dark stays the default. Light is for sitting on a page of work without
+/// punching a hole in it. Auto follows the Mac. Glass takes its cue from
+/// whatever is behind it, which is why it cannot also be Light.
 enum PanelAppearance: String, CaseIterable, Identifiable, Sendable {
     case dark
     case light
     case system
+    case glass
 
     static let `default` = PanelAppearance.dark
 
@@ -248,15 +250,19 @@ enum PanelAppearance: String, CaseIterable, Identifiable, Sendable {
         case .dark: .localized("Dark")
         case .light: .localized("Light")
         case .system: .localized("Auto")
+        case .glass: .localized("Glass")
         }
     }
 
     /// What the panel's content should treat as its colour scheme.
+    ///
+    /// Glass is left to the system: the material switches itself, and pinning
+    /// dark is what left white text sitting on bright glass.
     func resolved(matching system: ColorScheme) -> ColorScheme {
         switch self {
         case .dark: .dark
         case .light: .light
-        case .system: system
+        case .system, .glass: system
         }
     }
 

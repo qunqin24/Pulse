@@ -226,23 +226,46 @@ struct UsageDetailCard: View {
             Spacer(minLength: 0)
 
             if let openSettings {
-                headerButton("gearshape", label: String.localized("Settings…"), action: openSettings)
-                headerButton("power", label: String.localized("Quit Pulse")) {
+                HeaderIconButton(
+                    systemImage: "gearshape",
+                    label: String.localized("Settings…"),
+                    action: openSettings
+                )
+                HeaderIconButton(
+                    systemImage: "power",
+                    label: String.localized("Quit Pulse")
+                ) {
                     NSApplication.shared.terminate(nil)
                 }
             }
         }
     }
+}
 
-    private func headerButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {
+/// Settings and Quit on the card. `.onHover` is silent on this panel, so the
+/// pointing hand and the enlarge come from an `.activeAlways` tracking area.
+private struct HeaderIconButton: View {
+    let systemImage: String
+    let label: String
+    let action: () -> Void
+    @State private var hovering = false
+
+    var body: some View {
+        let size = DetailCardLayout.headerIconSize
         Button(action: action) {
             Image(systemName: systemImage)
-                .font(.system(size: DetailCardLayout.headerIconSize * 0.9, weight: .medium))
-                .foregroundStyle(.primary.opacity(0.55))
-                .frame(width: DetailCardLayout.headerIconSize, height: DetailCardLayout.headerIconSize)
-                .contentShape(Rectangle())
+                .font(.system(size: size * 0.9, weight: .medium))
+                .foregroundStyle(.primary.opacity(hovering ? 0.95 : 0.55))
+                .frame(width: size, height: size)
+                .scaleEffect(hovering ? 1.32 : 1)
+                .contentShape(Rectangle().inset(by: -7))
         }
         .buttonStyle(.plain)
+        .animation(.spring(response: 0.22, dampingFraction: 0.72), value: hovering)
+        .overlay {
+            PointerHand { hovering = $0 }
+                .frame(width: size + 16, height: size + 16)
+        }
         .help(label)
         .accessibilityLabel(label)
     }

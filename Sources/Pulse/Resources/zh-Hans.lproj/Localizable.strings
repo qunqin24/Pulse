@@ -171,10 +171,11 @@
 "Standard" = "标准";
 "Large" = "大";
 "Appearance" = "外观";
-"Dark, light, or match the Mac." = "深色、浅色，或跟随系统。";
+"Dark, light, match the Mac, or glass." = "深色、浅色、跟随系统，或毛玻璃。";
 "Dark" = "深色";
 "Light" = "浅色";
 "Auto" = "自动";
+"Glass" = "毛玻璃";
 
 /* Launch at login */
 "Open at login" = "开机自启";

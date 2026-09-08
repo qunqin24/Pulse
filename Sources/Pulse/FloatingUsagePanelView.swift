@@ -187,13 +187,9 @@ struct FloatingUsagePanelView: View {
             .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.panelAppearance.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)-\(settings.showsForecast)")
     }
 
-    /// What the solid rail (and everything drawn on it) treats as its scheme.
-    ///
-    /// Glass is left alone. Otherwise this is the Appearance setting, which
-    /// may follow the Mac or pin one side.
+    /// What the rail (and everything drawn on it) treats as its scheme.
     private var pinnedScheme: ColorScheme {
-        if settings.usesGlass { return colorScheme }
-        return settings.panelAppearance.resolved(matching: colorScheme)
+        settings.panelAppearance.resolved(matching: colorScheme)
     }
 
     /// Whether the rail is drawn out in full.
