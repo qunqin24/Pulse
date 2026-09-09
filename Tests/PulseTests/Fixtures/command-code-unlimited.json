@@ -1,0 +1,14 @@
+{
+  "success": true,
+  "credits": {
+    "planId": "individual_go",
+    "monthlyCredits": 0,
+    "purchasedCredits": 6,
+    "freeCredits": 0
+  },
+  "windowLimits": {
+    "limited": false,
+    "fiveHour": { "used": 4, "cap": 5, "resetAt": 1788780000000 },
+    "weekly": null
+  }
+}

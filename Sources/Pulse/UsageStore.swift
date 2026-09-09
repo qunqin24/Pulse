@@ -315,6 +315,7 @@ final class UsageStore {
         let copilot = CopilotUsageService(token: apiKeys[.copilot])
         let volcengine = VolcengineUsageService(enteredKey: apiKeys[.volcengine])
         let volcengineSource = settings.source(for: AccountKey(.volcengine))
+        let commandCode = CommandCodeUsageService(enteredKey: apiKeys[.commandCode])
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
@@ -369,6 +370,9 @@ final class UsageStore {
             async let volcengineUsage = wanted.contains(.volcengine)
                 ? await volcengine.fetch(source: volcengineSource)
                 : ProviderUsage.unavailable(.volcengine, reason: .loading)
+            async let commandCodeUsage = wanted.contains(.commandCode)
+                ? await commandCode.fetch()
+                : ProviderUsage.unavailable(.commandCode, reason: .loading)
 
             let (rawCodex, rawClaude, rawAntigravity, rawOpenCode) =
                 await (codexUsage, claudeUsage, antigravityUsage, openCodeUsage)
@@ -376,7 +380,7 @@ final class UsageStore {
             let (rawZai, rawGLM) = await (zaiUsage, glmUsage)
             let (rawMiniMax, rawMiniMaxCN) = await (minimaxUsage, minimaxCNUsage)
             let (rawCopilot, rawGrok, rawGrokBot) = await (copilotUsage, grokUsage, grokBotUsage)
-            let rawVolcengine = await volcengineUsage
+            let (rawVolcengine, rawCommandCode) = await (volcengineUsage, commandCodeUsage)
 
             // **The disowning is checked before anything is written, not just
             // before the readings are handed to the panel.** `reconciled`
@@ -406,6 +410,7 @@ final class UsageStore {
             let fetchedGrok = await UsageCache.shared.reconciled(rawGrok)
             let fetchedGrokBot = await UsageCache.shared.reconciled(rawGrokBot)
             let fetchedVolcengine = await UsageCache.shared.reconciled(rawVolcengine)
+            let fetchedCommandCode = await UsageCache.shared.reconciled(rawCommandCode)
 
             // Accounts Pulse signed in to itself, read one at a time: each
             // may have to renew its token first, and they are few.
@@ -451,6 +456,7 @@ final class UsageStore {
                 (.grok, fetchedGrok, rawGrok),
                 (.grokBot, fetchedGrokBot, rawGrokBot),
                 (.volcengine, fetchedVolcengine, rawVolcengine),
+                (.commandCode, fetchedCommandCode, rawCommandCode),
             ] where wanted.contains(provider) {
                 self.commit(fetched, raw: raw, for: AccountKey(provider).id)
             }
@@ -482,6 +488,7 @@ final class UsageStore {
                 (.grok, fetchedGrok),
                 (.grokBot, fetchedGrokBot),
                 (.volcengine, fetchedVolcengine),
+                (.commandCode, fetchedCommandCode),
             ].contains { provider, fetched in
                 wanted.contains(provider)
                     && previous[AccountKey(provider).id]?.windows != fetched.windows
@@ -531,6 +538,7 @@ final class UsageStore {
         let zai = ZaiUsageService(provider: provider, enteredKey: key)
         let minimax = MiniMaxUsageService(provider: provider, enteredKey: key)
         let volcengine = VolcengineUsageService(enteredKey: key)
+        let commandCode = CommandCodeUsageService(enteredKey: key)
 
         Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
             let raw: ProviderUsage
@@ -564,6 +572,8 @@ final class UsageStore {
                 raw = await grokBot.fetch()
             case .volcengine:
                 raw = await volcengine.fetch(source: source)
+            case .commandCode:
+                raw = await commandCode.fetch()
             }
             }
 
@@ -633,7 +643,8 @@ final class UsageStore {
         case .grokBot: await grokBot.fetch(account: account, token: credentials.accessToken)
         // Nothing else can be signed in to, so nothing else gets here.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine,
+             .commandCode:
             .unavailable(account, reason: .loading)
         }
     }

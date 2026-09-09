@@ -104,7 +104,7 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             // Never shown: `options(for:)` offers it to Claude Code alone.
             .localized("Use the endpoint when possible, the other route when not.")
         case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
-             (_, .minimax), (_, .minimaxCN), (_, .copilot):
+             (_, .minimax), (_, .minimaxCN), (_, .copilot), (_, .commandCode):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
         case (_, .grokBot):

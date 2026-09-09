@@ -32,6 +32,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `ZaiErrorTests` | What the GLM Coding Plan's HTTP-200 refusals mean, from envelopes taken off both live hosts |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 | `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |
+| `CommandCodeParsingTests` | Command Code's four replies → windows, from second-hand fixtures: the credit pool built from the account's own figures rather than the CLI's plan table, epoch-millisecond resets, `exceeded` outranking the arithmetic, and equal lengths not shuffling. [providers/command-code.md](providers/command-code.md) |
 
 ## What is not, and why
 
@@ -41,7 +42,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 **No live provider calls.** Every route needs somebody's real credential and answers differently by plan. Fixtures are captured by hand from a real reply and committed; the capture is recorded in that provider's page.
 
-**A fixture written from another project's parser is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; a captured one replaces them the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
+**A fixture written from another project's parser, or from a vendor's own shipped client, is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; Command Code's are written from the field names in its published npm bundle. A captured one replaces either the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
 
 **A subprocess test really spawns one.** `VolcengineProcessTests` runs `/bin/sh` on purpose: the two failures it covers — a child that fills the stderr pipe, and one that never exits — cannot be produced by a fake, and neither is visible by reading the code. The first version of that runner looked correct and had both; the *second* looked correct and still hung on a child that ignored SIGTERM. Neither was findable by reading. The deadline is a parameter so a test can use one second.
 

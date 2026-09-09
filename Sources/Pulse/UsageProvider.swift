@@ -21,6 +21,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case grok
     case grokBot
     case volcengine
+    case commandCode
 
     var id: String { rawValue }
 
@@ -65,6 +66,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Volcengine's. Naming it for the model would name the one part of
         // that chain the ring is not about.
         case .volcengine: "Volcengine"
+        // The product's own name. Its command is `cmd`, which names nothing on
+        // a rail of brands and collides with the key on every Mac keyboard.
+        case .commandCode: "Command Code"
         }
     }
 
@@ -95,6 +99,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // thing that tells the two apart on a rail carrying both.
         case .grokBot: "xai"
         case .volcengine: "volcengine"
+        // The command-key glyph from its own editor extension, rather than the
+        // wordmark the site leads with: at ring size a wordmark is a grey
+        // smudge, and this is the mark the product is recognised by anyway.
+        case .commandCode: "commandcode"
         }
     }
 
@@ -117,7 +125,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
-             .volcengine: false
+             .volcengine, .commandCode: false
         }
     }
 
@@ -163,7 +171,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         switch self {
         case .claudeCode, .codex, .volcengine: true
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot: false
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
+             .commandCode: false
         }
     }
 
@@ -198,7 +207,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Either a choice of routes, or a key the user pastes: both are asked
         // about elsewhere, so there is nothing here to state.
         case .claudeCode, .codex, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine:
+             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine,
+             .commandCode:
             nil
         }
     }
@@ -209,7 +219,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and that is the route taken first — but a key can also be pasted in for
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool {
-        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine].contains(self)
+        [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine,
+         .commandCode].contains(self)
     }
 
     /// Whether the pasted credential is a **pair** rather than one token.
@@ -258,6 +269,11 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         return switch self {
         case .openCodeGo: OpenCodeGoUsageService.storedKey() != nil
         case .glmCoding: ZaiUsageService.storedKey(for: .glmCoding) != nil
+        // The key `cmd auth login` wrote, not the directory around it:
+        // `~/.commandcode` is created for bundled skills before anybody has
+        // signed in, so its presence is evidence the CLI ran here and none at
+        // all that there is an account to report on.
+        case .commandCode: CommandCodeUsageService.storedKey() != nil
         default: false
         }
     }
@@ -349,6 +365,15 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // has no such file, so it is never detected — nothing to find.
         if ZaiUsageService.storedKey(for: .glmCoding) != nil {
             found.insert(.glmCoding)
+        }
+
+        // Command Code is an npm package with no bundle to look for, so the
+        // login its CLI saved is the evidence. **Not `~/.commandcode`**, which
+        // the CLI creates to unpack its bundled skills into on a machine that
+        // has never been signed in — the directory is evidence it ran, and this
+        // question is about whether there is an account behind it.
+        if CommandCodeUsageService.storedKey() != nil {
+            found.insert(.commandCode)
         }
 
         return found

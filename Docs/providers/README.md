@@ -1,6 +1,6 @@
 # Providers
 
-Pulse tracks **fifteen** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
+Pulse tracks **sixteen** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
 
 This directory is the home for routes, credentials, cookies, extra logins, and the failure lessons that belong to those. Current service code is authoritative. Historical measurements and “do not repeat” notes are labelled as such. Nothing here claims a runtime test of a live account.
 
@@ -29,8 +29,9 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.grok` | Grok | `grok` | Borrow `~/.grok/auth.json`; Pulse OAuth for extras | yes | one, named (primary) | no | `~/.grok` exists |
 | `.grokBot` | Grok Bot | `xai` | Cursor cookie; Cursor web login for extras | yes | one, named (primary) | no | **standalone** `Grok Bot.app` only |
 | `.volcengine` | Volcengine | `volcengine` | `arkcli`'s own login, else a pasted `AK:SK` pair | no | arkcli / signed endpoint | no | none — stays off until switched on |
+| `.commandCode` | Command Code | `commandcode` | Pasted key, else `~/.commandcode/auth.json` | no | pasted / found key | no | the CLI's stored key, **not** `~/.commandcode` |
 
-Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md).
+Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md), [command-code.md](command-code.md).
 
 Z.ai and GLM Coding Plan share [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsageService.swift). MiniMax and MiniMax CN share [`MiniMaxUsageService.swift`](../../Sources/Pulse/MiniMaxUsageService.swift). Two rings, two accounts, two keys — not a region switch inside one provider.
 
@@ -48,7 +49,7 @@ A window’s `isExhausted` is the provider’s judgement (`severity` / `locked_r
 
 ### Remaining vs spent
 
-Downstream UI talks about what is **gone**. Services that receive “what is left” invert at the boundary: Antigravity, MiniMax, Copilot, and some Kimi `limits[].detail` fields. Grok Bot’s `usagePercent` is already spent. Do not invert twice.
+Downstream UI talks about what is **gone**. Services that receive “what is left” invert at the boundary: Antigravity, MiniMax, Copilot, and some Kimi `limits[].detail` fields. Grok Bot’s `usagePercent` is already spent, and so are Command Code’s spend limits and window limits — only its **credit balance** is what is left, and that is turned into a pool rather than inverted. Do not invert twice.
 
 ### `windowSeconds` is not evidence of a reported length
 
@@ -68,7 +69,7 @@ A switched-off provider is not on the refresh pass. A provider’s own Settings 
 
 Offer-once, `Key.hasRun` / `Key.offeredProviders`, empty-rail vs empty provider set: [`../architecture.md`](../architecture.md).
 
-`canReportWithoutSetup` is not “needs no key”. Grok and Grok Bot borrow another tool’s login; with neither installed they would be switched on at the next update as grey rings saying “sign in to something you have never heard of”. Grok is gated on `~/.grok`; Grok Bot on the **standalone app**, not on a Cursor login (every Cursor user would otherwise get “your plan doesn’t include this”). OpenCode Go and mainland GLM still count as ready when another tool already saved a key. The rest wait in Settings. They are still stamped as offered, so the decision is taken once.
+`canReportWithoutSetup` is not “needs no key”. Grok and Grok Bot borrow another tool’s login; with neither installed they would be switched on at the next update as grey rings saying “sign in to something you have never heard of”. Grok is gated on `~/.grok`; Grok Bot on the **standalone app**, not on a Cursor login (every Cursor user would otherwise get “your plan doesn’t include this”). OpenCode Go, mainland GLM and Command Code still count as ready when another tool already saved a key. Command Code’s test is that key, **not** `~/.commandcode`: the CLI creates that directory to unpack bundled skills into before anyone has signed in, so the directory says it ran here and nothing about whether there is an account behind it. The rest wait in Settings. They are still stamped as offered, so the decision is taken once.
 
 ### Seeded state is not “Loading…”
 
@@ -84,7 +85,7 @@ Do not paper over `.apiKeyMissing`, `.ollamaSessionMissing`, `.signedOut`, `.cla
 
 Not the same question as “does Settings draw a paste field”.
 
-- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN. Ollama’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist.
+- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN, Volcengine, Command Code. Ollama’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist.
 - `keepsOwnCredential` — Pulse stores something in `keys.dat`: the paste providers **plus Copilot**. Reading `usesAPIKey` where *storage* was meant left a signed-in Copilot account reporting “sign in again”: the token was saved and then never loaded for the fetch.
 - Extra-account OAuth / Cursor web logins live in `accounts.dat`, not `keys.dat`. See [authentication.md](authentication.md).
 

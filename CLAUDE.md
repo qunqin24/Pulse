@@ -2,7 +2,7 @@
 
 AI entry for this repo. Human workflow, evidence rules, and the docs map live in [CONTRIBUTING.md](CONTRIBUTING.md) and [Docs/README.md](Docs/README.md). Change the **authoritative topic doc** in the same patch as the code; do not grow this file.
 
-Pulse is a macOS menu-bar usage monitor. SwiftUI draws the panel; a transparent, non-activating AppKit `NSPanel` owns size, placement, and input. Fifteen providers, no Pulse backend, no Pulse account. Per-provider routes, auth, cookies, and extra logins: [Docs/providers/README.md](Docs/providers/README.md).
+Pulse is a macOS menu-bar usage monitor. SwiftUI draws the panel; a transparent, non-activating AppKit `NSPanel` owns size, placement, and input. Sixteen providers, no Pulse backend, no Pulse account. Per-provider routes, auth, cookies, and extra logins: [Docs/providers/README.md](Docs/providers/README.md).
 
 ## Commands
 
@@ -59,4 +59,4 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no linter. **`
 
 ## Current facts (verify in code if they matter)
 
-Fifteen `Provider` cases. Extra accounts: Claude Code, Codex, Grok, Grok Bot (`supportsMultipleAccounts`). Adaptive refresh is a **one-shot** timer, **2–30 minutes** (`AdaptiveRefresh.floor` 120s / `ceiling` 1800s) — not a 60s loop. Liquid Glass drag: historical “material swallows input” diagnosis is **uncertain**; current approach is a hit-testable `PanelSurface` plus window `sendEvent`. Real-input verification is not claimed. Settings still say to drag by a ring while glass is on.
+Sixteen `Provider` cases. Extra accounts: Claude Code, Codex, Grok, Grok Bot (`supportsMultipleAccounts`). Adaptive refresh is a **one-shot** timer, **2–30 minutes** (`AdaptiveRefresh.floor` 120s / `ceiling` 1800s) — not a 60s loop. Liquid Glass drag: historical “material swallows input” diagnosis is **uncertain**; current approach is a hit-testable `PanelSurface` plus window `sendEvent`. Real-input verification is not claimed. Settings still say to drag by a ring while glass is on.

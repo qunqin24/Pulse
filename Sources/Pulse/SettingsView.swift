@@ -54,7 +54,7 @@ struct SettingsView: View {
     /// sign at all — without a way out the button stays disabled for the whole
     /// quarter of an hour.
     @State private var signInTask: Task<Void, Never>?
-    /// Narrows the sidebar. Fifteen providers plus every added account is a
+    /// Narrows the sidebar. Sixteen providers plus every added account is a
     /// list that scrolls on any window worth opening.
     @State private var search = ""
     /// The row a reorder drag is currently over, so it can say so.
@@ -90,7 +90,7 @@ struct SettingsView: View {
             // "GLM Coding Plan", with "GitHub Copilot" and "OpenCode Go"
             // behind it. At the old 170/180/220 every one of those truncated
             // to an ellipsis, which on a list whose entire job is telling
-            // fifteen products apart is the one thing it must not do. These
+            // sixteen products apart is the one thing it must not do. These
             // are brand names and are not translated, so the requirement does
             // not move with the language.
             //
@@ -550,9 +550,9 @@ struct SettingsView: View {
                 // the reasoning that four rows is not enough to make a drag
                 // worth learning and that an arrow which misses does nothing
                 // while a drag which misses does something. The first half of
-                // that stopped being true: there are fifteen providers now,
+                // that stopped being true: there are sixteen providers now,
                 // plus every added account, and moving the bottom one to the
-                // top is thirteen clicks.
+                // top is fifteen clicks.
                 //
                 // The arrows stay rather than being replaced. They are the
                 // precise way to move one place, they are the only way that
@@ -628,7 +628,7 @@ struct SettingsView: View {
 
                 // Last, and disabled while there is nothing to undo. A drag
                 // that went somewhere unintended is easy to make and, at
-                // fifteen rows, tedious to walk back by hand.
+                // sixteen rows, tedious to walk back by hand.
                 SettingsRowDivider()
 
                 SettingsRow(
@@ -1191,6 +1191,11 @@ struct SettingsView: View {
         // with nothing in it to suggest what went wrong.
         case .volcengine:
             .localized("AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.")
+        // Optional, like Volcengine's: `cmd auth login` already leaves a key
+        // Pulse can read, and this field is for anyone whose account is signed
+        // in somewhere other than this Mac.
+        case .commandCode:
+            .localized("From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }
