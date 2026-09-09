@@ -22,6 +22,7 @@ Window names are localized in the app and would change under a script's feet, so
 
 - `kind` — a flat token: `fiveHour`, `weekly`, `spend`, `monthly`, or `other:<seconds>`. `UsageWindow.Kind` is `Codable`, but its synthesised form is an object with an associated value in it; fine on disk, awkward in a `jq` filter.
 - `scope`, `name` — product names, the same in every language.
+- `estimated` — true where the provider said how much of an allowance is **left** and never how large it is, so the denominator behind `usedFraction` was inferred. Command Code's monthly plan grant is the only one today ([providers/command-code.md](providers/command-code.md)). The wording that marks it on screen is localized; this flag is not, which is why it is a flag and not a scope.
 - `label` — the user's own name for an added account, theirs to have written in any language.
 
 ## Shape
@@ -46,6 +47,7 @@ accounts[]
     exhausted          the provider's word, not usedPercent >= 100
     windowSeconds
     reportsLength      false when windowSeconds is only a sort key. Do not divide by it.
+    estimated          true when the denominator was inferred, not reported
     resetsAt
 ```
 

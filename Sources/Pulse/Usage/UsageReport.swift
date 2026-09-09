@@ -150,6 +150,12 @@ enum UsageReport {
         let windowSeconds: Int
         /// False when `windowSeconds` is only a sort key. Do not divide by it.
         let reportsLength: Bool
+        /// True where the provider stated how much of an allowance is left but
+        /// never how large it is, so the denominator behind `usedFraction` was
+        /// inferred rather than reported. Command Code's monthly plan grant is
+        /// the only one today. Anything holding Pulse to "figures the provider
+        /// reported" should filter on this.
+        let estimated: Bool
         let resetsAt: Date?
 
         init(_ window: UsageWindow) {
@@ -161,6 +167,7 @@ enum UsageReport {
             exhausted = window.isExhausted
             windowSeconds = window.windowSeconds
             reportsLength = window.reportsLength
+            estimated = window.isEstimated
             resetsAt = window.resetsAt
         }
 

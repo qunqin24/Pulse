@@ -99,8 +99,8 @@ None of this is documented by the vendor. It can change without notice, exactly 
 |---|---|---|---|
 | `five-hour` | `.fiveHour` | `windowLimits.fiveHour` | yes |
 | `weekly` | `.weekly` | `windowLimits.weekly` | yes |
-| `org.<n>.<scope>` | `.spend` | `whoami.orgLimits[]` | daily and weekly yes; monthly no |
-| `monthly` | `.monthly` | the plan's grant, **estimated** | only when the period states both ends |
+| `org.<scope>.<model?>.<interval?>` | `.spend` | `whoami.orgLimits[]` | daily and weekly yes; monthly no |
+| `monthly` | `.monthly` | the plan's grant, flagged **`estimated`** | only when the period states both ends |
 | `credits` | `.spend` | the purchased pool | only when the period states both ends |
 
 The last two are **mutually exclusive**: a running plan produces `monthly`, an account without one produces `credits`, and a plan that cannot be sized produces neither.
@@ -111,23 +111,25 @@ Shortest first. **Ties keep the order they were built in** — `sorted(by:)` is 
 
 **Command Code sells subscription coding plans**, and the monthly row answers a different question depending on whether one is running. The lineup, as `command-code@1.51.3` knows it:
 
-| `planId` | Shown as | Monthly grant |
+| `planId` | Monthly grant | The vendor's own name for it |
 |---|---|---|
-| `individual-go` | Go | $10 |
-| `individual-provider` | Provider | $15 |
-| `individual-pro` | Pro | $30 |
-| `individual-pro-v1` | Pro | $80 |
-| `teams-pro` | Teams Pro | $40 |
-| `individual-goat` | GOAT | $70 |
-| `individual-max` | Max | $150 |
-| `individual-ultra` | Ultra | $300 |
+| `individual-go` | $10 | Go |
+| `individual-provider` | $15 | Provider |
+| `individual-pro` | $30 | Pro |
+| `individual-pro-v1` | $80 | Pro |
+| `teams-pro` | $40 | Teams Pro |
+| `individual-goat` | $70 | GOAT |
+| `individual-max` | $150 | Max |
+| `individual-ultra` | $300 | Ultra |
+
+The third column is **not what Pulse shows** — it is the CLI's own display table, recorded here only because it is what the grants are advertised under. Pulse tidies the id instead ("Individual Pro", "Individual Goat"), for the reason under [Plan and balance](#plan-and-balance): a name table blanks every tier added after this build, and an unfamiliar name beats none. Note also that two different grants share the name "Pro", which is why nothing here may be reasoned about from the name.
 
 **No reply reports any of those numbers.** `credits.monthlyCredits` is the grant's *remainder*; its size is published on the pricing page. The vendor's own CLI carries this table for that reason, and so does CodexBar. Pulse carries it in [`CommandCodePlans`](../../Sources/Pulse/Providers/CommandCodePlans.swift), deliberately in its own file, because it is the one thing here that goes stale on someone else's schedule.
 
 So this is the **second labelled exception** to "Pulse does not invent a percentage", alongside the money estimate. What that costs is bounded in three ways, and the bounds are the design:
 
 - **The numerator is reported.** `grant - monthlyCredits` subtracts the account's own figure; only the denominator is inferred.
-- **The row is scoped `estimated`**, so the card reads "Monthly limit · estimated" rather than passing for a reported limit.
+- **The row carries `isEstimated`**, so the card reads "Monthly limit · estimated" rather than passing for a reported limit. A flag and not a `scope`: [json-output.md](../json-output.md) promises `scope` is a product name that is the same in every language, and this marker's wording is translated. `--json` exposes it as `estimated`.
 - **A plan this build cannot size draws nothing at all.** Not zero, not the pool. A missing row is this design's real failure mode and it is silent, so it must not be able to render as an untouched allowance for someone whose money is gone. CodexBar's table is missing `teams-pro` and `individual-provider` today, and its unsized plans fall through to a free-tier branch that draws exactly that.
 
 Matching is on the **whole** id, lowercased, with `_` folded to `-`. The CLI matches on a *prefix*, which would size a future `individual-pro-v2` as the $30 `individual-pro`; being wrong by $50 is worse here than saying nothing.
@@ -139,9 +141,10 @@ Matching is on the **whole** id, lowercased, with `_` folded to `-`. The CLI mat
 `isOnAPlan` decides, and it does not simply read the subscription's status:
 
 - **Subscription answered** → on a plan iff `status == "active"`. Cancelled, past due, trialing and lapsed are all off it.
+- **Subscription answered `data: null`** → *not* on a plan, and taken at its word however much a stale `planId` in the credits reply still names one. This is a different answer from no answer at all, and collapsing the two drew a pay-as-you-go account against a $30 grant it does not receive while hiding the purchased credit it actually holds.
 - **Subscription did not answer** → on a plan iff a `planId` is named, which `credits` carries as well as `subscriptions`. That call is allowed to fail without sinking the reading, so its silence is not evidence of no plan; reading it as one would answer with the pool, which is the wrong question *and* the wrong number.
+- **Answered with a plan but no `status`** → treated as running. The reply's shape has moved, and of the two ways to be wrong, a row this build cannot size draws nothing while the other passes the pooled balance off as a plan.
 
-### Off a plan, the pool is the account's own arithmetic
 ### Off a plan, the pool is the account's own arithmetic
 
 An account with no plan running is on what it has actually purchased — and *that* pool has both halves reported. This is also the CLI's own fallback whenever it has no table entry to reach for:
@@ -153,7 +156,14 @@ pool      = remaining + spent
 used      = spent / pool
 ```
 
-`remaining` is the only figure here that arrives as **what is left**; it is turned into a pool rather than inverted, so nothing downstream inverts it twice. Where `pool` is zero there is no denominator the provider gave, and there is no window at all — an account that has said nothing about a pool is not the same as one that is empty.
+`remaining` is the only figure here that arrives as **what is left**; it is turned into a pool rather than inverted, so nothing downstream inverts it twice.
+
+**Both halves must actually have been reported, and absent is not zero.** There is no window unless at least one credit pot is present *and* the summary answered. Reading absence as zero is wrong in both directions, and one of them is loud:
+
+- Every pot absent — the shape a renamed field produces on an undocumented route — totals nothing left, puts the whole pool in the numerator, and draws a **full red ring with `isExhausted`**, which `UsageAlerts` then announces as a limit that is spent, about an account that said nothing.
+- The summary call failing — it is allowed to, quietly — puts zero in the numerator and draws an **untouched ring** for an account that may be at the wall. `CommandCodePlans` argues that case at length for the plan grant; it is no different here.
+
+Where `pool` is zero there is likewise no window — an account that has said nothing about a pool is not the same as one that is empty.
 
 `isExhausted` is `remaining <= 0`: the balance is the account's own statement of what is left, and nothing left is spent whatever the percentage rounds to.
 
@@ -172,10 +182,10 @@ The billing period is a **stated length only where the reply gave both ends of i
 `spent` and `limit` are dollars and arrive **already counted as spent** — no inversion, unlike [antigravity.md](antigravity.md).
 
 - `exceeded` is the account's own verdict and outranks the arithmetic: a limit half used that the account says is done is reported as spent. Erring towards "you are blocked" is the safer mistake.
-- A limit of zero or less is treated as reached, which is what the account does with it.
+- **A ceiling of zero or less draws no row.** It was treated as a limit already reached, on the reasoning that a limit with no room in it is full. That is a guess about an encoding nobody here has seen: `-1` is the usual way to say *unlimited*, and reading it as "reached" paints an untouched organisation solid red and has the alerts announce a limit as spent that the account never reported.
 - A row with no `limit` is **dropped**. There is no denominator to build a fraction from, and a spend limit drawn at an invented ceiling is worse than one not drawn.
 - `scope: "model"` names its model (`modelLabel`, else `model`); anything else is the organisation as a whole and is left unscoped, because a row reading "Spend limit · Org-wide" says nothing the heading does not already say.
-- Ids carry the row's **position**, because an organisation can hold a limit per model and an org-wide one at once — duplicate ids collapse rows in the card and leave a pin unresolvable.
+- Ids are built from **what the limit is** — scope, model, reset interval — so `org.model.anthropic/claude-opus-5.daily` stays that row whatever order the array arrives in. `UsageWindow.id` is documented as stable across refreshes and a pin is resolved by it, so positional ids silently moved a pin from one model's limit to another's and swapped two rows' identity mid-animation. Two limits alike in all three fields are indistinguishable in the reply as well, and only those fall back to the order they arrived in.
 
 `resetInterval` becomes a length: `daily` and `weekly` are exact and are stated; `monthly` is 28 to 31 days stored as a flat 30, the same stand-in Cursor's billing cycle and Copilot's calendar month use, and it must not feed the window clock or the forecast; `total` is a lifetime cap with no period at all.
 

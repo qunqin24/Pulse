@@ -1812,7 +1812,7 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Usage data"),
-                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.")
+                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; the two places it has to infer one, it says so on the figure.")
                 ) {
                     EmptyView()
                 }

@@ -70,12 +70,12 @@ struct CommandCodeParsingTests {
         // "monthly", not "credits": an active plan is measured against its
         // grant, an account without one against what it bought.
         #expect(windows.map(\.id) == [
-            "five-hour",      // 5 hours
-            "org.1.model",    // daily
-            "weekly",         // 7 days
-            "org.2.model",    // 7 days
-            "org.0.org",      // ~monthly
-            "monthly",        // the billing period, also 30 days
+            "five-hour",                                // 5 hours
+            "org.model.anthropic/claude-opus-5.daily",  // daily
+            "weekly",                                   // 7 days
+            "org.model.moonshotai/Kimi-K3.weekly",      // 7 days
+            "org.org.monthly",                          // ~monthly
+            "monthly",                                  // the billing period
         ])
         #expect(windows.map(\.windowSeconds) == windows.map(\.windowSeconds).sorted())
     }
@@ -113,8 +113,10 @@ struct CommandCodeParsingTests {
         #expect(abs(monthly.usedFraction - 17.5 / 30) < 0.000_001)
         #expect(monthly.kind == .monthly)
         #expect(monthly.isExhausted == false)
-        // The label the card shows, because the denominator was not reported.
-        #expect(monthly.scope == "estimated")
+        // The label the card shows, because the denominator was not reported —
+        // and a flag rather than a scope, so `--json` stays language-neutral.
+        #expect(monthly.isEstimated)
+        #expect(monthly.scope == nil)
         #expect(monthly.name.contains("estimated"))
         // And no pool row beside it: that answers a different question.
         #expect(try Self.windows().contains { $0.id == "credits" } == false)
@@ -189,36 +191,72 @@ struct CommandCodeParsingTests {
         #expect(pool.elapsedFraction(at: Date()) == nil)
     }
 
-    @Test("A summary that never arrived shows nothing spent, not an estimate of it")
-    func withoutASummaryNothingIsInvented() throws {
+    /// The summary call is allowed to fail quietly, and its silence used to
+    /// read as "nothing spent" — an untouched ring for an account that may be
+    /// at the wall, which is the failure `CommandCodePlans` argues against at
+    /// length for the plan grant.
+    @Test("A summary that never arrived draws no pool at all, rather than an empty one")
+    func withoutASummaryThereIsNoPool() throws {
         let windows = CommandCodeUsageService.windows(
             from: try Self.reading(subscription: "command-code-subscriptions-lapsed", summary: nil)
         )
-        let pool = try #require(windows.first { $0.id == "credits" })
 
-        // What is left is still reported, so the pool is what is left and
-        // nothing reads as gone — rather than a percentage built from one real
-        // number and a guess at the other.
-        #expect(pool.usedFraction == 0)
-        #expect(pool.isExhausted == false)
+        #expect(windows.contains { $0.id == "credits" } == false)
+        // Everything the account did report is untouched by the one that failed.
+        #expect(windows.contains { $0.id == "five-hour" })
+        #expect(windows.contains { $0.id == "weekly" })
+    }
+
+    /// The loud half of the same mistake, and the reason it is worth a test:
+    /// absent pots totalled zero, which put the whole pool in the numerator and
+    /// drew a **full red ring with `isExhausted`** — which `UsageAlerts` then
+    /// announces as a limit that is spent, about an account that said nothing.
+    @Test("Credit fields that are absent are not a balance of zero")
+    func absentCreditsAreNotAnEmptyWallet() throws {
+        let credits = try JSONDecoder().decode(
+            CommandCodeUsageService.CreditsReply.self,
+            from: Data(#"{"success": true, "credits": {}}"#.utf8)
+        )
+        let reading = CommandCodeUsageService.Reading(
+            whoami: nil,
+            credits: credits,
+            subscription: nil,
+            summary: try Self.decode(CommandCodeUsageService.SummaryReply.self, "command-code-summary")
+        )
+
+        #expect(CommandCodeUsageService.windows(from: reading).isEmpty)
     }
 
     @Test("An account with nothing left and nothing spent reports no pool")
     func anEmptyAccountIsNotAFullOne() throws {
-        let reading = CommandCodeUsageService.Reading(
-            whoami: nil,
-            credits: try Self.decode(
-                CommandCodeUsageService.CreditsReply.self, "command-code-credits-no-plan"
-            ),
-            subscription: nil,
-            summary: nil
-        )
-        #expect(CommandCodeUsageService.windows(from: reading).contains { $0.id == "credits" })
-
         let silent = CommandCodeUsageService.Reading(
             whoami: nil, credits: nil, subscription: nil, summary: nil
         )
         #expect(CommandCodeUsageService.windows(from: silent).isEmpty)
+    }
+
+    /// "The lookup failed" and "the lookup said you have no plan" are different
+    /// answers, and the second one is the account's own word. Collapsing them
+    /// drew a pay-as-you-go account against a $30 grant it does not receive,
+    /// and hid the $200 of purchased credit it actually holds.
+    @Test("A subscription reply that answered `none` is taken at its word")
+    func anAnsweredAbsenceIsNotAFailedLookup() throws {
+        let subscription = try JSONDecoder().decode(
+            CommandCodeUsageService.SubscriptionReply.self,
+            from: Data(#"{"success": true, "data": null}"#.utf8)
+        )
+        let windows = CommandCodeUsageService.windows(
+            from: CommandCodeUsageService.Reading(
+                whoami: nil,
+                // Still names `individual-pro`, which is what the old rule read.
+                credits: try Self.decode(CommandCodeUsageService.CreditsReply.self, "command-code-credits"),
+                subscription: subscription,
+                summary: try Self.decode(CommandCodeUsageService.SummaryReply.self, "command-code-summary")
+            )
+        )
+
+        #expect(windows.contains { $0.id == "monthly" } == false)
+        #expect(windows.contains { $0.id == "credits" })
     }
 
     // MARK: - Rolling windows
@@ -254,7 +292,7 @@ struct CommandCodeParsingTests {
 
     @Test("Spend limits arrive already spent — no inversion")
     func orgLimitsAreNotInverted() throws {
-        let daily = try #require(try Self.windows().first { $0.id == "org.1.model" })
+        let daily = try #require(try Self.windows().first { $0.id == "org.model.anthropic/claude-opus-5.daily" })
         #expect(abs(daily.usedFraction - 0.9) < 0.000_001)
         #expect(daily.percentText == "90%")
         #expect(daily.scope == "Claude Opus 5")
@@ -262,7 +300,7 @@ struct CommandCodeParsingTests {
 
     @Test("`exceeded` is the account's verdict and outranks the arithmetic")
     func exceededOutranksThePercentage() throws {
-        let weekly = try #require(try Self.windows().first { $0.id == "org.2.model" })
+        let weekly = try #require(try Self.windows().first { $0.id == "org.model.moonshotai/Kimi-K3.weekly" })
         // Two dollars of four is half the limit, and the account still says it
         // is done. Erring towards "you are blocked" is the safer mistake.
         #expect(abs(weekly.usedFraction - 0.5) < 0.000_001)
@@ -271,7 +309,7 @@ struct CommandCodeParsingTests {
 
     @Test("An org-wide limit is left unscoped")
     func orgWideLimitsCarryNoModelName() throws {
-        let monthly = try #require(try Self.windows().first { $0.id == "org.0.org" })
+        let monthly = try #require(try Self.windows().first { $0.id == "org.org.monthly" })
         #expect(monthly.scope == nil)
         #expect(monthly.resetsAt != nil)
     }
@@ -279,11 +317,11 @@ struct CommandCodeParsingTests {
     @Test("A day and a week are lengths; a month is only a sort key")
     func onlyExactIntervalsClaimALength() throws {
         let windows = try Self.windows()
-        #expect(try #require(windows.first { $0.id == "org.1.model" }).reportsLength)
-        #expect(try #require(windows.first { $0.id == "org.2.model" }).reportsLength)
+        #expect(try #require(windows.first { $0.id == "org.model.anthropic/claude-opus-5.daily" }).reportsLength)
+        #expect(try #require(windows.first { $0.id == "org.model.moonshotai/Kimi-K3.weekly" }).reportsLength)
 
         // 28 to 31 days stored as a flat 30, so nothing may divide by it.
-        let monthly = try #require(windows.first { $0.id == "org.0.org" })
+        let monthly = try #require(windows.first { $0.id == "org.org.monthly" })
         #expect(monthly.reportsLength == false)
         #expect(monthly.elapsedFraction(at: Date()) == nil)
     }
@@ -293,7 +331,49 @@ struct CommandCodeParsingTests {
         // The fourth fixture row states `spent: 3` and no `limit` at all.
         // There is no denominator to build a fraction from, and a spend limit
         // shown at an invented ceiling is worse than one not shown.
-        #expect(!(try Self.windows().contains { $0.id == "org.3.org" }))
+        #expect(try Self.windows().count == 6)
+        #expect(!(try Self.windows().contains { $0.id.hasSuffix(".total") }))
+    }
+
+    /// `-1` is the usual way to encode *unlimited*, and this side has never
+    /// seen a live reply. Drawn as a ceiling already reached it would paint an
+    /// untouched organisation solid red and have the alerts announce it spent.
+    @Test("A ceiling of zero or less is not a denominator, so there is no row")
+    func aCeilingWithNoRoomInItIsNotALimit() throws {
+        for ceiling in ["-1", "0"] {
+            let whoami = try JSONDecoder().decode(
+                CommandCodeUsageService.Whoami.self,
+                from: Data(#"{"orgLimits":[{"scope":"org","spent":4,"limit":\#(ceiling)}]}"#.utf8)
+            )
+            let windows = CommandCodeUsageService.windows(
+                from: CommandCodeUsageService.Reading(
+                    whoami: whoami, credits: nil, subscription: nil, summary: nil
+                )
+            )
+            #expect(windows.isEmpty, "ceiling \(ceiling)")
+        }
+    }
+
+    /// A pin is resolved by id, so an id that moves moves the pin with it.
+    @Test("An org limit keeps its id when the array comes back in another order")
+    func orgIdsSurviveAReorder() throws {
+        let forwards = try Self.windows().filter { $0.id.hasPrefix("org.") }.map(\.id)
+
+        let text = try String(decoding: Self.fixture("command-code-whoami"), as: UTF8.self)
+        var json = try JSONSerialization.jsonObject(with: Data(text.utf8)) as! [String: Any]
+        json["orgLimits"] = Array((json["orgLimits"] as! [Any]).reversed())
+        let whoami = try JSONDecoder().decode(
+            CommandCodeUsageService.Whoami.self,
+            from: try JSONSerialization.data(withJSONObject: json)
+        )
+        let backwards = CommandCodeUsageService.windows(
+            from: CommandCodeUsageService.Reading(
+                whoami: whoami, credits: nil, subscription: nil, summary: nil
+            )
+        ).filter { $0.id.hasPrefix("org.") }.map(\.id)
+
+        #expect(Set(forwards) == Set(backwards))
+        #expect(forwards.count == 3)
     }
 
     // MARK: - Plan, balance and stamps

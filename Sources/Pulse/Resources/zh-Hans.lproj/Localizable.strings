@@ -284,7 +284,7 @@
 "This page can be closed." = "这个页面可以关闭了。";
 "Sign-in failed. You can close this page." = "登录失败，可以关闭这个页面。";
 "Signed in. You can close this page and go back to Pulse." = "已登录，可以关闭页面回到 Pulse 了。";
-"Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "直接读各家自己的账号。Pulse 只显示它们报告的数字，从不自行估算。";
+"Read from each provider's own account. Pulse shows the figures they report; the two places it has to infer one, it says so on the figure." = "直接读各家自己的账号。Pulse 只显示它们报告的数字；仅有的两处必须推算的地方，会在数字旁标明。";
 "Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
 "Open" = "打开";
 "under 15 minutes" = "不到 15 分钟";

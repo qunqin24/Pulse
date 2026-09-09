@@ -284,7 +284,7 @@
 "This page can be closed." = "This page can be closed.";
 "Sign-in failed. You can close this page." = "Sign-in failed. You can close this page.";
 "Signed in. You can close this page and go back to Pulse." = "Signed in. You can close this page and go back to Pulse.";
-"Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own." = "Read from each provider's own account. Pulse shows the figures they report and never estimates one of its own.";
+"Read from each provider's own account. Pulse shows the figures they report; the two places it has to infer one, it says so on the figure." = "Read from each provider's own account. Pulse shows the figures they report; the two places it has to infer one, it says so on the figure.";
 "Pulse is built from a design he posted on X." = "Pulse is built from a design he posted on X.";
 "Open" = "Open";
 "under 15 minutes" = "under 15 minutes";

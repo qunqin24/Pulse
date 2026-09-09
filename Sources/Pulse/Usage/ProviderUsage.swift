@@ -47,6 +47,18 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// `elapsedFraction` draw an arc nobody reported.
     var reportsLength: Bool = true
 
+    /// Whether this limit's *denominator* was inferred rather than reported.
+    ///
+    /// Set only where a provider states how much of an allowance is left and
+    /// never how large the allowance is — Command Code's monthly plan grant is
+    /// the one case. The row says so on screen and in `--json`, because the
+    /// rule everywhere else is that a percentage comes from the provider.
+    ///
+    /// **Not `scope`.** That is a product name and is promised to be the same
+    /// in every language; a translated marker in it would break any script
+    /// matching on it. This is a flag, and the wording lives in `name`.
+    var isEstimated: Bool = false
+
     /// Whether the provider says this limit is spent.
     ///
     /// Taken from the provider rather than inferred, because they are the ones
@@ -89,7 +101,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
                 : .localized("\("\(Int((Double(seconds) / 3_600).rounded()))")-hour limit")
         }
-        return scope.map { "\(base) · \($0)" } ?? base
+        let scoped = scope.map { "\(base) · \($0)" } ?? base
+        return isEstimated ? "\(scoped) · \(String.localized("estimated"))" : scoped
     }
 
     /// Rounded to the nearest whole number, **except that anything used at

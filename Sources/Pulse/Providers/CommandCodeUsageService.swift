@@ -405,13 +405,23 @@ struct CommandCodeUsageService: Sendable {
     /// The organisation's spend limits, which are money rather than tokens and
     /// arrive already counted as **spent** — no inversion here.
     ///
-    /// A limit of zero or less is not a limit with room in it: the account
-    /// treats it as reached, and so does this. `exceeded` is the account's own
-    /// verdict and outranks the arithmetic, which is the same rule every other
-    /// provider's spent flag follows.
+    /// **A ceiling of zero or less is not a denominator, so there is no row.**
+    /// It used to be drawn as a full, exhausted ring on the reasoning that a
+    /// limit with no room in it is a limit already reached. That is a guess
+    /// about an encoding nobody here has seen: `-1` is the usual way to say
+    /// *unlimited*, and reading it as "reached" would paint an untouched
+    /// organisation solid red and have `UsageAlerts` announce a limit as spent
+    /// that the account never reported. `exceeded` remains the account's own
+    /// verdict wherever there is a row to put it on.
     private static func orgWindows(_ whoami: Whoami?) -> [UsageWindow] {
-        (whoami?.orgLimits ?? []).enumerated().compactMap { index, limit -> UsageWindow? in
-            guard let ceiling = limit.limit, let spent = limit.spent else { return nil }
+        // Ids are built from what each limit *is*, so a row keeps its identity
+        // when the array comes back in another order — a pin is resolved by id,
+        // and positional ids silently move a pin from one model to another.
+        // Position is the tie-break and nothing more.
+        var seen: [String: Int] = [:]
+
+        return (whoami?.orgLimits ?? []).compactMap { limit -> UsageWindow? in
+            guard let ceiling = limit.limit, ceiling > 0, let spent = limit.spent else { return nil }
 
             // A model-scoped limit names its model; anything else is the
             // organisation as a whole and is left unscoped, because a row
@@ -425,19 +435,26 @@ struct CommandCodeUsageService: Sendable {
 
             let (seconds, stated) = interval(limit.resetInterval)
 
+            // What this limit is: its scope, the model it names, and how
+            // often it turns over. Two limits alike in all three are
+            // indistinguishable in the reply as well, so those — and only
+            // those — fall back to the order they arrived in.
+            let identity = [limit.scope ?? "org", limit.model, limit.resetInterval]
+                .compactMap { $0 }
+                .joined(separator: ".")
+            let occurrence = seen[identity, default: 0]
+            seen[identity] = occurrence + 1
+            let id = occurrence == 0 ? "org.\(identity)" : "org.\(identity).\(occurrence)"
+
             return UsageWindow(
-                // **Unique within one reading.** An organisation can hold a
-                // limit per model and an org-wide one at once, and duplicate
-                // ids collapse rows in the card and leave a pin unresolvable,
-                // so the position settles what the scope cannot.
-                id: "org.\(index).\(limit.scope ?? "org")",
+                id: id,
                 kind: .spend,
                 scope: scope,
-                usedFraction: ceiling > 0 ? min(max(spent / ceiling, 0), 1) : 1,
+                usedFraction: min(max(spent / ceiling, 0), 1),
                 windowSeconds: seconds,
                 resetsAt: limit.resetAt.flatMap(Self.date(from:)),
                 reportsLength: stated,
-                isExhausted: limit.exceeded == true || ceiling <= 0
+                isExhausted: limit.exceeded == true
             )
         }
     }
@@ -478,8 +495,10 @@ struct CommandCodeUsageService: Sendable {
     /// The grant is not reported by anything — see `CommandCodePlans`, which is
     /// where that compromise is argued and where it goes stale. What *is*
     /// reported is the remainder, so the subtraction is the account's own
-    /// number and only the denominator is inferred. The row is scoped
-    /// `estimated` so the card says which half that was.
+    /// number and only the denominator is inferred. The row carries
+    /// `isEstimated`, so the card says which half that was — a flag rather
+    /// than a `scope`, because `scope` is a product name that `--json`
+    /// promises is the same in every language.
     ///
     /// **A plan this build cannot size draws nothing.** Falling through to the
     /// pool below would answer the other question, and answer it wrongly; a
@@ -499,11 +518,13 @@ struct CommandCodeUsageService: Sendable {
         return UsageWindow(
             id: "monthly",
             kind: .monthly,
-            scope: .localized("estimated"),
+            scope: nil,
             usedFraction: (grant - remaining) / grant,
             windowSeconds: period.seconds ?? 30 * 86_400,
             resetsAt: period.end,
             reportsLength: period.seconds != nil,
+            // The grant is the one denominator on this rail nobody reported.
+            isEstimated: true,
             // The remainder is the account's own statement of what is left, and
             // nothing left is spent whatever the percentage rounds to.
             isExhausted: reported <= 0
@@ -512,16 +533,31 @@ struct CommandCodeUsageService: Sendable {
 
     /// What an account with no plan has bought, as a spend limit.
     ///
-    /// Both halves are reported here: what is left arrives directly, what is
-    /// gone arrives from the summary, and their sum is the money this period
-    /// started with. Where either half is missing there is no denominator the
-    /// provider gave, and so no window — a percentage cannot be built out of
-    /// one of the two numbers and a guess at the other.
+    /// **Both halves have to have been reported, and absent is not zero.** What
+    /// is left arrives directly, what is gone arrives from the summary, and
+    /// their sum is the money this period started with — so a missing half
+    /// leaves no denominator the provider gave, and there is no window. This is
+    /// the same refusal `planWindow` makes, and it has to be: the two ways of
+    /// reading absence as zero here are both wrong, and one of them is loud.
+    ///
+    /// - Every credit pot absent — the shape a renamed field produces, and this
+    ///   route is undocumented — would total nothing left, put the whole pool
+    ///   in the numerator, and draw a **full red ring with `isExhausted`**,
+    ///   which then tells `UsageAlerts` to announce a limit as spent that the
+    ///   provider never said a word about.
+    /// - The summary call failing — it is allowed to, quietly — would put zero
+    ///   in the numerator and draw an **untouched ring** for an account that
+    ///   may be at the wall. `CommandCodePlans` argues that case at length for
+    ///   the plan grant; it is no different here.
     private static func poolWindow(_ reading: Reading, _ credits: CreditsReply.Credits) -> UsageWindow? {
-        let remaining = max(0, credits.monthlyCredits ?? 0)
-            + max(0, credits.purchasedCredits ?? 0)
-            + max(0, credits.freeCredits ?? 0)
-        let spent = max(0, reading.summary?.totalCost ?? 0)
+        let pots = [credits.monthlyCredits, credits.purchasedCredits, credits.freeCredits]
+        guard
+            pots.contains(where: { $0 != nil }),
+            let reportedSpend = reading.summary?.totalCost
+        else { return nil }
+
+        let remaining = pots.compactMap { $0 }.reduce(0) { $0 + max(0, $1) }
+        let spent = max(0, reportedSpend)
         let pool = remaining + spent
         // Nothing left and nothing spent is an account that has said nothing
         // about a pool at all, which is not the same as one that is empty.
@@ -568,13 +604,25 @@ struct CommandCodeUsageService: Sendable {
     /// due, trialing, a plan that lapsed — is an account back on what it has
     /// bought, which is a pool this *can* measure from reported numbers alone.
     static func isOnAPlan(_ reading: Reading) -> Bool {
-        // The subscription lookup is allowed to fail without sinking the
-        // reading, so its silence is not evidence of no plan — and treating it
-        // as such would answer with the pooled balance, which is the wrong
-        // question for a subscriber. `credits.planId` still names the plan.
-        guard let status = reading.subscription?.data?.status else {
+        // **No answer is not the same as an answer of "none".** The lookup is
+        // allowed to fail without sinking the reading, so its silence is not
+        // evidence of no plan, and reading it as such would answer with the
+        // pooled balance — the wrong question for a subscriber, and the wrong
+        // number. `credits.planId` names the plan when the lookup cannot.
+        guard let subscription = reading.subscription else {
             return planID(reading) != nil
         }
+
+        // It did answer. Take it at its word in both directions: an account it
+        // says has no subscription is on what it bought, however much a stale
+        // `planId` in the credits reply still names.
+        guard let plan = subscription.data else { return false }
+
+        // A plan with no status is a reply whose shape has moved. Treat it as
+        // running: the cost of being wrong that way is a row this build cannot
+        // size, which draws nothing, and the cost of the other way is the
+        // pooled balance passed off as a plan.
+        guard let status = plan.status else { return true }
         return status.lowercased() == "active"
     }
 

@@ -16,6 +16,7 @@ struct UsageReportTests {
         scope: String? = nil,
         seconds: Int = 7 * 86_400,
         reportsLength: Bool = true,
+        isEstimated: Bool = false,
         resetsAt: Date? = nil
     ) -> UsageWindow {
         UsageWindow(
@@ -25,7 +26,8 @@ struct UsageReportTests {
             usedFraction: used,
             windowSeconds: seconds,
             resetsAt: resetsAt,
-            reportsLength: reportsLength
+            reportsLength: reportsLength,
+            isEstimated: isEstimated
         )
     }
 
@@ -171,6 +173,27 @@ struct UsageReportTests {
         let window = try #require((try Self.accounts(root)[0]["windows"] as? [[String: Any]])?.first)
 
         #expect(window["reportsLength"] as? Bool == false)
+    }
+
+    /// The contract's answer to "is this figure the provider's own?", which is
+    /// the whole promise `--json` makes. It has to be on **every** window, not
+    /// only the one that sets it, or a script cannot filter on its absence.
+    @Test("An inferred denominator is flagged, and the flag is on every window")
+    func inferredDenominatorsAreFlagged() throws {
+        let account = AccountKey(.commandCode)
+        let rail = AppSettings.StoredRail(accounts: [account], labels: [:], pinnedWindows: [:])
+        let root = try Self.object(rail: rail, readings: [account.id: Self.reading(account, [
+            Self.window("five-hour", kind: .fiveHour, used: 0.25, seconds: 5 * 3_600),
+            Self.window("monthly", kind: .monthly, used: 0.58, seconds: 30 * 86_400, isEstimated: true),
+        ], observedAt: Self.generatedAt)])
+        let windows = try #require(try Self.accounts(root)[0]["windows"] as? [[String: Any]])
+
+        #expect(windows.count == 2)
+        #expect(windows.allSatisfy { $0["estimated"] != nil })
+        #expect(windows.first { $0["id"] as? String == "five-hour" }?["estimated"] as? Bool == false)
+        #expect(windows.first { $0["id"] as? String == "monthly" }?["estimated"] as? Bool == true)
+        // And it is a flag, not a translated word hidden in a product field.
+        #expect(windows.allSatisfy { $0["scope"] == nil })
     }
 
     @Test("An added account is named by the user's own label")
