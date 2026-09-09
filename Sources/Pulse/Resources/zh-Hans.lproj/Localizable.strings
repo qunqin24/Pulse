@@ -229,6 +229,7 @@
 "Reads your quota from Ollama's own settings page." = "从 Ollama 自己的设置页面读取额度。";
 "Save" = "保存";
 "Monthly limit" = "每月限额";
+"estimated" = "推算";
 "Last read" = "上次读取";
 "Not yet" = "尚未读取";
 "That key was refused. Check it in Settings." = "这个 key 被拒绝了，去设置里检查一下。";

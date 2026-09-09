@@ -13,7 +13,7 @@ The ring is named for the product. Its command is `cmd`, which names nothing on 
 **Nobody on this side holds a Command Code account.** The routes and field names below were read out of the shipping client — `command-code@1.51.3`, `dist/cli.mjs`, the same code the CLI's own `/usage` overlay runs — rather than captured from a real reply. That is the same standing [volcengine.md](volcengine.md) has, and it is why:
 
 - the parsing is pinned by fixtures (`Tests/PulseTests/Fixtures/command-code-*.json`), so a schema change is a failing test rather than a wrong number;
-- every reading is built only from figures the reply carries, never from the client-side plan table described under [An active plan has no ring](#an-active-plan-has-no-ring).
+- every reading is built only from figures the reply carries, and the one inferred denominator — the plan grant — is labelled as such on screen. See [The monthly row](#the-monthly-row-a-plans-grant-or-a-pay-as-you-go-pool).
 
 What *is* verified: the host and the route answer. `GET https://api.commandcode.ai/alpha/whoami?limits=1` without a credential returns `401` and
 
@@ -100,17 +100,18 @@ None of this is documented by the vendor. It can change without notice, exactly 
 | `five-hour` | `.fiveHour` | `windowLimits.fiveHour` | yes |
 | `weekly` | `.weekly` | `windowLimits.weekly` | yes |
 | `org.<n>.<scope>` | `.spend` | `whoami.orgLimits[]` | daily and weekly yes; monthly no |
-| `credits` | `.spend` | the credit pool | only when the period states both ends |
+| `monthly` | `.monthly` | the plan's grant, **estimated** | only when the period states both ends |
+| `credits` | `.spend` | the purchased pool | only when the period states both ends |
 
-`credits` exists **only while no plan is active** — see [An active plan has no ring](#an-active-plan-has-no-ring).
+The last two are **mutually exclusive**: a running plan produces `monthly`, an account without one produces `credits`, and a plan that cannot be sized produces neither.
 
 Shortest first. **Ties keep the order they were built in** — `sorted(by:)` is not a stable sort, and this provider produces equal lengths as a matter of course: a weekly rolling limit beside a weekly org limit, a monthly org limit beside a billing period that happens to be thirty days. Left to `sorted` those rows could swap between one refresh and the next, which is the shuffling `headlineWindow`'s own tie rule exists to avoid.
 
-### An active plan has no ring
+### The monthly row: a plan's grant, or a pay-as-you-go pool
 
-**Command Code sells subscription coding plans**, and this is the fact the whole section turns on. The lineup, as the shipped CLI knows it — a monthly allowance in US dollars per plan id:
+**Command Code sells subscription coding plans**, and the monthly row answers a different question depending on whether one is running. The lineup, as `command-code@1.51.3` knows it:
 
-| `planId` | Shown as | Monthly credits |
+| `planId` | Shown as | Monthly grant |
 |---|---|---|
 | `individual-go` | Go | $10 |
 | `individual-provider` | Provider | $15 |
@@ -121,17 +122,29 @@ Shortest first. **Ties keep the order they were built in** — `sorted(by:)` is 
 | `individual-max` | Max | $150 |
 | `individual-ultra` | Ultra | $300 |
 
-**No reply reports any of those numbers.** That table lives inside the CLI bundle, and the CLI prefers it as the denominator whenever `subscriptions.data.status` is `"active"`. Pulse does not use it: a number that lives in a client rather than in the reply is not something the provider reported, it would silently mis-state every plan added after this build, and it rots in place — the shipped table already carries `individual-pro` at 30 and `individual-pro-v1` at 80 under the same displayed name.
+**No reply reports any of those numbers.** `credits.monthlyCredits` is the grant's *remainder*; its size is published on the pricing page. The vendor's own CLI carries this table for that reason, and so does CodexBar. Pulse carries it in [`CommandCodePlans`](../../Sources/Pulse/Providers/CommandCodePlans.swift), deliberately in its own file, because it is the one thing here that goes stale on someone else's schedule.
 
-So **while a plan is active there is no `credits` window at all**. The rings come from the limits the account really does report — the rolling five-hour and weekly windows, and the organisation's spend limits — and the plan's name and the dollars left stay on the card as figures rather than as a fraction.
+So this is the **second labelled exception** to "Pulse does not invent a percentage", alongside the money estimate. What that costs is bounded in three ways, and the bounds are the design:
 
-**Summing the three credit buckets instead was the first attempt, and it is worse than saying nothing**, because it is wrong in the direction that hurts. The monthly allowance resets and purchased credit does not, so a Pro subscriber holding $200 of top-up who has burnt $28 of a $30 month reads as **12%** — silence, and then a wall. `CommandCodeParsingTests` asserts the absence rather than leaving it implied by the order test.
+- **The numerator is reported.** `grant - monthlyCredits` subtracts the account's own figure; only the denominator is inferred.
+- **The row is scoped `estimated`**, so the card reads "Monthly limit · estimated" rather than passing for a reported limit.
+- **A plan this build cannot size draws nothing at all.** Not zero, not the pool. A missing row is this design's real failure mode and it is silent, so it must not be able to render as an untouched allowance for someone whose money is gone. CodexBar's table is missing `teams-pro` and `individual-provider` today, and its unsized plans fall through to a free-tier branch that draws exactly that.
 
-For the record, the CLI's own subscriber formula is `pool = max(table[planId], monthlyCredits) + purchased + free` with `used = pool - remaining` — a different numerator from the one below as well as a different denominator, so the two are not two roundings of one number.
+Matching is on the **whole** id, lowercased, with `_` folded to `-`. The CLI matches on a *prefix*, which would size a future `individual-pro-v2` as the $30 `individual-pro`; being wrong by $50 is worse here than saying nothing.
+
+**Adding the three credit buckets together instead was the first attempt, and it is worse than saying nothing.** The grant resets and purchased credit does not, so a Pro subscriber holding $200 of top-up who has burnt $28 of a $30 month read as **12%** — silence, and then a wall.
+
+#### Which question is being answered
+
+`isOnAPlan` decides, and it does not simply read the subscription's status:
+
+- **Subscription answered** → on a plan iff `status == "active"`. Cancelled, past due, trialing and lapsed are all off it.
+- **Subscription did not answer** → on a plan iff a `planId` is named, which `credits` carries as well as `subscriptions`. That call is allowed to fail without sinking the reading, so its silence is not evidence of no plan; reading it as one would answer with the pool, which is the wrong question *and* the wrong number.
 
 ### Off a plan, the pool is the account's own arithmetic
+### Off a plan, the pool is the account's own arithmetic
 
-A plan that is cancelled, past due, trialing, lapsed or never bought leaves an account on what it has actually purchased — and *that* pool has both halves reported. This is also the CLI's own fallback whenever it has no table entry to reach for:
+An account with no plan running is on what it has actually purchased — and *that* pool has both halves reported. This is also the CLI's own fallback whenever it has no table entry to reach for:
 
 ```
 remaining = max(0, monthlyCredits) + max(0, purchasedCredits) + max(0, freeCredits)

@@ -32,7 +32,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `ZaiErrorTests` | What the GLM Coding Plan's HTTP-200 refusals mean, from envelopes taken off both live hosts |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 | `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |
-| `CommandCodeParsingTests` | Command Code's four replies → windows, from second-hand fixtures: the credit pool built from the account's own figures rather than the CLI's plan table, epoch-millisecond resets, `exceeded` outranking the arithmetic, and equal lengths not shuffling. [providers/command-code.md](providers/command-code.md) |
+| `CommandCodeParsingTests` | Command Code's four replies → windows, from second-hand fixtures. Chiefly **which question the monthly row answers**: a running plan against its inferred, labelled grant; an account without one against the pool it bought; a plan the table cannot size against *nothing* — not zero, not the pool. Plus a subscription lookup that never answered still finding the plan in the credits reply, epoch-millisecond resets, `exceeded` outranking the arithmetic, and equal lengths not shuffling. [providers/command-code.md](providers/command-code.md) |
 
 ## What is not, and why
 

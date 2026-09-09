@@ -44,6 +44,14 @@ struct CommandCodeParsingTests {
         CommandCodeUsageService.windows(from: try reading())
     }
 
+    /// An account that never had a plan: no `planId` anywhere, so nothing
+    /// names a grant and the pool is the only thing to measure.
+    private static func neverOnAPlan() throws -> [UsageWindow] {
+        CommandCodeUsageService.windows(
+            from: try reading(credits: "command-code-credits-no-plan", subscription: nil)
+        )
+    }
+
     /// The same account with its plan lapsed: back on what it bought, which is
     /// a pool with both halves reported. The billing period is still stated,
     /// so this exercises the pool *and* its length.
@@ -59,14 +67,15 @@ struct CommandCodeParsingTests {
     func windowsAreOrderedShortestFirst() throws {
         let windows = try Self.windows()
 
-        // No "credits" row: this fixture's plan is active, and the allowance
-        // an active plan is measured against is not something any reply says.
+        // "monthly", not "credits": an active plan is measured against its
+        // grant, an account without one against what it bought.
         #expect(windows.map(\.id) == [
             "five-hour",      // 5 hours
             "org.1.model",    // daily
             "weekly",         // 7 days
             "org.2.model",    // 7 days
             "org.0.org",      // ~monthly
+            "monthly",        // the billing period, also 30 days
         ])
         #expect(windows.map(\.windowSeconds) == windows.map(\.windowSeconds).sorted())
     }
@@ -91,19 +100,64 @@ struct CommandCodeParsingTests {
 
     // MARK: - The credit pool
 
-    /// The plan is the reason there is no ring, so it is asserted as its own
-    /// fact rather than left implied by the order test.
+    /// The plan grant, which is the one figure here that is inferred.
     ///
-    /// Command Code sells monthly coding plans and reports the allowance
-    /// behind none of them. Adding the three credit buckets together instead
-    /// is wrong in the direction that hurts: this fixture's subscriber is 93%
-    /// through a $30 Pro month, and the sum would draw that as 43%.
-    @Test("An active plan draws no credit ring, because nothing reports its allowance")
-    func anActivePlanHasNoPoolToMeasure() throws {
+    /// Adding the three credit buckets together instead — the pool below — is
+    /// wrong in the direction that hurts: it would draw this same subscriber at
+    /// 43% while $12.50 of a $30 month is what is actually left.
+    @Test("An active plan is measured against its grant, and says that it was estimated")
+    func anActivePlanIsMeasuredAgainstItsGrant() throws {
+        let monthly = try #require(try Self.windows().first { $0.id == "monthly" })
+
+        // individual-pro grants 30; 12.5 left, so 17.5 of it is gone.
+        #expect(abs(monthly.usedFraction - 17.5 / 30) < 0.000_001)
+        #expect(monthly.kind == .monthly)
+        #expect(monthly.isExhausted == false)
+        // The label the card shows, because the denominator was not reported.
+        #expect(monthly.scope == "estimated")
+        #expect(monthly.name.contains("estimated"))
+        // And no pool row beside it: that answers a different question.
         #expect(try Self.windows().contains { $0.id == "credits" } == false)
-        // The limits the account really does report are untouched by that.
-        #expect(try Self.windows().contains { $0.id == "five-hour" })
-        #expect(try Self.windows().contains { $0.id == "weekly" })
+    }
+
+    /// The silent failure this design has, kept silent in the safe direction.
+    @Test("A plan this build cannot size draws nothing at all — not zero, not the pool")
+    func anUnknownPlanDrawsNothing() throws {
+        let reading = try Self.reading(subscription: "command-code-subscriptions-unknown-plan")
+        let windows = CommandCodeUsageService.windows(from: reading)
+
+        #expect(windows.contains { $0.id == "monthly" } == false)
+        #expect(windows.contains { $0.id == "credits" } == false)
+        // The reported limits are untouched by a plan nobody can size.
+        #expect(windows.contains { $0.id == "five-hour" })
+        #expect(windows.contains { $0.id == "weekly" })
+    }
+
+    /// The subscription call is allowed to fail without sinking the reading, so
+    /// its silence must not be read as "no plan" — that would answer with the
+    /// pool, which is the wrong question and the wrong number.
+    @Test("A subscription lookup that never answered still finds the plan in the credits reply")
+    func aFailedSubscriptionLookupStillKnowsThePlan() throws {
+        let windows = CommandCodeUsageService.windows(from: try Self.reading(subscription: nil))
+
+        let monthly = try #require(windows.first { $0.id == "monthly" })
+        #expect(abs(monthly.usedFraction - 17.5 / 30) < 0.000_001)
+        // No period was stated, so the month is a sort key and nothing divides.
+        #expect(monthly.reportsLength == false)
+        #expect(windows.contains { $0.id == "credits" } == false)
+    }
+
+    @Test("A grant already spent reads as spent, whatever else is in the wallet")
+    func aSpentGrantIsSpent() throws {
+        // individual_go, underscored, with the grant at zero and $6 of top-up
+        // still there. The top-up is not the plan and does not soften it.
+        let windows = CommandCodeUsageService.windows(
+            from: try Self.reading(whoami: nil, credits: "command-code-unlimited",
+                                   subscription: nil, summary: nil)
+        )
+        let monthly = try #require(windows.first { $0.id == "monthly" })
+        #expect(monthly.usedFraction == 1)
+        #expect(monthly.isExhausted)
     }
 
     /// A plan that is cancelled, past due, trialing or simply gone is an
@@ -128,12 +182,9 @@ struct CommandCodeParsingTests {
         #expect(stated.reportsLength)
         #expect(stated.windowSeconds == 30 * 86_400)
 
-        // No subscription at all — a pay-as-you-go balance — leaves the month
-        // as a sort key that nothing may divide by.
-        let loose = CommandCodeUsageService.windows(
-            from: try Self.reading(subscription: nil)
-        )
-        let pool = try #require(loose.first { $0.id == "credits" })
+        // No plan and no subscription — a pay-as-you-go balance — leaves the
+        // month as a sort key that nothing may divide by.
+        let pool = try #require(try Self.neverOnAPlan().first { $0.id == "credits" })
         #expect(pool.reportsLength == false)
         #expect(pool.elapsedFraction(at: Date()) == nil)
     }
@@ -156,7 +207,9 @@ struct CommandCodeParsingTests {
     func anEmptyAccountIsNotAFullOne() throws {
         let reading = CommandCodeUsageService.Reading(
             whoami: nil,
-            credits: try Self.decode(CommandCodeUsageService.CreditsReply.self, "command-code-credits"),
+            credits: try Self.decode(
+                CommandCodeUsageService.CreditsReply.self, "command-code-credits-no-plan"
+            ),
             subscription: nil,
             summary: nil
         )
@@ -194,7 +247,7 @@ struct CommandCodeParsingTests {
         // `limited: false`, so the five-hour cap in that reply is not something
         // the account is being held to and is not drawn as one.
         #expect(!windows.contains { $0.id == "five-hour" })
-        #expect(windows.map(\.id) == ["credits"])
+        #expect(windows.map(\.id) == ["monthly"])
     }
 
     // MARK: - Organisation spend limits

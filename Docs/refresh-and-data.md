@@ -1,6 +1,6 @@
 # Refresh, cache, activity, history
 
-Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. The money estimate in Settings is the labelled exception.
+Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. Two labelled exceptions, and both say on screen that they are inferred: the money estimate in Settings, and Command Code's monthly plan grant, whose remainder is reported while its size is published only on a pricing page ([providers/command-code.md](providers/command-code.md)).
 
 Per-provider HTTP, cookies, and login: [providers/README.md](providers/README.md). Why percentages stay reported: [decisions/reported-figures.md](decisions/reported-figures.md).
 

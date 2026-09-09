@@ -41,7 +41,7 @@ Refresh loop, cache algorithm, ledger, and forecast: [`../refresh-and-data.md`](
 
 ### Pulse does not invent a percentage
 
-If a provider does not report a figure, the UI says so. Do not derive a percentage from that provider’s local token counts. The labelled money estimate is the exception, and it is withheld when the inputs cannot carry it — details in [`../refresh-and-data.md`](../refresh-and-data.md).
+If a provider does not report a figure, the UI says so. Do not derive a percentage from that provider’s local token counts. Two labelled exceptions, each withheld when its inputs cannot carry it: the money estimate ([`../refresh-and-data.md`](../refresh-and-data.md)), and Command Code's monthly plan grant ([command-code.md](command-code.md)) — reported remainder, unreported plan size, and no row at all for a plan the table cannot size.
 
 ### Spent comes from the provider
 

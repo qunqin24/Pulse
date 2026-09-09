@@ -459,36 +459,65 @@ struct CommandCodeUsageService: Sendable {
         }
     }
 
-    /// The credit pool, as a spend limit — **for an account that is not on a
-    /// plan**.
+    /// The monthly row: the plan's grant while one is running, the purchased
+    /// balance when none is.
     ///
-    /// The pool is the account's own arithmetic, not a table: what is left is
-    /// reported directly, what is gone is reported by the summary, and their
-    /// sum is the money this period started with. Where either half is missing
-    /// there is no denominator that came from the provider, and so no window —
-    /// a percentage cannot be built out of one of the two numbers and a guess
-    /// at the other.
-    ///
-    /// **On an active plan there is no window at all**, and that is the whole
-    /// of the rule. Command Code sells subscription coding plans — Go, Pro,
-    /// Max, Ultra, Teams Pro and the rest, each a monthly allowance in dollars
-    /// — and *no reply reports that allowance*. It lives in a table inside the
-    /// CLI, which is a number in a client rather than a number from the
-    /// account, and tables rot: the shipped one carries `individual-pro` at 30
-    /// and `individual-pro-v1` at 80 under the same displayed name.
-    ///
-    /// Summing the three buckets instead is worse than saying nothing, because
-    /// it is wrong in the direction that hurts. The monthly allowance resets
-    /// and purchased credit does not, so a Pro subscriber holding $200 of
-    /// top-up who has burnt $28 of a $30 plan reads as 12% — silence, and then
-    /// a wall. Where the plan is active the rings come from the limits the
-    /// account really does report: the rolling five-hour and weekly windows,
-    /// and the organisation's spend limits. The plan's name and the dollars
-    /// left are still on the card, as figures rather than as a fraction.
+    /// Two different questions, and answering the wrong one is the failure this
+    /// splits to avoid. A plan's allowance resets every period and purchased
+    /// credit does not, so adding the pots together draws a Pro subscriber who
+    /// holds $200 of top-up and has burnt $28 of a $30 month at **12%** —
+    /// silence, and then a wall.
     private static func creditWindow(_ reading: Reading) -> UsageWindow? {
         guard let credits = reading.credits?.credits else { return nil }
-        guard !isOnAPlan(reading.subscription) else { return nil }
 
+        return isOnAPlan(reading) ? planWindow(reading, credits) : poolWindow(reading, credits)
+    }
+
+    /// How much of this month's plan grant is gone.
+    ///
+    /// The grant is not reported by anything — see `CommandCodePlans`, which is
+    /// where that compromise is argued and where it goes stale. What *is*
+    /// reported is the remainder, so the subtraction is the account's own
+    /// number and only the denominator is inferred. The row is scoped
+    /// `estimated` so the card says which half that was.
+    ///
+    /// **A plan this build cannot size draws nothing.** Falling through to the
+    /// pool below would answer the other question, and answer it wrongly; a
+    /// zero would be worse still.
+    private static func planWindow(_ reading: Reading, _ credits: CreditsReply.Credits) -> UsageWindow? {
+        guard
+            let grant = CommandCodePlans.monthlyCredits(forPlan: planID(reading)),
+            grant > 0,
+            // Absent is not zero. Without the remainder there is no numerator,
+            // and a plan drawn as wholly spent is the loudest way to be wrong.
+            let reported = credits.monthlyCredits
+        else { return nil }
+
+        let remaining = min(max(reported, 0), grant)
+        let period = billingPeriod(reading)
+
+        return UsageWindow(
+            id: "monthly",
+            kind: .monthly,
+            scope: .localized("estimated"),
+            usedFraction: (grant - remaining) / grant,
+            windowSeconds: period.seconds ?? 30 * 86_400,
+            resetsAt: period.end,
+            reportsLength: period.seconds != nil,
+            // The remainder is the account's own statement of what is left, and
+            // nothing left is spent whatever the percentage rounds to.
+            isExhausted: reported <= 0
+        )
+    }
+
+    /// What an account with no plan has bought, as a spend limit.
+    ///
+    /// Both halves are reported here: what is left arrives directly, what is
+    /// gone arrives from the summary, and their sum is the money this period
+    /// started with. Where either half is missing there is no denominator the
+    /// provider gave, and so no window — a percentage cannot be built out of
+    /// one of the two numbers and a guess at the other.
+    private static func poolWindow(_ reading: Reading, _ credits: CreditsReply.Credits) -> UsageWindow? {
         let remaining = max(0, credits.monthlyCredits ?? 0)
             + max(0, credits.purchasedCredits ?? 0)
             + max(0, credits.freeCredits ?? 0)
@@ -498,35 +527,55 @@ struct CommandCodeUsageService: Sendable {
         // about a pool at all, which is not the same as one that is empty.
         guard pool > 0 else { return nil }
 
-        let period = reading.subscription?.data
-        let start = period?.currentPeriodStart?.date
-        let end = period?.currentPeriodEnd?.date
-        // A length only where the reply gave both ends of it. Otherwise the
-        // month is a sort key and nothing divides by it.
-        let stated = start.flatMap { start in end.map { $0.timeIntervalSince(start) } }
-            .flatMap { $0 > 0 ? Int($0) : nil }
+        let period = billingPeriod(reading)
 
         return UsageWindow(
             id: "credits",
             kind: .spend,
             scope: nil,
             usedFraction: min(max(spent / pool, 0), 1),
-            windowSeconds: stated ?? 30 * 86_400,
-            resetsAt: end,
-            reportsLength: stated != nil,
-            // The balance is the provider's own statement of what is left.
-            // Nothing left is spent, whatever the percentage rounds to.
+            windowSeconds: period.seconds ?? 30 * 86_400,
+            resetsAt: period.end,
+            reportsLength: period.seconds != nil,
             isExhausted: remaining <= 0
         )
+    }
+
+    /// The billing period, and a length only where the reply gave both ends of
+    /// it. Otherwise the month is a sort key and nothing divides by it.
+    private static func billingPeriod(_ reading: Reading) -> (end: Date?, seconds: Int?) {
+        let period = reading.subscription?.data
+        let start = period?.currentPeriodStart?.date
+        let end = period?.currentPeriodEnd?.date
+        let seconds = start.flatMap { start in end.map { $0.timeIntervalSince(start) } }
+            .flatMap { $0 > 0 ? Int($0) : nil }
+        return (end, seconds)
+    }
+
+    /// The plan this account is on, from whichever reply named it.
+    ///
+    /// `credits` carries a `planId` of its own, and it is the one that survives
+    /// the subscription lookup failing — which is a real state, because that
+    /// call is allowed to come back empty rather than sink the whole reading.
+    static func planID(_ reading: Reading) -> String? {
+        let id = reading.subscription?.data?.planId ?? reading.credits?.credits?.planId
+        return id?.isEmpty == false ? id : nil
     }
 
     /// Whether a plan is paying for this account right now.
     ///
     /// `"active"` is the CLI's own test, and anything else — cancelled, past
     /// due, trialing, a plan that lapsed — is an account back on what it has
-    /// bought, which is a pool this *can* measure.
-    static func isOnAPlan(_ reply: SubscriptionReply?) -> Bool {
-        reply?.data?.status?.lowercased() == "active"
+    /// bought, which is a pool this *can* measure from reported numbers alone.
+    static func isOnAPlan(_ reading: Reading) -> Bool {
+        // The subscription lookup is allowed to fail without sinking the
+        // reading, so its silence is not evidence of no plan — and treating it
+        // as such would answer with the pooled balance, which is the wrong
+        // question for a subscriber. `credits.planId` still names the plan.
+        guard let status = reading.subscription?.data?.status else {
+            return planID(reading) != nil
+        }
+        return status.lowercased() == "active"
     }
 
     /// `individual-pro` → "Individual Pro". The plan id is passed through
