@@ -226,6 +226,36 @@ final class PanelPlacement {
         onChange?()
     }
 
+    /// Carries the panel onto another display, keeping where on a display it
+    /// sits.
+    ///
+    /// The two ratios are fractions of one screen's usable area, so they need
+    /// no adjusting: the rail lands in the same place on the new display as it
+    /// held on the old one, whatever the two displays' sizes. Only the name of
+    /// the display changes.
+    ///
+    /// Stored like any other move, so switching "follow the active display"
+    /// back off leaves the panel on the display it was last carried to rather
+    /// than throwing it back across the desk.
+    ///
+    /// **Not while the panel is held.** The same rule as `railLengthChanged`,
+    /// for the same reason: between mouse-down and the first movement the grab
+    /// offset is already measured, and moving the panel there makes it jump
+    /// the moment the pointer travels.
+    func move(toDisplay identifier: String) -> Bool {
+        guard !isDragging, !isPressed else { return false }
+        guard display != identifier else { return true }
+
+        record(
+            dock: dock,
+            horizontalRatio: horizontalRatio,
+            verticalRatio: verticalRatio,
+            display: identifier
+        )
+        onChange?()
+        return true
+    }
+
     /// Changes where the panel should sit, and asks for it to be moved there.
     func update(dock: PanelDock, horizontalRatio: Double? = nil, verticalRatio: Double? = nil) {
         record(

@@ -29,6 +29,17 @@ On the card, the window’s name has the top row to itself; spent and reset pair
 
 `PanelPlacement.layout(in:panel:rail:)` is the single source of truth for window frame **and** rail offset inside it. Drag handle and `placePanel` both go through it.
 
+### Follow the active display
+
+`AppSettings.followsActiveDisplay` (off by default) + `ActiveDisplayFollower` + `PanelPlacement.move(toDisplay:)`. Issue [#16](https://github.com/qunqin24/Pulse/issues/16).
+
+- **Active = the display holding the pointer**, and only that. Not the key window, not the frontmost app's frame — an app can be focused on one display while the person works on another, and reading window positions would need Accessibility permission to be wrong more expensively.
+- **One panel, moved.** Nothing here creates a second one; the move is a change of `display` alone, both ratios carried across unchanged, so the rail keeps its place *on* a display whatever the two displays' sizes.
+- **Sampled on a 0.25s timer**, for the same reason `PanelPointerWatcher` samples: a global mouse-moved monitor stops firing over this app's own windows, and a pointer that crosses and comes to rest emits nothing further. Fires once per crossing, not once per frame. The timer runs only while the panel is visible **and** the setting is on, and each tick bails immediately on one display.
+- **Refusal is reported, not swallowed.** `move(toDisplay:)` returns `false` while the panel is held (`isPressed` / `isDragging`, the same rule as `railLengthChanged`), and the follower then keeps that display on offer for the next tick rather than remembering it as handled. Returning to the *same* display is `true` and does nothing — otherwise every tick would re-offer it forever.
+- The move is **recorded** like a drag, so switching the setting back off leaves the panel on the display it was last carried to rather than throwing it back across the desk.
+- `didChangeScreenParametersNotification` calls `forgetLastDisplay()`: unplugging the monitor the panel was on leaves the pointer where it was, which would otherwise read as "nothing to do" while the panel sits on a fallback screen nobody chose.
+
 ## Axis, not a third special case
 
 `PanelEdge.axis`. Stacks, flare, card unfold, which stored ratio is pinned, sliver side — all axis. Both shapes are drawn **once, facing right**, then transformed (mirror left, quarter-turn top). Rotation, not reflection, preserves winding for `UsageBubbleShape`.

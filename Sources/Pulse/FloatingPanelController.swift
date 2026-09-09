@@ -74,6 +74,8 @@ final class FloatingPanelController {
     /// Where the panel is parked. The drag handle writes to this and moves the
     /// window itself; this class reads it when first placing the panel.
     private let placement: PanelPlacement
+    /// Watches which display the pointer is on, while that is switched on.
+    private let displayFollower = ActiveDisplayFollower()
 
     init(store: UsageStore, settings: AppSettings, placement: PanelPlacement) {
         self.store = store
@@ -133,8 +135,21 @@ final class FloatingPanelController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, !self.placement.isDragging else { return }
+                // The pointer has not moved, but the display under it may not
+                // be the one it was on a moment ago — and the panel may have
+                // just fallen back onto a screen nobody chose. Ask again.
+                self.displayFollower.forgetLastDisplay()
                 self.placePanel()
             }
+        }
+
+        // Carrying the panel to the display the pointer is on is the whole of
+        // the feature: there is one panel, and it moves. Refusing while the
+        // panel is held is `move(toDisplay:)`'s own rule, and returning that
+        // refusal keeps the display on offer for the next tick instead of
+        // being remembered as done.
+        displayFollower.onEnter = { [placement] identifier in
+            placement.move(toDisplay: identifier)
         }
 
         // What the panel can be picked up by. Collapsed there is no rail on
@@ -204,15 +219,18 @@ final class FloatingPanelController {
     func show() {
         placePanel()
         panel.orderFrontRegardless()
+        applyDisplayFollowing()
     }
 
     func toggle() {
         panel.isVisible ? panel.orderOut(nil) : show()
+        applyDisplayFollowing()
     }
 
     /// Brings the panel in line with settings that were just changed.
     func settingsChanged() {
         applyCollectionBehavior()
+        applyDisplayFollowing()
 
         if settings.isPanelVisible {
             if !panel.isVisible { show() }
@@ -249,6 +267,22 @@ final class FloatingPanelController {
             settings.hidesInFullScreen ? .fullScreenNone : .fullScreenAuxiliary,
             .stationary
         ]
+    }
+
+    /// Starts or stops watching the pointer's display.
+    ///
+    /// Nothing is sampled unless the panel is on screen and the setting is on,
+    /// so someone with one display — or with this switched off — pays for no
+    /// timer at all.
+    private func applyDisplayFollowing() {
+        guard settings.isPanelVisible, settings.followsActiveDisplay, panel.isVisible else {
+            displayFollower.stop()
+            return
+        }
+        // The stored display may be one the pointer left long ago, so the
+        // first tick has to be allowed to report where it actually is.
+        displayFollower.forgetLastDisplay()
+        displayFollower.start()
     }
 
     /// How many rings the rail is actually drawing.

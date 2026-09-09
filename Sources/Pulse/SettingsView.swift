@@ -333,6 +333,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Follow the active display"),
+                    subtitle: String.localized("With more than one display, the rail moves to the one the pointer is on.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.followsActiveDisplay },
+                        set: { settings.followsActiveDisplay = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Percentages at the side"),
                     subtitle: String.localized("The figure under each ring, docked left or right.")
                 ) {

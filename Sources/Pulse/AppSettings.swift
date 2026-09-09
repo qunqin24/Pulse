@@ -29,6 +29,24 @@ final class AppSettings {
         }
     }
 
+    /// Whether the panel moves itself onto whichever display the pointer is on.
+    ///
+    /// Off by default: with one display it can do nothing, and with two it
+    /// overrides a position the user chose by dragging the panel there. There
+    /// is still exactly **one** panel — this carries it across, it does not put
+    /// a copy on every screen.
+    ///
+    /// "Active" means the display holding the pointer, and only that. Reading
+    /// the focused window's display instead would follow other apps around,
+    /// which is the opposite of what this is for.
+    var followsActiveDisplay: Bool {
+        didSet {
+            guard followsActiveDisplay != oldValue else { return }
+            UserDefaults.standard.set(followsActiveDisplay, forKey: Key.followsActiveDisplay)
+            onChange?()
+        }
+    }
+
     /// The order the rail draws them in, as account ids.
     ///
     /// Stored rather than derived so it survives a launch, and resolved through
@@ -522,6 +540,7 @@ final class AppSettings {
     init(
         isPanelVisible: Bool = true,
         hidesInFullScreen: Bool = true,
+        followsActiveDisplay: Bool = false,
         enabledAccounts: Set<String> = Set(Provider.allCases.map(\.rawValue)),
         extraAccounts: [ExtraAccount] = [],
         providerOrder: [String] = [],
@@ -549,6 +568,7 @@ final class AppSettings {
     ) {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
+        self.followsActiveDisplay = followsActiveDisplay
         self.enabledAccounts = enabledAccounts
         self.extraAccounts = extraAccounts
         self.providerOrder = providerOrder
@@ -774,6 +794,7 @@ final class AppSettings {
         let settings = AppSettings(
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
+            followsActiveDisplay: defaults.object(forKey: Key.followsActiveDisplay) as? Bool ?? false,
             enabledAccounts: accounts,
             extraAccounts: extras,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
@@ -875,6 +896,7 @@ final class AppSettings {
         static let panelVisible = "settings.panelVisible"
         static let extraAccounts = "settings.extraAccounts"
         static let hidesInFullScreen = "settings.hidesInFullScreen"
+        static let followsActiveDisplay = "settings.followsActiveDisplay"
         static let enabledProviders = "settings.enabledProviders"
         static let language = "settings.language"
         static let pinnedWindows = "settings.pinnedWindows"
