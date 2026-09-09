@@ -1,6 +1,6 @@
 # Z.ai and GLM Coding Plan
 
-One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsageService.swift).
+One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/Providers/ZaiUsageService.swift).
 
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|

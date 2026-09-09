@@ -1,6 +1,6 @@
 # MiniMax and MiniMax CN
 
-One service, two providers: [`MiniMaxUsageService.swift`](../../Sources/Pulse/MiniMaxUsageService.swift).
+One service, two providers: [`MiniMaxUsageService.swift`](../../Sources/Pulse/Providers/MiniMaxUsageService.swift).
 
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|

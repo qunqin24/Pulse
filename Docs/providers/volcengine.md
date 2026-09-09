@@ -1,6 +1,6 @@
 # Volcengine
 
-Service: [`VolcengineUsageService.swift`](../../Sources/Pulse/VolcengineUsageService.swift). Signing: [`VolcengineSigner.swift`](../../Sources/Pulse/VolcengineSigner.swift).
+Service: [`VolcengineUsageService.swift`](../../Sources/Pulse/Providers/VolcengineUsageService.swift). Signing: [`VolcengineSigner.swift`](../../Sources/Pulse/Providers/VolcengineSigner.swift).
 
 The Ark Coding Plan, sold on Volcengine (火山引擎). Named for the platform rather than the model: Volcengine is the account, Ark (方舟) the model service on it, Doubao the model — and the account, the keys and the CLI are all Volcengine's. Naming the ring "Doubao" would name the one part of that chain it is not about.
 

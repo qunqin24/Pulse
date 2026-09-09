@@ -4,6 +4,8 @@ AI entry for this repo. Human workflow, evidence rules, and the docs map live in
 
 Pulse is a macOS menu-bar usage monitor. SwiftUI draws the panel; a transparent, non-activating AppKit `NSPanel` owns size, placement, and input. Sixteen providers, no Pulse backend, no Pulse account. Per-provider routes, auth, cookies, and extra logins: [Docs/providers/README.md](Docs/providers/README.md).
 
+Sources sit in six directories under `Sources/Pulse`: **App** (lifecycle, settings store, updates), **Panel** (the window, its placement, and everything drawn in it), **Settings** (the settings window), **Usage** (store, cache, ledger, forecast, alerts), **Providers** (one service per product, plus their helpers), **Auth** (keys, logins, cookies). Swift has no directory namespace and SwiftPM recurses, so a file's directory is a claim about what it belongs to and nothing else — move a file when that claim stops being true.
+
 ## Commands
 
 ```bash

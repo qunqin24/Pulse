@@ -1,6 +1,6 @@
 # Kimi Code
 
-Service: [`KimiCodeUsageService.swift`](../../Sources/Pulse/KimiCodeUsageService.swift).
+Service: [`KimiCodeUsageService.swift`](../../Sources/Pulse/Providers/KimiCodeUsageService.swift).
 
 Extra accounts are not supported. `keepsLocalTranscripts` is false. No first-run detection: nothing to install, Pulse never goes looking for a key, so it stays off until switched on.
 

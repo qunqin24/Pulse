@@ -111,5 +111,5 @@ Standalone client stores Cursor accounts in `~/Library/Application Support/Grok 
 
 ## Files (then and now)
 
-- Current: `Sources/Pulse/GrokBotUsageService.swift`, `Sources/Pulse/CursorWebLogin.swift`, `Sources/Pulse/CursorAppLogin.swift`, `Sources/Pulse/GrokUsageService.swift`, `Sources/Pulse/CursorUsageService.swift`.
+- Current: `Sources/Pulse/Providers/GrokBotUsageService.swift`, `Sources/Pulse/Auth/CursorWebLogin.swift`, `Sources/Pulse/Auth/CursorAppLogin.swift`, `Sources/Pulse/Providers/GrokUsageService.swift`, `Sources/Pulse/Providers/CursorUsageService.swift`.
 - Historical references outside this repo (CodexBar `CursorSandUsage` / `CursorStatusProbe`; OpenUsage `CursorUsageClient` / `CursorAuthStore` / `CursorUsageMapper`; `/Applications/Grok Bot.app`). Those trees are not part of Pulse and may have moved.

@@ -1,6 +1,6 @@
 # Grok Bot
 
-Service: [`GrokBotUsageService.swift`](../../Sources/Pulse/GrokBotUsageService.swift). Cookie: [`CursorAppLogin.swift`](../../Sources/Pulse/CursorAppLogin.swift). Extra accounts: [`CursorWebLogin.swift`](../../Sources/Pulse/CursorWebLogin.swift), [authentication.md](authentication.md).
+Service: [`GrokBotUsageService.swift`](../../Sources/Pulse/Providers/GrokBotUsageService.swift). Cookie: [`CursorAppLogin.swift`](../../Sources/Pulse/Auth/CursorAppLogin.swift). Extra accounts: [`CursorWebLogin.swift`](../../Sources/Pulse/Auth/CursorWebLogin.swift), [authentication.md](authentication.md).
 
 **Current behaviour lives here.** The pre-implementation investigation is historical: [`../grok-bot-usage.md`](../grok-bot-usage.md). Where that file and this one disagree, this file and the service win.
 
@@ -47,7 +47,7 @@ The reply prices the *upgrade* (“$500 of Grok Bot usage each week with Pro+”
 
 ## Extra accounts
 
-Not OAuth. [`CursorWebLogin`](../../Sources/Pulse/CursorWebLogin.swift): login page + poll. PKCE hashes the **base64url-encoded** verifier string. Tokens ~60 days; no refresh endpoint in Cursor’s client. See [authentication.md](authentication.md).
+Not OAuth. [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift): login page + poll. PKCE hashes the **base64url-encoded** verifier string. Tokens ~60 days; no refresh endpoint in Cursor’s client. See [authentication.md](authentication.md).
 
 Pulse does not read the standalone app’s `sand-secrets.json`.
 

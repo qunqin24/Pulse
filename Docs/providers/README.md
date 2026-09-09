@@ -4,7 +4,7 @@ Pulse tracks **sixteen** `Provider` cases. There is no Pulse backend and no Puls
 
 This directory is the home for routes, credentials, cookies, extra logins, and the failure lessons that belong to those. Current service code is authoritative. Historical measurements and “do not repeat” notes are labelled as such. Nothing here claims a runtime test of a live account.
 
-Shared types: [`../../Sources/Pulse/UsageProvider.swift`](../../Sources/Pulse/UsageProvider.swift), [`../../Sources/Pulse/MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift), [`../../Sources/Pulse/ProviderUsage.swift`](../../Sources/Pulse/ProviderUsage.swift), [`../../Sources/Pulse/UsageSource.swift`](../../Sources/Pulse/UsageSource.swift). Sign-in machinery: [authentication.md](authentication.md).
+Shared types: [`../../Sources/Pulse/Usage/UsageProvider.swift`](../../Sources/Pulse/Usage/UsageProvider.swift), [`../../Sources/Pulse/Usage/MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift), [`../../Sources/Pulse/Usage/ProviderUsage.swift`](../../Sources/Pulse/Usage/ProviderUsage.swift), [`../../Sources/Pulse/Usage/UsageSource.swift`](../../Sources/Pulse/Usage/UsageSource.swift). Sign-in machinery: [authentication.md](authentication.md).
 
 Ollama setup (how to read the session, what the page parser accepts) stays in [`../ollama-cloud.md`](../ollama-cloud.md). Do not duplicate it here.
 
@@ -33,7 +33,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 
 Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md), [command-code.md](command-code.md).
 
-Z.ai and GLM Coding Plan share [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsageService.swift). MiniMax and MiniMax CN share [`MiniMaxUsageService.swift`](../../Sources/Pulse/MiniMaxUsageService.swift). Two rings, two accounts, two keys — not a region switch inside one provider.
+Z.ai and GLM Coding Plan share [`ZaiUsageService.swift`](../../Sources/Pulse/Providers/ZaiUsageService.swift). MiniMax and MiniMax CN share [`MiniMaxUsageService.swift`](../../Sources/Pulse/Providers/MiniMaxUsageService.swift). Two rings, two accounts, two keys — not a region switch inside one provider.
 
 ## Shared contracts
 
@@ -105,7 +105,7 @@ An added Grok account is not shown the CLI-login row: `fetchAdded` never touches
 
 ### Extra accounts
 
-`supportsMultipleAccounts` is **Claude Code, Codex, Grok, and Grok Bot** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/MonitoredAccount.swift).
+`supportsMultipleAccounts` is **Claude Code, Codex, Grok, and Grok Bot** — not “the two CLIs”. Cursor itself is not on the list: the same web sign-in would work, but Cursor’s usage summary is read from the editor’s stored login and a second account has no editor behind it. Grok Bot needs nothing but the token. See [authentication.md](authentication.md) and [`MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift).
 
 A provider’s first account id is the provider’s raw value. That is the migration: stored preferences and cache files keep matching. Making an upgrade look like a fresh install has already cost a release.
 

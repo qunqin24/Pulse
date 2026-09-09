@@ -1,6 +1,6 @@
 # Command Code
 
-Service: [`CommandCodeUsageService.swift`](../../Sources/Pulse/CommandCodeUsageService.swift).
+Service: [`CommandCodeUsageService.swift`](../../Sources/Pulse/Providers/CommandCodeUsageService.swift).
 
 Command Code is a terminal coding agent published by CommandCodeAI. It is installed from npm as [`command-code`](https://www.npmjs.com/package/command-code) and its binaries are `cmd`, `cmdc`, `command-code` and `commandcode`. Docs and account live at [commandcode.ai](https://commandcode.ai); the GitHub repository ([CommandCodeAI/command-code](https://github.com/CommandCodeAI/command-code)) carries a readme and issue templates only — the CLI itself ships as a bundle, not as source.
 

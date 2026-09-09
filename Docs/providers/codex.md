@@ -1,6 +1,6 @@
 # Codex
 
-Service: [`CodexUsageService.swift`](../../Sources/Pulse/CodexUsageService.swift). App-server fallback: [`CodexAppServer.swift`](../../Sources/Pulse/CodexAppServer.swift). Extra accounts: [authentication.md](authentication.md).
+Service: [`CodexUsageService.swift`](../../Sources/Pulse/Providers/CodexUsageService.swift). App-server fallback: [`CodexAppServer.swift`](../../Sources/Pulse/Providers/CodexAppServer.swift). Extra accounts: [authentication.md](authentication.md).
 
 `keepsLocalTranscripts` is true. Extra accounts are supported. Source choice: endpoint vs `codex app-server`.
 

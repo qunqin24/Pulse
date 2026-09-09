@@ -6,7 +6,7 @@ Owns: the JSON contract other people's status lines are built on. Where the figu
 /Applications/Pulse.app/Contents/MacOS/Pulse --json
 ```
 
-Source: [`Sources/Pulse/UsageReport.swift`](../Sources/Pulse/UsageReport.swift). Dispatched in `PulseMain` before `LegacyDefaults.migrateIfNeeded()`, alongside `--statusline`.
+Source: [`Sources/Pulse/Usage/UsageReport.swift`](../Sources/Pulse/Usage/UsageReport.swift). Dispatched in `PulseMain` before `LegacyDefaults.migrateIfNeeded()`, alongside `--statusline`.
 
 ## It prints the cache and never fetches
 

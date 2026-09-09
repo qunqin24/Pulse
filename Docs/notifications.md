@@ -2,7 +2,7 @@
 
 Owns: when Pulse posts a system notification, what it says, and what it refuses to say. Settings copy and layout: [ui/settings.md](ui/settings.md). Where readings come from: [refresh-and-data.md](refresh-and-data.md).
 
-Source: [`Sources/Pulse/UsageAlerts.swift`](../Sources/Pulse/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds.
+Source: [`Sources/Pulse/Usage/UsageAlerts.swift`](../Sources/Pulse/Usage/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure`. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds.
 
 ## What can be said
 
@@ -51,7 +51,7 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 ## Memory
 
-`AlertMemory` is persisted to `alerts.json` in [`PulseStorage.directory`](../Sources/Pulse/ModelPrices.swift), keyed by account id, then by window id. It has to be on disk: Pulse starts at login and runs while the Mac sleeps, so "have I already mentioned this" cannot live in memory alone — every relaunch would re-announce everything already over the line, which is what makes people switch notifications off for good.
+`AlertMemory` is persisted to `alerts.json` in [`PulseStorage.directory`](../Sources/Pulse/Usage/ModelPrices.swift), keyed by account id, then by window id. It has to be on disk: Pulse starts at login and runs while the Mac sleeps, so "have I already mentioned this" cannot live in memory alone — every relaunch would re-announce everything already over the line, which is what makes people switch notifications off for good.
 
 It is kept up to date even when a grant was refused or the build is unbundled, so neither later announces a fortnight of missed crossings. **An unresolved authorization decision is different:** readings are not consumed while authorization is unknown in a bundled app or a request is in flight. They remain eligible for the immediate evaluation after a successful grant.
 

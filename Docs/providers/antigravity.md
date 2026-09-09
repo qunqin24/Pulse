@@ -1,6 +1,6 @@
 # Antigravity
 
-Service: [`AntigravityUsageService.swift`](../../Sources/Pulse/AntigravityUsageService.swift).
+Service: [`AntigravityUsageService.swift`](../../Sources/Pulse/Providers/AntigravityUsageService.swift).
 
 The odd one out. Extra accounts are not supported. `keepsLocalTranscripts` is false: it is an editor, not a CLI, and leaves no session files Pulse can read. History, the money estimate, and the activity mark are left out rather than shown as zeroes.
 

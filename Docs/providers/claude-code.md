@@ -1,6 +1,6 @@
 # Claude Code
 
-Primary service: [`ClaudeCodeUsageService.swift`](../../Sources/Pulse/ClaudeCodeUsageService.swift). Desktop route: [`ClaudeDesktopSession.swift`](../../Sources/Pulse/ClaudeDesktopSession.swift). Status line: [`StatusLineHook.swift`](../../Sources/Pulse/StatusLineHook.swift). Identity compare: [`ClaudeAccountIdentity.swift`](../../Sources/Pulse/ClaudeAccountIdentity.swift). Extra accounts: [authentication.md](authentication.md). Compact fallback diagram: [`../plan.md`](../plan.md).
+Primary service: [`ClaudeCodeUsageService.swift`](../../Sources/Pulse/Providers/ClaudeCodeUsageService.swift). Desktop route: [`ClaudeDesktopSession.swift`](../../Sources/Pulse/Providers/ClaudeDesktopSession.swift). Status line: [`StatusLineHook.swift`](../../Sources/Pulse/App/StatusLineHook.swift). Identity compare: [`ClaudeAccountIdentity.swift`](../../Sources/Pulse/Providers/ClaudeAccountIdentity.swift). Extra accounts: [authentication.md](authentication.md). Compact fallback diagram: [`../plan.md`](../plan.md).
 
 `keepsLocalTranscripts` is true. Extra accounts are supported. Source choice applies to the **primary** account only.
 
