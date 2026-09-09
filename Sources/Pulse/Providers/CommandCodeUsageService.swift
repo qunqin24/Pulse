@@ -459,16 +459,35 @@ struct CommandCodeUsageService: Sendable {
         }
     }
 
-    /// The plan's credit pool, as a spend limit.
+    /// The credit pool, as a spend limit — **for an account that is not on a
+    /// plan**.
     ///
-    /// **The pool is the account's own arithmetic, not a table.** What is left
-    /// is reported directly; what is gone is reported by the summary; their sum
-    /// is the money this period started with. Where either half is missing
+    /// The pool is the account's own arithmetic, not a table: what is left is
+    /// reported directly, what is gone is reported by the summary, and their
+    /// sum is the money this period started with. Where either half is missing
     /// there is no denominator that came from the provider, and so no window —
     /// a percentage cannot be built out of one of the two numbers and a guess
     /// at the other.
+    ///
+    /// **On an active plan there is no window at all**, and that is the whole
+    /// of the rule. Command Code sells subscription coding plans — Go, Pro,
+    /// Max, Ultra, Teams Pro and the rest, each a monthly allowance in dollars
+    /// — and *no reply reports that allowance*. It lives in a table inside the
+    /// CLI, which is a number in a client rather than a number from the
+    /// account, and tables rot: the shipped one carries `individual-pro` at 30
+    /// and `individual-pro-v1` at 80 under the same displayed name.
+    ///
+    /// Summing the three buckets instead is worse than saying nothing, because
+    /// it is wrong in the direction that hurts. The monthly allowance resets
+    /// and purchased credit does not, so a Pro subscriber holding $200 of
+    /// top-up who has burnt $28 of a $30 plan reads as 12% — silence, and then
+    /// a wall. Where the plan is active the rings come from the limits the
+    /// account really does report: the rolling five-hour and weekly windows,
+    /// and the organisation's spend limits. The plan's name and the dollars
+    /// left are still on the card, as figures rather than as a fraction.
     private static func creditWindow(_ reading: Reading) -> UsageWindow? {
         guard let credits = reading.credits?.credits else { return nil }
+        guard !isOnAPlan(reading.subscription) else { return nil }
 
         let remaining = max(0, credits.monthlyCredits ?? 0)
             + max(0, credits.purchasedCredits ?? 0)
@@ -499,6 +518,15 @@ struct CommandCodeUsageService: Sendable {
             // Nothing left is spent, whatever the percentage rounds to.
             isExhausted: remaining <= 0
         )
+    }
+
+    /// Whether a plan is paying for this account right now.
+    ///
+    /// `"active"` is the CLI's own test, and anything else — cancelled, past
+    /// due, trialing, a plan that lapsed — is an account back on what it has
+    /// bought, which is a pool this *can* measure.
+    static func isOnAPlan(_ reply: SubscriptionReply?) -> Bool {
+        reply?.data?.status?.lowercased() == "active"
     }
 
     /// `individual-pro` → "Individual Pro". The plan id is passed through

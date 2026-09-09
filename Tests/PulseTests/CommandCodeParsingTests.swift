@@ -44,19 +44,29 @@ struct CommandCodeParsingTests {
         CommandCodeUsageService.windows(from: try reading())
     }
 
+    /// The same account with its plan lapsed: back on what it bought, which is
+    /// a pool with both halves reported. The billing period is still stated,
+    /// so this exercises the pool *and* its length.
+    private static func offPlan() throws -> [UsageWindow] {
+        CommandCodeUsageService.windows(
+            from: try reading(subscription: "command-code-subscriptions-lapsed")
+        )
+    }
+
     // MARK: - Order and identity
 
     @Test("Every reported limit becomes a window, shortest first")
     func windowsAreOrderedShortestFirst() throws {
         let windows = try Self.windows()
 
+        // No "credits" row: this fixture's plan is active, and the allowance
+        // an active plan is measured against is not something any reply says.
         #expect(windows.map(\.id) == [
             "five-hour",      // 5 hours
             "org.1.model",    // daily
             "weekly",         // 7 days
             "org.2.model",    // 7 days
             "org.0.org",      // ~monthly
-            "credits",        // the billing period, also 30 days
         ])
         #expect(windows.map(\.windowSeconds) == windows.map(\.windowSeconds).sorted())
     }
@@ -81,9 +91,26 @@ struct CommandCodeParsingTests {
 
     // MARK: - The credit pool
 
+    /// The plan is the reason there is no ring, so it is asserted as its own
+    /// fact rather than left implied by the order test.
+    ///
+    /// Command Code sells monthly coding plans and reports the allowance
+    /// behind none of them. Adding the three credit buckets together instead
+    /// is wrong in the direction that hurts: this fixture's subscriber is 93%
+    /// through a $30 Pro month, and the sum would draw that as 43%.
+    @Test("An active plan draws no credit ring, because nothing reports its allowance")
+    func anActivePlanHasNoPoolToMeasure() throws {
+        #expect(try Self.windows().contains { $0.id == "credits" } == false)
+        // The limits the account really does report are untouched by that.
+        #expect(try Self.windows().contains { $0.id == "five-hour" })
+        #expect(try Self.windows().contains { $0.id == "weekly" })
+    }
+
+    /// A plan that is cancelled, past due, trialing or simply gone is an
+    /// account back on what it bought — and that pool has both halves.
     @Test("The pool is spent plus remaining, never a table in the client")
     func creditPoolIsTheAccountsOwnArithmetic() throws {
-        let credits = try #require(try Self.windows().first { $0.id == "credits" })
+        let credits = try #require(try Self.offPlan().first { $0.id == "credits" })
 
         // 12.5 + 4 + 0.5 left, 13 spent → a pool of 30, 43.33% gone. The CLI
         // would have reached for its own `individual-pro` entry of 30 monthly
@@ -97,7 +124,7 @@ struct CommandCodeParsingTests {
 
     @Test("A period stated at both ends is a length; one stated at neither is not")
     func periodLengthOnlyWhenBothEndsAreGiven() throws {
-        let stated = try #require(try Self.windows().first { $0.id == "credits" })
+        let stated = try #require(try Self.offPlan().first { $0.id == "credits" })
         #expect(stated.reportsLength)
         #expect(stated.windowSeconds == 30 * 86_400)
 
@@ -113,7 +140,9 @@ struct CommandCodeParsingTests {
 
     @Test("A summary that never arrived shows nothing spent, not an estimate of it")
     func withoutASummaryNothingIsInvented() throws {
-        let windows = CommandCodeUsageService.windows(from: try Self.reading(summary: nil))
+        let windows = CommandCodeUsageService.windows(
+            from: try Self.reading(subscription: "command-code-subscriptions-lapsed", summary: nil)
+        )
         let pool = try #require(windows.first { $0.id == "credits" })
 
         // What is left is still reported, so the pool is what is left and
