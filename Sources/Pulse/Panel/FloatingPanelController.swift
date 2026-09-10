@@ -217,8 +217,26 @@ final class FloatingPanelController {
     var isVisible: Bool { panel.isVisible }
 
     func show() {
+        // **Placed, shown, then placed again**, and the second one is the one
+        // that counts.
+        //
+        // `placePanel` measures where the rail sits inside the window against
+        // the frame the window was *granted* rather than the one it asked for
+        // — the panel is taller than a laptop's usable area and AppKit pulls it
+        // down. But a window that has never been ordered in is not being
+        // constrained yet: `setFrame` stores the request, `frame` reads it
+        // back unchanged, and the offset is measured against a position the
+        // window is about to lose. Ordering it front applies the constraint,
+        // and on this Mac that moved it 76pt — so the rail was drawn 76pt off
+        // from the moment the panel first appeared until anything happened to
+        // re-place it, at which point it jumped.
+        //
+        // The first call is not wasted: it puts the window roughly right
+        // before it is shown, so it does not appear at the origin and slide
+        // into place.
         placePanel()
         panel.orderFrontRegardless()
+        placePanel()
         applyDisplayFollowing()
     }
 

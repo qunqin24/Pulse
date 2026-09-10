@@ -29,6 +29,16 @@ On the card, the window’s name has the top row to itself; spent and reset pair
 
 `PanelPlacement.layout(in:panel:rail:)` is the single source of truth for window frame **and** rail offset inside it. Drag handle and `placePanel` both go through it.
 
+### A frame is not granted until the window is on screen
+
+`placePanel` measures the rail's offset against the frame the window was **granted**, not the one it asked for — that is the lesson `RailOffsetTests` pins, because the panel is taller than a laptop's usable area and `constrainFrameRect` pulls it down.
+
+But a window that has never been ordered in **is not being constrained yet**. `setFrame` stores the request, `frame` reads it back unchanged, and an offset measured there is against a position the window is about to lose. So `show()` places, orders front, and **places again**: the first call puts the window roughly right so it does not appear at the origin and slide into place, the second measures against what it actually got.
+
+Measured on a 1800×1169 display: asked for y=76, granted y=0, so the rail was drawn **76pt too low** from the moment the panel first appeared — and stayed wrong until anything re-placed it, at which point it jumped. Any settings change does that, which is how it was found: switching a provider's display mode appeared to move the whole rail.
+
+Verified by driving a real `FloatingPanelController` and reading `railTop` after `show()` against a re-place; there is no test for it, because pinning it needs a real window on a real screen and that is not a thing to put in `swift test`.
+
 ### Follow the active display
 
 `AppSettings.followsActiveDisplay` (off by default) + `ActiveDisplayFollower` + `PanelPlacement.move(toDisplay:)`. Issue [#16](https://github.com/qunqin24/Pulse/issues/16).
