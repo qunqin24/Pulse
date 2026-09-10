@@ -70,6 +70,14 @@ Three separate places read `usedFraction == nil` (or `headline == nil`) as *noth
 
 `balanceOnly` produces a reading whose body is nothing but a balance, and the card's body is otherwise limits, an unavailability message and a footnote — so hovering it drew a bubble with only the provider's name in it, which reads as a card that failed to load. Where a provider reports money and no allowance the money *is* the reading, so the card says it as a plain figure. No bar: a bar at zero beside a healthy balance reads as an empty account. No explanatory line either — it said the provider reports no limit, which the card has already made obvious by having nothing else on it.
 
+### The ring gets a glance, the card keeps the figure
+
+The rail's label is budgeted for "100%" — 38pt. Money is bounded by nothing: ¥5,000.00 wants 64pt and a reader outside China looking at a CNY account gets "CN¥5,000.00" at 83pt. `minimumScaleFactor` gives up at 0.6 and those need 0.56 and 0.43, so both were truncated on screen.
+
+`CreditAmount.railText(locale:)` is the short form — `¥9.4`, `¥5k`, `¥123k`, `$1.2M` — with the **narrow** symbol, which is what turns "CN¥" back into "¥". It is **truncated, never rounded**: a balance shown as more than it is is the wrong way to be wrong, and it settles the rollover for free (999,999 is `¥999k`, not the `¥1,000k` that rounding to one place produced). Cents survive below a hundred, where they are the part somebody might be watching.
+
+The exact figure is a hover away and is also in Settings. `RailMoneyTests` pins the forms and measures every one of them against the rail's own thickness.
+
 ### A reading with no windows is still a reading
 
 `balanceOnly` is the first **complete** answer Pulse has ever produced with no windows in it. `UsageCache.reconciled` tested `!windows.isEmpty` to mean "this fetch went wrong" — a fair assumption while every service with nothing to report returned `.noLimitsReported` — so it kept handing back the previous reading and switching the setting appeared to do nothing at all. The test is now `ProviderUsage.reportsSomething`: a balance is an answer. A reading carrying neither windows nor a balance is still a failure to fall back from, and `UsageCacheTests` pins both halves.

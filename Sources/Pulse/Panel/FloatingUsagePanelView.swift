@@ -254,7 +254,9 @@ struct FloatingUsagePanelView: View {
         let figure: String? = if headline == nil, case .unavailable = usage.state {
             nil
         } else if headline == nil {
-            usage.creditBalance
+            // The short form: the exact figure is on the card and in Settings,
+            // and it does not fit in a ring.
+            usage.creditRemaining?.railText() ?? usage.creditBalance
         } else {
             nil
         }

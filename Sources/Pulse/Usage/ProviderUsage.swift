@@ -379,6 +379,60 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         let amount: Double
         /// An ISO code, as the provider gave it.
         let currency: String
+
+        /// Short enough to read inside a ring.
+        ///
+        /// The rail's label is budgeted for "100%" — 38pt — and money is not
+        /// bounded by anything: a ¥5,000 balance formats as "¥5,000.00" at
+        /// 64pt and a US reader looking at a CNY account gets "CN¥5,000.00" at
+        /// 83pt. Both were being truncated, because `minimumScaleFactor` stops
+        /// at 0.6 and those need 0.56 and 0.43.
+        ///
+        /// So the ring gets a glance and the card keeps the figure. Rounding
+        /// for display is what `percentText` already does; the exact balance is
+        /// a hover away and is also in Settings.
+        ///
+        /// `.narrow` is what turns "CN¥" back into "¥": the wide form
+        /// disambiguates currencies that share a symbol, which is worth 45pt
+        /// somewhere the currency is not already fixed by the account.
+        func railText(locale: Locale = LocalizationSource.locale) -> String {
+            let magnitude = abs(amount)
+            let (value, suffix): (Double, String) = if magnitude >= 1_000_000 {
+                (amount / 1_000_000, "M")
+            } else if magnitude >= 1_000 {
+                (amount / 1_000, "k")
+            } else {
+                (amount, "")
+            }
+
+            // Three digits and a decimal point is as wide as this may get, so
+            // anything into the hundreds loses its fraction rather than its
+            // legibility. Cents survive only below a hundred, where they are
+            // the part somebody might actually be watching.
+            let places = abs(value) >= 100 ? 0 : (suffix.isEmpty ? 2 : 1)
+
+            // **Truncated, never rounded.** A balance shown as more than it is
+            // is the wrong way to be wrong — and it also settles the rollover
+            // for free: 999,999 becomes "¥999k" rather than the "¥1,000k" that
+            // rounding to one place produced.
+            let scale = pow(10, Double(places))
+            let shown = (value * scale).rounded(.towardZero) / scale
+
+            return symbol(locale) + shown.formatted(
+                .number.precision(.fractionLength(0...places)).grouping(.never)
+                    .locale(locale)
+            ) + suffix
+        }
+
+        /// The currency's narrow symbol, taken from a formatted zero so the
+        /// locale's own choice is used rather than a table of symbols here.
+        private func symbol(_ locale: Locale) -> String {
+            0.formatted(
+                .currency(code: currency).presentation(.narrow)
+                    .precision(.fractionLength(0)).locale(locale)
+            )
+            .filter { !$0.isNumber && !$0.isWhitespace }
+        }
     }
 
     var provider: Provider { account.provider }
