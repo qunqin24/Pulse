@@ -15,3 +15,6 @@ build.noindex/
 
 # OpenCode triage local install
 .github/opencode/node_modules/
+
+# Created by check-localization.sh on every run.
+Scripts/__pycache__/

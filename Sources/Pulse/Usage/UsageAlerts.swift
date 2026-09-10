@@ -306,7 +306,17 @@ struct AlertMemory: Codable, Sendable, Equatable {
                 // staying quiet. A reset time that has moved forward is the
                 // provider saying so; a figure that has dropped by forty points
                 // has not slid, it has turned over.
-                let unambiguous = movedOn || seen.fraction - window.usedFraction >= 0.4
+                // **Never for a balance.** `Kind.balance` is prepaid credit
+                // and its own doc says it is not a limit: there is no window
+                // to turn over, `resetsAt` is always nil, so `movedOn` can
+                // never be true and the whole test collapses to "the fraction
+                // dropped 40 points". On DeepSeek that fraction is a *setting*
+                // — both modes emit the window id "balance" — so switching
+                // "My budget" to "Since top-up", or lowering the full-tank
+                // figure, posted "This limit has reset" about money that had
+                // not moved, within a second of touching the picker.
+                let unambiguous = window.kind != .balance
+                    && (movedOn || seen.fraction - window.usedFraction >= 0.4)
 
                 // **The step is cleared by the same evidence that would
                 // announce, not by the drop alone.** Clearing on any 5-point
@@ -356,7 +366,16 @@ struct AlertMemory: Codable, Sendable, Equatable {
     /// that still has something in it is the same invention as a made-up
     /// percentage, told at the worst possible moment.
     private static func step(for window: UsageWindow, threshold: AlertThreshold) -> Int? {
-        let reached = window.isExhausted ? 100 : Int((window.usedFraction * 100).rounded(.down))
+        // A balance reaching 100% is arithmetic against a denominator that is
+        // Pulse's own observation or the reader's own typed figure — never
+        // DeepSeek's. `is_available` is the only thing that may say an account
+        // is spent, which is what the provider's own doc promises, and this is
+        // where that promise is kept: a ¥100 full-tank with the balance at zero
+        // announced "This limit is spent" while the account could still pay.
+        let reached = window.isExhausted
+            ? 100
+            : (window.kind == .balance ? min(99, Int((window.usedFraction * 100).rounded(.down)))
+                                       : Int((window.usedFraction * 100).rounded(.down)))
         if reached >= 100 { return 100 }
         if let percent = threshold.percent, reached >= percent { return percent }
         return nil

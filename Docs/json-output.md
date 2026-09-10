@@ -20,7 +20,7 @@ It **reads and never writes**. `AppSettings.storedRail()` exists for this: `rest
 
 Window names are localized in the app and would change under a script's feet, so `UsageWindow.name` is **not a field**. What is there instead:
 
-- `kind` — a flat token: `fiveHour`, `weekly`, `spend`, `monthly`, or `other:<seconds>`. `UsageWindow.Kind` is `Codable`, but its synthesised form is an object with an associated value in it; fine on disk, awkward in a `jq` filter.
+- `kind` — a flat token: `fiveHour`, `weekly`, `spend`, `monthly`, `balance`, or `other:<seconds>`. `balance` is prepaid credit, which is **not a limit**: it never turns over, so `reportsLength` is false and `resetsAt` is null on those rows ([providers/deepseek.md](providers/deepseek.md)). `UsageWindow.Kind` is `Codable`, but its synthesised form is an object with an associated value in it; fine on disk, awkward in a `jq` filter.
 - `scope`, `name` — product names, the same in every language.
 - `estimated` / `estimatedFrom` — true where the provider said how much of an allowance is **left** and never how large it is, so the denominator behind `usedFraction` was inferred; `estimatedFrom` is a stable token saying which inference — `planPrice` ([providers/command-code.md](providers/command-code.md)), `sinceTopUp` or `yourBudget` ([providers/deepseek.md](providers/deepseek.md)). The wording that marks it on screen is localized; neither of these is, which is why they are not folded into `scope`.
 - `label` — the user's own name for an added account, theirs to have written in any language.

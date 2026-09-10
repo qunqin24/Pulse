@@ -172,6 +172,61 @@ struct AlertMemoryTests {
         #expect(run(&memory, unlimited, lowBalance: 20).isEmpty)
     }
 
+    // MARK: - Prepaid credit is not a limit
+
+    private static func balanceWindow(_ used: Double) -> UsageWindow {
+        // What DeepSeek emits in either mode: the same id, no reset, no length.
+        UsageWindow(id: "balance", kind: .balance, scope: nil, usedFraction: used,
+                    windowSeconds: 30 * 86_400, resetsAt: nil,
+                    reportsLength: false, estimate: .sinceTopUp)
+    }
+
+    private static func balanceReading(_ used: Double) -> ProviderUsage {
+        ProviderUsage(account: account, windows: [balanceWindow(used)], observedAt: now,
+                      state: .live, plan: nil, creditBalance: "¥9.40")
+    }
+
+    /// The fraction on a `.balance` row is a **setting**, not a reading: both
+    /// DeepSeek modes emit the window id "balance", so switching "My budget"
+    /// to "Since top-up" — or lowering the full-tank figure — moved it by
+    /// forty points with the money untouched. `resetsAt` is always nil there,
+    /// so the reset test collapsed to that drop alone and announced "This
+    /// limit has reset" within a second of touching the picker.
+    @Test("Changing what the ring measures against is not a reset")
+    func aBalanceNeverResets() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balanceReading(0.90)).map(\.kind) == [.approaching(percent: 90)])
+
+        let after = run(&memory, Self.balanceReading(0.167))
+        #expect(!after.contains { $0.kind == .reset })
+        #expect(after.isEmpty)
+    }
+
+    /// `is_available` is the only thing that may call a prepaid balance spent,
+    /// which is what the provider's own doc promises. The fraction here is
+    /// arithmetic against a denominator Pulse watched or the reader typed.
+    @Test("A balance at 100% of somebody's own figure is not the provider saying it is spent")
+    func aClampedBalanceIsNotSpent() {
+        var memory = AlertMemory()
+        // Every penny of a ¥100 full tank gone, and DeepSeek still paying.
+        let alerts = run(&memory, Self.balanceReading(1))
+
+        #expect(!alerts.contains { $0.kind == .spent })
+        #expect(alerts.map(\.kind) == [.approaching(percent: 90)])
+    }
+
+    /// And the converse: when DeepSeek *does* say so, it is said.
+    @Test("A balance the provider calls spent is announced")
+    func theProvidersOwnVerdictIsAnnounced() {
+        var memory = AlertMemory()
+        var window = Self.balanceWindow(1)
+        window.isExhausted = true
+        let reading = ProviderUsage(account: Self.account, windows: [window], observedAt: Self.now,
+                                    state: .live, plan: nil, creditBalance: "¥0.00")
+
+        #expect(run(&memory, reading).contains { $0.kind == .spent })
+    }
+
     // MARK: - Thresholds
 
     @Test("A limit already past the line is announced once, immediately")

@@ -2,7 +2,7 @@ import Foundation
 
 /// Antigravity's limits, read from a language server running on this Mac.
 ///
-/// The odd one out of the sixteen. There is no account endpoint to ask and no
+/// The odd one out of the seventeen. There is no account endpoint to ask and no
 /// stored login to borrow: Antigravity starts a `language_server` process of
 /// its own and talks to it over HTTPS on the loopback interface, and that
 /// process is the only thing that knows the quota. So this is the one provider

@@ -188,6 +188,27 @@ struct DeepSeekParsingTests {
         #expect(overfull.usedFraction == 0)
     }
 
+    /// A budget of "inf" parses as a `Double` greater than zero, and an
+    /// infinite denominator makes the fraction NaN — which `min`/`max`
+    /// propagate rather than clamp, and which `Int(_:)` **traps** on. Persisted
+    /// to UserDefaults, that crashed the panel on every launch.
+    @Test("A denominator that is not a number draws nothing, and never a NaN")
+    func aNonFiniteBudgetIsNotADenominator() throws {
+        let purse = try Self.purse()
+
+        for budget in [Double.infinity, -.infinity, .nan] {
+            let windows = Self.windows(purse, basis: .budget, budget: budget)
+            #expect(windows.isEmpty, "budget \(budget)")
+        }
+
+        // And the figure itself refuses a NaN, wherever one came from.
+        let window = UsageWindow(
+            id: "x", kind: .balance, scope: nil, usedFraction: .nan,
+            windowSeconds: 0, resetsAt: nil
+        )
+        #expect(window.percentText(remaining: false) == "0%")
+    }
+
     // MARK: - The mark
 
     /// The whole honesty of the default mode: the denominator is *watched*.

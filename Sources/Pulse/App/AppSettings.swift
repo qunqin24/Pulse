@@ -197,7 +197,17 @@ final class AppSettings {
     /// is stored: dragging a row down and back up again leaves a full stored
     /// list that happens to match the default exactly, and offering to reset
     /// an order that is already the default is a button that does nothing.
-    var hasCustomOrder: Bool { orderedAccounts != allAccounts }
+    /// Whether anybody has actually arranged the rail.
+    ///
+    /// **Not `orderedAccounts != allAccounts`.** That compared the order shown
+    /// against *declaration* order, and since the default became name order the
+    /// two differ on a fresh install — so "Reset order" was enabled out of the
+    /// box and did nothing when pressed, which is the one thing a control must
+    /// never do. The question is whether a stored arrangement exists that still
+    /// names something real.
+    var hasCustomOrder: Bool {
+        !providerOrder.compactMap(AccountKey.init(id:)).filter(allAccounts.contains).isEmpty
+    }
 
     /// Back to declaration order.
     ///

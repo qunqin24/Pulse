@@ -359,13 +359,13 @@
 "Balance only" = "只看余额";
 "My budget" = "我的预算";
 "since top-up" = "自上次充值";
-"of your budget" = "占你的预算";
-"Full tank" = "满额金额";
-"What you call a full balance. The ring measures against it." = "你认为多少算满。圆环以它为分母。";
+"of your budget" = "按你的预算";
+"Full tank" = "满额基准";
+"What you call a full balance. The ring measures against it." = "你认为多少算满，圆环按它来量。";
 "How much of the balance Pulse last saw you top up to is gone." = "自 Pulse 上次看到你充值以来，用掉了多少。";
 "The money left, with no ring. DeepSeek reports no allowance." = "只显示余额，不画环。DeepSeek 不报告任何额度。";
 "How much of the figure you set is gone." = "你设定的金额用掉了多少。";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "在 platform.deepseek.com 获取。加密保存在本机。";
 "Balance" = "余额";
-"Warn below" = "低于此金额时提醒";
+"Warn below" = "余额提醒线";
 "Notify once when the balance falls under this. Blank for never." = "余额跌破这个数时提醒一次。留空则不提醒。";

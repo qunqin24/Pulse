@@ -14,6 +14,8 @@ Because the wait changes each pass, `scheduleNext` sets `Timer.scheduledTimer(..
 
 **One timer, but not one cadence.** Under `.automatic` each provider has its own interval and the timer is set for whichever is due soonest; a pass then asks only the accounts that are actually due (`UsageStore.providersToAsk`, paced from `askedAt` — *asked*, not answered, or a provider that refuses every time reads as permanently due and spins the loop). Everything not asked keeps the reading it has, because the commit loop is gated on the same set. A **fixed** interval chosen in Settings applies to everything equally: somebody who picked five minutes meant five minutes.
 
+`UsageStore.currentInterval` stays **the cadence**, not the countdown to the next tick: Settings renders it as "Now: X minutes" and `isOverdue` multiplies it, and both broke when it briefly became the wait — a timer set for the last fifteen seconds of somebody's cycle read as "Now: 0 minutes".
+
 **`refresh(dueOnly:)` is true for exactly one caller — the timer.** Every other route into a pass is *something happening*: a setting changed, a window reset, the display woke, the app server pushed, the pointer arrived at a rail whose figures are older than the cadence allows. Each of those is a reason to look now, whatever the cadence says. Getting it backwards is not a slow refresh but **a control that does nothing**: switching DeepSeek between "since top-up" and "balance only" changes what the reading means, and a pass that skipped the provider because it had been asked a minute ago left the old ring on screen. `providersToAsk` is `nonisolated static` and pure so that rule is pinned by `RefreshPacingTests` rather than by hand.
 
 Signals (every one is a reason to wait **longer**, never shorter):

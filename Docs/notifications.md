@@ -22,10 +22,18 @@ This was silent first, with a changelog note saying to add a sound in System Set
 
 One rule for all of them rather than sound only for the consequential ones. macOS offers one switch per app, so a distinction drawn here would be one nobody could turn off and nobody could discover. And a silent banner on a second display, or behind a full-screen window, is a message that was never delivered — which is the opposite of the test these four had to pass to be here.
 
+### A `balance` window is not a limit
+
+`Kind.balance` is prepaid credit, and two rules here assumed things that are only true of limits. Both are now guarded on the kind, and `AlertMemoryTests` pins them:
+
+- **It never resets** — `resetsAt` is nil, so `movedOn` can never be true and the reset test fell back to "the fraction dropped forty points". That fraction is a setting on DeepSeek, not a reading.
+- **Only `isExhausted` may call it spent** — the step rule otherwise reaches 100 from a clamp against a denominator that is Pulse's own observation or the reader's own typed figure.
+
 ### Low balance is about money, not a share of anything
 
 `lowBalance` is the odd one, and it exists because DeepSeek does. Providers that sell prepaid credit report **no allowance**, so there is no percentage to put a threshold on — `alertThreshold` has nothing to act on and would stay silent while the account emptied. What there is to warn about is the money.
 
+- **It asks for permission like its siblings.** Entering a figure calls `requestAuthorizationIfNeeded` and then reconsiders the readings in hand, so a balance already under the line is announced once rather than waiting for a pass. It was the only alert control in the app that did not ask, which on a fresh install meant `observe` bailed on `.notDetermined` for ever and nothing was ever said.
 - **Per account, not one figure.** The providers that report a spendable balance do not price in the same currency; ¥20 and $20 are not the same line. `Provider.reportsSpendableBalance` is the short list that hands over `ProviderUsage.creditRemaining` — a number *and* a currency — as opposed to the six that set the display string `creditBalance`, one of which is sometimes the word "Unlimited".
 - **Live readings only**, the same rule the limits follow: a stale reading carries whatever the cache last banked, and the account may have been topped up since.
 - **Once.** The memory records the figure warned about, not a flag, so **moving the line warns again** — somebody who raises it from ¥5 to ¥50 is asking a new question. A balance climbing back over re-arms it, which for bought credit only ever means a top-up.

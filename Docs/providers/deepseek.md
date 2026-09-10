@@ -82,6 +82,8 @@ The exact figure is a hover away and is also in Settings. `RailMoneyTests` pins 
 
 `balanceOnly` is the first **complete** answer Pulse has ever produced with no windows in it. `UsageCache.reconciled` tested `!windows.isEmpty` to mean "this fetch went wrong" — a fair assumption while every service with nothing to report returned `.noLimitsReported` — so it kept handing back the previous reading and switching the setting appeared to do nothing at all. The test is now `ProviderUsage.reportsSomething`: a balance is an answer. A reading carrying neither windows nor a balance is still a failure to fall back from, and `UsageCacheTests` pins both halves.
 
+**The read path needed it too, and was missed the first time.** `reading(for:)` had the same `!windows.isEmpty` guard, so a banked balance-only reading could be written and never come back out: blank through the first round trip after launch, no fallback when a fetch failed, and `--json` reporting a null balance. `Stored` also gained `creditRemaining`, or the restored reading falls back to the long currency string on the rail.
+
 Marks live in `deepseek-baseline.json` in Pulse's Application Support folder, **one per currency**, written off the main thread on a serial queue — the same arrangement `UsageAlerts` writes its memory with, and for the same reason: this is written on every pass. The mark is advanced on every reading whichever mode is in force, so switching to `sinceTopUp` later finds a peak already there rather than starting over from whatever the balance happens to be that afternoon.
 
 ### `budget` is the reader's own line
@@ -93,6 +95,13 @@ Blank, zero or negative leaves the mode with no denominator, which draws the bal
 `AppSettings.lowBalanceAlerts` holds a figure per account, and DeepSeek's settings pane offers the field because `Provider.reportsSpendableBalance` is true for it. Off until a figure is entered, like every other alert. The rule, the memory and why it is money rather than a percentage: [../notifications.md](../notifications.md).
 
 This is the reason `ProviderUsage.creditRemaining` exists alongside `creditBalance`. The latter is a display string and is sometimes prose — Codex's says "Unlimited" — so nothing may be decided from it; the former is a number and the currency it is denominated in, so ¥ is never compared against $.
+
+## Notifications: prepaid credit is not a limit
+
+Two rules in `AlertMemory` had to learn that, because `Kind.balance` breaks assumptions both of them rested on:
+
+- **A balance never resets.** `resetsAt` is always nil, so the reset test collapsed to "the fraction dropped forty points" — and on DeepSeek that fraction is a *setting*: both modes emit the window id `balance`, so switching "My budget" to "Since top-up" moved it forty points with the money untouched and posted "This limit has reset" within a second of touching the picker.
+- **Only the provider may call it spent.** The step rule reaches 100 from the arithmetic, and here the arithmetic is a clamp against a denominator Pulse watched or the reader typed. A ¥100 full tank with the balance at zero announced "This limit is spent" while `is_available` was true. A `.balance` row is now capped at 99 unless `isExhausted` says otherwise.
 
 ## `is_available` is the only thing that may say "spent"
 

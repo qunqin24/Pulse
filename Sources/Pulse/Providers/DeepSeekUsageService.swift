@@ -202,7 +202,12 @@ struct DeepSeekUsageService: Sendable {
                 .map { ($0, UsageWindow.Estimate.sinceTopUp) }
         case .budget:
             budget.flatMap { budget in
-                budget > 0
+                // **Finite, not merely positive.** `Double("inf")` is greater
+                // than zero, and an infinite denominator makes the fraction
+                // NaN — which the clamps below propagate rather than catch.
+                // Settings refuses one too; this is the guard that does not
+                // depend on where the figure came from.
+                budget.isFinite && budget > 0
                     ? (min(max((budget - purse.total) / budget, 0), 1), UsageWindow.Estimate.yourBudget)
                     : nil
             }

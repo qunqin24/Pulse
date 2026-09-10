@@ -92,10 +92,10 @@ struct SettingsView: View {
             }
             .listStyle(.sidebar)
             // Wide enough for the longest name the list can hold —
-            // "GLM Coding Plan", with "GitHub Copilot" and "OpenCode Go"
+            // "GitHub Copilot", with "Command Code" and "Ollama Cloud"
             // behind it. At the old 170/180/220 every one of those truncated
             // to an ellipsis, which on a list whose entire job is telling
-            // sixteen products apart is the one thing it must not do. These
+            // seventeen products apart is the one thing it must not do. These
             // are brand names and are not translated, so the requirement does
             // not move with the language.
             //
@@ -555,9 +555,9 @@ struct SettingsView: View {
                 // the reasoning that four rows is not enough to make a drag
                 // worth learning and that an arrow which misses does nothing
                 // while a drag which misses does something. The first half of
-                // that stopped being true: there are sixteen providers now,
+                // that stopped being true: there are seventeen providers now,
                 // plus every added account, and moving the bottom one to the
-                // top is fifteen clicks.
+                // top is sixteen clicks.
                 //
                 // The arrows stay rather than being replaced. They are the
                 // precise way to move one place, they are the only way that
@@ -633,7 +633,7 @@ struct SettingsView: View {
 
                 // Last, and disabled while there is nothing to undo. A drag
                 // that went somewhere unintended is easy to make and, at
-                // sixteen rows, tedious to walk back by hand.
+                // seventeen rows, tedious to walk back by hand.
                 SettingsRowDivider()
 
                 SettingsRow(
@@ -1239,9 +1239,43 @@ struct SettingsView: View {
     /// Blank clears it, which puts the ring back to showing the balance alone
     /// rather than a fraction of nothing.
     private func saveDeepSeekBudget() {
-        let trimmed = deepSeekBudget.trimmingCharacters(in: .whitespaces)
-        settings.deepSeekBudget = trimmed.isEmpty ? nil : Double(trimmed).flatMap { $0 > 0 ? $0 : nil }
-        deepSeekBudget = settings.deepSeekBudget.map { String($0) } ?? ""
+        settings.deepSeekBudget = Self.money(deepSeekBudget)
+        deepSeekBudget = Self.text(settings.deepSeekBudget)
+    }
+
+    /// A figure typed into a settings field, or nil for anything that is not
+    /// one.
+    ///
+    /// **`Double(_:)` alone is not this.** It accepts `"inf"`, `"infinity"`
+    /// and `"1e999"`, all of which are `> 0`, and an infinite denominator makes
+    /// `usedFraction` NaN — which `min`/`max` propagate rather than clamp, and
+    /// which `Int(_:)` traps on. Persisted, that crashed the panel on every
+    /// launch until the field was cleared.
+    ///
+    /// Parsed through a formatter rather than `Double(_:)` so a comma decimal
+    /// separator is read rather than silently clearing the setting, and the
+    /// currency symbol somebody types out of habit is ignored.
+    private static func money(_ typed: String) -> Double? {
+        let trimmed = typed.trimmingCharacters(in: .whitespaces)
+            .filter { $0.isNumber || $0 == "." || $0 == "," || $0 == "-" }
+        guard !trimmed.isEmpty else { return nil }
+
+        let formatter = NumberFormatter()
+        formatter.locale = LocalizationSource.locale
+        formatter.numberStyle = .decimal
+        let value = formatter.number(from: trimmed)?.doubleValue
+            ?? Double(trimmed.replacingOccurrences(of: ",", with: "."))
+
+        guard let value, value.isFinite, value > 0 else { return nil }
+        return value
+    }
+
+    /// The stored figure back in the field — without the `.0` that
+    /// `String(_:)` puts on every whole number.
+    private static func text(_ amount: Double?) -> String {
+        guard let amount else { return "" }
+        return amount.formatted(.number.precision(.fractionLength(0...2)).grouping(.never)
+            .locale(LocalizationSource.locale))
     }
 
     private static func deepSeekBasisSubtitle(_ basis: DeepSeekBasis) -> String {
@@ -1270,13 +1304,27 @@ struct SettingsView: View {
 
                 Button(String.localized("Save")) { saveLowBalance(for: account) }
             }
+            // Greyed out in a build with no bundle, like every other alert
+            // control: `UNUserNotificationCenter` raises without one.
+            .disabled(!UsageAlerts.isSupported)
         }
     }
 
     private func saveLowBalance(for account: AccountKey) {
-        let trimmed = lowBalance.trimmingCharacters(in: .whitespaces)
-        settings.setLowBalanceAlert(trimmed.isEmpty ? nil : Double(trimmed), for: account)
-        lowBalance = settings.lowBalanceAlert(for: account).map { String($0) } ?? ""
+        settings.setLowBalanceAlert(Self.money(lowBalance), for: account)
+        lowBalance = Self.text(settings.lowBalanceAlert(for: account))
+        // **The only alert control that was not asking.** Its three siblings in
+        // the general pane all do, and without it a fresh install types a
+        // figure into a group headed "Notifications" and is never told
+        // anything: `observe` bails while authorization is `.notDetermined`,
+        // and nothing else was ever going to ask.
+        guard settings.lowBalanceAlert(for: account) != nil else { return }
+        Task {
+            // And reconsider straight away, like its siblings: a balance
+            // already under the line when the figure is entered is announced
+            // once, rather than waiting for a pass.
+            if await alerts.requestAuthorizationIfNeeded() { store.reconsiderAlerts() }
+        }
     }
 
     private static func keySubtitle(for provider: Provider) -> String {

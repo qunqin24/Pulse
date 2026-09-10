@@ -4,7 +4,7 @@ import Foundation
 /// the panel — a tmux status line, sketchybar, Raycast, a shell prompt.
 ///
 /// **It prints the cache and never fetches.** A status line polls every couple
-/// of seconds; sixteen providers cannot be asked at that rate, and a command
+/// of seconds; seventeen providers cannot be asked at that rate, and a command
 /// that opened network connections and touched the keychain every time a
 /// terminal redrew would be a worse citizen than no command at all. So this
 /// reads what the running app last banked, and says how old it is — every

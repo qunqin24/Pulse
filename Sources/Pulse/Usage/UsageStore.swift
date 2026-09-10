@@ -833,7 +833,17 @@ final class UsageStore {
         // nothing enabled, or with something perpetually due, this is what
         // stops the loop spinning.
         let wait = max(waits.min() ?? AdaptiveRefresh.interval(for: signals), 15)
-        currentInterval = wait
+
+        // **`currentInterval` is the cadence, not the countdown.** Settings
+        // renders it as "Now: X minutes" and `isOverdue` multiplies it, and
+        // both broke when it briefly became the wait until the next tick: a
+        // timer set for the remaining 15 seconds of somebody's cycle read as
+        // "Now: 0 minutes", and the overdue threshold for the half-hour
+        // providers collapsed to about eleven minutes because DeepSeek was on
+        // the rail. The wait is a scheduling detail; this is the answer to
+        // "how often is Pulse asking", which is still the ordinary cadence.
+        currentInterval = settings.refreshInterval.seconds
+            ?? AdaptiveRefresh.interval(for: signals)
 
         let timer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in
             // **The one caller that honours each provider's own cadence.**

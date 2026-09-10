@@ -80,6 +80,18 @@ struct RailSlotTests {
         #expect(settings.orderedAccounts.first == extra.key)
     }
 
+    /// A control that is enabled and does nothing is the one thing a control
+    /// must never be. `hasCustomOrder` compared the shown order against
+    /// *declaration* order, and once the default became name order the two
+    /// differ on a fresh install — so "Reset order" was live out of the box.
+    @Test("Reset order is offered only when there is an arrangement to reset")
+    func resetIsOfferedOnlyWhenThereIsSomethingToReset() {
+        #expect(AppSettings(providerOrder: []).hasCustomOrder == false)
+        #expect(AppSettings(providerOrder: [AccountKey(.codex).id]).hasCustomOrder)
+        // An arrangement naming only accounts that no longer exist is not one.
+        #expect(AppSettings(providerOrder: ["nothing.like.this"]).hasCustomOrder == false)
+    }
+
     @Test("An account that is not split gets exactly one slot")
     func unsplitAccountIsOneSlot() {
         let slots = RailSlot.rail(

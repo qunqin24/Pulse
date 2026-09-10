@@ -44,6 +44,18 @@ actor UsageCache {
         let observedAt: Date
         let plan: String?
         let creditBalance: String?
+        /// The balance as a number, so a restored reading can draw the short
+        /// form on the rail rather than falling back to the long one
+        /// `CreditAmount.railText` exists to avoid. Optional: entries written
+        /// before this field existed simply have none.
+        var creditRemaining: CreditAmountStored?
+    }
+
+    /// `ProviderUsage.CreditAmount` is not `Codable` — nothing else needs it to
+    /// be — so this is its shape on disk.
+    private struct CreditAmountStored: Codable {
+        let amount: Double
+        let currency: String
     }
 
     /// Returns the reading worth showing: the fetched one when it carries
@@ -106,7 +118,10 @@ actor UsageCache {
             windows: usage.windows,
             observedAt: usage.observedAt ?? Date(),
             plan: usage.plan,
-            creditBalance: usage.creditBalance
+            creditBalance: usage.creditBalance,
+            creditRemaining: usage.creditRemaining.map {
+                CreditAmountStored(amount: $0.amount, currency: $0.currency)
+            }
         )
         readings = all
         write(all)
@@ -130,9 +145,16 @@ actor UsageCache {
 
         // Drop what has since reset — see the note above.
         let windows = stored.windows.filter { ($0.resetsAt ?? .distantFuture) > now }
-        guard !windows.isEmpty else { return nil }
 
-        return ProviderUsage(
+        // **Not `!windows.isEmpty`.** `reconciled` was taught that a balance
+        // with no limits is a complete answer, and this — the *read* path —
+        // was missed, so a banked DeepSeek "balance only" reading could be
+        // written and never come back out: blank through the first round trip
+        // after launch, no fallback when a fetch failed, and `--json` reporting
+        // a null balance. Same rule as `ProviderUsage.reportsSomething`.
+        guard !windows.isEmpty || stored.creditBalance != nil else { return nil }
+
+        var restored = ProviderUsage(
             account: account,
             windows: windows,
             observedAt: stored.observedAt,
@@ -140,6 +162,10 @@ actor UsageCache {
             plan: stored.plan,
             creditBalance: stored.creditBalance
         )
+        restored.creditRemaining = stored.creditRemaining.map {
+            .init(amount: $0.amount, currency: $0.currency)
+        }
+        return restored
     }
 
     // MARK: - Disk

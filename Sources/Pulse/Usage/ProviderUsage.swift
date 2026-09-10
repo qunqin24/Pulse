@@ -84,6 +84,83 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
 
     var estimate: Estimate?
 
+    /// Spelled out because the hand-written `init(from:)` below suppresses the
+    /// synthesised one. Same order and same defaults as before.
+    init(
+        id: String,
+        kind: Kind,
+        scope: String?,
+        usedFraction: Double,
+        windowSeconds: Int,
+        resetsAt: Date?,
+        reportsLength: Bool = true,
+        estimate: Estimate? = nil,
+        isExhausted: Bool = false
+    ) {
+        self.id = id
+        self.kind = kind
+        self.scope = scope
+        self.usedFraction = usedFraction
+        self.windowSeconds = windowSeconds
+        self.resetsAt = resetsAt
+        self.reportsLength = reportsLength
+        self.estimate = estimate
+        self.isExhausted = isExhausted
+    }
+
+    /// Decoded by hand for one reason: `estimate` replaced a stored
+    /// `isEstimated: Bool`, and a cache written by 1.0.9 carries the old key.
+    /// The synthesised decoder ignores it and leaves `estimate` nil, so the
+    /// first launch after upgrading drew Command Code's inferred monthly
+    /// percentage with nothing marking it as inferred — until that provider
+    /// happened to refresh, which on the ceiling is half an hour, and never at
+    /// all for `--json` if the app is not running.
+    ///
+    /// `.planPrice` because it was the only estimate that existed when that
+    /// key was being written.
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        kind = try container.decode(Kind.self, forKey: .kind)
+        scope = try container.decodeIfPresent(String.self, forKey: .scope)
+        usedFraction = try container.decode(Double.self, forKey: .usedFraction)
+        windowSeconds = try container.decode(Int.self, forKey: .windowSeconds)
+        resetsAt = try container.decodeIfPresent(Date.self, forKey: .resetsAt)
+        reportsLength = try container.decodeIfPresent(Bool.self, forKey: .reportsLength) ?? true
+        isExhausted = try container.decodeIfPresent(Bool.self, forKey: .isExhausted) ?? false
+
+        if let estimate = try container.decodeIfPresent(Estimate.self, forKey: .estimate) {
+            self.estimate = estimate
+        } else {
+            let legacy = try container.decodeIfPresent(Bool.self, forKey: .isEstimated) ?? false
+            self.estimate = legacy ? .planPrice : nil
+        }
+    }
+
+    /// Written by hand alongside the decoder, because `CodingKeys` carries a
+    /// legacy case with no property behind it. **`isEstimated` is read and
+    /// never written**: nothing new should be putting the old shape back on
+    /// disk.
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(kind, forKey: .kind)
+        try container.encodeIfPresent(scope, forKey: .scope)
+        try container.encode(usedFraction, forKey: .usedFraction)
+        try container.encode(windowSeconds, forKey: .windowSeconds)
+        try container.encodeIfPresent(resetsAt, forKey: .resetsAt)
+        try container.encode(reportsLength, forKey: .reportsLength)
+        try container.encodeIfPresent(estimate, forKey: .estimate)
+        try container.encode(isExhausted, forKey: .isExhausted)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, kind, scope, usedFraction, windowSeconds, resetsAt
+        case reportsLength, isExhausted, estimate
+        /// Written by 1.0.9 and earlier. Read, never written.
+        case isEstimated
+    }
+
     /// Whether the denominator was inferred at all, which is what `--json`
     /// reports and what anything holding Pulse to "figures the provider
     /// reported" filters on.
@@ -178,6 +255,12 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// A fraction as a whole percentage that never rounds away the fact that
     /// there is *some*, or that there is *not all*.
     private static func figure(_ fraction: Double) -> Int {
+        // **NaN first, because `min`/`max` propagate it rather than clamping**
+        // and `Int(NaN)` traps. A budget of "inf" typed into Settings reached
+        // here as (inf − balance)/inf, and the panel then crashed on every
+        // launch until the field was cleared, because the figure is persisted.
+        // Guarded at the source too; this is the one that cannot be bypassed.
+        guard fraction.isFinite else { return 0 }
         let percent = min(max(fraction, 0), 1) * 100
         if percent <= 0 { return 0 }
         if percent >= 100 { return 100 }
