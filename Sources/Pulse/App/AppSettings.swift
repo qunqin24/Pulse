@@ -82,6 +82,20 @@ final class AppSettings {
         }
     }
 
+    /// Warn when a prepaid balance falls below this much, per account.
+    ///
+    /// Empty is off, which is how it ships — the same rule every other alert
+    /// follows. Keyed by account id and stored per account rather than as one
+    /// figure because the providers that report a balance do not price in the
+    /// same currency: ¥20 and $20 are not the same line.
+    var lowBalanceAlerts: [String: Double] {
+        didSet {
+            guard lowBalanceAlerts != oldValue else { return }
+            UserDefaults.standard.set(lowBalanceAlerts, forKey: Key.lowBalanceAlerts)
+            onChange?()
+        }
+    }
+
     /// The order the rail draws them in, as account ids.
     ///
     /// Stored rather than derived so it survives a launch, and resolved through
@@ -504,7 +518,7 @@ final class AppSettings {
     /// Whether anything at all would be posted. What decides if permission is
     /// worth asking for.
     var wantsAlerts: Bool {
-        alertThreshold != .off || alertsOnReset || alertsOnFailure
+        alertThreshold != .off || alertsOnReset || alertsOnFailure || !lowBalanceAlerts.isEmpty
     }
 
     /// A second, smaller ring inside the first, for the next-fullest limit.
@@ -579,6 +593,7 @@ final class AppSettings {
         deepSeekBasis: DeepSeekBasis = .default,
         deepSeekBudget: Double? = nil,
         deepSeekCurrency: String? = nil,
+        lowBalanceAlerts: [String: Double] = [:],
         enabledAccounts: Set<String> = Set(Provider.allCases.map(\.rawValue)),
         extraAccounts: [ExtraAccount] = [],
         providerOrder: [String] = [],
@@ -610,6 +625,7 @@ final class AppSettings {
         self.deepSeekBasis = deepSeekBasis
         self.deepSeekBudget = deepSeekBudget
         self.deepSeekCurrency = deepSeekCurrency
+        self.lowBalanceAlerts = lowBalanceAlerts
         self.enabledAccounts = enabledAccounts
         self.extraAccounts = extraAccounts
         self.providerOrder = providerOrder
@@ -643,6 +659,20 @@ final class AppSettings {
     func source(for account: AccountKey) -> UsageSource {
         let stored = sources[account.id].flatMap(UsageSource.init(rawValue:)) ?? .automatic
         return UsageSource.options(for: account).contains(stored) ? stored : .automatic
+    }
+
+    /// The balance this account should be warned below, or nil for no warning.
+    func lowBalanceAlert(for account: AccountKey) -> Double? {
+        lowBalanceAlerts[account.id]
+    }
+
+    /// Anything that is not a positive figure clears it: a warning below zero
+    /// can never fire, and one at zero fires only once the account is already
+    /// empty, which is the moment it is too late to be told.
+    func setLowBalanceAlert(_ amount: Double?, for account: AccountKey) {
+        var updated = lowBalanceAlerts
+        updated[account.id] = amount.flatMap { $0 > 0 ? $0 : nil }
+        lowBalanceAlerts = updated
     }
 
     func setSource(_ source: UsageSource, for account: AccountKey) {
@@ -840,6 +870,7 @@ final class AppSettings {
                 .flatMap(DeepSeekBasis.init(rawValue:)) ?? .default,
             deepSeekBudget: defaults.object(forKey: Key.deepSeekBudget) as? Double,
             deepSeekCurrency: defaults.string(forKey: Key.deepSeekCurrency),
+            lowBalanceAlerts: defaults.dictionary(forKey: Key.lowBalanceAlerts) as? [String: Double] ?? [:],
             enabledAccounts: accounts,
             extraAccounts: extras,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
@@ -945,6 +976,7 @@ final class AppSettings {
         static let deepSeekBasis = "settings.deepSeekBasis"
         static let deepSeekBudget = "settings.deepSeekBudget"
         static let deepSeekCurrency = "settings.deepSeekCurrency"
+        static let lowBalanceAlerts = "settings.lowBalanceAlerts"
         static let enabledProviders = "settings.enabledProviders"
         static let language = "settings.language"
         static let pinnedWindows = "settings.pinnedWindows"

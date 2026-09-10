@@ -367,3 +367,5 @@
 "How much of the figure you set is gone." = "你设定的金额用掉了多少。";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "在 platform.deepseek.com 获取。加密保存在本机。";
 "Balance" = "余额";
+"Warn below" = "低于此金额时提醒";
+"Notify once when the balance falls under this. Blank for never." = "余额跌破这个数时提醒一次。留空则不提醒。";

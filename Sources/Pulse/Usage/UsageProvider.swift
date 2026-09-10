@@ -228,6 +228,15 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
          .commandCode, .deepSeek].contains(self)
     }
 
+    /// Whether this provider reports a prepaid balance that can be compared
+    /// against a figure — so a "warn me below" line is worth offering.
+    ///
+    /// **Not "reports a `creditBalance`".** Six providers set that, but it is
+    /// a display string and Codex's is sometimes the word "Unlimited". This is
+    /// the shorter list that also hands over `creditRemaining`, which is a
+    /// number and a currency.
+    var reportsSpendableBalance: Bool { [.deepSeek, .commandCode].contains(self) }
+
     /// Whether the pasted credential is a **pair** rather than one token.
     ///
     /// Volcengine signs with an access key id and a secret, so Volcengine's field

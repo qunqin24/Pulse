@@ -80,6 +80,12 @@ Marks live in `deepseek-baseline.json` in Pulse's Application Support folder, **
 
 Blank, zero or negative leaves the mode with no denominator, which draws the balance alone rather than a fraction of a number nobody gave. A balance above the budget is **0% used**, not a negative fraction.
 
+## Warn me below
+
+`AppSettings.lowBalanceAlerts` holds a figure per account, and DeepSeek's settings pane offers the field because `Provider.reportsSpendableBalance` is true for it. Off until a figure is entered, like every other alert. The rule, the memory and why it is money rather than a percentage: [../notifications.md](../notifications.md).
+
+This is the reason `ProviderUsage.creditRemaining` exists alongside `creditBalance`. The latter is a display string and is sometimes prose — Codex's says "Unlimited" — so nothing may be decided from it; the former is a number and the currency it is denominated in, so ¥ is never compared against $.
+
 ## `is_available` is the only thing that may say "spent"
 
 DeepSeek's own flag for "this balance can no longer pay for a call". Nothing else sets `isExhausted` — in particular a generous budget can put the ring near the top while the account is perfectly able to pay, and that is the reader's line rather than DeepSeek's verdict. [../notifications.md](../notifications.md)

@@ -91,7 +91,8 @@ struct DeepSeekUsageService: Sendable {
             observedAt: Date(),
             state: .live,
             plan: nil,
-            creditBalance: Self.balance(purse)
+            creditBalance: Self.balance(purse),
+            creditRemaining: .init(amount: purse.total, currency: purse.currency)
         )
     }
 

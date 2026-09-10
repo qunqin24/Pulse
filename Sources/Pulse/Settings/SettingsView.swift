@@ -37,6 +37,8 @@ struct SettingsView: View {
     /// The budget being typed, kept as text so a half-entered number is not
     /// read as a denominator on every keystroke.
     @State private var deepSeekBudget = ""
+    /// The low-balance figure being typed, kept as text for the same reason.
+    @State private var lowBalance = ""
     @State private var savedKey = ""
     /// The provider a browser sign-in is currently open for, and what went
     /// wrong with the last one.
@@ -911,6 +913,17 @@ struct SettingsView: View {
             // signed in to itself they would be worse than that. Those
             // transcripts belong to whichever account the CLI is signed in to,
             // which is not this one, so showing them here would report one
+            // Its own group rather than a row under Connection, which is
+            // about credentials and routes. This is a notification, and the
+            // general pane's group of them is the wrong home too: the figure
+            // is per account, because the providers that report a balance do
+            // not price in the same currency.
+            if provider.reportsSpendableBalance {
+                SettingsGroup(String.localized("Notifications")) {
+                    lowBalanceRow(for: account)
+                }
+            }
+
             // account's spending under another's name.
             if provider.providesHistory, account.isPrimary {
                 // The estimate is money, and money needs the token split only
@@ -929,6 +942,9 @@ struct SettingsView: View {
             // beside a ring that is measuring against it.
             if shown == .deepSeek {
                 deepSeekBudget = settings.deepSeekBudget.map { String($0) } ?? ""
+            }
+            if shown.reportsSpendableBalance {
+                lowBalance = settings.lowBalanceAlert(for: AccountKey(shown)).map { String($0) } ?? ""
             }
             // Copilot has no key field, but its token lives in the same store
             // and the pane needs to know whether there is one.
@@ -1237,6 +1253,30 @@ struct SettingsView: View {
         case .budget:
             .localized("How much of the figure you set is gone.")
         }
+    }
+
+    /// A prepaid balance has no percentage to warn at, so it gets a line of
+    /// its own: the money, not a fraction of an allowance nobody reports.
+    private func lowBalanceRow(for account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("Warn below"),
+            subtitle: String.localized("Notify once when the balance falls under this. Blank for never.")
+        ) {
+            HStack(spacing: 8) {
+                TextField("", text: $lowBalance)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: SettingsLayout.controlWidth - 70)
+                    .onSubmit { saveLowBalance(for: account) }
+
+                Button(String.localized("Save")) { saveLowBalance(for: account) }
+            }
+        }
+    }
+
+    private func saveLowBalance(for account: AccountKey) {
+        let trimmed = lowBalance.trimmingCharacters(in: .whitespaces)
+        settings.setLowBalanceAlert(trimmed.isEmpty ? nil : Double(trimmed), for: account)
+        lowBalance = settings.lowBalanceAlert(for: account).map { String($0) } ?? ""
     }
 
     private static func keySubtitle(for provider: Provider) -> String {

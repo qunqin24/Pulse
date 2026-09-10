@@ -124,7 +124,8 @@ struct CommandCodeUsageService: Sendable {
             observedAt: Date(),
             state: .live,
             plan: Self.planName(subscription?.data?.planId ?? credits.credits?.planId),
-            creditBalance: Self.balance(credits)
+            creditBalance: Self.balance(credits),
+            creditRemaining: Self.remaining(credits)
         )
     }
 
@@ -637,6 +638,22 @@ struct CommandCodeUsageService: Sendable {
             .split(whereSeparator: { $0 == "-" || $0 == "_" })
             .map { $0.prefix(1).uppercased() + $0.dropFirst().lowercased() }
             .joined(separator: " ")
+    }
+
+    /// The same total as a number, for the low-balance warning. Nil where no
+    /// pot was reported at all — absent is not a balance of zero.
+    static func remaining(_ reply: CreditsReply?) -> ProviderUsage.CreditAmount? {
+        guard let credits = reply?.credits else { return nil }
+
+        let pots = [credits.monthlyCredits, credits.purchasedCredits, credits.freeCredits]
+        guard pots.contains(where: { $0 != nil }) else { return nil }
+
+        return .init(
+            amount: pots.compactMap { $0 }.reduce(0) { $0 + max(0, $1) },
+            // Command Code prices in US dollars and says so nowhere in the
+            // reply, so this is the one place the code states it.
+            currency: "USD"
+        )
     }
 
     /// What is left, in the dollars the service prices in — hence a fixed

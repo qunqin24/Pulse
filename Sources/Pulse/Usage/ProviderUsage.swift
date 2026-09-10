@@ -362,8 +362,24 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     let state: State
     /// Plan name, when the provider names one.
     let plan: String?
-    /// Remaining credit, when the provider reports it.
+    /// Remaining credit, when the provider reports it. Formatted for display,
+    /// which is all most of the app wants.
     let creditBalance: String?
+    /// The same figure as a number, where there is one to compare.
+    ///
+    /// **Separate from `creditBalance` on purpose.** That is a display string
+    /// and is sometimes prose — Codex says "Unlimited" — so nothing may be
+    /// decided from it. A low-balance warning has to compare money against
+    /// money, and it must not compare ¥ against $, so the currency travels
+    /// with the amount.
+    var creditRemaining: CreditAmount?
+
+    /// Money the provider says is left, and what it is denominated in.
+    struct CreditAmount: Equatable, Sendable {
+        let amount: Double
+        /// An ISO code, as the provider gave it.
+        let currency: String
+    }
 
     var provider: Provider { account.provider }
     var id: String { account.id }

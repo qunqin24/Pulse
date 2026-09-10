@@ -12,7 +12,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 | Suite | Covers |
 |---|---|
-| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate. [notifications.md](notifications.md) |
+| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate, and the low-balance line — said once, re-armed by a top-up, said again when the line moves, and never from a stale reading or a balance with no figure behind it. [notifications.md](notifications.md) |
 | `AlertsThroughTheCacheTests` | The same rules reached the way production reaches them: service → `UsageCache.reconciled` → state machine |
 | `NotificationAuthorizationTests` | An injected authorization decision, concurrent requests, no warning consumed while a grant is pending, and the foreground delegate selector; no system permission or notification delivery |
 | `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry, and that a live reading carrying a balance and no limits is an **answer** rather than a failure to paper over (DeepSeek's "balance only"), while one carrying nothing at all still is |

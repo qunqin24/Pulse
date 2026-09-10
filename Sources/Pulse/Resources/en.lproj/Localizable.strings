@@ -367,3 +367,5 @@
 "How much of the figure you set is gone." = "How much of the figure you set is gone.";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "From platform.deepseek.com. Stored encrypted on this Mac.";
 "Balance" = "Balance";
+"Warn below" = "Warn below";
+"Notify once when the balance falls under this. Blank for never." = "Notify once when the balance falls under this. Blank for never.";

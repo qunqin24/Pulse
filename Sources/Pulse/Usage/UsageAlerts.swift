@@ -47,6 +47,10 @@ struct UsageAlert: Sendable, Equatable {
         case spent
         /// A window Pulse had already warned about has turned over.
         case reset
+        /// A prepaid balance fell below the figure the user asked to be told
+        /// about. Money, not a percentage: these providers report no allowance
+        /// to take a percentage of.
+        case lowBalance(remaining: String)
         /// Several passes in a row failed to produce a current reading. The
         /// reason when there is one; nil when the fetch simply failed and the
         /// cache answered in its place.
@@ -68,6 +72,7 @@ struct UsageAlert: Sendable, Equatable {
         case .approaching(let percent): "approaching-\(percent)"
         case .spent: "spent"
         case .reset: "reset-\(Int(window?.resetsAt?.timeIntervalSince1970 ?? 0))"
+        case .lowBalance: "low-balance"
         case .unreadable: "unreadable"
         }
         return "\(account.id)|\(limit)|\(what)"
@@ -100,6 +105,15 @@ struct AlertMemory: Codable, Sendable, Equatable {
         /// the first reading that works, so a provider that comes and goes is
         /// mentioned once per outage rather than once per pass.
         var reportedFailure = false
+        /// The low-balance figure already warned about, or nil for nothing
+        /// said.
+        ///
+        /// **The threshold rather than a flag**, so that raising the line
+        /// warns again about a balance that was already under the old one —
+        /// somebody who moves it from ¥5 to ¥50 is asking a new question and
+        /// deserves an answer. Cleared when the balance climbs back over,
+        /// which is a top-up.
+        var lowBalanceWarnedFor: Double?
     }
 
     /// Keyed by account id, like every other stored table — see `AccountKey`.
@@ -154,6 +168,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
         threshold: AlertThreshold,
         announcesReset: Bool,
         announcesFailure: Bool,
+        /// The balance to warn below, or nil for no warning on this account.
+        lowBalance: Double?,
         staleMeansFailure: Bool,
         now: Date
     ) -> [UsageAlert] {
@@ -214,6 +230,34 @@ struct AlertMemory: Codable, Sendable, Equatable {
                 countFailure(reason)
             case .answered: succeeded()
             case .neutral: break
+            }
+        }
+
+        // **Money, and judged on live readings only** — the same rule as the
+        // limits below and for the same reason: a stale reading carries
+        // whatever the cache last banked, and warning from it would announce a
+        // balance the account may have topped up since.
+        //
+        // Separate from `threshold` because it answers a different question.
+        // These providers report no allowance to take a percentage of; what
+        // there is to warn about is the money running out.
+        if let lowBalance,
+           case .live = rawState, case .live = reading.state,
+           let remaining = reading.creditRemaining,
+           let formatted = reading.creditBalance {
+            if remaining.amount < lowBalance {
+                if record.lowBalanceWarnedFor != lowBalance {
+                    record.lowBalanceWarnedFor = lowBalance
+                    produced.append(UsageAlert(
+                        account: account,
+                        kind: .lowBalance(remaining: formatted),
+                        window: nil
+                    ))
+                }
+            } else {
+                // Back over the line — a top-up, or the line moved down.
+                // Either way the next crossing is news again.
+                record.lowBalanceWarnedFor = nil
             }
         }
 
@@ -511,6 +555,7 @@ final class UsageAlerts {
             threshold: settings.alertThreshold,
             announcesReset: settings.alertsOnReset,
             announcesFailure: settings.alertsOnFailure,
+            lowBalance: settings.lowBalanceAlert(for: account),
             staleMeansFailure: !settings.source(for: account).reportsOnlyWhenUsed(for: account),
             // The one clock reading in here, taken at the edge and passed in,
             // so the rules themselves stay decidable from their arguments.
@@ -546,6 +591,7 @@ final class UsageAlerts {
     /// which account it is. An account-wide fault has no limit to name.
     private func subtitle(for alert: UsageAlert) -> String? {
         if case .unreadable = alert.kind { return .localized("Can't be read") }
+        if case .lowBalance = alert.kind { return .localized("Balance") }
         return alert.window?.name
     }
 
@@ -565,6 +611,13 @@ final class UsageAlerts {
                 ? .localized("\(figure) left.")
                 : .localized("\(figure) used.")
             return Self.joined(said, Self.resetSentence(alert.window))
+
+        case .lowBalance(let remaining):
+            // The figure and nothing else. There is no window to say when it
+            // comes back, because it does not come back on its own — this
+            // provider's credit is bought, and the only thing that refills it
+            // is the reader.
+            return .localized("\(remaining) left.")
 
         case .spent:
             return Self.joined(.localized("This limit is spent."), Self.resetSentence(alert.window))

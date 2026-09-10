@@ -6,7 +6,7 @@ Source: [`Sources/Pulse/Usage/UsageAlerts.swift`](../Sources/Pulse/Usage/UsageAl
 
 ## What can be said
 
-Four things, and nothing else. Each is something you would want to know *while looking at something else*, which is the test for belonging here rather than on the card.
+Five things, and nothing else. Each is something you would want to know *while looking at something else*, which is the test for belonging here rather than on the card.
 
 | Alert | Fires when | Gated by |
 |---|---|---|
@@ -14,12 +14,22 @@ Four things, and nothing else. Each is something you would want to know *while l
 | `spent` | The provider reports the window exhausted, or the share rounds *down* to 100 | `alertThreshold` |
 | `reset` | A window that was warned about has unambiguously turned over | `alertsOnReset` + `alertThreshold` |
 | `unreadable(_:)` | Three eligible failures; cached figures remain protected for their first 30 minutes, while a failure with no usable figures counts immediately | `alertsOnFailure` |
+| `lowBalance(remaining:)` | A prepaid balance falls under the figure set for that account | `lowBalanceAlerts[account]` |
 
 All off by default. All ask for the **default sound**; the mute switch is macOS's own per-app "Play sound for notifications".
 
 This was silent first, with a changelog note saying to add a sound in System Settings if you wanted one. **That note was wrong.** A notification with no `sound` is delivered silently, and the system switch cannot put one back — it only takes away one the app asked for. The choice was never quiet versus loud, it was a working off switch in the place people look for it versus no switch at all. `requestAuthorization` therefore asks for `[.alert, .sound]`: without `.sound` in the grant, `soundSetting` is disabled outright and every `content.sound` is dropped whatever the user does with the switch.
 
-One rule for all four rather than sound only for the consequential two. macOS offers one switch per app, so a distinction drawn here would be one nobody could turn off and nobody could discover. And a silent banner on a second display, or behind a full-screen window, is a message that was never delivered — which is the opposite of the test these four had to pass to be here.
+One rule for all of them rather than sound only for the consequential ones. macOS offers one switch per app, so a distinction drawn here would be one nobody could turn off and nobody could discover. And a silent banner on a second display, or behind a full-screen window, is a message that was never delivered — which is the opposite of the test these four had to pass to be here.
+
+### Low balance is about money, not a share of anything
+
+`lowBalance` is the odd one, and it exists because DeepSeek does. Providers that sell prepaid credit report **no allowance**, so there is no percentage to put a threshold on — `alertThreshold` has nothing to act on and would stay silent while the account emptied. What there is to warn about is the money.
+
+- **Per account, not one figure.** The providers that report a spendable balance do not price in the same currency; ¥20 and $20 are not the same line. `Provider.reportsSpendableBalance` is the short list that hands over `ProviderUsage.creditRemaining` — a number *and* a currency — as opposed to the six that set the display string `creditBalance`, one of which is sometimes the word "Unlimited".
+- **Live readings only**, the same rule the limits follow: a stale reading carries whatever the cache last banked, and the account may have been topped up since.
+- **Once.** The memory records the figure warned about, not a flag, so **moving the line warns again** — somebody who raises it from ¥5 to ¥50 is asking a new question. A balance climbing back over re-arms it, which for bought credit only ever means a top-up.
+- **Nothing is said about when it comes back**, unlike every other alert here. It does not come back on its own: the only thing that refills this is the reader.
 
 ## Rules that are not obvious
 
@@ -51,7 +61,7 @@ The copy is a **status, not an event** — "92% used", never "just passed 90%" �
 
 ## Memory
 
-`AlertMemory` is persisted to `alerts.json` in [`PulseStorage.directory`](../Sources/Pulse/Usage/ModelPrices.swift), keyed by account id, then by window id. It has to be on disk: Pulse starts at login and runs while the Mac sleeps, so "have I already mentioned this" cannot live in memory alone — every relaunch would re-announce everything already over the line, which is what makes people switch notifications off for good.
+`AlertMemory` is persisted to `alerts.json` in [`PulseStorage.directory`](../Sources/Pulse/Usage/ModelPrices.swift), keyed by account id, then by window id — except `lowBalanceWarnedFor`, which is per account because a balance belongs to no window. It has to be on disk: Pulse starts at login and runs while the Mac sleeps, so "have I already mentioned this" cannot live in memory alone — every relaunch would re-announce everything already over the line, which is what makes people switch notifications off for good.
 
 It is kept up to date even when a grant was refused or the build is unbundled, so neither later announces a fortnight of missed crossings. **An unresolved authorization decision is different:** readings are not consumed while authorization is unknown in a bundled app or a request is in flight. They remain eligible for the immediate evaluation after a successful grant.
 
