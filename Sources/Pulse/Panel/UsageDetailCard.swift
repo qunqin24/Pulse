@@ -122,6 +122,29 @@ struct UsageDetailCard: View {
                 )
             }
 
+            // **A card with only a title in it reads as a card that failed to
+            // load.** Every provider until DeepSeek reported at least one
+            // limit, so an empty body could only mean an unavailable reading
+            // and the message below covered it. DeepSeek on "balance only"
+            // reports money and no limits *by design*, and the money is then
+            // the whole reading — so it is what the card says.
+            if usage.windows.isEmpty, let balance = usage.creditBalance {
+                ValueRow(
+                    title: String.localized("Credit balance"),
+                    value: balance,
+                    note: String.localized("This provider reports no limit to measure it against.")
+                )
+            }
+
+            // The same rule for the other way a body can come out empty: a
+            // reading that says nothing at all still has to say *that*.
+            if saysNothing {
+                Text(ProviderUsage.Unavailability.noLimitsReported.message)
+                    .font(.system(size: DetailCardLayout.messageFontSize, weight: .regular, design: .rounded))
+                    .foregroundStyle(.primary.opacity(0.55))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
             if case .unavailable(let reason) = usage.state {
                 Text(reason.message)
                     .font(.system(size: DetailCardLayout.messageFontSize, weight: .regular, design: .rounded))
@@ -165,6 +188,17 @@ struct UsageDetailCard: View {
         case .right: .trailing
         case .top: .top
         }
+    }
+
+    /// Whether the body would otherwise be nothing but the header.
+    ///
+    /// An unavailable reading is excluded because its own message is about to
+    /// say something better than "no limits reported" — which route failed,
+    /// or what to sign in to.
+    private var saysNothing: Bool {
+        guard usage.windows.isEmpty, usage.creditBalance == nil else { return false }
+        if case .unavailable = usage.state { return false }
+        return true
     }
 
     /// A line under the limits saying how much to trust them: Claude Code's
@@ -222,6 +256,43 @@ struct UsageDetailCard: View {
 
             Spacer(minLength: 0)
         }
+    }
+}
+
+/// A figure with no percentage behind it, for a provider that reports one.
+///
+/// No bar: there is nothing to fill it with. A bar drawn at zero beside a real
+/// balance would read as an empty account, which is the opposite of what a
+/// healthy balance means.
+private struct ValueRow: View {
+    let title: String
+    let value: String
+    let note: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DetailCardLayout.rowInternalSpacing) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(title)
+                    .foregroundStyle(.primary)
+                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
+
+                Spacer(minLength: 0)
+
+                Text(value)
+                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .medium, design: .rounded))
+                    .foregroundStyle(.primary.opacity(0.9))
+                    .lineLimit(1)
+                    .layoutPriority(1)
+            }
+
+            Text(note)
+                .font(.system(size: DetailCardLayout.footnoteFontSize, weight: .regular, design: .rounded))
+                .foregroundStyle(.primary.opacity(0.45))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(value)
     }
 }
 
