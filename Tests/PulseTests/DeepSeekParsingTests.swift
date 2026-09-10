@@ -106,7 +106,9 @@ struct DeepSeekParsingTests {
         #expect(abs(window.usedFraction - (100 - 42.30) / 100) < 0.000_001)
         #expect(window.percentText(remaining: false) == "58%")
         #expect(window.isEstimated)
-        #expect(window.scope == "since top-up")
+        #expect(window.estimate == .sinceTopUp)
+        // Not the scope: that is a product name `--json` promises is untranslated.
+        #expect(window.scope == nil)
         // Prepaid credit does not turn over, so there is no length to divide by.
         #expect(window.reportsLength == false)
         #expect(window.resetsAt == nil)
@@ -138,7 +140,8 @@ struct DeepSeekParsingTests {
         )
 
         #expect(abs(window.usedFraction - (50 - 42.30) / 50) < 0.000_001)
-        #expect(window.scope == "of your budget")
+        #expect(window.estimate == .yourBudget)
+        #expect(window.scope == nil)
         #expect(window.isEstimated)
     }
 

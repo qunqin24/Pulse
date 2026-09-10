@@ -193,16 +193,16 @@ struct DeepSeekUsageService: Sendable {
         since: Date,
         isAvailable: Bool?
     ) -> [UsageWindow] {
-        let measured: (fraction: Double, scope: String)? = switch basis {
+        let measured: (fraction: Double, estimate: UsageWindow.Estimate)? = switch basis {
         case .balanceOnly:
             nil
         case .sinceTopUp:
             DeepSeekBaseline.usedFraction(balance: purse.total, peak: peak)
-                .map { ($0, String.localized("since top-up")) }
+                .map { ($0, UsageWindow.Estimate.sinceTopUp) }
         case .budget:
             budget.flatMap { budget in
                 budget > 0
-                    ? (min(max((budget - purse.total) / budget, 0), 1), String.localized("of your budget"))
+                    ? (min(max((budget - purse.total) / budget, 0), 1), UsageWindow.Estimate.yourBudget)
                     : nil
             }
         }
@@ -213,15 +213,18 @@ struct DeepSeekUsageService: Sendable {
             UsageWindow(
                 id: "balance",
                 kind: .balance,
-                scope: measured.scope,
+                // **Not the scope.** Scope is a product name that `--json`
+                // promises reads the same in every language, and "since
+                // top-up" translated into it broke that the day it shipped.
+                scope: nil,
                 usedFraction: measured.fraction,
                 windowSeconds: 30 * 86_400,
                 resetsAt: nil,
                 reportsLength: false,
                 // The denominator is Pulse's own observation in one mode and
                 // the reader's own figure in the other. Neither is DeepSeek's,
-                // and the card says which.
-                isEstimated: true,
+                // and the row names which.
+                estimate: measured.estimate,
                 // **DeepSeek's own word**, not the arithmetic: `is_available`
                 // is the flag it sets when the balance can no longer pay for a
                 // call. A budget the reader set low can reach 100% with money

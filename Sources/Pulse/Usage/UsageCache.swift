@@ -50,7 +50,7 @@ actor UsageCache {
     /// anything, otherwise whatever was last banked — and, when both have
     /// something, whichever was actually taken later.
     func reconciled(_ fetched: ProviderUsage) -> ProviderUsage {
-        if case .live = fetched.state, !fetched.windows.isEmpty {
+        if case .live = fetched.state, fetched.reportsSomething {
             // **`.live` is not the same as "newest".** The status-line route
             // calls its capture live for ten minutes after it was taken, and
             // that capture can be older than a reading the endpoint route
@@ -93,7 +93,7 @@ actor UsageCache {
         if let fetchedAt = fetched.observedAt,
            let cachedAt = cached.observedAt,
            fetchedAt >= cachedAt,
-           !fetched.windows.isEmpty {
+           fetched.reportsSomething {
             return fetched
         }
 

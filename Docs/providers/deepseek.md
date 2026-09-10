@@ -46,13 +46,19 @@ A ring needs a denominator, and there are exactly three places one can come from
 | `balanceOnly` | None | No window; the rail draws the money |
 | `budget` | A figure the reader typed | `(budget − balance) / budget` |
 
-Both fractions are `isEstimated`, and both rows carry a `scope` naming where the number came from — "since top-up", "of your budget" — so the card says which is in force. The scope is why these rows do **not** also get the generic `estimated` marker appended: `UsageWindow.name` appends it only when no scope already says it more specifically.
+Both fractions carry a `UsageWindow.Estimate` naming where the number came from — `sinceTopUp` or `yourBudget` — which the card renders after the name ("余额 · 自上次充值") and `--json` reports as the stable token `estimatedFrom`.
+
+**Not `scope`.** That was the first attempt and it shipped wrong for an afternoon: `scope` is a product name and [../json-output.md](../json-output.md) promises it reads the same in every language, so a localized "since top-up" in it broke any script matching on it the moment the reader switched language. The same trap `.localized` in a contract field is always going to be.
 
 ### `sinceTopUp` is measured, not inferred
 
 This is the whole reason it is the default. Pulse reads the balance every refresh — 2 to 30 minutes — and remembers the highest it has seen. **A balance that goes up can only be a top-up**, so that resets the mark and the ring starts from full again. Nothing here is a guess about DeepSeek's pricing, a table of plans, or a number anyone typed. Contrast [command-code.md](command-code.md), where the plan grant genuinely is a table in a client.
 
 What it costs is the first run: a Mac that has never watched this account has no mark, so the first reading becomes one and the ring reads 0% until money is actually spent. That is a true statement about what Pulse has seen. A peak of zero draws no window at all — an account that has never had credit is not one that has spent it.
+
+### A reading with no windows is still a reading
+
+`balanceOnly` is the first **complete** answer Pulse has ever produced with no windows in it. `UsageCache.reconciled` tested `!windows.isEmpty` to mean "this fetch went wrong" — a fair assumption while every service with nothing to report returned `.noLimitsReported` — so it kept handing back the previous reading and switching the setting appeared to do nothing at all. The test is now `ProviderUsage.reportsSomething`: a balance is an answer. A reading carrying neither windows nor a balance is still a failure to fall back from, and `UsageCacheTests` pins both halves.
 
 Marks live in `deepseek-baseline.json` in Pulse's Application Support folder, **one per currency**, written off the main thread on a serial queue — the same arrangement `UsageAlerts` writes its memory with, and for the same reason: this is written on every pass. The mark is advanced on every reading whichever mode is in force, so switching to `sinceTopUp` later finds a peak already there rather than starting over from whatever the balance happens to be that afternoon.
 

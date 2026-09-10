@@ -524,7 +524,7 @@ struct CommandCodeUsageService: Sendable {
             resetsAt: period.end,
             reportsLength: period.seconds != nil,
             // The grant is the one denominator on this rail nobody reported.
-            isEstimated: true,
+            estimate: .planPrice,
             // The remainder is the account's own statement of what is left, and
             // nothing left is spent whatever the percentage rounds to.
             isExhausted: reported <= 0

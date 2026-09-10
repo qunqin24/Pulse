@@ -52,17 +52,42 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// `elapsedFraction` draw an arc nobody reported.
     var reportsLength: Bool = true
 
-    /// Whether this limit's *denominator* was inferred rather than reported.
+    /// Where this limit's denominator came from, when it did not come from the
+    /// provider.
     ///
-    /// Set only where a provider states how much of an allowance is left and
-    /// never how large the allowance is — Command Code's monthly plan grant is
-    /// the one case. The row says so on screen and in `--json`, because the
-    /// rule everywhere else is that a percentage comes from the provider.
+    /// Set only where a provider states how much of an allowance is **left**
+    /// and never how large the allowance is. The row says which on screen and
+    /// in `--json`, because the rule everywhere else is that a percentage comes
+    /// from the provider.
     ///
-    /// **Not `scope`.** That is a product name and is promised to be the same
-    /// in every language; a translated marker in it would break any script
-    /// matching on it. This is a flag, and the wording lives in `name`.
-    var isEstimated: Bool = false
+    /// **This is why it is not `scope`.** Scope is a product name and
+    /// `Docs/json-output.md` promises it reads the same in every language — a
+    /// translated qualifier there breaks any script matching on it, which is
+    /// exactly what putting "since top-up" in it did. A case here has a stable
+    /// token for the contract and a localized title for the card.
+    enum Estimate: String, Equatable, Codable, Sendable {
+        /// Command Code: the monthly grant, from its published plan price.
+        case planPrice
+        /// DeepSeek: the highest balance Pulse has watched.
+        case sinceTopUp
+        /// DeepSeek: a figure the reader typed.
+        case yourBudget
+
+        var title: String {
+            switch self {
+            case .planPrice: .localized("estimated")
+            case .sinceTopUp: .localized("since top-up")
+            case .yourBudget: .localized("of your budget")
+            }
+        }
+    }
+
+    var estimate: Estimate?
+
+    /// Whether the denominator was inferred at all, which is what `--json`
+    /// reports and what anything holding Pulse to "figures the provider
+    /// reported" filters on.
+    var isEstimated: Bool { estimate != nil }
 
     /// Whether the provider says this limit is spent.
     ///
@@ -107,11 +132,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
                 : .localized("\("\(Int((Double(seconds) / 3_600).rounded()))")-hour limit")
         }
-        // A scope that already names where the figure came from — "since
-        // top-up", "of your budget" — says it better than the generic marker
-        // does, and saying both reads as three separate qualifiers on one row.
-        if let scope { return "\(base) · \(scope)" }
-        return isEstimated ? "\(base) · \(String.localized("estimated"))" : base
+        let scoped = scope.map { "\(base) · \($0)" } ?? base
+        return estimate.map { "\(scoped) · \($0.title)" } ?? scoped
     }
 
     /// Rounded to the nearest whole number, **except that anything used at
@@ -353,6 +375,18 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// particular window in settings; a pin that no longer matches anything —
     /// a model that stopped being reported, say — quietly reverts to the
     /// default rather than leaving the ring blank.
+    /// Whether this reading actually says anything.
+    ///
+    /// **Not `!windows.isEmpty`.** That was the test everywhere, on the fair
+    /// assumption that a reading with no limits in it is a fetch that went
+    /// wrong — every service that has nothing to report says
+    /// `.noLimitsReported` rather than returning an empty `.live`. DeepSeek
+    /// broke the assumption: it sells prepaid credit and reports no allowance,
+    /// so on "balance only" a **complete** answer is deliberately a balance and
+    /// no windows at all. Read as a failure, the cache kept handing back the
+    /// previous reading and the setting appeared to do nothing.
+    var reportsSomething: Bool { !windows.isEmpty || creditBalance != nil }
+
     func headlineWindow(preferring id: String? = nil) -> UsageWindow? {
         if let id, let pinned = windows.first(where: { $0.id == id }) { return pinned }
         return windows.max { $0.usedFraction < $1.usedFraction }

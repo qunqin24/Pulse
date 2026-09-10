@@ -16,7 +16,7 @@ struct UsageReportTests {
         scope: String? = nil,
         seconds: Int = 7 * 86_400,
         reportsLength: Bool = true,
-        isEstimated: Bool = false,
+        estimate: UsageWindow.Estimate? = nil,
         resetsAt: Date? = nil
     ) -> UsageWindow {
         UsageWindow(
@@ -27,7 +27,7 @@ struct UsageReportTests {
             windowSeconds: seconds,
             resetsAt: resetsAt,
             reportsLength: reportsLength,
-            isEstimated: isEstimated
+            estimate: estimate
         )
     }
 
@@ -184,7 +184,7 @@ struct UsageReportTests {
         let rail = AppSettings.StoredRail(accounts: [account], labels: [:], pinnedWindows: [:])
         let root = try Self.object(rail: rail, readings: [account.id: Self.reading(account, [
             Self.window("five-hour", kind: .fiveHour, used: 0.25, seconds: 5 * 3_600),
-            Self.window("monthly", kind: .monthly, used: 0.58, seconds: 30 * 86_400, isEstimated: true),
+            Self.window("monthly", kind: .monthly, used: 0.58, seconds: 30 * 86_400, estimate: .planPrice),
         ], observedAt: Self.generatedAt)])
         let windows = try #require(try Self.accounts(root)[0]["windows"] as? [[String: Any]])
 
@@ -192,6 +192,10 @@ struct UsageReportTests {
         #expect(windows.allSatisfy { $0["estimated"] != nil })
         #expect(windows.first { $0["id"] as? String == "five-hour" }?["estimated"] as? Bool == false)
         #expect(windows.first { $0["id"] as? String == "monthly" }?["estimated"] as? Bool == true)
+        // Which inference, as a token a script can switch on rather than a
+        // translated word.
+        #expect(windows.first { $0["id"] as? String == "monthly" }?["estimatedFrom"] as? String == "planPrice")
+        #expect(windows.first { $0["id"] as? String == "five-hour" }?["estimatedFrom"] == nil)
         // And it is a flag, not a translated word hidden in a product field.
         #expect(windows.allSatisfy { $0["scope"] == nil })
     }

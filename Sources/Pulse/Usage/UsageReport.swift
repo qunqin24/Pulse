@@ -152,10 +152,13 @@ enum UsageReport {
         let reportsLength: Bool
         /// True where the provider stated how much of an allowance is left but
         /// never how large it is, so the denominator behind `usedFraction` was
-        /// inferred rather than reported. Command Code's monthly plan grant is
-        /// the only one today. Anything holding Pulse to "figures the provider
-        /// reported" should filter on this.
+        /// inferred rather than reported. Anything holding Pulse to "figures
+        /// the provider reported" should filter on this.
         let estimated: Bool
+        /// Which inference, as a stable token: `planPrice`, `sinceTopUp` or
+        /// `yourBudget`. Absent when `estimated` is false. Not translated —
+        /// the wording shown on the card is, this is not.
+        let estimatedFrom: String?
         let resetsAt: Date?
 
         init(_ window: UsageWindow) {
@@ -168,6 +171,7 @@ enum UsageReport {
             windowSeconds = window.windowSeconds
             reportsLength = window.reportsLength
             estimated = window.isEstimated
+            estimatedFrom = window.estimate?.rawValue
             resetsAt = window.resetsAt
         }
 

@@ -56,6 +56,66 @@ struct UsageCacheTests {
         #expect(banked?.windows.first?.usedFraction == 0.4)
     }
 
+    /// The rule was `!windows.isEmpty`, on the fair assumption that a reading
+    /// with no limits in it is a fetch that went wrong. DeepSeek broke it: on
+    /// "balance only" a **complete** answer is deliberately a balance and no
+    /// windows, and the cache kept handing back the previous reading — so
+    /// switching the setting appeared to do nothing at all.
+    @Test("A live reading with a balance and no limits is an answer, not a failure")
+    func aBalanceWithoutLimitsIsAnAnswer() async {
+        let cache = Self.cache()
+        let deepSeek = AccountKey(.deepSeek)
+        // Recent, or the bank is discarded as older than a day and every path
+        // trivially hands the fetched reading back — proving nothing.
+        let earlier = Date().addingTimeInterval(-600)
+
+        let measured = ProviderUsage(
+            account: deepSeek,
+            windows: [Self.window(used: 0.4, resetsAt: nil)],
+            observedAt: earlier,
+            state: .live,
+            plan: nil,
+            creditBalance: "¥9.40"
+        )
+        _ = await cache.reconciled(measured)
+
+        let balanceOnly = ProviderUsage(
+            account: deepSeek,
+            windows: [],
+            observedAt: earlier.addingTimeInterval(60),
+            state: .live,
+            plan: nil,
+            creditBalance: "¥9.40"
+        )
+        let shown = await cache.reconciled(balanceOnly)
+
+        #expect(shown.windows.isEmpty)
+        #expect(shown.state == .live)
+        #expect(shown.creditBalance == "¥9.40")
+    }
+
+    /// The other half of the same rule, which must not be lost with it: a
+    /// reading carrying nothing at all is still a failure to fall back from.
+    @Test("A live reading carrying nothing at all is still not an answer")
+    func anEmptyReadingIsStillAFailure() async {
+        let cache = Self.cache()
+        let earlier = Date().addingTimeInterval(-600)
+        _ = await cache.reconciled(Self.live([Self.window(used: 0.4, resetsAt: nil)], at: earlier))
+
+        let empty = ProviderUsage(
+            account: Self.account,
+            windows: [],
+            observedAt: earlier.addingTimeInterval(60),
+            state: .live,
+            plan: nil,
+            creditBalance: nil
+        )
+        let shown = await cache.reconciled(empty)
+
+        #expect(shown.windows.count == 1)
+        #expect(shown.state == .stale)
+    }
+
     @Test("A failed fetch falls back to the banked figures, marked stale")
     func failureFallsBackToCache() async {
         let cache = Self.cache()
