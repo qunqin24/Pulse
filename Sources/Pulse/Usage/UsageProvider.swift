@@ -228,6 +228,15 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
          .commandCode, .deepSeek].contains(self)
     }
 
+    /// Whether this Mac can see the thing this provider is billing for.
+    ///
+    /// True for the agents that write transcripts here, and true enough for a
+    /// subscription whose window turns over on a clock. False for credit spent
+    /// through an API on somebody else's servers: nothing local moves when it
+    /// drains, so `AdaptiveRefresh`'s signals are blind to it and it would sit
+    /// on the ceiling for ever. See `AdaptiveRefresh.unwatchedCeiling`.
+    var spendingIsWatchedLocally: Bool { !reportsSpendableBalance }
+
     /// Whether this provider reports a prepaid balance that can be compared
     /// against a figure — so a "warn me below" line is worth offering.
     ///

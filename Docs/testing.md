@@ -22,6 +22,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `ZaiHistoryReadTests` | What a history read found *out*: no key is not a failed request, and a successful reply with no rows is an answer |
 | `ActiveDisplayTests` | Following the pointer onto another display: the move keeps dock and both ratios, a held panel refuses and the refusal is *reported* so the display stays on offer, and returning to the display it is already on is quiet rather than a refusal. [ui/panel-geometry.md](ui/panel-geometry.md) |
 | `PanelHoldTests` | Nothing re-places the panel while it is held — including the gap between mouse-down and the first movement, where `isDragging` is still false. [ui/input.md](ui/input.md) |
+| `RefreshPacingTests` | What `.automatic` waits, and the one asymmetry in it: a provider whose spending this Mac cannot see is capped at five minutes instead of thirty, the cap only ever lowers a wait, and a constrained Mac or hidden panel still outranks it. [refresh-and-data.md](refresh-and-data.md) |
 | `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |

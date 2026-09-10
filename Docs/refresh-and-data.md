@@ -12,6 +12,8 @@ What Pulse says about these readings unprompted: [notifications.md](notification
 
 Because the wait changes each pass, `scheduleNext` sets `Timer.scheduledTimer(..., repeats: false)` and reschedules after every refresh.
 
+**One timer, but not one cadence.** Under `.automatic` each provider has its own interval and the timer is set for whichever is due soonest; a pass then asks only the accounts that are actually due (`UsageStore.isDue`, paced from `askedAt` — *asked*, not answered, or a provider that refuses every time reads as permanently due and spins the loop). Everything not asked keeps the reading it has, because the commit loop is gated on the same set. A **fixed** interval chosen in Settings applies to everything equally: somebody who picked five minutes meant five minutes.
+
 Signals (every one is a reason to wait **longer**, never shorter):
 
 - CLI transcript metadata (`AgentActivity.lastWrite`) — not a second file scan
@@ -19,6 +21,14 @@ Signals (every one is a reason to wait **longer**, never shorter):
 - Whether the rail was hovered (`noteLooked`)
 - Whether the panel is on screen
 - Low power, thermal, display asleep
+
+#### The one asymmetry: providers this Mac cannot watch
+
+Every signal above is local, which is the module's whole advantage — Pulse can see an agent working without asking anyone's server. It also means a provider billed entirely on **its own** servers is invisible to all three activity signals and lands on the ceiling every time. That is circular: it waits half an hour because nothing changed, and nothing appears to have changed because it waited half an hour. For prepaid credit draining towards zero — DeepSeek, Command Code — being half an hour late is the one case where it costs something.
+
+So `AdaptiveRefresh.interval(for:isWatched:)` caps those at `unwatchedCeiling` (300s). `Provider.spendingIsWatchedLocally` is the flag, and it is the inverse of `reportsSpendableBalance`.
+
+The cap **only ever lowers** a wait the ladder already decided, which keeps the module's rule intact: no signal here may make anything wait longer. And it is beaten by the two short-circuits above it — a constrained Mac and a hidden panel — because those are statements about *this machine*, not about the provider.
 
 Manual interval in Settings still exists. The group is named **Refresh**, not Updates (the app has Sparkle now).
 

@@ -74,6 +74,12 @@ final class UsageStore {
     private static let lookCooldown: TimeInterval = 30
 
     private var signals = AdaptiveRefresh.Signals()
+    /// When each account was last **asked**, not when it last answered.
+    ///
+    /// Asked, because this paces requests: one that failed still spent the
+    /// request, and one that never commits — a provider refusing every time —
+    /// would otherwise read as permanently due and spin the loop.
+    private var askedAt: [String: Date] = [:]
     private var screensAsleep = false
 
     /// Whether either CLI is working right now. Its own clock — see
@@ -225,6 +231,25 @@ final class UsageStore {
         }
     }
 
+    /// How long this provider may be left between asks.
+    ///
+    /// A fixed interval chosen in Settings applies to everything equally —
+    /// somebody who picked five minutes meant five minutes. Only `.automatic`
+    /// paces providers differently, and only ever to ask sooner.
+    private func interval(for provider: Provider) -> TimeInterval {
+        settings.refreshInterval.seconds
+            ?? AdaptiveRefresh.interval(for: signals, isWatched: provider.spendingIsWatchedLocally)
+    }
+
+    /// A second of slack, so a timer that fires a hair early does not skip the
+    /// very provider it woke up for and sleep another full interval.
+    private static let dueSlack: TimeInterval = 1
+
+    private func isDue(_ provider: Provider, at now: Date) -> Bool {
+        guard let asked = askedAt[AccountKey(provider).id] else { return true }
+        return now.timeIntervalSince(asked) >= interval(for: provider) - Self.dueSlack
+    }
+
     /// Whether the newest reading is older than the loop's own cadence allows.
     ///
     /// Twice the interval plus a minute: one missed tick is a slow network,
@@ -325,7 +350,22 @@ final class UsageStore {
         // Nothing is fetched for a provider that isn't on the rail: it would
         // spend someone else's request, and read a credential, for a figure
         // nobody is going to see.
-        let wanted = Set(settings.shownAccounts.filter(\.isPrimary).map(\.provider))
+        // **And only the ones that are due.** One timer still drives the loop,
+        // but each provider has its own cadence under `.automatic`, so a pass
+        // woken for DeepSeek must not drag sixteen other services along with
+        // it. Everything not asked keeps the reading it already has: the
+        // commit loop below is gated on this same set.
+        let now = Date()
+        let wanted = Set(
+            settings.shownAccounts
+                .filter(\.isPrimary)
+                .map(\.provider)
+                .filter { isDue($0, at: now) }
+        )
+        for provider in wanted { askedAt[AccountKey(provider).id] = now }
+        // Added accounts stay on the loop's own cadence: every one of them is
+        // an agent whose transcripts this Mac can see, so the signals are not
+        // blind to any of them.
         let extras = settings.shownAccounts.filter { !$0.isPrimary }
 
         Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
@@ -748,7 +788,18 @@ final class UsageStore {
         // the refresh loop reads its answer rather than scanning again.
         signals.lastAgentActivity = activity.lastWrite
 
-        let wait = settings.refreshInterval.seconds ?? AdaptiveRefresh.interval(for: signals)
+        // The soonest anything is due, so the provider on the shortest cadence
+        // sets the alarm and the rest are simply not asked when it goes off.
+        let now = Date()
+        let waits = settings.shownAccounts.filter(\.isPrimary).map { account -> TimeInterval in
+            let due = interval(for: account.provider)
+            guard let asked = askedAt[account.id] else { return 0 }
+            return max(due - now.timeIntervalSince(asked), 0)
+        }
+        // A floor on the *timer* rather than on any provider's cadence: with
+        // nothing enabled, or with something perpetually due, this is what
+        // stops the loop spinning.
+        let wait = max(waits.min() ?? AdaptiveRefresh.interval(for: signals), 15)
         currentInterval = wait
 
         let timer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in
