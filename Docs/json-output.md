@@ -38,6 +38,8 @@ accounts[]
   creditBalance        when the provider reports one
   observedAt           when this reading was taken, absent when there is none
   ageSeconds           generatedAt − observedAt
+  source               actual origin of the saved reading, absent for older caches
+  settingsURL          pulse://account/<percent-encoded account id>
   headline{}           the window the ring shows: windowId, usedPercent, exhausted, resetsAt
   windows[]
     id, kind, scope
@@ -55,6 +57,10 @@ accounts[]
 `headline` repeats a window from `windows` on purpose: the common case is one number in a status line, and making every consumer re-implement "which limit matters" — the fullest, unless one is pinned — is how they end up disagreeing with the ring.
 
 `usedPercent` carries the display rule, so anything used never reads 0% and not quite full never reads 100%. `UsageWindow.percentValue` is the one copy of it; `percentText` is that plus a `%`.
+
+`source` is a stable token: `endpoint`, `statusLine`, `desktopSession`, `appServer`, `languageServer`, `webSession`, or `arkCLI`. It describes where the saved figures came from, not the user's current route preference or the outcome of a later failed check. Old cache files carry no source; Pulse does not reconstruct one from today's settings. Consumers should tolerate future source tokens.
+
+`settingsURL` exists even without a reading. Added-account `#` separators are encoded as `%23`, not URL fragments. The bundled app opens that account's settings. Ready-to-use consumers and installation: [integrations.md](integrations.md).
 
 ## Examples
 

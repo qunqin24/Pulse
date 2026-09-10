@@ -26,6 +26,8 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `RailSlotTests` | The rail's order — including the order before anybody arranges it, which is by name, and that an arrangement somebody made is not re-sorted under them: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
+| `ConnectionDiagnosticTests` | Failures through real cache reconciliation, persisted origin, legacy unknown sources, capture freshness versus cache selection, allowlisted diagnostic copy, account-specific repair choices, and credential failures at pinned service boundaries without network calls |
+| `PulseLinkTests` | Encoded added-account ids, malformed/action-bearing URL rejection, existing-account navigation and repeated-link requests |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `ZaiHistoryTests` | The statistics endpoint's shape → a day-by-day ledger, and what may not be said about it |
 | `SecondWindowTests` | Which limit the second ring shows: the fullest in the headline's own model group, and the fallback when that group holds nothing more |
@@ -38,6 +40,8 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `DeepSeekParsingTests` | Where each denominator comes from, for the one provider that reports none: the watched mark advancing only on a rise, a peak of zero drawing nothing, a budget of nothing drawing nothing, money strings parsed with absent kept distinct from zero, which currency the ring follows, and `is_available` being the only thing that may say spent. [providers/deepseek.md](providers/deepseek.md) |
 
 ## What is not, and why
+
+Developer integrations also have `Integrations/raycast/tests/report.mjs`: run `npm test` from that extension directory after `npm ci`. It exercises the TypeScript consumer and launches the actual shell formatter with synthetic JSON, covering gaps, balance-only accounts, estimates, age, exact account selection and tmux escaping. `npm run build` and `npm run typecheck` check the Raycast extension. These are not evidence of real Raycast/sketchybar UI or macOS URL delivery; those need the host applications and a bundled Pulse. Installation: [integrations.md](integrations.md).
 
 **No UI tests.** The panel is an accessory `NSPanel` whose hover cannot be driven by synthesised events — `hitTest` and synthetic `NSEvent`s both reported a handle as perfectly reachable while real clicks were being dropped, which is the lesson in [ui/input.md](ui/input.md). A UI test here would report the same thing.
 
@@ -53,7 +57,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 ## Two conventions
 
-**The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving sixty-nine files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
+**The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving seventy-eight files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
 
 **A symbol may be `internal` instead of `private` so a test can hold it**, and when it is, the comment says so and says not to tidy it back. `AntigravityUsageService.Reply` and `windows(from:)` are the first two. Nothing outside the module can see them either way; the difference is only whether the fixture test compiles.
 

@@ -69,6 +69,8 @@ At launch, if Claude Code is enabled and its source is Automatic or Desktop App,
 
 OAuth scopes and loopback behaviour: [authentication.md](authentication.md).
 
+Route-check diagnostics preserve fallback outcomes without changing which account may answer; the shared diagnostic and repair contract is in [README.md](README.md#diagnostic-route-checks-and-repair).
+
 ## Spent
 
 Claude Code reports `severity` and `locked_reason` per limit. Unrecognised severity is treated as spent.

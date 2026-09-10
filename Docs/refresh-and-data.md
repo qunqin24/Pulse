@@ -64,6 +64,14 @@ Disabled providers are not fetched. A provider pane can still refresh that accou
 
 Which unavailability cases a given provider emits: [providers/README.md](providers/README.md).
 
+### Connection diagnostics
+
+`UsageStore.commit` also records a `ConnectionDiagnostic` per account, separately from the reconciled display reading. It retains the latest raw result, completed-check timestamp, route checks and the newest successful reading timestamp. The last of these uses the reading's own `observedAt`: re-reading a status-line capture never advances it to the time the user clicked Retry. Restored cache and seeded placeholders do not manufacture a completed check; the UI says no check has completed since launch.
+
+`ProviderUsage.origin` records the route that produced the figures. Cache entries persist that optional origin; old entries remain unknown. `isCached` is set only by cache restoration, so a stale status-line capture displayed directly is not called a cache replacement. Route attempts are not saved with the figures. Single-route providers are labelled at reconciliation and diagnostic commit; the three multi-route services record their own branches ([providers/README.md](providers/README.md)).
+
+The copied diagnostic report is a fixed allowlist: app version, provider, primary/added account kind, route preference, typed outcomes and timestamps. It omits account ids and labels, plan names, amounts, paths, credentials, headers and response bodies. Tests pass results through the real cache before checking diagnostics. UI and repair controls: [ui/settings.md](ui/settings.md).
+
 ## Agent activity
 
 A white arc inside the ring while that provider’s CLI is working (`AgentActivity`), polled every 2s on its **own** clock. Usage moves in percent; a turn starts and finishes in seconds.

@@ -54,6 +54,7 @@ Treat remaining warnings as failures. macOS 14+, Swift tools 6.0, no linter. **`
 | Notifications, alert rules | [Docs/notifications.md](Docs/notifications.md) |
 | What is tested, fixtures | [Docs/testing.md](Docs/testing.md) |
 | `--json` output contract | [Docs/json-output.md](Docs/json-output.md) |
+| Developer integrations, account links | [Docs/integrations.md](Docs/integrations.md) |
 | Localization, resources, adding UI | [Docs/development.md](Docs/development.md) |
 | Bundle, tag, Sparkle, DMG | [Docs/releasing.md](Docs/releasing.md) / [Docs/build-from-source.md](Docs/build-from-source.md) |
 | Why / failure lessons | [Docs/decisions/README.md](Docs/decisions/README.md) |

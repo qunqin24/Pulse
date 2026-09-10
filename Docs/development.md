@@ -10,7 +10,7 @@ The AppKit frame is computed from `DockLayout` / `DetailCardLayout` **before** S
 - `FloatingUsagePanelView` (and anything else that caches layout) carries size, language, percentage flags, spacing, and label-above-ring in `.id(...)`. SwiftUI cannot observe plain statics.
 - Anything new on the panel takes size from `PanelMetrics`, never a literal. The card’s fonts scale with the rail; historically width followed `PanelMetrics` while fonts did not.
 - `percentTextHeight` and `itemLength` are measured with the real font and rounded **up**. Every item is pinned to its budgeted length along the rail axis.
-- `RailSpacing` (tight/standard/loose) is *not* folded into `PanelSize`: fewer millimetres between rings is a different wish from bigger rings.
+- `RailSpacing` (compact/standard/roomy) is *not* folded into `PanelSize`: fewer millimetres between rings is a different wish from bigger rings.
 - `BurnRate`’s extra line rides on `PanelMetrics` / `DetailCardLayout` because it changes card height. Left out of that budget, a top-docked card was sliced off the window.
 
 Historical matrix and disagreement numbers: [decisions/panel-frame.md](decisions/panel-frame.md). Do not treat those numbers as re-verified.

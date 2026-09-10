@@ -86,7 +86,7 @@ Do not paper over `.apiKeyMissing`, `.ollamaSessionMissing`, `.signedOut`, `.cla
 
 Not the same question as “does Settings draw a paste field”.
 
-- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN, Volcengine, Command Code. Ollama’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist.
+- `usesAPIKey` — Settings paste UI: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, MiniMax CN, Volcengine, Command Code, DeepSeek. Ollama’s value is a **session cookie** (`usesSessionCookie`); calling it an API key in Settings would send people looking for one that does not exist.
 - `keepsOwnCredential` — Pulse stores something in `keys.dat`: the paste providers **plus Copilot**. Reading `usesAPIKey` where *storage* was meant left a signed-in Copilot account reporting “sign in again”: the token was saved and then never loaded for the fetch.
 - Extra-account OAuth / Cursor web logins live in `accounts.dat`, not `keys.dat`. See [authentication.md](authentication.md).
 
@@ -96,13 +96,21 @@ Keys are read once per launch rather than once per refresh (`UsageStore.loadAPIK
 
 ### Source choice
 
-Only Claude Code and Codex have `hasSourceChoice` (tied to `keepsLocalTranscripts`). `.automatic` is the default: endpoint when it can, the other route when it cannot. Pinning means a failure is *reported* rather than quietly answered from elsewhere.
+Claude Code, Codex and Volcengine have `hasSourceChoice`. The picker applies only to primary accounts; added accounts use their own endpoint credential. `.automatic` is the default; each service owns its fallback policy, including Volcengine's preference for configured keys ([volcengine.md](volcengine.md)). Pinning means a failure is *reported* rather than quietly answered from elsewhere.
 
 `.desktopApp` is offered only on the **primary** Claude Code account. An added account’s picker must not offer a route `fetchAdded` would ignore.
 
 `Provider.soleRoute` is an exhaustive switch. It used to be a ternary in Settings (Cursor’s wording, else Antigravity’s), so Grok’s pane read “Antigravity’s language server”. The row is not drawn when the answer is nil. For Grok Bot it names **Cursor’s** login, because that is whose bill it is.
 
 An added Grok account is not shown the CLI-login row: `fetchAdded` never touches `~/.grok/auth.json`.
+
+### Diagnostic route checks and repair
+
+`UsageRoute` identifies actual origins separately from `UsageSource` preferences. Claude Code, Codex and Volcengine record their chosen branches and preceding failures. A route check includes credential eligibility and local-helper setup, so it does **not** claim that an HTTP request was sent. The single-route providers use `UsageRoute.soleRoute(for:)`. Added accounts are always endpoint-backed, including credential renewal failures before the HTTP call.
+
+Claude's automatic route retains an endpoint failure when a status-line capture answers. `ClaudeDesktopSession.attemptIfAlreadyPermitted` returns a failed result for diagnostics, or a reading with an identity-compatibility flag; only a compatible live answer interrupts fallback. A desktop account mismatch is recorded as a discarded attempt without exposing its identity. An unavailable or unpermitted desktop route is skipped without inventing a failed request. Incompatible desktop figures never enter the cache. A missing status-line capture is recorded as not connected / awaiting response even when the final unavailable message explains a CLI login problem.
+
+`ConnectionRemedy` maps typed reasons to actions: added-account login failures reopen that slot's sign-in; Copilot uses its existing GitHub flow; key failures focus the credential field; Ollama rereads the selected browser; an unconnected status line offers installation; desktop/editor failures open the relevant app; CLI login failures copy a command; transient failures offer Retry; unsupported response shapes and missing plans/tools open the provider's setup page. Opening an app does not silently restart it. Browser and sign-in operations retain their normal permissions and cancellation. Shared failure text remains provider-neutral.
 
 ### Extra accounts
 

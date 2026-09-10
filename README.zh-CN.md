@@ -55,6 +55,8 @@ Pulse 是一个停靠在屏幕边缘的小巧悬浮监视器。它展示各服�
 - **本地消费历史**：直接解析本地 CLI 会话日志，基于官方公开 API 价格折算历史总消费，并估算限额窗口的实际价值。
 - **十七个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、z.ai、Zhipu、MiniMax（国际与国内）、火山引擎、Command Code，以及 DeepSeek。
 - **可脚本化**：`Pulse --json` 输出最近一次读数——套餐、每条限额、重置时间，以及数字有多旧——可接 tmux、sketchybar、Raycast 或 shell 提示符。它只读缓存不发请求，高频轮询也不花代价。
+- **开发者集成**：在设置中导出 Raycast 扩展及可直接配置的 tmux、sketchybar、终端脚本；通过账户链接直达对应设置页。[安装指南](Docs/integrations.md)。
+- **连接诊断**：查看实际读数来源、缓存使用情况、最近检查及回退结果；根据原因直接重连、重新登录或编辑凭据，并可复制不含账户信息和密钥的诊断报告。
 - **本地优先**：无 Pulse 服务器、无 Pulse 账号、无遥测。请求发往你已在使用的服务商（并遵循 macOS 系统代理设置）。
 
 <p align="center">
@@ -84,6 +86,9 @@ Pulse 仅呈现各服务上报的数字，绝不依靠本地 Token 粗略估算�
 | **Zhipu** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
 | **MiniMax / MiniMax CN** | 设置中填入 API Key | 同时支持国际站（`minimax.io`）与国内站（`minimaxi.com`） |
 | **Ollama Cloud** | 本地读取浏览器登录会话 Cookies | 官方无配额 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
+| **Volcengine（火山引擎）** | `arkcli` 登录，或粘贴 Volcengine Access Key 对（签名走 Top OpenAPI） | Ark Coding / Agent 套餐；自动模式优先使用粘贴的密钥 |
+| **Command Code** | 设置中填入 API Key，或读取 `cmd auth login` 已保存的登录 | 以美元计费的余额；含滚动 5 小时 / 周限额与月度套餐行（标记为**估算**） |
+| **DeepSeek** | 设置中填入 API Key；官方文档化的 `GET /user/balance` | 仅报告预付余额、无额度；圆环的度量基准由你选择 |
 
 ---
 

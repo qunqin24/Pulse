@@ -34,7 +34,7 @@ Same window-level path. `FloatingPanel` records the press, marks a drag only aft
 
 Click starts a provider-scoped refresh. `UsageStore.isRefreshing` : the usage arc **dims but does not move**; a short bright segment travels around. Do not rotate the usage arc (at 0% there is no arc; at 95% a rotated arc looks still; it also takes the gauge away). Travelling mark is usage colour, not white (white is the CLI-activity mark). Hold at least 650ms so a local read still registers. Keep the physical click here; `sendEvent` takes the press before SwiftUI. Default accessibility action can still live on the ring.
 
-A click is matched against **displayed** order: `orderedProviders.filter(isEnabled)`, not `Provider.allCases`.
+A click is matched against the **displayed slots** the controller builds through `RailSlot.rail(for:isSplit:groups:)`, not `Provider.allCases`.
 
 ## Settings fields
 

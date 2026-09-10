@@ -2,7 +2,7 @@
 
 Chrome and why it is AppKit-owned: [../architecture.md](../architecture.md). Localization rules: [../development.md](../development.md).
 
-`SettingsView` / `SettingsRow`: `NavigationSplitView` source list, panes from `SettingsGroup` + `SettingsRow` (title + optional subtitle left, control right). `SettingsPane` includes `.provider(_:)` so each provider has a sidebar row.
+`SettingsView` / `SettingsRow`: `NavigationSplitView` source list, panes from `SettingsGroup` + `SettingsRow` (title + optional subtitle left, control right). `SettingsPane` includes `.account(AccountKey)`, so every account — each provider’s first, plus any added login — has a sidebar row.
 
 The sidebar is `.searchable(placement: .sidebar)` — **not** `.automatic`: this window has no `NSToolbar`, so automatic placement has nowhere to put the field. Accounts match on the provider's name *as well as* the user's label, so a second Claude subscription called "工作" is still found by typing "claude". Matching is `localizedStandardContains` (case- and accent-insensitive, the same comparison Finder searches with). A section with no matches is omitted; nothing matching at all leaves a "No matches" line. The current selection is not cleared by a search that hides it — you keep your place.
 
@@ -37,6 +37,12 @@ Default window: **920 × 660**, set on the `NSWindow`'s `contentRect`; the view'
 A provider with one route has that route **named**, and the name belongs to the provider (`Provider.soleRoute`). A ternary (Cursor vs else Antigravity) made the next single-route provider inherit Antigravity’s sentence. Exhaustive `Provider` switch; omit the row when nil.
 
 Each pane has its own refresh, with last-reading time. Rail click is not the only way.
+
+Each account also has a **Connection diagnostics** group immediately after Connection: latest check, check time, last successful reading, actual source of displayed figures, explicit cache use, and expandable route checks. A failed check stays visible even when the card displays cached figures. Retry asks only that account; diagnostic copy contains allowlisted metadata ([../refresh-and-data.md](../refresh-and-data.md)). The contextual next step focuses the credential field, reconnects the status line, starts the existing sign-in, reads the chosen browser, opens the relevant app, copies a login command, or opens setup help. Provider-specific action mappings live in [../providers/README.md](../providers/README.md).
+
+Added accounts have a **Sign in again** control; successful reauthentication replaces credentials in the selected slot, preserving its name and display preferences. They do not show ambient CLI source controls that their fetch ignores. A cancelled sign-in or an account removed while sign-in is pending is not written back.
+
+The sidebar's Application section includes **Developer integrations**. It copies the actual executable's `--json` command with shell quoting, exports the bundled developer kit into a new `Pulse Integrations` folder, and copies links or `open` commands for any configured account. Exports refuse an existing destination and exclude dependency/build folders. Install instructions: [../integrations.md](../integrations.md).
 
 The Panel group's rows are per account: show, "Ring shows", ring colour — and, only where `Provider.splitsByModelGroup` is true, **"A ring for each model group"**. Drawn behind that flag rather than always with an explanation, because a switch that promises a second ring it can never draw is worse than no switch. Off by default; it costs a slot on the rail, and the rail is the whole of the panel when docked. [rings-and-surface.md](rings-and-surface.md)
 

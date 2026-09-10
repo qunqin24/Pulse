@@ -30,6 +30,7 @@ Release needs `SPARKLE_PRIVATE_KEY`. It fails without it rather than publishing 
 
 - Resource bundle in `Contents/Resources` (`Bundle.module` via `Bundle.main.resourceURL`). Leave it out: English, no provider marks.
 - `LSUIElement` = true.
+- `CFBundleURLTypes` registers `pulse` for settings/account navigation. The developer kit is copied to `Contents/Resources/Integrations` from an explicit file list: scripts, Raycast source, manifest, lockfile, icon and tests; no `node_modules` or generated extension output. This copy needs no Node.js build on release CI. [integrations.md](integrations.md)
 - Universal: `--arch arm64 --arch x86_64`. Zip with **`ditto`**, not `zip` (plain zip flattens bundle symlinks).
 - **Output is `build.noindex/`.** Spotlight indexes any `.app`; a project-folder build appears beside the installed copy, and whichever is opened claims the login item and rewrites Claude Code’s status-line path to itself. A `.metadata_never_index` marker was tried and did **not** stop indexing (historical); the `.noindex` suffix is what Spotlight honours. Do not rename it back.
 - Sparkle is copied into `Contents/Frameworks` and `@executable_path/../Frameworks` is added to the rpath. Sign **inside out** (nested XPC / updater first).
