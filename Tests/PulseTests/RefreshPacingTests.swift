@@ -69,6 +69,59 @@ struct RefreshPacingTests {
         #expect(Self.interval(constrained, isWatched: false) == AdaptiveRefresh.ceiling)
     }
 
+    // MARK: - Which providers a pass asks
+
+    private static let deepSeek = AccountKey(.deepSeek)
+    private static let claude = AccountKey(.claudeCode)
+
+    private static func asked(_ seconds: TimeInterval) -> [String: Date] {
+        [deepSeek.id: now.addingTimeInterval(-seconds), claude.id: now.addingTimeInterval(-seconds)]
+    }
+
+    private static func toAsk(dueOnly: Bool, askedAt: [String: Date]) -> Set<Provider> {
+        UsageStore.providersToAsk(
+            from: [deepSeek, claude],
+            dueOnly: dueOnly,
+            askedAt: askedAt,
+            interval: { $0 == .deepSeek ? AdaptiveRefresh.unwatchedCeiling : AdaptiveRefresh.ceiling },
+            now: now
+        )
+    }
+
+    /// **The bug this exists to prevent is not a slow refresh, it is a control
+    /// that does nothing.** Switching DeepSeek between "since top-up" and
+    /// "balance only" changes what the reading means, and a pass that skipped
+    /// the provider because it had been asked a minute ago left the old ring
+    /// on screen for up to five minutes.
+    @Test("Anything but the timer asks everything, however recently it was asked")
+    func onlyTheTimerHonoursTheCadence() {
+        #expect(Self.toAsk(dueOnly: false, askedAt: Self.asked(1)) == [.deepSeek, .claudeCode])
+    }
+
+    @Test("The timer asks only what its own cadence says is due")
+    func theTimerAsksWhatIsDue() {
+        // Six minutes: past DeepSeek's five-minute cap, nowhere near the
+        // half-hour ceiling the other one is on.
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(6 * 60)) == [.deepSeek])
+        // Neither, a minute in.
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(60)).isEmpty)
+        // Both, once the slower one comes round.
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(31 * 60)) == [.deepSeek, .claudeCode])
+    }
+
+    @Test("An account never asked is due")
+    func neverAskedIsDue() {
+        #expect(Self.toAsk(dueOnly: true, askedAt: [:]) == [.deepSeek, .claudeCode])
+    }
+
+    /// A timer that fires a hair early must not skip the very provider it woke
+    /// up for and then sleep another full interval.
+    @Test("A tick landing just short of the interval still counts as due")
+    func theSlackCoversAnEarlyTick() {
+        let justShort = AdaptiveRefresh.unwatchedCeiling - UsageStore.dueSlack / 2
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(justShort)).contains(.deepSeek))
+    }
+
     /// The list is short on purpose: it is the providers whose money moves
     /// where this Mac cannot see it.
     @Test("Only the balance providers are unwatched")

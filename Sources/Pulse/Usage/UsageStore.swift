@@ -243,11 +243,41 @@ final class UsageStore {
 
     /// A second of slack, so a timer that fires a hair early does not skip the
     /// very provider it woke up for and sleep another full interval.
-    private static let dueSlack: TimeInterval = 1
+    nonisolated static let dueSlack: TimeInterval = 1
 
-    private func isDue(_ provider: Provider, at now: Date) -> Bool {
-        guard let asked = askedAt[AccountKey(provider).id] else { return true }
-        return now.timeIntervalSince(asked) >= interval(for: provider) - Self.dueSlack
+    /// Which providers a pass should ask.
+    ///
+    /// **`dueOnly` is true for exactly one caller: the timer.** Everything else
+    /// that reaches `refresh()` is something happening — a setting changed, a
+    /// window reset, the display woke, the pointer arrived at a rail whose
+    /// figures are older than they should be — and each of those is a reason to
+    /// go and look *now*, whatever the cadence says.
+    ///
+    /// Getting that backwards is not a slow refresh, it is a control that does
+    /// nothing: switching DeepSeek between "since top-up" and "balance only"
+    /// changes what the reading means, and a pass that skipped it because it
+    /// had been asked a minute ago left the old ring on screen.
+    ///
+    /// `nonisolated static` and pure, so the rule is arguable: it reads none of
+    /// the store's state, the clock is passed in, and so is the cadence — which
+    /// is the store's own `interval(for:)` in production.
+    nonisolated static func providersToAsk(
+        from accounts: [AccountKey],
+        dueOnly: Bool,
+        askedAt: [String: Date],
+        interval: (Provider) -> TimeInterval,
+        now: Date
+    ) -> Set<Provider> {
+        Set(
+            accounts
+                .filter(\.isPrimary)
+                .map(\.provider)
+                .filter { provider in
+                    guard dueOnly else { return true }
+                    guard let asked = askedAt[AccountKey(provider).id] else { return true }
+                    return now.timeIntervalSince(asked) >= interval(provider) - dueSlack
+                }
+        )
     }
 
     /// Whether the newest reading is older than the loop's own cadence allows.
@@ -299,7 +329,9 @@ final class UsageStore {
     /// ever asks again.
     private static let passCeiling: TimeInterval = 180
 
-    func refresh() {
+    /// - Parameter dueOnly: leave every provider alone whose own cadence has
+    ///   not come round yet. True only from the timer; see `providersToAsk`.
+    func refresh(dueOnly: Bool = false) {
         if isRefreshing, let started = refreshStartedAt,
            Date().timeIntervalSince(started) > Self.passCeiling {
             // Whatever it was waiting for is not coming. Letting the next pass
@@ -356,11 +388,12 @@ final class UsageStore {
         // it. Everything not asked keeps the reading it already has: the
         // commit loop below is gated on this same set.
         let now = Date()
-        let wanted = Set(
-            settings.shownAccounts
-                .filter(\.isPrimary)
-                .map(\.provider)
-                .filter { isDue($0, at: now) }
+        let wanted = Self.providersToAsk(
+            from: settings.shownAccounts,
+            dueOnly: dueOnly,
+            askedAt: askedAt,
+            interval: { self.interval(for: $0) },
+            now: now
         )
         for provider in wanted { askedAt[AccountKey(provider).id] = now }
         // Added accounts stay on the loop's own cadence: every one of them is
@@ -803,7 +836,8 @@ final class UsageStore {
         currentInterval = wait
 
         let timer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
+            // **The one caller that honours each provider's own cadence.**
+            MainActor.assumeIsolated { self?.refresh(dueOnly: true) }
         }
         // `.common` so the loop keeps running while a menu or a drag has the
         // run loop in another mode.
