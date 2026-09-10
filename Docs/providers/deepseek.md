@@ -56,6 +56,10 @@ This is the whole reason it is the default. Pulse reads the balance every refres
 
 What it costs is the first run: a Mac that has never watched this account has no mark, so the first reading becomes one and the ring reads 0% until money is actually spent. That is a true statement about what Pulse has seen. A peak of zero draws no window at all — an account that has never had credit is not one that has spent it.
 
+### The card shows the money
+
+`balanceOnly` produces a reading whose body is nothing but a balance, and the card's body is otherwise limits, an unavailability message and a footnote — so hovering it drew a bubble with only the provider's name in it, which reads as a card that failed to load. Where a provider reports money and no allowance the money *is* the reading, so the card says it as a plain figure. No bar: a bar at zero beside a healthy balance reads as an empty account. No explanatory line either — it said the provider reports no limit, which the card has already made obvious by having nothing else on it.
+
 ### A reading with no windows is still a reading
 
 `balanceOnly` is the first **complete** answer Pulse has ever produced with no windows in it. `UsageCache.reconciled` tested `!windows.isEmpty` to mean "this fetch went wrong" — a fair assumption while every service with nothing to report returned `.noLimitsReported` — so it kept handing back the previous reading and switching the setting appeared to do nothing at all. The test is now `ProviderUsage.reportsSomething`: a balance is an answer. A reading carrying neither windows nor a balance is still a failure to fall back from, and `UsageCacheTests` pins both halves.

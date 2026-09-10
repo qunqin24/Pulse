@@ -129,11 +129,7 @@ struct UsageDetailCard: View {
             // reports money and no limits *by design*, and the money is then
             // the whole reading — so it is what the card says.
             if usage.windows.isEmpty, let balance = usage.creditBalance {
-                ValueRow(
-                    title: String.localized("Credit balance"),
-                    value: balance,
-                    note: String.localized("This provider reports no limit to measure it against.")
-                )
+                ValueRow(title: String.localized("Credit balance"), value: balance)
             }
 
             // The same rule for the other way a body can come out empty: a
@@ -264,31 +260,27 @@ struct UsageDetailCard: View {
 /// No bar: there is nothing to fill it with. A bar drawn at zero beside a real
 /// balance would read as an empty account, which is the opposite of what a
 /// healthy balance means.
+///
+/// No explanatory line under it either. It said that the provider reports no
+/// limit to measure the figure against, which is true and is also the one
+/// thing the card has already made obvious by having nothing else on it.
 private struct ValueRow: View {
     let title: String
     let value: String
-    let note: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DetailCardLayout.rowInternalSpacing) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(title)
-                    .foregroundStyle(.primary)
-                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(title)
+                .foregroundStyle(.primary)
+                .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
 
-                Spacer(minLength: 0)
+            Spacer(minLength: 0)
 
-                Text(value)
-                    .font(.system(size: DetailCardLayout.rowFontSize, weight: .medium, design: .rounded))
-                    .foregroundStyle(.primary.opacity(0.9))
-                    .lineLimit(1)
-                    .layoutPriority(1)
-            }
-
-            Text(note)
-                .font(.system(size: DetailCardLayout.footnoteFontSize, weight: .regular, design: .rounded))
-                .foregroundStyle(.primary.opacity(0.45))
-                .fixedSize(horizontal: false, vertical: true)
+            Text(value)
+                .font(.system(size: DetailCardLayout.rowFontSize, weight: .medium, design: .rounded))
+                .foregroundStyle(.primary.opacity(0.9))
+                .lineLimit(1)
+                .layoutPriority(1)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
