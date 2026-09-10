@@ -53,7 +53,7 @@ Pulse 是一个停靠在屏幕边缘的小巧悬浮监视器。它展示各服�
 ### 多账号管理与本地消费账本
 - **多账号并行**：支持同一服务绑定多个订阅（Claude Code、Codex、Grok、Grok Bot），并排查看并自定义标签。
 - **本地消费历史**：直接解析本地 CLI 会话日志，基于官方公开 API 价格折算历史总消费，并估算限额窗口的实际价值。
-- **十六个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、Z.ai、GLM Coding Plan、MiniMax（国际与国内）、火山引擎，以及 Command Code。
+- **十六个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、z.ai、Zhipu、MiniMax（国际与国内）、火山引擎，以及 Command Code。
 - **可脚本化**：`Pulse --json` 输出最近一次读数——套餐、每条限额、重置时间，以及数字有多旧——可接 tmux、sketchybar、Raycast 或 shell 提示符。它只读缓存不发请求，高频轮询也不花代价。
 - **本地优先**：无 Pulse 服务器、无 Pulse 账号、无遥测。请求发往你已在使用的服务商（并遵循 macOS 系统代理设置）。
 
@@ -80,8 +80,8 @@ Pulse 仅呈现各服务上报的数字，绝不依靠本地 Token 粗略估算�
 | **GitHub Copilot** | GitHub 设备码（Device Code）登录 | 仅申请极窄的 `read:user` 权限，绝不触碰你的仓库代码 |
 | **OpenCode Go** | 设置中填入 API Key，或读取 OpenCode CLI 登录信息 | — |
 | **Kimi Code** | 设置中填入 API Key | — |
-| **Z.ai** | 设置中填入 API Key | 智谱国际站（`api.z.ai`），与国内账号独立 |
-| **GLM 编码套餐** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
+| **z.ai** | 设置中填入 API Key | 智谱国际站（`api.z.ai`），与国内账号独立 |
+| **Zhipu** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
 | **MiniMax / MiniMax CN** | 设置中填入 API Key | 同时支持国际站（`minimax.io`）与国内站（`minimaxi.com`） |
 | **Ollama Cloud** | 本地读取浏览器登录会话 Cookies | 官方无配额 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 

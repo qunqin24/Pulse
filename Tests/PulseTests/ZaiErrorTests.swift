@@ -87,7 +87,7 @@ struct ZaiErrorTests {
         // Both shops sell the same thing under the same name, so a row called
         // "GLM Coding Plan" is a row half the buyers pick wrongly — issue #13.
         #expect(Provider.zai.displayName == "z.ai")
-        #expect(Provider.glmCoding.displayName == "智谱")
+        #expect(Provider.glmCoding.displayName == "Zhipu")
         for provider in [Provider.zai, .glmCoding] {
             #expect(!provider.displayName.contains("GLM Coding Plan"),
                     "the ambiguous name is what caused the mix-up")

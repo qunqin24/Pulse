@@ -46,7 +46,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // company is the one thing that differs and the one thing a buyer
         // knows, so it is the whole name.
         case .zai: "z.ai"
-        case .glmCoding: "智谱"
+        case .glmCoding: "Zhipu"
         // Same product, two storefronts and two accounts. There is no separate
         // brand name for the mainland one, so the region is the distinction.
         case .minimax: "MiniMax"
@@ -149,7 +149,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     ///
     /// **Not the same question as `keepsLocalTranscripts`**, which it used to
     /// be. Two different sources answer it: the CLIs leave session files on
-    /// this Mac, and Z.ai and 智谱 publish the account's own statistics — the
+    /// this Mac, and Z.ai and Zhipu publish the account's own statistics — the
     /// endpoint their console draws its charts from. The second is the better
     /// data (it covers every machine) and the poorer (one token total per
     /// model, so nothing can be priced), which is what `UsageLedger.Origin`

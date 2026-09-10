@@ -22,7 +22,7 @@ Declaration order in `Provider` is the order a new, unmentioned provider is appe
 | `.kimiCode` | Kimi Code | `kimi` | Pasted key | no | pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
-| `.glmCoding` | 智谱 | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
+| `.glmCoding` | Zhipu | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
 | `.minimax` | MiniMax | `minimax` | Pasted key | no | pasted key | no | none |
 | `.minimaxCN` | MiniMax CN | `minimax` | Pasted key | no | pasted key | no | none |
 | `.copilot` | GitHub Copilot | `github` | GitHub device login; token in `keys.dat` | no | sign-in | no | none |
@@ -113,7 +113,7 @@ A provider’s first account id is the provider’s raw value. That is the migra
 
 Counting, cache filename, burn-rate, and estimate rules: [`../refresh-and-data.md`](../refresh-and-data.md).
 
-Only Claude Code and Codex set `keepsLocalTranscripts`, which gates the labelled money estimate and the “working right now” mark. **History is the wider `providesHistory`**: Z.ai and 智谱 answer it from the account's own statistics instead ([zai.md](zai.md)). Both are left out for everyone else rather than shown as zeroes. OpenCode *does* keep sessions (`opencode stats`); they live in OpenCode’s own store, not the JSONL the ledger reads, so the flag is false today.
+Only Claude Code and Codex set `keepsLocalTranscripts`, which gates the labelled money estimate and the “working right now” mark. **History is the wider `providesHistory`**: Z.ai and Zhipu answer it from the account's own statistics instead ([zai.md](zai.md)). Both are left out for everyone else rather than shown as zeroes. OpenCode *does* keep sessions (`opencode stats`); they live in OpenCode’s own store, not the JSONL the ledger reads, so the flag is false today.
 
 Claude vs Codex token fields (exclude vs include cache; running total vs per-turn): [claude-code.md](claude-code.md), [codex.md](codex.md). Sort-key lengths (Kimi rolling week, Cursor/Copilot ~30-day stand-in, Grok Bot’s seven days without a stated reset) must keep `reportsLength: false` so they never feed the window clock or forecast.
 

@@ -85,11 +85,11 @@ Off by default (`showsForecast`). One line under a limit: expected to last the w
 
 ## Spending history and the estimate (Settings only)
 
-Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude Code, Codex) carry input/output/cache counts, so they can be priced — that is the money estimate. **Provider statistics** (Z.ai, 智谱) come from the account and cover every machine, but report one token total per model, which cannot be priced: the card shows tokens and no money, and says so. `Provider.providesHistory` is the wider gate; `keepsLocalTranscripts` still gates the estimate. [providers/zai.md](providers/zai.md)
+Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude Code, Codex) carry input/output/cache counts, so they can be priced — that is the money estimate. **Provider statistics** (Z.ai, Zhipu) come from the account and cover every machine, but report one token total per model, which cannot be priced: the card shows tokens and no money, and says so. `Provider.providesHistory` is the wider gate; `keepsLocalTranscripts` still gates the estimate. [providers/zai.md](providers/zai.md)
 
 Neither money nor per-day history is reported by providers. Both are reconstructed from CLI transcripts (`UsageLedger`) at published API prices (`ModelPrices`, `models.dev`, cached a day). A model with no published price is left out, never given a plausible rate.
 
-`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and 智谱 also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
+`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and Zhipu also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
 
 Ledger notes (verify again after changing the counting; historical independent check agreed to the cent on one machine):
 
