@@ -34,6 +34,9 @@ struct SettingsView: View {
     /// The key field's contents. Seeded from the store when the pane opens;
     /// the store is a file, not something SwiftUI can observe.
     @State private var apiKey = ""
+    /// The budget being typed, kept as text so a half-entered number is not
+    /// read as a denominator on every keystroke.
+    @State private var deepSeekBudget = ""
     @State private var savedKey = ""
     /// The provider a browser sign-in is currently open for, and what went
     /// wrong with the last one.
@@ -922,6 +925,11 @@ struct SettingsView: View {
             }
         }
         .onChange(of: provider, initial: true) { _, shown in
+            // The stored figure, shown in the field rather than left blank
+            // beside a ring that is measuring against it.
+            if shown == .deepSeek {
+                deepSeekBudget = settings.deepSeekBudget.map { String($0) } ?? ""
+            }
             // Copilot has no key field, but its token lives in the same store
             // and the pane needs to know whether there is one.
             guard shown.usesAPIKey || shown == .copilot else { return }
@@ -1174,6 +1182,63 @@ struct SettingsView: View {
             : .localized("Asking \(provider.displayName)")
     }
 
+    /// DeepSeek reports money and no allowance, so the ring has no denominator
+    /// until one is chosen. Three modes because there are exactly three places
+    /// one can come from — see `DeepSeekBasis`.
+    private var deepSeekBasisRow: some View {
+        SettingsRow(
+            String.localized("Ring shows"),
+            subtitle: Self.deepSeekBasisSubtitle(settings.deepSeekBasis)
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.deepSeekBasis },
+                set: { settings.deepSeekBasis = $0 }
+            )) {
+                ForEach(DeepSeekBasis.allCases) { basis in
+                    Text(basis.title).tag(basis)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
+    }
+
+    private var deepSeekBudgetRow: some View {
+        SettingsRow(
+            String.localized("Full tank"),
+            subtitle: String.localized("What you call a full balance. The ring measures against it.")
+        ) {
+            HStack(spacing: 8) {
+                TextField("", text: $deepSeekBudget)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: SettingsLayout.controlWidth - 70)
+                    .onSubmit { saveDeepSeekBudget() }
+
+                Button(String.localized("Save")) { saveDeepSeekBudget() }
+            }
+        }
+    }
+
+    /// Blank clears it, which puts the ring back to showing the balance alone
+    /// rather than a fraction of nothing.
+    private func saveDeepSeekBudget() {
+        let trimmed = deepSeekBudget.trimmingCharacters(in: .whitespaces)
+        settings.deepSeekBudget = trimmed.isEmpty ? nil : Double(trimmed).flatMap { $0 > 0 ? $0 : nil }
+        deepSeekBudget = settings.deepSeekBudget.map { String($0) } ?? ""
+    }
+
+    private static func deepSeekBasisSubtitle(_ basis: DeepSeekBasis) -> String {
+        switch basis {
+        case .sinceTopUp:
+            .localized("How much of the balance Pulse last saw you top up to is gone.")
+        case .balanceOnly:
+            .localized("The money left, with no ring. DeepSeek reports no allowance.")
+        case .budget:
+            .localized("How much of the figure you set is gone.")
+        }
+    }
+
     private static func keySubtitle(for provider: Provider) -> String {
         switch provider {
         case _ where provider.usesSessionCookie:
@@ -1196,6 +1261,8 @@ struct SettingsView: View {
         // in somewhere other than this Mac.
         case .commandCode:
             .localized("From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac.")
+        case .deepSeek:
+            .localized("From platform.deepseek.com. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }
@@ -1388,6 +1455,15 @@ struct SettingsView: View {
                             .multilineTextAlignment(.trailing)
                             .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                     }
+                }
+            }
+
+            if account.provider == .deepSeek {
+                SettingsRowDivider()
+                deepSeekBasisRow
+                if settings.deepSeekBasis == .budget {
+                    SettingsRowDivider()
+                    deepSeekBudgetRow
                 }
             }
 
@@ -1812,7 +1888,7 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Usage data"),
-                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; the two places it has to infer one, it says so on the figure.")
+                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so.")
                 ) {
                     EmptyView()
                 }

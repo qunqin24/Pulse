@@ -260,6 +260,14 @@ struct RailEntry: Identifiable, Equatable {
     /// it where an account has been split into one ring per group.
     var title: String
     var elapsed: Double?
+    /// What to draw in the ring when there is no percentage to draw.
+    ///
+    /// DeepSeek sells prepaid credit and reports no allowance, so on "balance
+    /// only" there is deliberately no window and therefore no fraction — but
+    /// there *is* a figure, and a ring showing an em dash beside a perfectly
+    /// good balance reads as a provider that failed. Nil everywhere else,
+    /// where nothing known really does mean nothing known.
+    var figure: String?
     /// The next-fullest limit, when the second ring is switched on and this
     /// provider reports more than one.
     var second: UsageWindow?
@@ -481,8 +489,14 @@ private struct UsageDockItem: View {
     @ViewBuilder
     private var percentLabel: some View {
         if showsPercentage {
-            Text(headline?.percentText(remaining: entry.showsRemaining) ?? "—")
+            Text(headline?.percentText(remaining: entry.showsRemaining) ?? entry.figure ?? "—")
                 .font(.system(size: DockLayout.percentFontSize, weight: .medium, design: .rounded))
+                // Money is longer than a percentage and its length is not
+                // bounded by anything — "¥9.40" fits where "$1,234.56" does
+                // not — so it shrinks to fit rather than being cut off inside
+                // the ring.
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 // A spent limit colours the figure too. At ring size a fourth
                 // hue on the stroke alone would read as the third.
                 .foregroundStyle(
@@ -500,7 +514,7 @@ private struct UsageDockItem: View {
                 .contentTransition(.numericText())
                 .animation(
                     .spring(response: 0.5, dampingFraction: 0.85),
-                    value: headline?.percentText(remaining: entry.showsRemaining)
+                    value: headline?.percentText(remaining: entry.showsRemaining) ?? entry.figure
                 )
         }
     }

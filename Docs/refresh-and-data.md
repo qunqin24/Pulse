@@ -1,6 +1,6 @@
 # Refresh, cache, activity, history
 
-Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. Two labelled exceptions, and both say on screen that they are inferred: the money estimate in Settings, and Command Code's monthly plan grant, whose remainder is reported while its size is published only on a pricing page ([providers/command-code.md](providers/command-code.md)).
+Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. Labelled exceptions only, and each says on screen that it is inferred: the money estimate in Settings; Command Code's monthly plan grant, whose remainder is reported while its size is published only on a pricing page ([providers/command-code.md](providers/command-code.md)); and DeepSeek's ring, where nothing at all is reported but the money ([providers/deepseek.md](providers/deepseek.md)).
 
 Per-provider HTTP, cookies, and login: [providers/README.md](providers/README.md). Why percentages stay reported: [decisions/reported-figures.md](decisions/reported-figures.md).
 

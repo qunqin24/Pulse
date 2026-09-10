@@ -47,6 +47,41 @@ final class AppSettings {
         }
     }
 
+    /// Where DeepSeek's ring gets its denominator.
+    ///
+    /// DeepSeek reports a prepaid balance and no allowance at all, so unlike
+    /// every other provider there is no percentage to show until something
+    /// supplies one. Three modes, one setting, and the card always names which
+    /// is in force — see `DeepSeekBasis`. Scalars rather than the per-account
+    /// dictionaries beside them because DeepSeek has no second account.
+    var deepSeekBasis: DeepSeekBasis {
+        didSet {
+            guard deepSeekBasis != oldValue else { return }
+            UserDefaults.standard.set(deepSeekBasis.rawValue, forKey: Key.deepSeekBasis)
+            onChange?()
+        }
+    }
+
+    /// What the reader calls a full tank, for `DeepSeekBasis.budget`. Nil until
+    /// they say, which leaves that mode showing the balance and no fraction.
+    var deepSeekBudget: Double? {
+        didSet {
+            guard deepSeekBudget != oldValue else { return }
+            UserDefaults.standard.set(deepSeekBudget, forKey: Key.deepSeekBudget)
+            onChange?()
+        }
+    }
+
+    /// Which currency the ring follows when the account holds more than one.
+    /// Nil takes the first the reply lists with money in it.
+    var deepSeekCurrency: String? {
+        didSet {
+            guard deepSeekCurrency != oldValue else { return }
+            UserDefaults.standard.set(deepSeekCurrency, forKey: Key.deepSeekCurrency)
+            onChange?()
+        }
+    }
+
     /// The order the rail draws them in, as account ids.
     ///
     /// Stored rather than derived so it survives a launch, and resolved through
@@ -541,6 +576,9 @@ final class AppSettings {
         isPanelVisible: Bool = true,
         hidesInFullScreen: Bool = true,
         followsActiveDisplay: Bool = false,
+        deepSeekBasis: DeepSeekBasis = .default,
+        deepSeekBudget: Double? = nil,
+        deepSeekCurrency: String? = nil,
         enabledAccounts: Set<String> = Set(Provider.allCases.map(\.rawValue)),
         extraAccounts: [ExtraAccount] = [],
         providerOrder: [String] = [],
@@ -569,6 +607,9 @@ final class AppSettings {
         self.isPanelVisible = isPanelVisible
         self.hidesInFullScreen = hidesInFullScreen
         self.followsActiveDisplay = followsActiveDisplay
+        self.deepSeekBasis = deepSeekBasis
+        self.deepSeekBudget = deepSeekBudget
+        self.deepSeekCurrency = deepSeekCurrency
         self.enabledAccounts = enabledAccounts
         self.extraAccounts = extraAccounts
         self.providerOrder = providerOrder
@@ -795,6 +836,10 @@ final class AppSettings {
             isPanelVisible: visible,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
             followsActiveDisplay: defaults.object(forKey: Key.followsActiveDisplay) as? Bool ?? false,
+            deepSeekBasis: defaults.string(forKey: Key.deepSeekBasis)
+                .flatMap(DeepSeekBasis.init(rawValue:)) ?? .default,
+            deepSeekBudget: defaults.object(forKey: Key.deepSeekBudget) as? Double,
+            deepSeekCurrency: defaults.string(forKey: Key.deepSeekCurrency),
             enabledAccounts: accounts,
             extraAccounts: extras,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
@@ -897,6 +942,9 @@ final class AppSettings {
         static let extraAccounts = "settings.extraAccounts"
         static let hidesInFullScreen = "settings.hidesInFullScreen"
         static let followsActiveDisplay = "settings.followsActiveDisplay"
+        static let deepSeekBasis = "settings.deepSeekBasis"
+        static let deepSeekBudget = "settings.deepSeekBudget"
+        static let deepSeekCurrency = "settings.deepSeekCurrency"
         static let enabledProviders = "settings.enabledProviders"
         static let language = "settings.language"
         static let pinnedWindows = "settings.pinnedWindows"

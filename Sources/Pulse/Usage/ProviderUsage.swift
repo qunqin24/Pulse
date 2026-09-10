@@ -16,6 +16,11 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case fiveHour
         case weekly
         case spend
+        /// Prepaid credit, which is **not a limit**. DeepSeek sells money
+        /// rather than an allowance: there is no ceiling to reach, no window
+        /// to turn over, and calling it a spend limit put the word "limit"
+        /// on a row where none exists.
+        case balance
         /// OpenCode Go's billing period. The others' longest window is a
         /// week, so this one had nowhere to map.
         case monthly
@@ -95,14 +100,18 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         case .fiveHour: .localized("5-hour limit")
         case .weekly: .localized("Weekly limit")
         case .spend: .localized("Spend limit")
+        case .balance: .localized("Balance")
         case .monthly: .localized("Monthly limit")
         case .other(let seconds):
             seconds >= 86_400
                 ? .localized("\("\(Int((Double(seconds) / 86_400).rounded()))")-day limit")
                 : .localized("\("\(Int((Double(seconds) / 3_600).rounded()))")-hour limit")
         }
-        let scoped = scope.map { "\(base) · \($0)" } ?? base
-        return isEstimated ? "\(scoped) · \(String.localized("estimated"))" : scoped
+        // A scope that already names where the figure came from — "since
+        // top-up", "of your budget" — says it better than the generic marker
+        // does, and saying both reads as three separate qualifiers on one row.
+        if let scope { return "\(base) · \(scope)" }
+        return isEstimated ? "\(base) · \(String.localized("estimated"))" : base
     }
 
     /// Rounded to the nearest whole number, **except that anything used at

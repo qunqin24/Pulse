@@ -22,6 +22,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case grokBot
     case volcengine
     case commandCode
+    case deepSeek
 
     var id: String { rawValue }
 
@@ -69,6 +70,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // The product's own name. Its command is `cmd`, which names nothing on
         // a rail of brands and collides with the key on every Mac keyboard.
         case .commandCode: "Command Code"
+        // The shop, not the model family: the balance belongs to the account
+        // and is spent across whatever the key is pointed at.
+        case .deepSeek: "DeepSeek"
         }
     }
 
@@ -103,6 +107,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // wordmark the site leads with: at ring size a wordmark is a grey
         // smudge, and this is the mark the product is recognised by anyway.
         case .commandCode: "commandcode"
+        case .deepSeek: "deepseek"
         }
     }
 
@@ -125,7 +130,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // which is true today and better than a column of zeroes.
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
-             .volcengine, .commandCode: false
+             .volcengine, .commandCode, .deepSeek: false
         }
     }
 
@@ -172,7 +177,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .claudeCode, .codex, .volcengine: true
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
-             .commandCode: false
+             .commandCode, .deepSeek: false
         }
     }
 
@@ -208,7 +213,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // about elsewhere, so there is nothing here to state.
         case .claudeCode, .codex, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine,
-             .commandCode:
+             .commandCode, .deepSeek:
             nil
         }
     }
@@ -220,7 +225,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// anyone on the plan who doesn't run the CLI on this Mac.
     var usesAPIKey: Bool {
         [.openCodeGo, .kimiCode, .ollamaCloud, .zai, .glmCoding, .minimax, .minimaxCN, .volcengine,
-         .commandCode].contains(self)
+         .commandCode, .deepSeek].contains(self)
     }
 
     /// Whether the pasted credential is a **pair** rather than one token.

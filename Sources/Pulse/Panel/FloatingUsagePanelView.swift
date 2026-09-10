@@ -245,10 +245,23 @@ struct FloatingUsagePanelView: View {
         let account = slot.account
         let label = settings.label(for: account)
         let pinned = settings.pinnedWindow(for: account)
+        let headline = usage.headlineWindow(preferring: pinned)
+
+        // The money, but only where there is a reading and deliberately no
+        // window to draw — which today is DeepSeek on "balance only". An
+        // unavailable reading has nothing to say, and putting a remembered
+        // figure on the rail there would show it as though it were current.
+        let figure: String? = if headline == nil, case .unavailable = usage.state {
+            nil
+        } else if headline == nil {
+            usage.creditBalance
+        } else {
+            nil
+        }
 
         return RailEntry(
             usage: usage,
-            headline: usage.headlineWindow(preferring: pinned),
+            headline: headline,
             // Activity is per *provider*: a running CLI belongs to whichever
             // account it happens to be signed in to, and the transcripts do
             // not say which. Every account of that provider shows the mark.
@@ -261,9 +274,8 @@ struct FloatingUsagePanelView: View {
             title: slot.group.map { "\(label) · \($0)" } ?? label,
             // Nil unless it is switched on *and* the window says enough to
             // work it out — a reset time on its own is not enough.
-            elapsed: settings.showsWindowClock
-                ? usage.headlineWindow(preferring: pinned)?.elapsedFraction(at: minute)
-                : nil,
+            elapsed: settings.showsWindowClock ? headline?.elapsedFraction(at: minute) : nil,
+            figure: figure,
             second: settings.showsSecondRing ? usage.secondWindow(preferring: pinned) : nil,
             showsRemaining: settings.showsRemaining
         )
