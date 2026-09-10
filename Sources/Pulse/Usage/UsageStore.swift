@@ -17,6 +17,7 @@ final class UsageStore {
     /// Keyed by account id rather than by provider: one of them can be signed
     /// in to more than once, and a reading belongs to the account it came from.
     private(set) var usage: [String: ProviderUsage] = [:]
+    private(set) var diagnostics: [String: ConnectionDiagnostic] = [:]
     private(set) var isRefreshing = false
     /// Nil while an automatic refresh is fetching every provider; otherwise
     /// the one provider the user explicitly asked to refresh from its ring.
@@ -674,6 +675,7 @@ final class UsageStore {
             guard pass == self.currentPass else { return }
 
             let fetched = await UsageCache.shared.reconciled(raw)
+            guard pass == self.currentPass else { return }
             self.commit(fetched, raw: raw, for: account.id)
 
             if previous?.windows != fetched.windows {
@@ -689,6 +691,7 @@ final class UsageStore {
                 try? await Task.sleep(for: minimumFeedback - elapsed)
             }
 
+            guard pass == self.currentPass else { return }
             self.isRefreshing = false
             self.refreshStartedAt = nil
             self.refreshingAccount = nil
@@ -766,6 +769,10 @@ final class UsageStore {
     /// crossings the moment the app opened.
     private func commit(_ fetched: ProviderUsage, raw: ProviderUsage, for id: String) {
         usage[id] = fetched
+        diagnostics[id] = ConnectionDiagnostic(
+            raw: raw.recordingSoleRoute(), displayed: fetched,
+            previous: diagnostics[id], now: Date()
+        )
         guard let alerts, let account = AccountKey(id: id) else { return }
         // Both: the panel shows the reconciled reading, and the alert rules
         // need the answer the service actually gave — `reconciled` swaps a

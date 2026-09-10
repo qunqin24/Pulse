@@ -49,6 +49,7 @@ actor UsageCache {
         /// `CreditAmount.railText` exists to avoid. Optional: entries written
         /// before this field existed simply have none.
         var creditRemaining: CreditAmountStored?
+        var origin: UsageRoute?
     }
 
     /// `ProviderUsage.CreditAmount` is not `Codable` — nothing else needs it to
@@ -61,7 +62,8 @@ actor UsageCache {
     /// Returns the reading worth showing: the fetched one when it carries
     /// anything, otherwise whatever was last banked — and, when both have
     /// something, whichever was actually taken later.
-    func reconciled(_ fetched: ProviderUsage) -> ProviderUsage {
+    func reconciled(_ result: ProviderUsage) -> ProviderUsage {
+        let fetched = result.recordingSoleRoute()
         if case .live = fetched.state, fetched.reportsSomething {
             // **`.live` is not the same as "newest".** The status-line route
             // calls its capture live for ten minutes after it was taken, and
@@ -121,7 +123,8 @@ actor UsageCache {
             creditBalance: usage.creditBalance,
             creditRemaining: usage.creditRemaining.map {
                 CreditAmountStored(amount: $0.amount, currency: $0.currency)
-            }
+            },
+            origin: usage.origin
         )
         readings = all
         write(all)
@@ -165,6 +168,8 @@ actor UsageCache {
         restored.creditRemaining = stored.creditRemaining.map {
             .init(amount: $0.amount, currency: $0.currency)
         }
+        restored.origin = stored.origin
+        restored.isCached = true
         return restored
     }
 

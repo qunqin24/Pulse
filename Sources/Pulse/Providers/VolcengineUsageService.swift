@@ -72,27 +72,30 @@ struct VolcengineUsageService: Sendable {
         switch source {
         case .endpoint:
             guard let credentials else {
-                return .unavailable(.volcengine, reason: hasUnreadableKey ? .apiKeyRefused : .apiKeyMissing)
+                return ProviderUsage.unavailable(.volcengine, reason: hasUnreadableKey ? .apiKeyRefused : .apiKeyMissing)
+                    .recording(.endpoint)
             }
-            return await signed(credentials)
+            return await signed(credentials).recording(.endpoint)
 
         case .tooling:
-            return await cli()
+            return await cli().recording(.arkCLI)
 
         case .automatic, .desktopApp:
             // A field with something in it that is not a pair is a mistake to
             // be told about, not a reason to quietly use a different route —
             // and possibly a different account.
             if credentials == nil, hasUnreadableKey {
-                return .unavailable(.volcengine, reason: .apiKeyRefused)
+                return ProviderUsage.unavailable(.volcengine, reason: .apiKeyRefused).recording(.endpoint)
             }
-            guard let credentials else { return await cli() }
+            guard let credentials else { return await cli().recording(.arkCLI) }
 
-            let keyed = await signed(credentials)
+            let keyed = await signed(credentials).recording(.endpoint)
             // Keys that are simply wrong should say so rather than falling
             // through to a CLI that might be a different account: the fallback
             // would look like the keys working.
-            if case .unavailable(.unreachable) = keyed.state { return await cli() }
+            if case .unavailable(.unreachable) = keyed.state {
+                return await cli().recording(.arkCLI, after: keyed.attempts)
+            }
             return keyed
         }
     }

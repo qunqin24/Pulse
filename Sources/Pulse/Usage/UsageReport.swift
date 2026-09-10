@@ -95,6 +95,8 @@ enum UsageReport {
         let creditBalance: String?
         let observedAt: Date?
         let ageSeconds: Int?
+        let source: String?
+        let settingsURL: URL
         /// The window the ring shows, repeated from `windows` so the common
         /// case — one number in a status line — is one field rather than a
         /// re-implementation of which limit matters.
@@ -116,6 +118,8 @@ enum UsageReport {
             creditBalance = reading?.creditBalance
             observedAt = reading?.observedAt
             ageSeconds = reading?.observedAt.map { Int(generatedAt.timeIntervalSince($0).rounded()) }
+            source = reading?.origin?.rawValue
+            settingsURL = PulseLink.account(account).url
             windows = (reading?.windows ?? []).map(Window.init)
             headline = reading?.headlineWindow(preferring: pinned).map(Headline.init)
         }

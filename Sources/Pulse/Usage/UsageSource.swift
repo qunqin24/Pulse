@@ -56,10 +56,9 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
     /// outage on three of the four — for the provider Pulse is most about,
     /// while the identical outage on Codex still alerted.
     ///
-    /// `.automatic` counts, and that is the conservative half of the trade:
-    /// it can be answered by the capture, and nothing in a reading says which
-    /// route produced it. Staying quiet where Pulse cannot tell is the rule
-    /// the whole alert subsystem is built on.
+    /// `.automatic` remains conservative: this rule is based on the configured
+    /// route, not the per-check provenance now retained for diagnostics. Older
+    /// cache entries have no origin, and a capture remains an eligible answer.
     ///
     /// Read by `AlertMemory` as `staleMeansFailure` — see
     /// [Docs/notifications.md](../../Docs/notifications.md).

@@ -38,6 +38,10 @@ struct ClaudeCodeUsageService: Sendable {
     /// stored CLI login both belong to whichever account the CLI is signed in
     /// to, which is not this one.
     func fetch(account: AccountKey, token: String) async -> ProviderUsage {
+        await endpointUsage(account: account, token: token).recording(.endpoint)
+    }
+
+    private func endpointUsage(account: AccountKey, token: String) async -> ProviderUsage {
         switch await fetchOverHTTP(token: token, for: account) {
         case .success(let usage): return usage
         case .needsFreshCredentials: return .unavailable(account, reason: .claudeLoginExpired)
@@ -53,26 +57,21 @@ struct ClaudeCodeUsageService: Sendable {
             // Pinned here, the endpoint is never tried — so a stored token
             // says nothing about whether it still works, and calling it
             // expired would be a guess about something this route never asked.
-            return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: StatusLineHook.isInstalled ? .awaitingResponse : .notConnected)
+            return (readCapturedUsage()
+                ?? .unavailable(.claudeCode, reason: StatusLineHook.isInstalled ? .awaitingResponse : .notConnected))
+                .recording(.statusLine)
 
         case .desktopApp:
             // Pinned here for the same reason as the other two: a failure is
             // reported rather than quietly answered from somewhere else. It is
-            // never reached from `.automatic` — see `UsageSource.desktopApp`.
-            return await ClaudeDesktopSession.usage(for: AccountKey(.claudeCode))
+            // reached explicitly here, so a keychain prompt is allowed.
+            return await ClaudeDesktopSession.usage(for: AccountKey(.claudeCode)).recording(.desktopSession)
 
         case .endpoint:
             guard let token = loadAccessToken() else {
-                return .unavailable(.claudeCode, reason: .claudeSignInRequired)
+                return ProviderUsage.unavailable(.claudeCode, reason: .claudeSignInRequired).recording(.endpoint)
             }
-            switch await fetchOverHTTP(token: token, for: AccountKey(.claudeCode)) {
-            case .success(let usage): return usage
-            // A token was found and refused, which is not the same thing as
-            // never having signed in.
-            case .needsFreshCredentials: return .unavailable(.claudeCode, reason: .claudeLoginExpired)
-            case .failed(let reason): return .unavailable(.claudeCode, reason: reason)
-            }
+            return await endpointUsage(account: AccountKey(.claudeCode), token: token).recording(.endpoint)
 
         case .automatic:
             // Read once. Both answers come out of the same blob: an expired
@@ -81,18 +80,31 @@ struct ClaudeCodeUsageService: Sendable {
             // was pulled out of the loop to stop.
             let credentials = storedCredentials()
             let hadCredentials = credentials != nil
+            var attempts: [ConnectionDiagnostic.Attempt] = []
             if let token = credentials.flatMap(Self.unexpiredAccessToken) {
                 switch await fetchOverHTTP(token: token, for: AccountKey(.claudeCode)) {
                 case .success(let usage):
-                    return usage
+                    return usage.recording(.endpoint)
                 case .needsFreshCredentials:
+                    attempts.append(.init(route: .endpoint, state: .unavailable(.claudeLoginExpired)))
                     break // fall through to the desktop session, then the status line
                 case .failed(let reason):
                     // A network stumble shouldn't hide a perfectly good
                     // captured reading, so prefer that and keep the error in
                     // reserve.
-                    return readCapturedUsage() ?? .unavailable(.claudeCode, reason: reason)
+                    var failure = ProviderUsage.unavailable(.claudeCode, reason: reason).recording(.endpoint)
+                    if let capture = readCapturedUsage() {
+                        return capture.recording(.statusLine, after: failure.attempts)
+                    }
+                    failure.attempts.append(.init(route: .statusLine, state: .unavailable(
+                        StatusLineHook.isInstalled ? .awaitingResponse : .notConnected
+                    )))
+                    return failure
                 }
+            } else {
+                attempts.append(.init(route: .endpoint, state: .unavailable(
+                    hadCredentials ? .claudeLoginExpired : .claudeSignInRequired
+                )))
             }
 
             // **Before the status line, not after it.** That route is a push:
@@ -102,13 +114,21 @@ struct ClaudeCodeUsageService: Sendable {
             // panel came to sit on yesterday's figures with a refresh button
             // that appeared to do nothing. A live reading outranks a captured
             // one; the capture keeps its turn when there is no live reading to
-            // be had. Silent only — see `usageIfAlreadyPermitted`.
-            if let desktop = await ClaudeDesktopSession.usageIfAlreadyPermitted(for: AccountKey(.claudeCode)) {
-                return desktop
+            // be had. Silent only — see `attemptIfAlreadyPermitted`.
+            if let desktop = await ClaudeDesktopSession.attemptIfAlreadyPermitted(for: AccountKey(.claudeCode)) {
+                if desktop.compatible, case .live = desktop.usage.state {
+                    return desktop.usage.recording(.desktopSession, after: attempts)
+                }
+                attempts.append(.init(route: .desktopSession, state: desktop.usage.state,
+                                      discardedForAccountMismatch: !desktop.compatible))
             }
 
-            return readCapturedUsage()
-                ?? .unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: hadCredentials))
+            if let capture = readCapturedUsage() { return capture.recording(.statusLine, after: attempts) }
+            var failure = ProviderUsage.unavailable(.claudeCode, reason: capturedUsageProblem(hadCredentials: hadCredentials))
+            failure.attempts = attempts + [.init(route: .statusLine, state: .unavailable(
+                StatusLineHook.isInstalled ? .awaitingResponse : .notConnected
+            ))]
+            return failure
         }
     }
 

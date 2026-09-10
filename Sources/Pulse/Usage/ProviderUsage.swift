@@ -292,7 +292,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// `UsageWindow.Kind` is: the text is produced when it's displayed, so it
     /// follows the language setting instead of freezing at whichever language
     /// was current when the reading was taken.
-    enum Unavailability: Equatable, Sendable {
+    enum Unavailability: String, Equatable, Sendable {
         case loading
         /// Claude Code's status line hook hasn't been registered.
         case notConnected
@@ -456,6 +456,12 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// money, and it must not compare ¥ against $, so the currency travels
     /// with the amount.
     var creditRemaining: CreditAmount?
+
+    var origin: UsageRoute?
+    /// A stale status-line capture is not necessarily a cache replacement.
+    var isCached = false
+    /// Only the latest fetch carries attempts; the cache stores the origin alone.
+    var attempts: [ConnectionDiagnostic.Attempt] = []
 
     /// Money the provider says is left, and what it is denominated in.
     struct CreditAmount: Equatable, Sendable {

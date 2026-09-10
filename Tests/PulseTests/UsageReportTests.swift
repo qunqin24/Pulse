@@ -211,5 +211,18 @@ struct UsageReportTests {
         // The product is still named, so a script can group by it.
         #expect(entry["name"] as? String == "Claude Code")
         #expect(entry["provider"] as? String == "claudeCode")
+        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode%23work")
+        #expect(entry["source"] == nil)
+    }
+
+    @Test("The JSON source is the reading's actual origin, not a route preference")
+    func actualSource() throws {
+        let account = AccountKey(.claudeCode)
+        let rail = AppSettings.StoredRail(accounts: [account], labels: [:], pinnedWindows: [:])
+        let reading = Self.reading(account, [Self.window("w", used: 0.5)], observedAt: Self.generatedAt)
+            .recording(.desktopSession)
+        let entry = try Self.accounts(try Self.object(rail: rail, readings: [account.id: reading]))[0]
+        #expect(entry["source"] as? String == "desktopSession")
+        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode")
     }
 }

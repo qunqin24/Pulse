@@ -86,7 +86,7 @@ enum ClaudeDesktopSession {
             return .unavailable(account, reason: .claudeDesktopKeyRefused)
         }
         // Reaching here means macOS handed the key over, which it only does
-        // for an app the user has allowed. See `usageIfAlreadyPermitted`.
+        // for an app the user has allowed. See `attemptIfAlreadyPermitted`.
         wasPermitted = true
 
         // Read once, not once per thing wanted from it: every row in this
@@ -146,7 +146,7 @@ enum ClaudeDesktopSession {
     ///
     /// A grant revoked afterwards costs exactly one surprise prompt: the read
     /// then fails, the flag is cleared, and nothing asks again.
-    static func usageIfAlreadyPermitted(for account: AccountKey) async -> ProviderUsage? {
+    static func attemptIfAlreadyPermitted(for account: AccountKey) async -> (usage: ProviderUsage, compatible: Bool)? {
         guard wasPermitted, isAvailable else { return nil }
 
         let usage = await self.usage(for: account)
@@ -154,7 +154,8 @@ enum ClaudeDesktopSession {
         // else — a session that has been signed out, a refusal — leaves the
         // older routes their turn, since between a live nothing and a dated
         // something the dated something is what the panel is for.
-        guard case .live = usage.state else { return nil }
+        // The caller retains the failure for diagnostics and continues routing.
+        guard case .live = usage.state else { return (usage, true) }
 
         // **The two apps can be signed in as different people**, and this ring
         // is the CLI account's. Substituting silently would put one person's
@@ -165,9 +166,9 @@ enum ClaudeDesktopSession {
         // session, it gets the desktop app's session.
         guard let seen = await Known.shared.lastFingerprint(),
               ClaudeAccountIdentity.maySubstitute(seen)
-        else { return nil }
+        else { return (usage, false) }
 
-        return usage
+        return (usage, true)
     }
 
     /// Whether macOS has handed this app the desktop app's storage key before.

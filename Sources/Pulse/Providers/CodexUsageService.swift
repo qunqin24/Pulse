@@ -25,19 +25,20 @@ struct CodexUsageService: Sendable {
     var endpoint = URL(string: "https://chatgpt.com/backend-api/wham/usage")!
 
     func fetch(source: UsageSource = .automatic) async -> ProviderUsage {
-        if source == .tooling { return await fetchViaAppServer() }
+        if source == .tooling { return await fetchViaAppServer().recording(.appServer) }
 
         switch await fetchOverHTTP() {
         case .success(let usage):
-            return usage
+            return usage.recording(.endpoint)
         case .needsFreshCredentials:
             // Pinned to the endpoint, so a dead token is reported rather than
             // quietly answered by the app server.
+            let failure = ProviderUsage.unavailable(.codex, reason: .signInRequired).recording(.endpoint)
             return source == .endpoint
-                ? .unavailable(.codex, reason: .signInRequired)
-                : await fetchViaAppServer()
+                ? failure
+                : await fetchViaAppServer().recording(.appServer, after: failure.attempts)
         case .failed(let reason):
-            return .unavailable(.codex, reason: reason)
+            return ProviderUsage.unavailable(.codex, reason: reason).recording(.endpoint)
         }
     }
 
