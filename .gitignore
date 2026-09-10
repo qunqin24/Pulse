@@ -18,3 +18,8 @@ build.noindex/
 
 # Created by check-localization.sh on every run.
 Scripts/__pycache__/
+
+# Raycast development output
+Integrations/raycast/node_modules/
+Integrations/raycast/dist/
+Integrations/raycast/raycast-env.d.ts

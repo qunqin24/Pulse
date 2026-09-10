@@ -10,7 +10,11 @@ struct SettingsView: View {
     let update: AppUpdate
     let alerts: UsageAlerts
 
-    @State private var pane: SettingsPane = .general
+    @Bindable var navigation: SettingsNavigation
+    private var pane: SettingsPane {
+        get { navigation.pane }
+        nonmutating set { navigation.pane = newValue }
+    }
     @State private var hookGeneration = 0
     /// Login-item state lives with the system, not in `AppSettings`, so it is
     /// read back rather than stored — and nudged when it changes.
@@ -64,10 +68,13 @@ struct SettingsView: View {
     @State private var search = ""
     /// The row a reorder drag is currently over, so it can say so.
     @State private var dropTarget: AccountKey?
+    @FocusState private var credentialFocused: Bool
+    @State private var repairMessages: [String: String] = [:]
+    @State private var connectionFocusRequest = 0
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $pane) {
+            List(selection: $navigation.pane) {
                 if matches(.general) {
                     Section(String.localized("Panel")) {
                         row(.general)
@@ -84,9 +91,10 @@ struct SettingsView: View {
                     }
                 }
 
-                if matches(.about) {
+                if matches(.about) || matches(.integrations) {
                     Section(String.localized("Application")) {
-                        row(.about)
+                        if matches(.integrations) { row(.integrations) }
+                        if matches(.about) { row(.about) }
                     }
                 }
             }
@@ -113,36 +121,44 @@ struct SettingsView: View {
                 prompt: Text(localized: "Search")
             )
             .overlay {
-                if isSearching, matchingAccounts.isEmpty, !matches(.general), !matches(.about) {
+                if isSearching, matchingAccounts.isEmpty, !matches(.general), !matches(.about), !matches(.integrations) {
                     Text(localized: "No matches")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
             }
         } detail: {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    heading
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        heading
+                            .id("heading")
 
-                    switch pane {
-                    case .general: general
-                    case .account(let account): accountPane(account)
-                    case .about: about
+                        switch pane {
+                        case .general: general
+                        case .account(let account): accountPane(account)
+                        case .about: about
+                        case .integrations: DeveloperIntegrationsView(settings: settings)
+                        }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(24)
+                .background(.windowBackground)
+                // Keyed on the pane and enabled state, so enabling an account
+                // also reconsiders its history's empty-state explanation.
+                .task(id: historyKey) { await loadHistory() }
+                .onChange(of: connectionFocusRequest) {
+                    proxy.scrollTo("connection", anchor: .top)
+                    credentialFocused = true
+                }
+                .onChange(of: navigation.requestID) { proxy.scrollTo("heading", anchor: .top) }
             }
-            .background(.windowBackground)
-            // Keyed on the pane **and** whether its account is on. A disabled
-            // account is never asked, and the empty state says so — a sentence
-            // that would otherwise sit under a toggle that now reads "on",
-            // contradicting the control a few rows above it.
-            .task(id: historyKey) { await loadHistory() }
         }
         // No `navigationTitle`: each pane already prints its own heading, and
         // the toolbar would repeat it right above.
         .frame(minWidth: 720, minHeight: 460)
+        .onChange(of: navigation.requestID) { search = "" }
         // Rebuild everything when the language changes — the strings are read
         // through a plain function, so SwiftUI has nothing else to observe.
         .id(settings.language)
@@ -206,7 +222,7 @@ struct SettingsView: View {
             switch pane {
             case .account(let account):
                 LobeIconView(provider: account.provider, size: 14)
-            case .general, .about:
+            case .general, .about, .integrations:
                 Image(systemName: pane.symbol)
             }
         }
@@ -790,13 +806,21 @@ struct SettingsView: View {
             }.value
 
             if let found {
-                apiKey = found.header
-                saveKey(for: account)
-                sessionMessage = String.localized("Read from \(found.browser.name).")
+                guard APIKeyStore.setKey(found.header, for: account.provider) else { return }
+                store.loadAPIKeys()
+                store.refresh(account)
+                // The keychain dialog may outlive the pane that opened it.
+                if pane == .account(account) {
+                    apiKey = found.header
+                    savedKey = found.header
+                    sessionMessage = String.localized("Read from \(found.browser.name).")
+                }
                 return
             }
 
-            sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
+            if pane == .account(account) {
+                sessionMessage = String.localized("No Ollama session found. Sign in at ollama.com first.")
+            }
         }
     }
 
@@ -902,6 +926,15 @@ struct SettingsView: View {
             }
 
             connection(for: account)
+                .id("connection")
+
+            ConnectionDiagnosticsView(
+                account: account, store: store, settings: settings,
+                isSigningIn: signingIn != nil || githubTask != nil,
+                repairMessage: repairMessages[account.id],
+                repair: { repair($0, for: account) }
+            )
+            .id(account)
 
             accounts(for: account)
 
@@ -1372,7 +1405,7 @@ struct SettingsView: View {
         SettingsGroup(String.localized("Connection")) {
             // A account.provider with a single route gets told, not asked. A picker
             // with one entry is a control that cannot do anything.
-            if account.provider.hasSourceChoice {
+            if account.isPrimary, account.provider.hasSourceChoice {
                 SettingsRow(
                     String.localized("Read usage from"),
                     subtitle: source.detail(for: account.provider)
@@ -1476,6 +1509,7 @@ struct SettingsView: View {
                 ) {
                     HStack(spacing: 8) {
                         SecureField("", text: $apiKey)
+                            .focused($credentialFocused)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: SettingsLayout.controlWidth)
                             .onSubmit { saveKey(for: account) }
@@ -1558,7 +1592,7 @@ struct SettingsView: View {
             // The status line has to be registered before it can report
             // anything, so the control for that follows the choice that needs
             // it.
-            if account.provider == .claudeCode, source != .endpoint {
+            if account.isPrimary, account.provider == .claudeCode, source != .endpoint {
                 SettingsRowDivider()
                 claudeCodeStatusLine
             }
@@ -1569,6 +1603,7 @@ struct SettingsView: View {
     /// Whether `connection(for:)` has anything to put in its card — the same
     /// four questions it asks, answered before the heading is drawn.
     private func hasConnectionControls(for account: AccountKey) -> Bool {
+        guard account.isPrimary else { return false }
         if account.provider.hasSourceChoice { return true }
         if account.provider == .copilot { return true }
         if account.provider.usesAPIKey { return true }
@@ -1586,15 +1621,17 @@ struct SettingsView: View {
     private func accounts(for account: AccountKey) -> some View {
         if account.provider.supportsMultipleAccounts {
             SettingsGroup(String.localized("Accounts")) {
-                if account.isPrimary {
+                Group {
                     SettingsRow(
-                        String.localized("Add another account"),
+                        account.isPrimary ? String.localized("Add another account") : String.localized("Sign in again…"),
                         // The one thing someone should know before they start:
                         // whose name is on the page that opens.
                         subtitle: String.localized("Opens the provider's own sign-in page.")
                     ) {
                         if signingIn == nil {
-                            Button(String.localized("Sign in…")) { signIn(to: account.provider) }
+                            Button(String.localized("Sign in…")) {
+                                signIn(to: account.provider, replacing: account.isPrimary ? nil : account)
+                            }
                         } else {
                             Button(String.localized("Cancel")) {
                                 signInTask?.cancel()
@@ -1642,7 +1679,9 @@ struct SettingsView: View {
                         SettingsRowDivider()
                         SettingsRow(String.localized("Sign-in"), subtitle: signInError) { EmptyView() }
                     }
-                } else {
+                }
+                if !account.isPrimary {
+                    SettingsRowDivider()
                     SettingsRow(String.localized("Name")) {
                         TextField("", text: Binding(
                             get: { settings.label(for: account) },
@@ -1692,12 +1731,15 @@ struct SettingsView: View {
                 NSWorkspace.shared.open(prompt.verificationURL)
 
                 let token = try await GitHubDeviceLogin.awaitToken(prompt)
+                try Task.checkCancellation()
                 guard APIKeyStore.setKey(token, for: .copilot) else {
                     githubError = String.localized("Couldn't save the login on this Mac.")
                     return
                 }
-                apiKey = token
-                savedKey = token
+                if pane == .account(AccountKey(.copilot)) {
+                    apiKey = token
+                    savedKey = token
+                }
                 store.loadAPIKeys()
                 store.refresh(AccountKey(.copilot))
             } catch let failure as GitHubDeviceLogin.Failure {
@@ -1716,6 +1758,48 @@ struct SettingsView: View {
         NSPasteboard.general.setString(text, forType: .string)
     }
 
+    private func repair(_ remedy: ConnectionRemedy, for account: AccountKey) {
+        repairMessages[account.id] = nil
+        switch remedy {
+        case .signIn:
+            if account.provider == .copilot { startGitHubSignIn() }
+            else if !account.isPrimary { signIn(to: account.provider, replacing: account) }
+        case .editCredential:
+            connectionFocusRequest += 1
+        case .readBrowser:
+            readSession(for: account)
+        case .connectStatusLine:
+            let installed = StatusLineHook.install()
+            hookGeneration += 1
+            repairMessages[account.id] = installed
+                ? String.localized("Connected. Use Claude Code to send a new reading.")
+                : String.localized("Couldn't connect the status line. Open setup help.")
+            if installed { store.refresh(account) }
+        case .copyCommand(let command):
+            copy(command)
+            repairMessages[account.id] = String.localized("Copied — run \(command) in your terminal, then retry.")
+        case .openApp(let name):
+            let candidates = [
+                URL.applicationDirectory.appending(path: "\(name).app"),
+                URL.homeDirectory.appending(path: "Applications/\(name).app")
+            ]
+            guard let app = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
+                repairMessages[account.id] = String.localized("Couldn't find \(name). Open setup help.")
+                return
+            }
+            Task {
+                do {
+                    _ = try await NSWorkspace.shared.openApplication(at: app, configuration: .init())
+                    store.refresh(account)
+                } catch {
+                    repairMessages[account.id] = String.localized("Couldn't open \(name). Open setup help.")
+                }
+            }
+        case .retry: store.refresh(account)
+        case .help: NSWorkspace.shared.open(ConnectionRemedy.helpURL(for: account.provider))
+        }
+    }
+
     private func endGitHubSignIn() {
         githubTask?.cancel()
         githubTask = nil
@@ -1724,7 +1808,7 @@ struct SettingsView: View {
     }
 
     /// Runs the browser sign-in, then keeps whatever came back.
-    private func signIn(to provider: Provider) {
+    private func signIn(to provider: Provider, replacing existing: AccountKey? = nil) {
         signingIn = provider
         signInError = nil
 
@@ -1771,9 +1855,11 @@ struct SettingsView: View {
                 }
                 // Seeded from whatever the provider said about the account, so
                 // two subscriptions are not both offered as "Codex".
-                let added = settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
+                try Task.checkCancellation()
+                if let existing, !settings.allAccounts.contains(existing) { return }
+                let added = existing ?? settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
                 guard AccountCredentialStore.set(credentials, for: added) else {
-                    settings.removeAccount(added)
+                    if existing == nil { settings.removeAccount(added) }
                     signInError = String.localized("Couldn't save the login on this Mac.")
                     return
                 }
@@ -2029,6 +2115,7 @@ enum SettingsPane: Hashable {
     case general
     case account(AccountKey)
     case about
+    case integrations
 
     var title: String {
         switch self {
@@ -2037,6 +2124,7 @@ enum SettingsPane: Hashable {
         // A fallback: the view titles these from the account's own label.
         case .account(let account): account.provider.displayName
         case .about: .localized("About")
+        case .integrations: .localized("Developer integrations")
         }
     }
 
@@ -2047,6 +2135,7 @@ enum SettingsPane: Hashable {
         case .general: "slider.horizontal.3"
         case .account: "square.stack.3d.up"
         case .about: "info.circle"
+        case .integrations: "terminal"
         }
     }
 }
@@ -2057,6 +2146,7 @@ enum SettingsPane: Hashable {
         settings: AppSettings(),
         placement: PanelPlacement(),
         update: AppUpdate(),
-        alerts: UsageAlerts(settings: AppSettings())
+        alerts: UsageAlerts(settings: AppSettings()),
+        navigation: SettingsNavigation()
     )
 }

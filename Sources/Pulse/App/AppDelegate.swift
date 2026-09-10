@@ -96,8 +96,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showSettings() {
+        showSettings(link: nil)
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            if let link = PulseLink(url: url) { showSettings(link: link) }
+        }
+    }
+
+    private func showSettings(link: PulseLink?) {
         let window = settingsWindow ?? SettingsWindowController(store: store, settings: settings, placement: placement, update: update, alerts: alerts)
         settingsWindow = window
-        window.show()
+        window.show(link: link)
     }
 }

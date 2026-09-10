@@ -17,6 +17,7 @@ final class SettingsWindowController {
     private let update: AppUpdate
     private let alerts: UsageAlerts
     private var window: NSWindow?
+    private let navigation = SettingsNavigation()
 
     init(
         store: UsageStore,
@@ -32,7 +33,8 @@ final class SettingsWindowController {
         self.alerts = alerts
     }
 
-    func show() {
+    func show(link: PulseLink? = nil) {
+        if let link { navigation.open(link, accounts: settings.allAccounts) }
         let window = window ?? makeWindow()
         self.window = window
         window.title = String.localized("Pulse Settings")
@@ -93,7 +95,7 @@ final class SettingsWindowController {
         window.titlebarSeparatorStyle = .automatic
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(
-            rootView: SettingsView(store: store, settings: settings, placement: placement, update: update, alerts: alerts)
+            rootView: SettingsView(store: store, settings: settings, placement: placement, update: update, alerts: alerts, navigation: navigation)
         )
         return window
     }
