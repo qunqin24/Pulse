@@ -468,6 +468,9 @@ private struct UsageDockItem: View {
         UsageRingView(
             provider: usage.provider,
             usedFraction: headline?.usedFraction,
+            // A ring showing money instead of a percentage has a reading; only
+            // one showing an em dash does not.
+            hasReading: headline != nil || entry.figure != nil,
             chosenTint: entry.tint,
             isSpent: UsageTint.isSpent(headline),
             showsRemaining: entry.showsRemaining,
@@ -502,7 +505,7 @@ private struct UsageDockItem: View {
                 .foregroundStyle(
                     UsageTint.isSpent(headline)
                         ? Color.pulseExhausted
-                        : .primary.opacity(headline == nil ? 0.4 : 1)
+                        : .primary.opacity(headline == nil && entry.figure == nil ? 0.4 : 1)
                 )
                 .monospacedDigit()
                 // Dimmed with the arc, so the whole ring goes quiet together

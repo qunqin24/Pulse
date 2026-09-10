@@ -56,6 +56,16 @@ This is the whole reason it is the default. Pulse reads the balance every refres
 
 What it costs is the first run: a Mac that has never watched this account has no mark, so the first reading becomes one and the ring reads 0% until money is actually spent. That is a true statement about what Pulse has seen. A peak of zero draws no window at all — an account that has never had credit is not one that has spent it.
 
+### "No fraction" is not "no reading"
+
+Three separate places read `usedFraction == nil` (or `headline == nil`) as *nothing came back*, which was sound while every provider reported a percentage. On `balanceOnly` all three were wrong about a perfectly good reading, and each had to be pointed at whether there is a reading rather than whether there is a fraction:
+
+- `UsageCache.reconciled` threw the reading away and handed back the previous one, so the setting appeared to do nothing.
+- The hover card drew a bubble with only the provider's name in it.
+- The rail drew the icon and the figure at 35% and 40% opacity — the dimming that means "Pulse has no data for this one".
+
+`UsageRingView` now takes `hasReading` rather than inferring it, and the rail's label dims only when it has neither a percentage nor a figure.
+
 ### The card shows the money
 
 `balanceOnly` produces a reading whose body is nothing but a balance, and the card's body is otherwise limits, an unavailability message and a footnote — so hovering it drew a bubble with only the provider's name in it, which reads as a card that failed to load. Where a provider reports money and no allowance the money *is* the reading, so the card says it as a plain figure. No bar: a bar at zero beside a healthy balance reads as an empty account. No explanatory line either — it said the provider reports no limit, which the card has already made obvious by having nothing else on it.

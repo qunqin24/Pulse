@@ -3,9 +3,19 @@ import SwiftUI
 
 struct UsageRingView: View {
     let provider: Provider
-    /// How much of the tightest limit is gone, or nil when there is no reading
-    /// — an empty track then says "nothing known" rather than "nothing used".
+    /// How much of the tightest limit is gone, or nil when there is no
+    /// fraction to draw — an empty track then says "nothing known" rather than
+    /// "nothing used".
     let usedFraction: Double?
+    /// Whether this ring has a reading at all.
+    ///
+    /// **Not `usedFraction != nil`**, which is what the icon used to dim on.
+    /// The two agreed while every provider reported a percentage; DeepSeek
+    /// reports prepaid credit and no allowance, so on "balance only" there is
+    /// deliberately no fraction and the ring shows the money instead — a
+    /// perfectly good reading, drawn at 35% opacity as though nothing had come
+    /// back.
+    var hasReading: Bool = true
     /// A colour chosen for this account, or nil to colour by how much is gone.
     ///
     /// Nil is the default and the one that carries meaning — see `RingTint`.
@@ -215,7 +225,7 @@ struct UsageRingView: View {
             )
             // Dimmed while there is no reading, so the rail shows at a glance
             // which providers it actually has data for.
-            .foregroundStyle(.primary.opacity(usedFraction == nil ? 0.35 : 1))
+            .foregroundStyle(.primary.opacity(hasReading ? 1 : 0.35))
 
             if let secondFraction {
                 secondRing(secondFraction)
