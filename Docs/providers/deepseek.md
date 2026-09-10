@@ -102,6 +102,34 @@ DeepSeek's own flag for "this balance can no longer pay for a call". Nothing els
 
 Prepaid credit is **not a limit**: there is no ceiling to reach and no window to turn over. `.spend` made the row read "Spend limit", which put the word *limit* on something that has none. `reportsLength` is false and `resetsAt` is nil, always — the seconds exist only to sort the row. `--json` reports the kind as `balance`.
 
+## No usage history — investigated, and not for want of an endpoint
+
+**Do not dig this up again.** Checked 2026-09-10 against `main.b50d812fde.js`, the console's own bundle.
+
+The console's charts — daily spend, request counts, token breakdown, split by model or by API key — are real endpoints on `platform.deepseek.com`, and their shapes are known:
+
+| Route | Shape |
+|---|---|
+| `GET /api/v0/usage/by_api_key/cost?start=&end=&tz=` | `data.biz_data { start, end, bucket, models, data: [{ currency, series: [{ api_key, model, buckets: [{ time, cost }] }] }] }` |
+| `GET /api/v0/usage/by_api_key/amount?start=&end=&tz=` | `series: [{ api_key, model, buckets: [{ time, usage: { PROMPT_CACHE_HIT_TOKEN, PROMPT_CACHE_MISS_TOKEN, RESPONSE_TOKEN, REQUEST } }] }]` |
+| `GET /api/v0/usage/export`, `/api/v0/users/get_user_summary` | not mapped |
+
+`start`/`end` are epoch seconds, `tz` a seconds offset. That is richer than anything Pulse shows today — it separates cache-hit from cache-miss tokens.
+
+**The credential is what stops it.** These want `Authorization: Bearer <userToken>`, the console's own login token, and an API key is refused outright:
+
+```
+$ curl -H "Authorization: Bearer sk-…" \
+    "https://platform.deepseek.com/api/v0/usage/by_api_key/cost?start=…&end=…&tz=28800"
+{"code":40003,"msg":"Authorization Failed (invalid token)","data":null}
+```
+
+`userToken` lives in **`localStorage`**, not a cookie — the bundle's storage class is a thin wrapper over `localStorage.getItem/setItem`. That is the whole problem. Pulse reads browser *cookies* for Ollama Cloud and Cursor ([authentication.md](authentication.md)); localStorage is a per-origin store in Chrome's LevelDB (locked while Chrome runs) or WebKit's sqlite, and reading it is both more invasive and far more brittle than anything here does today.
+
+The remaining option is asking the user to paste the token out of devtools, which is an ugly setup step for a credential of unknown lifetime — a feature that would fail silently the day it expires. So: no history for DeepSeek. `providesHistory` is false and stays false until DeepSeek exposes usage to an API key.
+
+Noted in passing: `/api/v0/users/set_alert_bound` is DeepSeek's own low-balance alert, server-side. Pulse's [Warn me below](#warn-me-below) is the local equivalent and does not touch it.
+
 ## Currencies
 
 `balance_infos` is an **array** and an account can hold both CNY and USD. They cannot be added, and Pulse will not pick a "main" one by comparing figures across currencies — ¥100 against $10 is not a comparison. The ring follows the reader's choice if they made one, else the first entry with money in it, else the first entry at all. `creditBalance` is formatted in the currency the purse is actually priced in, not the reader's locale.
