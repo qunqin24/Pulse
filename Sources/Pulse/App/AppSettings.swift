@@ -139,13 +139,42 @@ final class AppSettings {
         }
     }
 
-    /// Every account, in the user's order. Anything the stored order doesn't
-    /// mention goes last, in declaration order — so a new one appears at the
-    /// bottom of the rail rather than in the middle of it.
+    /// Every account, in the user's order.
+    ///
+    /// Anything the stored order doesn't mention goes after it, **sorted by
+    /// name**. Someone who has arranged the rail keeps their arrangement and a
+    /// provider added later lands at the bottom of it; someone who never
+    /// touched it — which is everybody until they do — gets the whole list in
+    /// alphabetical order rather than in the order the enum happens to be
+    /// written in.
     var orderedAccounts: [AccountKey] {
         let known = allAccounts
         let stored = providerOrder.compactMap(AccountKey.init(id:)).filter(known.contains)
-        return stored + known.filter { !stored.contains($0) }
+        return stored + known.filter { !stored.contains($0) }.sorted(by: byName)
+    }
+
+    /// The order accounts fall into before anybody has arranged them: **by the
+    /// name on the row**.
+    ///
+    /// It used to be declaration order, which is the order the providers were
+    /// added to the enum over the months — an order with a meaning, but not one
+    /// visible from the outside. Seventeen rows arranged by nothing a reader
+    /// can see is a list you have to scan rather than one you can look in.
+    ///
+    /// An added account sorts by the label the user gave it, not by its
+    /// provider, because the label is what is written on the row. Two Claude
+    /// Code accounts called "Work" and "Personal" belong under W and P.
+    ///
+    /// `localizedStandardCompare` is Finder's comparison: case- and
+    /// accent-insensitive, and it puts any digits in a name in numeric order.
+    /// The same one the settings search matches with.
+    private func byName(_ a: AccountKey, _ b: AccountKey) -> Bool {
+        let left = label(for: a)
+        let right = label(for: b)
+        // Ids as the tie-break, so two rows that read the same never swap
+        // places between launches.
+        if left.localizedStandardCompare(right) == .orderedSame { return a.id < b.id }
+        return left.localizedStandardCompare(right) == .orderedAscending
     }
 
     /// Moves an account one place up or down. Silently does nothing at the

@@ -41,6 +41,45 @@ struct RailSlotTests {
         ]
     }
 
+    // MARK: - The order before anybody arranges it
+
+    /// Seventeen rows in the order the enum happens to be written in is a list
+    /// you have to scan; by name it is one you can look in.
+    @Test("With nothing arranged, accounts come out in name order")
+    func theDefaultOrderIsByName() {
+        let names = AppSettings(providerOrder: []).orderedAccounts.map(\.provider.displayName)
+
+        #expect(names == names.sorted { $0.localizedStandardCompare($1) == .orderedAscending })
+        #expect(names.first == "Antigravity")
+        #expect(names.count == Provider.allCases.count)
+    }
+
+    /// An arrangement somebody made is theirs, and is not to be re-sorted
+    /// under them.
+    @Test("A stored arrangement is kept, and what it does not mention follows in name order")
+    func aStoredArrangementSurvives() {
+        let settings = AppSettings(providerOrder: [
+            AccountKey(.volcengine).id, AccountKey(.codex).id,
+        ])
+        let order = settings.orderedAccounts.map(\.provider)
+
+        #expect(Array(order.prefix(2)) == [.volcengine, .codex])
+
+        let rest = order.dropFirst(2).map(\.displayName)
+        #expect(rest == rest.sorted { $0.localizedStandardCompare($1) == .orderedAscending })
+        #expect(!rest.contains("Volcengine"))
+    }
+
+    /// An added account is sorted by what is written on its row, which is the
+    /// label its owner gave it rather than the provider behind it.
+    @Test("An added account sorts by its own label")
+    func addedAccountsSortByLabel() {
+        let extra = ExtraAccount(provider: .claudeCode, slot: "work", label: "Aardvark")
+        let settings = AppSettings(extraAccounts: [extra], providerOrder: [])
+
+        #expect(settings.orderedAccounts.first == extra.key)
+    }
+
     @Test("An account that is not split gets exactly one slot")
     func unsplitAccountIsOneSlot() {
         let slots = RailSlot.rail(
