@@ -1,10 +1,8 @@
 name: Build
 
 # Every push and every pull request that touches something the build can see.
-# The build itself is the first check — under Swift 6's strict rules, with
-# warnings treated as failures — and `swift test` runs behind it. The build
-# comes first deliberately: an actor-isolation mistake is a compile error here
-# and no test can be reached to report it.
+# The package has no test target, so the build itself — under Swift 6's strict
+# rules, with warnings treated as failures — is the check.
 #
 # Prose and pictures are skipped: a macOS runner bills at ten times the rate of
 # a Linux one and takes several minutes to assemble the bundle, which is a lot
