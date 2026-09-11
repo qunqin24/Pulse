@@ -45,6 +45,25 @@ struct AlertMemoryTests {
         )
     }
 
+    /// A prepaid balance and no limits — DeepSeek's shape.
+    private static func balance(
+        _ amount: Double,
+        currency: String = "CNY",
+        state: ProviderUsage.State = .live,
+        at observedAt: Date = now
+    ) -> ProviderUsage {
+        var usage = ProviderUsage(
+            account: account,
+            windows: [],
+            observedAt: observedAt,
+            state: state,
+            plan: nil,
+            creditBalance: "¥\(amount)"
+        )
+        usage.creditRemaining = .init(amount: amount, currency: currency)
+        return usage
+    }
+
     private static func unavailable(_ reason: ProviderUsage.Unavailability) -> ProviderUsage {
         .unavailable(account, reason: reason)
     }
@@ -70,6 +89,7 @@ struct AlertMemoryTests {
         announcesFailure: Bool = true,
         celebratesReset: Bool = false,
         staleMeansFailure: Bool = true,
+        lowBalance: Double? = nil,
         now: Date = AlertMemoryTests.now
     ) -> [UsageAlert] {
         memory.alerts(
@@ -80,9 +100,135 @@ struct AlertMemoryTests {
             announcesReset: announcesReset,
             announcesFailure: announcesFailure,
             celebratesReset: celebratesReset,
+            lowBalance: lowBalance,
             staleMeansFailure: staleMeansFailure,
             now: now
         )
+    }
+
+    // MARK: - Low balance
+
+    /// Providers that sell prepaid credit report no allowance to take a
+    /// percentage of, so the only thing there is to warn about is the money.
+    @Test("A balance under the line is announced once, and not again")
+    func lowBalanceIsSaidOnce() {
+        var memory = AlertMemory()
+
+        #expect(run(&memory, Self.balance(9.40), lowBalance: 20).map(\.kind)
+            == [.lowBalance(remaining: "¥9.4")])
+        // Still under, still the same line, still nothing more to say.
+        #expect(run(&memory, Self.balance(8), lowBalance: 20).isEmpty)
+        #expect(run(&memory, Self.balance(0.5), lowBalance: 20).isEmpty)
+    }
+
+    @Test("Nothing is said while the balance is over the line")
+    func aHealthyBalanceIsSilent() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balance(50), lowBalance: 20).isEmpty)
+    }
+
+    /// Credit is bought, not refilled on a schedule, so the only thing that
+    /// re-arms this is the reader topping up.
+    @Test("A top-up re-arms the warning")
+    func toppingUpRearmsIt() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balance(9.40), lowBalance: 20).count == 1)
+
+        #expect(run(&memory, Self.balance(100), lowBalance: 20).isEmpty)
+        #expect(run(&memory, Self.balance(5), lowBalance: 20).count == 1)
+    }
+
+    /// Moving the line is asking a new question, and it deserves an answer
+    /// even about a balance that was already under the old one.
+    @Test("Raising the line warns again about the same balance")
+    func movingTheLineWarnsAgain() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balance(9.40), lowBalance: 10).count == 1)
+        #expect(run(&memory, Self.balance(9.40), lowBalance: 10).isEmpty)
+
+        #expect(run(&memory, Self.balance(9.40), lowBalance: 50).count == 1)
+    }
+
+    @Test("No line set is no warning, however low the balance")
+    func withoutALineNothingIsSaid() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balance(0.01), lowBalance: nil).isEmpty)
+    }
+
+    /// The same rule the limits follow: a stale reading carries whatever the
+    /// cache last banked, and the account may have been topped up since.
+    @Test("A stale balance is not warned about")
+    func staleBalancesAreNotJudged() {
+        var memory = AlertMemory()
+        let banked = Self.balance(9.40, state: .stale)
+        #expect(run(&memory, banked, raw: banked, lowBalance: 20).isEmpty)
+    }
+
+    /// A provider that reports a balance string but no figure — Codex says
+    /// "Unlimited" — has said nothing this rule may act on.
+    @Test("A balance with no figure behind it is not compared")
+    func prosaicBalancesAreNotCompared() {
+        var memory = AlertMemory()
+        let unlimited = ProviderUsage(
+            account: Self.account, windows: [], observedAt: Self.now,
+            state: .live, plan: nil, creditBalance: "Unlimited"
+        )
+        #expect(run(&memory, unlimited, lowBalance: 20).isEmpty)
+    }
+
+    // MARK: - Prepaid credit is not a limit
+
+    private static func balanceWindow(_ used: Double) -> UsageWindow {
+        // What DeepSeek emits in either mode: the same id, no reset, no length.
+        UsageWindow(id: "balance", kind: .balance, scope: nil, usedFraction: used,
+                    windowSeconds: 30 * 86_400, resetsAt: nil,
+                    reportsLength: false, estimate: .sinceTopUp)
+    }
+
+    private static func balanceReading(_ used: Double) -> ProviderUsage {
+        ProviderUsage(account: account, windows: [balanceWindow(used)], observedAt: now,
+                      state: .live, plan: nil, creditBalance: "¥9.40")
+    }
+
+    /// The fraction on a `.balance` row is a **setting**, not a reading: both
+    /// DeepSeek modes emit the window id "balance", so switching "My budget"
+    /// to "Since top-up" — or lowering the full-tank figure — moved it by
+    /// forty points with the money untouched. `resetsAt` is always nil there,
+    /// so the reset test collapsed to that drop alone and announced "This
+    /// limit has reset" within a second of touching the picker.
+    @Test("Changing what the ring measures against is not a reset")
+    func aBalanceNeverResets() {
+        var memory = AlertMemory()
+        #expect(run(&memory, Self.balanceReading(0.90)).map(\.kind) == [.approaching(percent: 90)])
+
+        let after = run(&memory, Self.balanceReading(0.167))
+        #expect(!after.contains { $0.kind == .reset })
+        #expect(after.isEmpty)
+    }
+
+    /// `is_available` is the only thing that may call a prepaid balance spent,
+    /// which is what the provider's own doc promises. The fraction here is
+    /// arithmetic against a denominator Pulse watched or the reader typed.
+    @Test("A balance at 100% of somebody's own figure is not the provider saying it is spent")
+    func aClampedBalanceIsNotSpent() {
+        var memory = AlertMemory()
+        // Every penny of a ¥100 full tank gone, and DeepSeek still paying.
+        let alerts = run(&memory, Self.balanceReading(1))
+
+        #expect(!alerts.contains { $0.kind == .spent })
+        #expect(alerts.map(\.kind) == [.approaching(percent: 90)])
+    }
+
+    /// And the converse: when DeepSeek *does* say so, it is said.
+    @Test("A balance the provider calls spent is announced")
+    func theProvidersOwnVerdictIsAnnounced() {
+        var memory = AlertMemory()
+        var window = Self.balanceWindow(1)
+        window.isExhausted = true
+        let reading = ProviderUsage(account: Self.account, windows: [window], observedAt: Self.now,
+                                    state: .live, plan: nil, creditBalance: "¥0.00")
+
+        #expect(run(&memory, reading).contains { $0.kind == .spent })
     }
 
     // MARK: - Thresholds
@@ -675,6 +821,8 @@ struct AlertsThroughTheCacheTests {
             threshold: .ninety,
             announcesReset: true,
             announcesFailure: true,
+            celebratesReset: false,
+            lowBalance: nil,
             staleMeansFailure: true,
             now: Date()
         )
@@ -735,7 +883,7 @@ struct AlertsThroughTheCacheTests {
         for seconds in [120.0, 240, 360, 1800] {
             let produced = memory.alerts(for: shown, raw: down.state, as: Self.account,
                                         threshold: .off, announcesReset: false, announcesFailure: true,
-                                        staleMeansFailure: true, now: now.addingTimeInterval(seconds))
+                                        celebratesReset: false, lowBalance: nil, staleMeansFailure: true, now: now.addingTimeInterval(seconds))
             #expect(produced.isEmpty)
         }
         #expect(memory.accounts[Self.account.id]?.failures == 0)
@@ -743,7 +891,7 @@ struct AlertsThroughTheCacheTests {
         for seconds in [1801.0, 1921, 2041] {
             produced += memory.alerts(for: shown, raw: down.state, as: Self.account,
                                       threshold: .off, announcesReset: false, announcesFailure: true,
-                                      staleMeansFailure: true, now: now.addingTimeInterval(seconds))
+                                      celebratesReset: false, lowBalance: nil, staleMeansFailure: true, now: now.addingTimeInterval(seconds))
         }
         #expect(produced.map(\.kind) == [.unreadable(.unreachable)])
     }
@@ -837,7 +985,7 @@ struct NotificationAuthorizationTests {
         var memory = alerts.memory
         #expect(memory.alerts(for: reading, raw: reading.state, as: account,
                               threshold: .ninety, announcesReset: false, announcesFailure: false,
-                              staleMeansFailure: false, now: Date()).count == 1)
+                              celebratesReset: false, lowBalance: nil, staleMeansFailure: false, now: Date()).count == 1)
     }
 
     @Test("The foreground presentation callback is a real optional protocol method")

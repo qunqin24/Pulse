@@ -1,6 +1,6 @@
 # Kimi Code
 
-Service: [`KimiCodeUsageService.swift`](../../Sources/Pulse/KimiCodeUsageService.swift). Sign-in: [authentication.md](authentication.md).
+Service: [`KimiCodeUsageService.swift`](../../Sources/Pulse/Providers/KimiCodeUsageService.swift).
 
 Extra accounts are supported, same device-code path as Codex extras. `keepsLocalTranscripts` is false. No first-run detection: a subscription login Pulse has never driven, and no pasted key, stays off until switched on in Settings.
 

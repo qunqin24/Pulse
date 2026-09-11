@@ -1,0 +1,7 @@
+{
+  "is_available": true,
+  "balance_infos": [
+    { "currency": "USD", "total_balance": "0.00", "granted_balance": "0.00", "topped_up_balance": "0.00" },
+    { "currency": "CNY", "total_balance": "42.30", "granted_balance": "10.00", "topped_up_balance": "32.30" }
+  ]
+}

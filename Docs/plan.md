@@ -28,4 +28,4 @@ A successful OAuth reading wins immediately. An expired or refused OAuth credent
 
 Added Claude accounts use their own OAuth credentials only. The primary CLI Status Line and Desktop session are never substituted for an added account.
 
-Source: [`Sources/Pulse/ClaudeCodeUsageService.swift`](../Sources/Pulse/ClaudeCodeUsageService.swift), [`Sources/Pulse/ClaudeDesktopSession.swift`](../Sources/Pulse/ClaudeDesktopSession.swift), [`Sources/Pulse/UsageCache.swift`](../Sources/Pulse/UsageCache.swift), [`Sources/Pulse/UsageStore.swift`](../Sources/Pulse/UsageStore.swift), [`Sources/Pulse/AppDelegate.swift`](../Sources/Pulse/AppDelegate.swift).
+Source: [`Sources/Pulse/Providers/ClaudeCodeUsageService.swift`](../Sources/Pulse/Providers/ClaudeCodeUsageService.swift), [`Sources/Pulse/Providers/ClaudeDesktopSession.swift`](../Sources/Pulse/Providers/ClaudeDesktopSession.swift), [`Sources/Pulse/Usage/UsageCache.swift`](../Sources/Pulse/Usage/UsageCache.swift), [`Sources/Pulse/Usage/UsageStore.swift`](../Sources/Pulse/Usage/UsageStore.swift), [`Sources/Pulse/App/AppDelegate.swift`](../Sources/Pulse/App/AppDelegate.swift).

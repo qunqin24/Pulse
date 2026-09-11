@@ -1,6 +1,6 @@
 # Refresh, cache, activity, history
 
-Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. The money estimate in Settings is the labelled exception.
+Pulse shows **figures the provider reported**. It does not invent a usage percentage from local token counts. If a provider reports no figure, the UI says so. Labelled exceptions only, and each says on screen that it is inferred: the money estimate in Settings; Command Code's monthly plan grant, whose remainder is reported while its size is published only on a pricing page ([providers/command-code.md](providers/command-code.md)); and DeepSeek's ring, where nothing at all is reported but the money ([providers/deepseek.md](providers/deepseek.md)).
 
 Per-provider HTTP, cookies, and login: [providers/README.md](providers/README.md). Why percentages stay reported: [decisions/reported-figures.md](decisions/reported-figures.md).
 
@@ -12,6 +12,12 @@ What Pulse says about these readings unprompted: [notifications.md](notification
 
 Because the wait changes each pass, `scheduleNext` sets `Timer.scheduledTimer(..., repeats: false)` and reschedules after every refresh.
 
+**One timer, but not one cadence.** Under `.automatic` each provider has its own interval and the timer is set for whichever is due soonest; a pass then asks only the accounts that are actually due (`UsageStore.providersToAsk`, paced from `askedAt` — *asked*, not answered, or a provider that refuses every time reads as permanently due and spins the loop). Everything not asked keeps the reading it has, because the commit loop is gated on the same set. A **fixed** interval chosen in Settings applies to everything equally: somebody who picked five minutes meant five minutes.
+
+`UsageStore.currentInterval` stays **the cadence**, not the countdown to the next tick: Settings renders it as "Now: X minutes" and `isOverdue` multiplies it, and both broke when it briefly became the wait — a timer set for the last fifteen seconds of somebody's cycle read as "Now: 0 minutes".
+
+**`refresh(dueOnly:)` is true for exactly one caller — the timer.** Every other route into a pass is *something happening*: a setting changed, a window reset, the display woke, the app server pushed, the pointer arrived at a rail whose figures are older than the cadence allows. Each of those is a reason to look now, whatever the cadence says. Getting it backwards is not a slow refresh but **a control that does nothing**: switching DeepSeek between "since top-up" and "balance only" changes what the reading means, and a pass that skipped the provider because it had been asked a minute ago left the old ring on screen. `providersToAsk` is `nonisolated static` and pure so that rule is pinned by `RefreshPacingTests` rather than by hand.
+
 Signals (every one is a reason to wait **longer**, never shorter):
 
 - CLI transcript metadata (`AgentActivity.lastWrite`) — not a second file scan
@@ -19,6 +25,14 @@ Signals (every one is a reason to wait **longer**, never shorter):
 - Whether the rail was hovered (`noteLooked`)
 - Whether the panel is on screen
 - Low power, thermal, display asleep
+
+#### The one asymmetry: providers this Mac cannot watch
+
+Every signal above is local, which is the module's whole advantage — Pulse can see an agent working without asking anyone's server. It also means a provider billed entirely on **its own** servers is invisible to all three activity signals and lands on the ceiling every time. That is circular: it waits half an hour because nothing changed, and nothing appears to have changed because it waited half an hour. For prepaid credit draining towards zero — DeepSeek, Command Code — being half an hour late is the one case where it costs something.
+
+So `AdaptiveRefresh.interval(for:isWatched:)` caps those at `unwatchedCeiling` (300s). `Provider.spendingIsWatchedLocally` is the flag, and it is the inverse of `reportsSpendableBalance`.
+
+The cap **only ever lowers** a wait the ladder already decided, which keeps the module's rule intact: no signal here may make anything wait longer. And it is beaten by the two short-circuits above it — a constrained Mac and a hidden panel — because those are statements about *this machine*, not about the provider.
 
 Manual interval in Settings still exists. The group is named **Refresh**, not Updates (the app has Sparkle now).
 
@@ -49,6 +63,14 @@ Disabled providers are not fetched. A provider pane can still refresh that accou
 - `UsageStore.start` paints the cache before the first request so the rail is not blank on a cold start. Cache never undoes a fetch that has already landed.
 
 Which unavailability cases a given provider emits: [providers/README.md](providers/README.md).
+
+### Connection diagnostics
+
+`UsageStore.commit` also records a `ConnectionDiagnostic` per account, separately from the reconciled display reading. It retains the latest raw result, completed-check timestamp, route checks and the newest successful reading timestamp. The last of these uses the reading's own `observedAt`: re-reading a status-line capture never advances it to the time the user clicked Retry. Restored cache and seeded placeholders do not manufacture a completed check; the UI says no check has completed since launch.
+
+`ProviderUsage.origin` records the route that produced the figures. Cache entries persist that optional origin; old entries remain unknown. `isCached` is set only by cache restoration, so a stale status-line capture displayed directly is not called a cache replacement. Route attempts are not saved with the figures. Single-route providers are labelled at reconciliation and diagnostic commit; the three multi-route services record their own branches ([providers/README.md](providers/README.md)).
+
+The copied diagnostic report is a fixed allowlist: app version, provider, primary/added account kind, route preference, typed outcomes and timestamps. It omits account ids and labels, plan names, amounts, paths, credentials, headers and response bodies. Tests pass results through the real cache before checking diagnostics. UI and repair controls: [ui/settings.md](ui/settings.md).
 
 ## Agent activity
 
@@ -85,11 +107,11 @@ Off by default (`showsForecast`). One line under a limit: expected to last the w
 
 ## Spending history and the estimate (Settings only)
 
-Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude Code, Codex) carry input/output/cache counts, so they can be priced — that is the money estimate. **Provider statistics** (Z.ai, 智谱) come from the account and cover every machine, but report one token total per model, which cannot be priced: the card shows tokens and no money, and says so. `Provider.providesHistory` is the wider gate; `keepsLocalTranscripts` still gates the estimate. [providers/zai.md](providers/zai.md)
+Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude Code, Codex) carry input/output/cache counts, so they can be priced — that is the money estimate. **Provider statistics** (Z.ai, Zhipu) come from the account and cover every machine, but report one token total per model, which cannot be priced: the card shows tokens and no money, and says so. `Provider.providesHistory` is the wider gate; `keepsLocalTranscripts` still gates the estimate. [providers/zai.md](providers/zai.md)
 
 Neither money nor per-day history is reported by providers. Both are reconstructed from CLI transcripts (`UsageLedger`) at published API prices (`ModelPrices`, `models.dev`, cached a day). A model with no published price is left out, never given a plausible rate.
 
-`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and 智谱 also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
+`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and Zhipu also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
 
 Ledger notes (verify again after changing the counting; historical independent check agreed to the cent on one machine):
 

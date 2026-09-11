@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "user": { "userId": "usr_7f3a", "userName": "example" },
+  "org": { "id": "org_2b91", "login": "example-org" },
+  "orgLimits": [
+    {
+      "scope": "org",
+      "spent": 18.5,
+      "limit": 50,
+      "exceeded": false,
+      "resetInterval": "monthly",
+      "resetAt": "2026-10-01T00:00:00Z"
+    },
+    {
+      "scope": "model",
+      "model": "anthropic/claude-opus-5",
+      "modelLabel": "Claude Opus 5",
+      "spent": 9,
+      "limit": 10,
+      "exceeded": false,
+      "resetInterval": "daily",
+      "resetAt": "2026-09-10T00:00:00Z"
+    },
+    {
+      "scope": "model",
+      "model": "moonshotai/Kimi-K3",
+      "modelLabel": "Kimi K3",
+      "spent": 2,
+      "limit": 4,
+      "exceeded": true,
+      "resetInterval": "weekly",
+      "resetAt": "2026-09-14T00:00:00Z"
+    },
+    {
+      "scope": "org",
+      "spent": 3,
+      "resetInterval": "total"
+    }
+  ]
+}

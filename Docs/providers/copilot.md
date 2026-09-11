@@ -1,6 +1,6 @@
 # GitHub Copilot
 
-Service: [`CopilotUsageService.swift`](../../Sources/Pulse/CopilotUsageService.swift). Sign-in: [`GitHubDeviceLogin.swift`](../../Sources/Pulse/GitHubDeviceLogin.swift), [authentication.md](authentication.md).
+Service: [`CopilotUsageService.swift`](../../Sources/Pulse/Providers/CopilotUsageService.swift). Sign-in: [`GitHubDeviceLogin.swift`](../../Sources/Pulse/Auth/GitHubDeviceLogin.swift), [authentication.md](authentication.md).
 
 Extra accounts are not supported. `keepsLocalTranscripts` is false. `usesAPIKey` is false (Settings draws a sign-in, not a paste field) but `keepsOwnCredential` is **true** — the token lives in `keys.dat`. Loading keys with `usesAPIKey` alone left a signed-in account reporting “sign in again”.
 

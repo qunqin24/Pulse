@@ -60,8 +60,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 # Spotlight indexes an .app wherever it finds one, so a build sitting in the
 # project folder turns up in Launchpad and search beside the installed copy —
-# two identical Pulses, and no way to tell which is which. This marker keeps
-# the whole build directory out of the index.
+# two identical Pulses, and no way to tell which is which. It is the directory's
+# `.noindex` suffix that Spotlight actually honours; this marker was tried on
+# its own and did not work, and is kept only as a second line. Do not rely on
+# it, and do not rename the directory. See Docs/releasing.md.
 touch "build.noindex/.metadata_never_index"
 
 cp "$BUILT/Pulse" "$APP/Contents/MacOS/Pulse"
@@ -71,6 +73,12 @@ cp "$BUILT/Pulse" "$APP/Contents/MacOS/Pulse"
 # where it has to land — the app is silently English with no icons without it.
 cp -R "$BUILT/Pulse_Pulse.bundle" "$APP/Contents/Resources/"
 cp AppIcon/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# A ready-to-copy developer kit. Never ship local npm dependencies or build output.
+mkdir -p "$APP/Contents/Resources/Integrations/raycast"
+cp Integrations/pulse-status.sh Integrations/pulse-sketchybar.sh "$APP/Contents/Resources/Integrations/"
+cp Integrations/raycast/package.json Integrations/raycast/package-lock.json Integrations/raycast/tsconfig.json "$APP/Contents/Resources/Integrations/raycast/"
+cp -R Integrations/raycast/src Integrations/raycast/assets Integrations/raycast/tests "$APP/Contents/Resources/Integrations/raycast/"
 
 # Sparkle has to travel inside the app. SwiftPM links the executable against
 # the framework but has no app to put it in, which is why a `swift run` build
@@ -119,6 +127,12 @@ cat > "$APP/Contents/Info.plist" <<PLIST
          also sets .accessory, but that runs after the Dock has already been
          told what to show. -->
     <key>LSUIElement</key><true/>
+    <key>CFBundleURLTypes</key>
+    <array><dict>
+        <key>CFBundleURLName</key><string>$BUNDLE_ID.navigation</string>
+        <key>CFBundleURLSchemes</key><array><string>pulse</string></array>
+        <key>CFBundleTypeRole</key><string>Viewer</string>
+    </dict></array>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>github.com/${GITHUB_REPO}</string>
     <key>SUFeedURL</key><string>$FEED_URL</string>

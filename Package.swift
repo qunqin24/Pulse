@@ -32,7 +32,7 @@ let package = Package(
         ),
         // Tests the executable target directly rather than through a library
         // split. Pulse is one app, not a framework with an app on top, and
-        // carving 63 files into two targets to make them reachable would be a
+        // carving sixty-nine files into two targets to make them reachable would be a
         // refactor in service of the test runner. SwiftPM has been able to
         // `@testable import` an executable target since Swift 5.5.
         .testTarget(

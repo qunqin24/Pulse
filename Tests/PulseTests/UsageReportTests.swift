@@ -16,6 +16,7 @@ struct UsageReportTests {
         scope: String? = nil,
         seconds: Int = 7 * 86_400,
         reportsLength: Bool = true,
+        estimate: UsageWindow.Estimate? = nil,
         resetsAt: Date? = nil
     ) -> UsageWindow {
         UsageWindow(
@@ -25,7 +26,8 @@ struct UsageReportTests {
             usedFraction: used,
             windowSeconds: seconds,
             resetsAt: resetsAt,
-            reportsLength: reportsLength
+            reportsLength: reportsLength,
+            estimate: estimate
         )
     }
 
@@ -173,6 +175,31 @@ struct UsageReportTests {
         #expect(window["reportsLength"] as? Bool == false)
     }
 
+    /// The contract's answer to "is this figure the provider's own?", which is
+    /// the whole promise `--json` makes. It has to be on **every** window, not
+    /// only the one that sets it, or a script cannot filter on its absence.
+    @Test("An inferred denominator is flagged, and the flag is on every window")
+    func inferredDenominatorsAreFlagged() throws {
+        let account = AccountKey(.commandCode)
+        let rail = AppSettings.StoredRail(accounts: [account], labels: [:], pinnedWindows: [:])
+        let root = try Self.object(rail: rail, readings: [account.id: Self.reading(account, [
+            Self.window("five-hour", kind: .fiveHour, used: 0.25, seconds: 5 * 3_600),
+            Self.window("monthly", kind: .monthly, used: 0.58, seconds: 30 * 86_400, estimate: .planPrice),
+        ], observedAt: Self.generatedAt)])
+        let windows = try #require(try Self.accounts(root)[0]["windows"] as? [[String: Any]])
+
+        #expect(windows.count == 2)
+        #expect(windows.allSatisfy { $0["estimated"] != nil })
+        #expect(windows.first { $0["id"] as? String == "five-hour" }?["estimated"] as? Bool == false)
+        #expect(windows.first { $0["id"] as? String == "monthly" }?["estimated"] as? Bool == true)
+        // Which inference, as a token a script can switch on rather than a
+        // translated word.
+        #expect(windows.first { $0["id"] as? String == "monthly" }?["estimatedFrom"] as? String == "planPrice")
+        #expect(windows.first { $0["id"] as? String == "five-hour" }?["estimatedFrom"] == nil)
+        // And it is a flag, not a translated word hidden in a product field.
+        #expect(windows.allSatisfy { $0["scope"] == nil })
+    }
+
     @Test("An added account is named by the user's own label")
     func addedAccountsCarryTheirLabel() throws {
         let extra = AccountKey(.claudeCode, slot: "work")
@@ -184,5 +211,18 @@ struct UsageReportTests {
         // The product is still named, so a script can group by it.
         #expect(entry["name"] as? String == "Claude Code")
         #expect(entry["provider"] as? String == "claudeCode")
+        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode%23work")
+        #expect(entry["source"] == nil)
+    }
+
+    @Test("The JSON source is the reading's actual origin, not a route preference")
+    func actualSource() throws {
+        let account = AccountKey(.claudeCode)
+        let rail = AppSettings.StoredRail(accounts: [account], labels: [:], pinnedWindows: [:])
+        let reading = Self.reading(account, [Self.window("w", used: 0.5)], observedAt: Self.generatedAt)
+            .recording(.desktopSession)
+        let entry = try Self.accounts(try Self.object(rail: rail, readings: [account.id: reading]))[0]
+        #expect(entry["source"] as? String == "desktopSession")
+        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode")
     }
 }

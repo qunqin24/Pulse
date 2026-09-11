@@ -56,6 +56,115 @@ struct UsageCacheTests {
         #expect(banked?.windows.first?.usedFraction == 0.4)
     }
 
+    /// The rule was `!windows.isEmpty`, on the fair assumption that a reading
+    /// with no limits in it is a fetch that went wrong. DeepSeek broke it: on
+    /// "balance only" a **complete** answer is deliberately a balance and no
+    /// windows, and the cache kept handing back the previous reading — so
+    /// switching the setting appeared to do nothing at all.
+    @Test("A live reading with a balance and no limits is an answer, not a failure")
+    func aBalanceWithoutLimitsIsAnAnswer() async {
+        let cache = Self.cache()
+        let deepSeek = AccountKey(.deepSeek)
+        // Recent, or the bank is discarded as older than a day and every path
+        // trivially hands the fetched reading back — proving nothing.
+        let earlier = Date().addingTimeInterval(-600)
+
+        let measured = ProviderUsage(
+            account: deepSeek,
+            windows: [Self.window(used: 0.4, resetsAt: nil)],
+            observedAt: earlier,
+            state: .live,
+            plan: nil,
+            creditBalance: "¥9.40"
+        )
+        _ = await cache.reconciled(measured)
+
+        let balanceOnly = ProviderUsage(
+            account: deepSeek,
+            windows: [],
+            observedAt: earlier.addingTimeInterval(60),
+            state: .live,
+            plan: nil,
+            creditBalance: "¥9.40"
+        )
+        let shown = await cache.reconciled(balanceOnly)
+
+        #expect(shown.windows.isEmpty)
+        #expect(shown.state == .live)
+        #expect(shown.creditBalance == "¥9.40")
+    }
+
+    /// The other half of the same rule, which must not be lost with it: a
+    /// reading carrying nothing at all is still a failure to fall back from.
+    @Test("A live reading carrying nothing at all is still not an answer")
+    func anEmptyReadingIsStillAFailure() async {
+        let cache = Self.cache()
+        let earlier = Date().addingTimeInterval(-600)
+        _ = await cache.reconciled(Self.live([Self.window(used: 0.4, resetsAt: nil)], at: earlier))
+
+        let empty = ProviderUsage(
+            account: Self.account,
+            windows: [],
+            observedAt: earlier.addingTimeInterval(60),
+            state: .live,
+            plan: nil,
+            creditBalance: nil
+        )
+        let shown = await cache.reconciled(empty)
+
+        #expect(shown.windows.count == 1)
+        #expect(shown.state == .stale)
+    }
+
+    /// `reconciled` learned that a balance with no limits is an answer; the
+    /// **read** path did not, so such a reading could be banked and never come
+    /// back out — blank through the first round trip after launch, no fallback
+    /// when a fetch failed, and `--json` reporting a null balance.
+    @Test("A banked balance with no limits can be read back")
+    func aBankedBalanceComesBackOut() async {
+        let cache = Self.cache()
+        let deepSeek = AccountKey(.deepSeek)
+
+        var reading = ProviderUsage(
+            account: deepSeek, windows: [], observedAt: Date(),
+            state: .live, plan: nil, creditBalance: "¥9.40"
+        )
+        reading.creditRemaining = .init(amount: 9.4, currency: "CNY")
+        _ = await cache.reconciled(reading)
+
+        let restored = await cache.lastReading(for: deepSeek)
+        #expect(restored?.creditBalance == "¥9.40")
+        // And the figure, not only the string — otherwise the rail falls back
+        // to the long form `railText` exists to avoid.
+        #expect(restored?.creditRemaining?.amount == 9.4)
+        #expect(restored?.creditRemaining?.currency == "CNY")
+    }
+
+    /// `estimate` replaced a stored `isEstimated: Bool`. A cache written by
+    /// 1.0.9 carries the old key, and the synthesised decoder would ignore it —
+    /// so the first launch after upgrading drew Command Code's inferred
+    /// percentage with nothing marking it as inferred.
+    @Test("A window banked by an older build keeps its inferred mark")
+    func aLegacyEstimateSurvivesTheUpgrade() throws {
+        let legacy = #"""
+        {"id":"monthly","kind":{"monthly":{}},"usedFraction":0.58,
+         "windowSeconds":2592000,"reportsLength":true,
+         "isEstimated":true,"isExhausted":false}
+        """#
+        let window = try JSONDecoder().decode(UsageWindow.self, from: Data(legacy.utf8))
+
+        #expect(window.isEstimated)
+        #expect(window.estimate == .planPrice)
+        #expect(window.name.contains("estimated"))
+
+        // And nothing writes the old shape back out.
+        let rewritten = try JSONSerialization.jsonObject(
+            with: try JSONEncoder().encode(window)
+        ) as? [String: Any]
+        #expect(rewritten?["isEstimated"] == nil)
+        #expect(rewritten?["estimate"] as? String == "planPrice")
+    }
+
     @Test("A failed fetch falls back to the banked figures, marked stale")
     func failureFallsBackToCache() async {
         let cache = Self.cache()

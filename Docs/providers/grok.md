@@ -1,6 +1,6 @@
 # Grok
 
-Service: [`GrokUsageService.swift`](../../Sources/Pulse/GrokUsageService.swift). Extra accounts: [authentication.md](authentication.md).
+Service: [`GrokUsageService.swift`](../../Sources/Pulse/Providers/GrokUsageService.swift). Extra accounts: [authentication.md](authentication.md).
 
 This is the **account’s** weekly SuperGrok / xAI pool, not “Grok Build the CLI”. Grok Bot is a different bill: [grok-bot.md](grok-bot.md).
 
