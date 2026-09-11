@@ -8,10 +8,10 @@ Toolchain and local `swift build`: [build-from-source.md](build-from-source.md).
 
 The version lives in `VERSION` and nowhere else. Tag `v$(cat VERSION)`. The update check reads GitHub’s latest release tag against `CFBundleShortVersionString`.
 
-**Pushing a tag is the whole release.** `CHANGELOG.md` needs a `## x.y.z` section **before** the tag: the workflow stops without one, before it builds. Those words are the GitHub release body **and** the Sparkle update window. Generating notes from commit subjects is a fallback for forgotten entries, not the path for a tagged release.
+**Pushing a tag is the whole release.** Both `CHANGELOG.md` and `CHANGELOG.zh-CN.md` need a `## x.y.z` section **before** the tag: the workflow stops without either, before it builds. GitHub Release notes are **bilingual, Chinese first**, built by `Scripts/release-notes.py`. Sparkle's update window still uses the **English** `CHANGELOG.md` only. Generating notes from commit subjects is a fallback for forgotten English entries in older tooling, not the path for a tagged release.
 
 ```bash
-# CHANGELOG.md first. Then:
+# CHANGELOG.md and CHANGELOG.zh-CN.md first. Then:
 echo 1.0.1 > VERSION && git commit -am "Pulse 1.0.1"
 git tag v1.0.1 && git push && git push origin v1.0.1
 ```
@@ -27,6 +27,16 @@ A tag/VERSION mismatch fails the run. A suffix (`v1.1.0-beta.1`) is a GitHub pre
 Both pin **`macos-26`**, not `macos-latest`. `PanelSurface`’s Liquid Glass needs the macOS 26 SDK to compile even behind `#available`. Workflows check `xcrun --show-sdk-version` first. Warnings fail the build.
 
 Release needs `SPARKLE_PRIVATE_KEY`. It fails without it rather than publishing a version no installed copy would be offered.
+
+
+## Workflow file updates
+
+Pushing changes under `.github/workflows/` needs a token with the `workflow` scope.
+The OAuth token used for routine fork pushes does not have it. The bilingual Release
+notes job lives in [patches/release.yml.bilingual](patches/release.yml.bilingual)
+(diff: [patches/release-yml-bilingual.patch](patches/release-yml-bilingual.patch)):
+apply that onto `.github/workflows/release.yml` with a `workflow`-scoped token (or
+the GitHub UI) before the next tagged release.
 
 ## Bundle (`Scripts/bundle.sh`)
 
@@ -59,4 +69,4 @@ Sparkle updates from the **zip**, not the DMG. The image is for people.
 - Public key: `Scripts/sparkle-public-key.txt` (committed). Private key: `SPARKLE_PRIVATE_KEY` only.
 - `Scripts/appcast.py` signs the zip and appends to `appcast.xml`. The workflow commits the feed **after** publishing (the feed points at the release asset).
 
-`Scripts/changelog.py` converts one CHANGELOG section to HTML. Grammar: bullets, `**bold**`, `` `code` ``, links.
+`Scripts/changelog.py` converts one English CHANGELOG section to HTML for Sparkle. Grammar: bullets, `**bold**`, `` `code` ``, links. `Scripts/release-notes.py` builds the bilingual GitHub Release body from both changelogs.

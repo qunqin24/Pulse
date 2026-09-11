@@ -1,0 +1,63 @@
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -47,13 +47,16 @@
+           echo "VERSION=$FILE" >> "$GITHUB_ENV"
+ 
+       # Before anything is built or published, so a missing entry costs a
+-      # re-tag rather than a release whose notes went out wrong. These words
+-      # reach the update window of every installed copy; the fallback in
+-      # Scripts/appcast.py is for older versions and hand runs, not for this.
++      # re-tag rather than a release whose notes went out wrong. English
++      # CHANGELOG.md reaches Sparkle; both EN+ZH feed the GitHub Release body.
+       - name: The changelog has an entry for this version
+         run: |
+           if ! Scripts/changelog.py "$VERSION" > /dev/null 2>&1; then
+             echo "::error::CHANGELOG.md has no '## $VERSION' entry. Write it, commit, then re-tag."
++            exit 1
++          fi
++          if ! grep -qE "^## ${VERSION}[[:space:]]*$" CHANGELOG.zh-CN.md; then
++            echo "::error::CHANGELOG.zh-CN.md has no '## $VERSION' entry. Write the Chinese notes, commit, then re-tag."
+             exit 1
+           fi
+ 
+@@ -94,36 +97,11 @@
+           ls -lh build.noindex/
+ 
+       - name: Release notes
+-        env:
+-          GH_TOKEN: ${{ github.token }}
+         run: |
+-          # Generated notes plus the part that isn't in the commit history:
+-          # what to do when macOS refuses to open it.
+-          gh api "repos/${{ github.repository }}/releases/generate-notes" \
+-            -f tag_name="v$VERSION" \
+-            --jq .body > generated.md || echo "" > generated.md
+-
+-          # The same words the update window shows, so the two cannot drift
+-          # apart. Its presence was checked before anything was built.
+-          Scripts/changelog.py "$VERSION" > body.md
+-
+-          {
+-            cat body.md
+-            echo
+-            echo "### Install"
+-            echo
+-            echo "Download **Pulse-$VERSION.dmg**, open it and drag Pulse into Applications."
+-            echo
+-            echo "Pulse isn't signed with an Apple Developer ID, so macOS blocks the first"
+-            echo "launch — and on macOS 15 and later the old right-click → Open trick no"
+-            echo "longer works. Open Pulse, dismiss the warning, then go to"
+-            echo "**System Settings → Privacy & Security**, scroll to **Security**, and click"
+-            echo "**Open Anyway**. Once only."
+-            echo
+-            echo "Requires macOS 14 or newer. Universal (Apple Silicon and Intel)."
+-            echo
+-            cat generated.md
+-          } > notes.md
++          # Bilingual GitHub Release body (Chinese first). Sparkle still reads
++          # the English CHANGELOG.md via appcast.py — these pages are separate
++          # on purpose. Presence of both entries was checked before the build.
++          Scripts/release-notes.py "$VERSION" > notes.md
+ 
+       - name: Publish
+         id: publish

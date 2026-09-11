@@ -1,0 +1,181 @@
+name: Release
+
+# Tag and push, and that is the whole publishing step:
+#
+#   ./Scripts/bundle.sh   (locally, to check it)
+#   git tag v1.0.1 && git push origin v1.0.1
+#
+# Pulse's own update check reads GitHub's latest release, so what this
+# publishes is exactly what installed copies are offered.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and publish"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-26
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+          # Release notes are generated from the history between tags.
+          fetch-depth: 0
+
+      # The version lives in VERSION and the tag has to agree with it: the
+      # update check compares the published tag against the bundle's
+      # CFBundleShortVersionString, which is read from that file. Mismatched,
+      # every installed copy would be told forever that an update is waiting.
+      - name: Tag and VERSION must agree
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          TAG="${TAG#v}"
+          FILE="$(tr -d '[:space:]' < VERSION)"
+          echo "tag=$TAG  VERSION=$FILE"
+          if [ "$TAG" != "$FILE" ]; then
+            echo "::error::Tag v$TAG does not match VERSION ($FILE). Bump VERSION, commit, then re-tag."
+            exit 1
+          fi
+          echo "VERSION=$FILE" >> "$GITHUB_ENV"
+
+      # Before anything is built or published, so a missing entry costs a
+      # re-tag rather than a release whose notes went out wrong. English
+      # CHANGELOG.md reaches Sparkle; both EN+ZH feed the GitHub Release body.
+      - name: The changelog has an entry for this version
+        run: |
+          if ! Scripts/changelog.py "$VERSION" > /dev/null 2>&1; then
+            echo "::error::CHANGELOG.md has no '## $VERSION' entry. Write it, commit, then re-tag."
+            exit 1
+          fi
+          if ! grep -qE "^## ${VERSION}[[:space:]]*$" CHANGELOG.zh-CN.md; then
+            echo "::error::CHANGELOG.zh-CN.md has no '## $VERSION' entry. Write the Chinese notes, commit, then re-tag."
+            exit 1
+          fi
+
+      - name: Check the SDK is new enough
+        run: |
+          SDK="$(xcrun --sdk macosx --show-sdk-version | cut -d. -f1)"
+          if [ "$SDK" -lt 26 ]; then
+            echo "::error::macOS SDK $SDK is too old — PanelSurface needs 26 for glassEffect."
+            exit 1
+          fi
+
+      - name: Localization keys
+        run: ./Scripts/check-localization.sh
+
+      - name: Build
+        run: |
+          set -o pipefail
+          swift build -Xswiftc -swift-version -Xswiftc 6 2>&1 | tee build.log
+          if grep -q "warning:" build.log; then
+            echo "::error::The build produced warnings, which this project treats as failures."
+            grep "warning:" build.log | head -40
+            exit 1
+          fi
+
+      # A tag publishes to everyone who has the app installed. The tests are
+      # the last thing standing between a regression in the rules and a
+      # Sparkle update, so they run here too rather than only on push.
+      - name: Tests
+        run: swift test -Xswiftc -swift-version -Xswiftc 6
+
+      # The disk image carries the install instructions on its window, so it is
+      # the download people should get; the zip is there for anything that
+      # would rather have an archive.
+      - name: Package
+        run: |
+          ./Scripts/dmg.sh
+          ./Scripts/bundle.sh --zip
+          ls -lh build.noindex/
+
+      - name: Release notes
+        run: |
+          # Bilingual GitHub Release body (Chinese first). Sparkle still reads
+          # the English CHANGELOG.md via appcast.py — these pages are separate
+          # on purpose. Presence of both entries was checked before the build.
+          Scripts/release-notes.py "$VERSION" > notes.md
+
+      - name: Publish
+        id: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A tag like v1.1.0-beta.1 is published as a pre-release, which
+          # GitHub's "latest release" excludes — and so, therefore, does
+          # Pulse's update check.
+          PRERELEASE=""
+          case "$VERSION" in *-*) PRERELEASE="--prerelease";; esac
+
+          # Re-runnable. A later step failing used to mean deleting the release
+          # and the tag and starting over, which is a lot of ceremony for a
+          # typo in the step after this one.
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release exists — replacing its assets."
+            gh release upload "v$VERSION" \
+              "build.noindex/Pulse-$VERSION.dmg" \
+              "build.noindex/Pulse-$VERSION.zip" \
+              --clobber
+          else
+            gh release create "v$VERSION" \
+              "build.noindex/Pulse-$VERSION.dmg" \
+              "build.noindex/Pulse-$VERSION.zip" \
+              --title "Pulse $VERSION" \
+              --notes-file notes.md \
+              $PRERELEASE
+          fi
+
+      # After publishing, because the feed points at the release's own asset —
+      # committing it first would advertise a download that 404s.
+      #
+      # This is what makes updates *install themselves*. Sparkle refuses an
+      # archive that isn't signed by the private half of the key whose public
+      # half is baked into the app, so the signature written here is the whole
+      # trust story: it holds even though the app carries only an ad-hoc
+      # signature and Apple has vouched for nothing.
+      - name: Offer it to Sparkle
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SPARKLE_PRIVATE_KEY" ]; then
+            echo "::error::SPARKLE_PRIVATE_KEY is not set — installed copies would never see this release."
+            exit 1
+          fi
+
+          URL="https://github.com/${{ github.repository }}/releases/download/v$VERSION/Pulse-$VERSION.zip"
+
+          # The tag was checked out detached; the feed lives on main.
+          git fetch origin main
+          git checkout -B main origin/main
+
+          Scripts/appcast.py "$VERSION" "build.noindex/Pulse-$VERSION.zip" "$URL"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+
+          # Staged first, and compared against the index rather than the
+          # working tree: `git diff` only looks at *tracked* files, so on the
+          # very first release — when the feed is brand new — it reported no
+          # change, the step exited green, and nothing was ever committed. A
+          # step that succeeds without doing its job is the worst kind.
+          if git diff --cached --quiet -- appcast.xml; then
+            echo "Feed already offers $VERSION."
+          else
+            git commit -m "Offer $VERSION to Sparkle"
+            git push origin main
+          fi
+
+          # Say it out loud rather than trusting the step's own exit code.
+          if ! git show HEAD:appcast.xml | grep -q "<sparkle:shortVersionString>$VERSION<"; then
+            echo "::error::appcast.xml on main does not offer $VERSION — installed copies would never see it."
+            exit 1
+          fi
+          echo "Feed on main offers $VERSION."

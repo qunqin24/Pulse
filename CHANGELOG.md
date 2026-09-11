@@ -2,8 +2,11 @@
 
 What each release changed, written for somebody deciding whether to install it.
 
-This file is the source for both the GitHub release page and the text Sparkle
-shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
+This file is the **English** source for Sparkle's update window (via
+[Scripts/changelog.py](Scripts/changelog.py) / appcast) and for the English half
+of the GitHub Release page. The Chinese half lives in
+[CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md); both are assembled by
+[Scripts/release-notes.py](Scripts/release-notes.py) (Chinese first).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
