@@ -28,7 +28,7 @@ struct DeveloperIntegrationsView: View {
                 }
                 SettingsRowDivider()
                 SettingsRow(String.localized("Installation guide")) {
-                    Link(destination: URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/integrations.md")!) {
+                    Link(destination: URL(string: "https://github.com/harrisliangsu/Pulse/blob/main/Docs/integrations.md")!) {
                         Text(localized: "Open")
                     }
                 }

@@ -14,7 +14,8 @@ enum ConnectionRemedy: Equatable {
     static func forReason(_ reason: ProviderUsage.Unavailability, account: AccountKey) -> Self? {
         if !account.isPrimary,
            [.signedOut, .claudeLoginExpired, .signInRequired, .grokLoginExpired,
-            .cursorLoginExpired, .cursorSignInRequired].contains(reason) {
+            .cursorLoginExpired, .cursorSignInRequired,
+            .kimiSignInRequired, .kimiLoginExpired].contains(reason) {
             return .signIn
         }
         switch reason {
@@ -27,9 +28,10 @@ enum ConnectionRemedy: Equatable {
         case .claudeDesktopNotSignedIn, .claudeDesktopSessionExpired: return .openApp("Claude")
         case .cursorSignInRequired, .cursorLoginExpired: return .openApp("Cursor")
         case .antigravityNotRunning, .antigravityNotAnswering: return .openApp("Antigravity")
-        case .notSignedIn, .signedOut: return .signIn
+        case .notSignedIn, .signedOut, .kimiSignInRequired, .kimiLoginExpired: return .signIn
         case .apiKeyMissing, .apiKeyRefused: return .editCredential
-        case .ollamaSessionMissing, .ollamaSessionExpired: return .readBrowser
+        case .ollamaSessionMissing, .ollamaSessionExpired,
+             .qoderSessionMissing, .qoderSessionExpired: return .readBrowser
         case .claudeDesktopKeyRefused, .unreachable, .rateLimited, .serverError,
              .codexServerFailed: return .retry
         case .codexNotInstalled, .volcengineCLIMissing, .noLimitsReported,
@@ -68,7 +70,9 @@ enum ConnectionRemedy: Equatable {
         case .volcengine: "volcengine"
         case .commandCode: "command-code"
         case .deepSeek: "deepseek"
+        case .qoder: "qoder"
         }
-        return URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/providers/\(page).md")!
+        // Fork docs live here; upstream help links would send people to the wrong repo.
+        return URL(string: "https://github.com/harrisliangsu/Pulse/blob/main/Docs/providers/\(page).md")!
     }
 }
