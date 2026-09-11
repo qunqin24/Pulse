@@ -1,0 +1,135 @@
+import AppKit
+import SwiftUI
+
+/// Owns the settings window.
+///
+/// Pulse runs as an `.accessory` app, so it has no Dock icon and is normally
+/// not the active application. A settings window therefore has to activate the
+/// app explicitly, or it opens behind whatever the user was looking at. That
+/// is also why this is a plain `NSWindowController` rather than SwiftUI's
+/// `Settings` scene: the window's activation and lifetime need to be handled
+/// directly.
+@MainActor
+final class SettingsWindowController {
+    private let store: UsageStore
+    private let settings: AppSettings
+    private let placement: PanelPlacement
+    private let update: AppUpdate
+    private let alerts: UsageAlerts
+    private var window: NSWindow?
+    private let navigation = SettingsNavigation()
+
+    init(
+        store: UsageStore,
+        settings: AppSettings,
+        placement: PanelPlacement,
+        update: AppUpdate,
+        alerts: UsageAlerts
+    ) {
+        self.store = store
+        self.settings = settings
+        self.placement = placement
+        self.update = update
+        self.alerts = alerts
+    }
+
+    func show(link: PulseLink? = nil) {
+        if let link { navigation.open(link, accounts: settings.allAccounts) }
+        let window = window ?? makeWindow()
+        self.window = window
+        window.title = String.localized("Pulse Settings")
+
+        // The system may have taken the grant away since launch, and this
+        // window is the only place Pulse reports it.
+        alerts.refreshAuthorization()
+
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        window.center()
+    }
+
+    /// Re-reads the title, which is set once at creation but has to follow a
+    /// language change while the window is open.
+    func refreshTitle() {
+        window?.title = String.localized("Pulse Settings")
+    }
+
+    private func makeWindow() -> NSWindow {
+        // 920 × 660 rather than the 760 × 500 it opened at first.
+        //
+        // The old default was set when the sidebar held four rows. It now holds
+        // seventeen providers plus every added account, and the general pane a
+        // six-group stack — so the window opened already scrolling in both
+        // columns, which reads as a window that is broken rather than one that
+        // is small. This is the size at which the sidebar shows its accounts
+        // without scrolling and a settings group fits whole; `minWidth` /
+        // `minHeight` on the view are unchanged, so it can still be dragged
+        // down to the old size. It fits a 13-inch display with room over.
+        let window = SettingsWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 920, height: 660),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        // These two go together, and the pairing is the whole point.
+        //
+        // `.fullSizeContentView` lets the scrolling content run under the
+        // title bar, so it is *blurred away* as you scroll rather than being
+        // chopped off at a hard edge. Nothing is hidden at rest: AppKit
+        // reports the bar as a 52pt top safe area and the scroll view already
+        // insets by it.
+        //
+        // But that only works if something actually draws up there. A
+        // transparent title bar draws nothing, so the scrolled content came
+        // straight through and printed over "Pulse Settings" — which is the
+        // bug this pairing fixes. Opaque means AppKit's own material does the
+        // blurring.
+        //
+        // Measured, in case it comes up: the sidebar does *not* run behind the
+        // traffic lights either way. AppKit gives that treatment to an
+        // `NSSplitViewController` with a sidebar item, and SwiftUI's
+        // `NavigationSplitView` inside an `NSHostingView` doesn't get it —
+        // neither `.fullSizeContentView` nor a unified `NSToolbar` changes it.
+        window.titlebarAppearsTransparent = false
+        // The documented "hairline once content is scrolled under it" setting.
+        window.titlebarSeparatorStyle = .automatic
+        window.isReleasedWhenClosed = false
+        window.contentView = NSHostingView(
+            rootView: SettingsView(store: store, settings: settings, placement: placement, update: update, alerts: alerts, navigation: navigation)
+        )
+        return window
+    }
+}
+
+/// Clicking away from the key field has to end its editing, and on macOS
+/// nothing does that by itself: a text field holds first responder until some
+/// other view asks for it, and nothing else in this window ever does. So the
+/// field kept its focus ring wherever else you clicked, and only changing pane
+/// — which tears the field down — let it go.
+///
+/// The window is the right place for it because it sees the press before
+/// anything decides what it landed on, the same reason the floating panel
+/// takes its drags here. The test is plain geometry against the field being
+/// edited, not a hit test: a hit test asks a hosted SwiftUI tree a question it
+/// answers unreliably, and this one only needs "was that inside the box".
+final class SettingsWindow: NSWindow {
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown, let field = fieldBeingEdited() {
+            let box = field.convert(field.bounds, to: nil)
+            if !box.contains(event.locationInWindow) { makeFirstResponder(nil) }
+        }
+
+        super.sendEvent(event)
+    }
+
+    /// The text field the window's field editor is currently working for, or
+    /// nil when nothing is being edited.
+    private func fieldBeingEdited() -> NSView? {
+        guard let editor = firstResponder as? NSText, editor.isFieldEditor else { return nil }
+
+        // The field editor is shared and installed into whichever field is
+        // active, which it keeps as its delegate.
+        if let field = (editor as? NSTextView)?.delegate as? NSView { return field }
+        return editor.superview?.superview
+    }
+}

@@ -1,6 +1,6 @@
 # Claude Code
 
-Primary service: [`ClaudeCodeUsageService.swift`](../../Sources/Pulse/ClaudeCodeUsageService.swift). Desktop route: [`ClaudeDesktopSession.swift`](../../Sources/Pulse/ClaudeDesktopSession.swift). Status line: [`StatusLineHook.swift`](../../Sources/Pulse/StatusLineHook.swift). Identity compare: [`ClaudeAccountIdentity.swift`](../../Sources/Pulse/ClaudeAccountIdentity.swift). Extra accounts: [authentication.md](authentication.md). Compact fallback diagram: [`../plan.md`](../plan.md).
+Primary service: [`ClaudeCodeUsageService.swift`](../../Sources/Pulse/Providers/ClaudeCodeUsageService.swift). Desktop route: [`ClaudeDesktopSession.swift`](../../Sources/Pulse/Providers/ClaudeDesktopSession.swift). Status line: [`StatusLineHook.swift`](../../Sources/Pulse/App/StatusLineHook.swift). Identity compare: [`ClaudeAccountIdentity.swift`](../../Sources/Pulse/Providers/ClaudeAccountIdentity.swift). Extra accounts: [authentication.md](authentication.md). Compact fallback diagram: [`../plan.md`](../plan.md).
 
 `keepsLocalTranscripts` is true. Extra accounts are supported. Source choice applies to the **primary** account only.
 
@@ -68,6 +68,8 @@ At launch, if Claude Code is enabled and its source is Automatic or Desktop App,
 `fetch(account:token:)` goes straight over HTTP with the token Pulse holds. Status-line capture and the desktop session belong to whichever account the CLI or desktop app is signed in to, which for an added account is not this one. `UsageSource.options(for:)` leaves `.desktopApp` off an added account’s picker.
 
 OAuth scopes and loopback behaviour: [authentication.md](authentication.md).
+
+Route-check diagnostics preserve fallback outcomes without changing which account may answer; the shared diagnostic and repair contract is in [README.md](README.md#diagnostic-route-checks-and-repair).
 
 ## Spent
 

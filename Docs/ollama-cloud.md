@@ -72,7 +72,7 @@ paste it into issues, pull requests, chat, screenshots or repository files.
 
 In `keys.dat`, Pulse's own encrypted store — AES-GCM boxes in its Application
 Support folder, owner-only, with the key derived from this Mac rather than
-stored ([`APIKeyStore.swift`](../Sources/Pulse/APIKeyStore.swift)).
+stored ([`APIKeyStore.swift`](../Sources/Pulse/Auth/APIKeyStore.swift)).
 
 **Not the keychain**, which is what the original contribution used. Pulse holds
 no keychain item of its own anywhere; one encrypted store for every secret it
@@ -96,7 +96,7 @@ which is a plist any process running as you can read.
   and per-model usage are out of scope.
 
 **A successful reading is cached like every other provider's**
-([`UsageCache.swift`](../Sources/Pulse/UsageCache.swift)), so a later refusal
+([`UsageCache.swift`](../Sources/Pulse/Usage/UsageCache.swift)), so a later refusal
 shows the last good figures with the time they were taken rather than an error
 with nothing. Only `.live` readings are stored, they come back marked stale,
 and a window whose reset time has passed is dropped rather than aged. The

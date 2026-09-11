@@ -1,6 +1,6 @@
 # Volcengine
 
-Service: [`VolcengineUsageService.swift`](../../Sources/Pulse/VolcengineUsageService.swift). Signing: [`VolcengineSigner.swift`](../../Sources/Pulse/VolcengineSigner.swift).
+Service: [`VolcengineUsageService.swift`](../../Sources/Pulse/Providers/VolcengineUsageService.swift). Signing: [`VolcengineSigner.swift`](../../Sources/Pulse/Providers/VolcengineSigner.swift).
 
 The Ark Coding Plan, sold on Volcengine (火山引擎). Named for the platform rather than the model: Volcengine is the account, Ark (方舟) the model service on it, Doubao the model — and the account, the keys and the CLI are all Volcengine's. Naming the ring "Doubao" would name the one part of that chain it is not about.
 
@@ -29,7 +29,7 @@ The Ark Coding Plan, sold on Volcengine (火山引擎). Named for the platform r
 
 `arkcli usage plan --format json`. Located by `ARKCLI_PATH`, then `PATH`, then `~/.local/bin`, `/opt/homebrew/bin`, `/usr/local/bin` — a GUI app inherits almost no `PATH`, the same problem `CodexAppServer.locateCodex` solves.
 
-Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it — and with three guarantees that are enforced rather than merely commented, because a pass that never finishes never calls `scheduleNext` and the rail then freezes for **all fifteen** providers, not just this one:
+Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it — and with three guarantees that are enforced rather than merely commented, because a pass that never finishes never calls `scheduleNext` and the rail then freezes for **all seventeen** providers, not just this one:
 
 - **Both pipes are drained at once.** Reading stdout to EOF and only then reading stderr deadlocks the moment the child writes more than a 64 KiB pipe buffer to stderr before closing stdout — a panic, a debug build, a TLS dump. The child blocks writing, Pulse blocks reading, neither returns.
 - **Reading never stops early.** Past the 512 KiB ceiling the bytes are dropped but the pipe is still drained; a reader that walks away is the same deadlock wearing a different hat.

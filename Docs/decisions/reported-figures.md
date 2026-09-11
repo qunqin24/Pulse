@@ -2,7 +2,7 @@
 
 **Status:** still in force. **Evidence:** product rule (code); activity/ledger/burn-rate numbers historical, one machine.
 
-Pulse never computes a usage percentage. Token budgets behind these limits are not published. A guess presented as a fact is worse than “not reported.” Shared `Unavailability` copy originally said “Codex” for every provider.
+Pulse computes a usage percentage only where it says on screen that it did — three labelled exceptions today, each drawing **nothing** rather than a zero when its inputs are missing ([../providers/command-code.md](../providers/command-code.md), [../providers/deepseek.md](../providers/deepseek.md)). Otherwise it does not. Token budgets behind these limits are not published. A guess presented as a fact is worse than “not reported.” Shared `Unavailability` copy originally said “Codex” for every provider.
 
 `windowSeconds > 0` is not “the provider stated a length.” Sort keys (rolling weeks, 30-day stand-ins for 28–31 day cycles) would drive the window clock and burn rate if that were the test. `reportsLength` exists because of that. `UsageDetailCard.resetText` once fell back to `lengthText` when `resetsAt` was nil and printed “7 days” for a length nobody reported.
 

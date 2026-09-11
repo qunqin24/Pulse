@@ -29,6 +29,27 @@ On the card, the window’s name has the top row to itself; spent and reset pair
 
 `PanelPlacement.layout(in:panel:rail:)` is the single source of truth for window frame **and** rail offset inside it. Drag handle and `placePanel` both go through it.
 
+### A frame is not granted until the window is on screen
+
+`placePanel` measures the rail's offset against the frame the window was **granted**, not the one it asked for — that is the lesson `RailOffsetTests` pins, because the panel is taller than a laptop's usable area and `constrainFrameRect` pulls it down.
+
+But a window that has never been ordered in **is not being constrained yet**. `setFrame` stores the request, `frame` reads it back unchanged, and an offset measured there is against a position the window is about to lose. So `show()` places, orders front, and **places again**: the first call puts the window roughly right so it does not appear at the origin and slide into place, the second measures against what it actually got.
+
+Measured on a 1800×1169 display: asked for y=76, granted y=0, so the rail was drawn **76pt too low** from the moment the panel first appeared — and stayed wrong until anything re-placed it, at which point it jumped. Any settings change does that, which is how it was found: switching a provider's display mode appeared to move the whole rail.
+
+Verified by driving a real `FloatingPanelController` and reading `railTop` after `show()` against a re-place; there is no test for it, because pinning it needs a real window on a real screen and that is not a thing to put in `swift test`.
+
+### Follow the active display
+
+`AppSettings.followsActiveDisplay` (off by default) + `ActiveDisplayFollower` + `PanelPlacement.move(toDisplay:)`. Issue [#16](https://github.com/qunqin24/Pulse/issues/16).
+
+- **Active = the display holding the pointer**, and only that. Not the key window, not the frontmost app's frame — an app can be focused on one display while the person works on another, and reading window positions would need Accessibility permission to be wrong more expensively.
+- **One panel, moved.** Nothing here creates a second one; the move is a change of `display` alone, both ratios carried across unchanged, so the rail keeps its place *on* a display whatever the two displays' sizes.
+- **Sampled on a 0.25s timer**, for the same reason `PanelPointerWatcher` samples: a global mouse-moved monitor stops firing over this app's own windows, and a pointer that crosses and comes to rest emits nothing further. Fires once per crossing, not once per frame. The timer runs only while the panel is visible **and** the setting is on, and each tick bails immediately on one display.
+- **Refusal is reported, not swallowed.** `move(toDisplay:)` returns `false` while the panel is held (`isPressed` / `isDragging`, the same rule as `railLengthChanged`), and the follower then keeps that display on offer for the next tick rather than remembering it as handled. Returning to the *same* display is `true` and does nothing — otherwise every tick would re-offer it forever.
+- The move is **recorded** like a drag, so switching the setting back off leaves the panel on the display it was last carried to rather than throwing it back across the desk.
+- `didChangeScreenParametersNotification` calls `forgetLastDisplay()`: unplugging the monitor the panel was on leaves the pointer where it was, which would otherwise read as "nothing to do" while the panel sits on a fallback screen nobody chose.
+
 ## Axis, not a third special case
 
 `PanelEdge.axis`. Stacks, flare, card unfold, which stored ratio is pinned, sliver side — all axis. Both shapes are drawn **once, facing right**, then transformed (mirror left, quarter-turn top). Rotation, not reflection, preserves winding for `UsageBubbleShape`.

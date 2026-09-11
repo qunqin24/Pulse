@@ -1,6 +1,6 @@
 # OpenCode Go
 
-Service: [`OpenCodeGoUsageService.swift`](../../Sources/Pulse/OpenCodeGoUsageService.swift).
+Service: [`OpenCodeGoUsageService.swift`](../../Sources/Pulse/Providers/OpenCodeGoUsageService.swift).
 
 Extra accounts are not supported. `keepsLocalTranscripts` is false today.
 

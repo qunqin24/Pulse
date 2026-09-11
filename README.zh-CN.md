@@ -44,18 +44,20 @@ Pulse 是一个停靠在屏幕边缘的小巧悬浮监视器。它展示各服�
 
 ### 原生丝滑、静默无扰
 - **多位置随心停靠**：可吸附停靠在屏幕左边缘、右边缘或顶部（菜单栏之上），亦可在屏幕任意位置自由悬浮。
-- **多显示器支持**：随心拖拽到外接屏幕，自动记忆所在显示器位置；拔掉副屏后自适应回归主屏。
+- **多显示器支持**：随心拖拽到外接屏幕，自动记忆所在显示器位置；拔掉副屏后自适应回归主屏。开启**跟随活动显示器**后，唯一的那条胶囊会自动移动到指针所在的屏幕。
 - **边缘微光收起**：闲置时自动折叠为一条极窄细线，不遮挡代码与工作视线；仅在额度见底预警时细线泛红提醒。
-- **可选的系统通知**：默认全部关闭。开启后可在限额越过 75/80/90/95%、服务商判定用尽、之前提醒过的窗口重置、以及连续几次读不到用量（面板正悄悄显示旧数字）时收到通知。每件事只说一次：打开开关时已经越线的限额会立刻告诉你一次，之后不再重复，直到它重置或者更糟。
-- **重置彩带**：限额转过来时全屏撒彩带，上面写着是哪一家。默认关闭，在「设置 › 通用」里打开。不是通知，也不要求之前预警过。
+- **可选的系统通知**：默认全部关闭。开启后可在限额越过 75/80/90/95%、服务商判定用尽、之前提醒过的窗口重置、连续几次读不到用量（面板正悄悄显示旧数字）、以及预付费额度跌破你设定的金额时收到通知。每件事只说一次：打开开关时已经越线的限额会立刻告诉你一次，之后不再重复，直到它重置或者更糟。
+- **限额恢复庆祝**：可在设置中打开，限额（非五小时）回来时播放彩带与系统 Hero 音效。
 - **全屏空间避让**：默认不在其他全屏应用（Spaces）中弹出干扰。
 - **原生质感**：深色、浅色或 macOS 26+ 的 **Liquid Glass（毛玻璃）**，外观里四选一，不再跟浅色叠两层开关。尺寸从极小到大。
 
 ### 多账号管理与本地消费账本
 - **多账号并行**：支持同一服务绑定多个订阅（Claude Code、Codex、Grok、Grok Bot、Kimi Code），并排查看并自定义标签。
 - **本地消费历史**：直接解析本地 CLI 会话日志，基于官方公开 API 价格折算历史总消费，并估算限额窗口的实际价值。
-- **十六个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、Qoder、Z.ai、GLM Coding Plan、MiniMax（国际与国内），以及火山引擎。
+- **十八个服务商**：Claude Code、Codex、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、Qoder、z.ai、Zhipu、MiniMax（国际与国内）、火山引擎、Command Code，以及 DeepSeek。
 - **可脚本化**：`Pulse --json` 输出最近一次读数——套餐、每条限额、重置时间，以及数字有多旧——可接 tmux、sketchybar、Raycast 或 shell 提示符。它只读缓存不发请求，高频轮询也不花代价。
+- **开发者集成**：在设置中导出 Raycast 扩展及可直接配置的 tmux、sketchybar、终端脚本；通过账户链接直达对应设置页。[安装指南](Docs/integrations.md)。
+- **连接诊断**：查看实际读数来源、缓存使用情况、最近检查及回退结果；根据原因直接重连、重新登录或编辑凭据，并可复制不含账户信息和密钥的诊断报告。
 - **本地优先**：无 Pulse 服务器、无 Pulse 账号、无遥测。请求发往你已在使用的服务商（并遵循 macOS 系统代理设置）。
 
 <p align="center">
@@ -86,6 +88,9 @@ Pulse 仅呈现各服务上报的数字，绝不依靠本地 Token 粗略估算�
 | **MiniMax / MiniMax CN** | 设置中填入 API Key | 同时支持国际站（`minimax.io`）与国内站（`minimaxi.com`） |
 | **Ollama Cloud** | 本地读取浏览器登录会话 Cookies | 官方无配额 API。详见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 | **Qoder** | 本地读取浏览器登录会话 Cookies | 已登录账号的 Plan Credits。详见 [Docs/providers/qoder.md](Docs/providers/qoder.md) |
+| **Zhipu** | 设置中填入 API Key，或读取本地 GLM 工具已保存密钥 | 智谱国内站（`open.bigmodel.cn`） |
+| **Command Code** | 设置中填入 API Key，或读取 `cmd auth login` 已保存的登录 | 以美元计费的余额；含滚动 5 小时 / 周限额与月度套餐行（标记为**估算**） |
+| **DeepSeek** | 设置中填入 API Key；官方文档化的 `GET /user/balance` | 仅报告预付余额、无额度；圆环的度量基准由你选择 |
 
 ---
 

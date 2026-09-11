@@ -1,0 +1,9 @@
+{
+  "success": true,
+  "data": {
+    "planId": "individual-pro",
+    "status": "active",
+    "currentPeriodStart": "2026-09-01T00:00:00Z",
+    "currentPeriodEnd": "2026-10-01T00:00:00Z"
+  }
+}

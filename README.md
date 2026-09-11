@@ -44,18 +44,20 @@ Pulse is an unobtrusive floating monitor that docks neatly along the edge of you
 
 ### Native, Fluid & Non-Intrusive
 - **Flexible Edge Docking**: Dock to the left, right, or top of your screen (above the menu bar), or float freely anywhere.
-- **Multi-Monitor Native**: Drag Pulse to any secondary display; it remembers screen placement and gracefully returns if disconnected.
+- **Multi-Monitor Native**: Drag Pulse to any secondary display; it remembers screen placement and gracefully returns if disconnected. Turn on **Follow the active display** and the single rail moves itself to whichever screen your pointer is on.
 - **Auto-Collapse**: Automatically folds into a razor-thin sliver when idle to eliminate distraction, glowing red only when quota runs critically low.
-- **Opt-In Notifications**: Off until you turn them on. Get told when a limit passes 75/80/90/95%, when the provider says it is spent, when a window you were warned about comes back, and when several checks in a row fail so the panel is quietly showing older figures. Each thing is said once: a limit already past the line when you switch this on is mentioned straight away, then never again until it resets or gets worse.
-- **Reset ribbons**: A full-screen overlay named for the provider, when a limit turns over. Off until you turn it on in Settings › General. Not a notification, and not tied to being warned on the way up.
+- **Opt-In Notifications**: Off until you turn them on. Get told when a limit passes 75/80/90/95%, when the provider says it is spent, when a window you were warned about comes back, and when several checks in a row fail so the panel is quietly showing older figures, and — for the services that sell prepaid credit — when the balance falls under a figure you set. Each thing is said once: a limit already past the line when you switch this on is mentioned straight away, then never again until it resets or gets worse.
+- **Celebrations**: optional ribbons and the system Hero sound when a weekly/monthly limit comes back (off by default).
 - **Spaces-Friendly**: By default, stays out of your full-screen application Spaces.
 - **macOS Aesthetic**: Dark, light, or native **Liquid Glass** on macOS 26+ — one Appearance control, not two stacked switches. Size from tiny to large.
 
 ### Multi-Account & Local Ledger
 - **Multi-Account Support**: Monitor multiple subscriptions for the same provider (Claude Code, Codex, Grok, Grok Bot, Kimi Code) side-by-side with custom labels.
 - **On-Device Spending History**: Reconstructs your historical token expenditures from local CLI session transcripts, calculated against published API prices.
-- **Sixteen Providers**: Claude Code, Codex, Antigravity, Cursor, GitHub Copilot, Grok, Grok Bot, OpenCode Go, Kimi Code, Ollama Cloud, Qoder, Z.ai, GLM Coding Plan, MiniMax (intl. and mainland), and Volcengine.
+- **Eighteen Providers**: Claude Code, Codex, Antigravity, Cursor, GitHub Copilot, Grok, Grok Bot, OpenCode Go, Kimi Code, Ollama Cloud, Qoder, z.ai, Zhipu, MiniMax (intl. and mainland), Volcengine, Command Code, and DeepSeek.
 - **Scriptable**: `Pulse --json` prints the last readings — plan, every limit, reset times, and how old the figures are — for tmux, sketchybar, Raycast, or a shell prompt. It reads the cache and never fetches, so polling it costs nothing.
+- **Developer Integrations**: Export a Raycast extension and ready-to-configure tmux, sketchybar and shell scripts from Settings. Account links open the right pane directly. [Setup guide](Docs/integrations.md).
+- **Connection Diagnostics**: See the actual reading source, cache use, latest check and fallback outcomes. Contextual actions help reconnect, sign in again or fix credentials; copy a diagnostic report without account details or secrets.
 - **Privacy First**: No Pulse servers, no Pulse account, and no telemetry. Requests go to the providers you already use (and follow macOS system proxy settings).
 
 <p align="center">
@@ -80,12 +82,15 @@ Pulse shows the figures each service reports. It never guesses percentages from 
 | **Grok Bot** | Cursor dashboard API | The xAI quota included with Cursor subscriptions |
 | **GitHub Copilot** | GitHub Device Code authentication | Requests minimal `read:user` scope; never accesses repositories |
 | **OpenCode Go** | API key or existing OpenCode CLI credentials | Fully configurable in Settings |
-| **Kimi Code** | Kimi Code device-code sign-in, or a pasted API key | Subscription login from Settings; console key still works |
+| **Kimi Code** | Kimi Code device-code sign-in, or a pasted API key | Subscription users need not create a console key |
 | **Z.ai** | Direct API key | International storefront (`api.z.ai`) |
 | **GLM Coding Plan** | Direct API key or saved GLM tooling credentials | Mainland storefront (`open.bigmodel.cn`) |
 | **MiniMax / MiniMax CN** | Direct API key | Supports international (`minimax.io`) & mainland (`minimaxi.com`) |
 | **Ollama Cloud** | Browser session cookie | Read locally from browser. See [Docs/ollama-cloud.md](Docs/ollama-cloud.md) |
 | **Qoder** | Browser session cookie | Plan Credits from the signed-in dashboard. See [Docs/providers/qoder.md](Docs/providers/qoder.md) |
+| **Zhipu** | Direct API key or saved GLM tooling credentials | Mainland storefront (`open.bigmodel.cn`) |
+| **Command Code** | Pasted key, else the login `cmd auth login` already saved | Credit balance in dollars; monthly plan row marked **estimated** |
+| **DeepSeek** | Pasted key; documented `GET /user/balance` | Prepaid balance only — no allowance; you pick what the ring measures against |
 
 ---
 

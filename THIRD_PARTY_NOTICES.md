@@ -16,6 +16,7 @@ Pulse bundles provider marks derived from [Lobe Icons](https://github.com/lobehu
 - `Sources/Pulse/Resources/volcengine.svg`
 - `Sources/Pulse/Resources/grok.svg`
 - `Sources/Pulse/Resources/xai.svg`
+- `Sources/Pulse/Resources/deepseek.svg`
 
 Lobe Icons is distributed under the MIT License:
 

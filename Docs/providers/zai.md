@@ -1,11 +1,11 @@
 # Z.ai and GLM Coding Plan
 
-One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/ZaiUsageService.swift).
+One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/Providers/ZaiUsageService.swift).
 
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|
 | `.zai` | z.ai | `https://api.z.ai` | `zai` |
-| `.glmCoding` | 智谱 | `https://open.bigmodel.cn` | `qingyan` |
+| `.glmCoding` | Zhipu | `https://open.bigmodel.cn` | `qingyan` |
 
 They are one company’s international and mainland storefronts, answering the same JSON on different hosts — **separate accounts with separate keys**. A key for one is refused by the other. CodexBar models this as one provider with a region switch; Pulse gives each a ring so someone with only the mainland plan does not have to know an international one exists.
 
@@ -15,7 +15,7 @@ The marks are the two products' own — z.ai's and 清言's — rather than one 
 
 ## Usage history
 
-`GET {host}/api/monitor/usage/model-usage?startTime=…&endTime=…` — the endpoint the console's own charts are drawn from, and the second way a history reaches Pulse. Same host and same bearer as the quota call — **the account's own host**: `statisticsURL` takes it without a default, because it had one, the call site omitted it, and every history request went to BigModel carrying whichever key it was given. Sending a z.ai token to 智谱's server is the trap two providers exist to prevent.
+`GET {host}/api/monitor/usage/model-usage?startTime=…&endTime=…` — the endpoint the console's own charts are drawn from, and the second way a history reaches Pulse. Same host and same bearer as the quota call — **the account's own host**: `statisticsURL` takes it without a default, because it had one, the call site omitted it, and every history request went to BigModel carrying whichever key it was given. Sending a z.ai token to Zhipu's server is the trap two providers exist to prevent.
 
 ```
 data.x_time         [String]  bucket labels

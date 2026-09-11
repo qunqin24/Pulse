@@ -2,7 +2,7 @@
 
 Pulse is not an official integration of any of these products. Where it signs in, it drives a **public client the product already ships** (a CLI, an editor plugin, a login page). Settings says so before anyone starts: the consent page names that product, not Pulse, and the provider can change or withdraw the client.
 
-Current code: [`OAuthLogin.swift`](../../Sources/Pulse/OAuthLogin.swift), [`LoopbackCallback.swift`](../../Sources/Pulse/LoopbackCallback.swift), [`GitHubDeviceLogin.swift`](../../Sources/Pulse/GitHubDeviceLogin.swift), [`CursorWebLogin.swift`](../../Sources/Pulse/CursorWebLogin.swift), [`AccountCredentials.swift`](../../Sources/Pulse/AccountCredentials.swift), [`APIKeyStore.swift`](../../Sources/Pulse/APIKeyStore.swift), [`LocalSecrets.swift`](../../Sources/Pulse/LocalSecrets.swift), [`BrowserCookies.swift`](../../Sources/Pulse/BrowserCookies.swift), [`ClaudeDesktopSession.swift`](../../Sources/Pulse/ClaudeDesktopSession.swift).
+Current code: [`OAuthLogin.swift`](../../Sources/Pulse/Auth/OAuthLogin.swift), [`LoopbackCallback.swift`](../../Sources/Pulse/Auth/LoopbackCallback.swift), [`GitHubDeviceLogin.swift`](../../Sources/Pulse/Auth/GitHubDeviceLogin.swift), [`CursorWebLogin.swift`](../../Sources/Pulse/Auth/CursorWebLogin.swift), [`AccountCredentials.swift`](../../Sources/Pulse/Auth/AccountCredentials.swift), [`APIKeyStore.swift`](../../Sources/Pulse/Auth/APIKeyStore.swift), [`LocalSecrets.swift`](../../Sources/Pulse/Auth/LocalSecrets.swift), [`BrowserCookies.swift`](../../Sources/Pulse/Auth/BrowserCookies.swift), [`ClaudeDesktopSession.swift`](../../Sources/Pulse/Providers/ClaudeDesktopSession.swift).
 
 This is not a catalogue of secrets. Client ids below are public (they ship in every copy of those CLIs and plugins). Do not copy refresh tokens, cookies, or `accounts.dat` / `keys.dat` into issues.
 
@@ -33,10 +33,10 @@ Pulse’s extra-account login has its own refresh token and does not read or wri
 
 ## Extra accounts: who can have them
 
-[`Provider.supportsMultipleAccounts`](../../Sources/Pulse/MonitoredAccount.swift) is **`.claudeCode`, `.codex`, `.grok`, `.grokBot`**. Not two. Not Cursor.
+[`Provider.supportsMultipleAccounts`](../../Sources/Pulse/Usage/MonitoredAccount.swift) is **`.claudeCode`, `.codex`, `.grok`, `.grokBot`**. Not two. Not Cursor.
 
 - Claude Code / Codex / Grok: `OAuthLogin` public CLI clients.
-- Grok Bot: **not OAuth** — [`CursorWebLogin`](../../Sources/Pulse/CursorWebLogin.swift) (Cursor’s login page + poll).
+- Grok Bot: **not OAuth** — [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift) (Cursor’s login page + poll).
 - Cursor itself is omitted on purpose. See [cursor.md](cursor.md) and [grok-bot.md](grok-bot.md).
 
 `AccountKey` for the first account is the provider’s raw value (`claudeCode`, not `claudeCode#…`). Added accounts get a slot generated once and never reused, so removing one and adding another cannot inherit settings.
@@ -110,7 +110,7 @@ Query values are read encoded and decoded here: a query string spells a space `+
 
 ## GitHub Copilot — device code, `read:user` only
 
-[`GitHubDeviceLogin`](../../Sources/Pulse/GitHubDeviceLogin.swift). This is a **security decision**, not a missing paste field.
+[`GitHubDeviceLogin`](../../Sources/Pulse/Auth/GitHubDeviceLogin.swift). This is a **security decision**, not a missing paste field.
 
 The Copilot usage endpoint accepts any GitHub OAuth token — the one `gh` already holds works (verified historically). That token carries `repo` and `workflow`: the run of someone’s source code, handed over to draw a percentage. The device flow asks for `read:user` and nothing else.
 
@@ -153,9 +153,9 @@ Pulse does **not** read `~/Library/Application Support/Grok Bot/sand-secrets.jso
 
 ## Browser cookies — Ollama Cloud only
 
-[`BrowserCookies.swift`](../../Sources/Pulse/BrowserCookies.swift) exists because Ollama publishes no quota API. Setup, host filter, and parser rules: [`../ollama-cloud.md`](../ollama-cloud.md).
+[`BrowserCookies.swift`](../../Sources/Pulse/Auth/BrowserCookies.swift) exists because Ollama publishes no quota API. Setup, host filter, and parser rules: [`../ollama-cloud.md`](../ollama-cloud.md).
 
-**User-browser cookie reading is not how Claude, Cursor, or anyone else authenticates.** Claude Desktop borrows the *desktop app’s* Chromium cookie store (`sessionKey` / `sessionKeyV3` on `claude.ai`) via [`ClaudeDesktopSession`](../../Sources/Pulse/ClaudeDesktopSession.swift) — a different path, gated on a Keychain grant for `Claude Safe Storage`. Cursor **builds** a `WorkosCursorSessionToken` from the editor’s SQLite token; it does not open Safari or Chrome.
+**User-browser cookie reading is not how Claude, Cursor, or anyone else authenticates.** Claude Desktop borrows the *desktop app’s* Chromium cookie store (`sessionKey` / `sessionKeyV3` on `claude.ai`) via [`ClaudeDesktopSession`](../../Sources/Pulse/Providers/ClaudeDesktopSession.swift) — a different path, gated on a Keychain grant for `Claude Safe Storage`. Cursor **builds** a `WorkosCursorSessionToken` from the editor’s SQLite token; it does not open Safari or Chrome.
 
 Failure class this feature keeps rediscovering: **a wrong lookup reads as an empty one**, then the next browser is tried, and Settings reports a session from a browser the user never signed in at.
 
@@ -169,7 +169,7 @@ Parsers were driven against data built on purpose (synthetic `binarycookies`, Ch
 
 ## Claude Desktop Keychain grant
 
-There is no way to ask the Keychain for an item silently (`SecKeychainSetUserInteractionAllowed` is deprecated with no replacement). [`AppDelegate`](../../Sources/Pulse/AppDelegate.swift) asks for `Claude Safe Storage` once at launch, fenced three ways: a desktop cookie store exists, Claude Code is enabled with source Automatic or Desktop App, and **once** — a refusal is a decision.
+There is no way to ask the Keychain for an item silently (`SecKeychainSetUserInteractionAllowed` is deprecated with no replacement). [`AppDelegate`](../../Sources/Pulse/App/AppDelegate.swift) asks for `Claude Safe Storage` once at launch, fenced three ways: a desktop cookie store exists, Claude Code is enabled with source Automatic or Desktop App, and **once** — a refusal is a decision.
 
 `.automatic` then reads the remembered grant (`usageIfAlreadyPermitted`) rather than raising the dialog. Pinning `.desktopApp` calls `usage` directly, so a first-time pin can prompt there.
 

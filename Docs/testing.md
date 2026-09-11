@@ -12,20 +12,24 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 | Suite | Covers |
 |---|---|
-| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate, and reset ribbons. [notifications.md](notifications.md) |
+| `AlertMemoryTests` | Every notification rule: thresholds, spent, resets, the failure streak, the stale-age gate, and the low-balance line — said once, re-armed by a top-up, said again when the line moves, and never from a stale reading or a balance with no figure behind it. [notifications.md](notifications.md) |
 | `AlertsThroughTheCacheTests` | The same rules reached the way production reaches them: service → `UsageCache.reconciled` → state machine |
 | `NotificationAuthorizationTests` | An injected authorization decision, concurrent requests, no warning consumed while a grant is pending, and the foreground delegate selector; no system permission or notification delivery |
-| `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry |
+| `UsageCacheTests` | `reconciled` — fallback, "a reading never goes backwards", credentials that must not be papered over, expiry, and that a live reading carrying a balance and no limits is an **answer** rather than a failure to paper over (DeepSeek's "balance only"), while one carrying nothing at all still is |
 | `UsageWindowTests` | The reported figure at both ends, and when the window clock may divide |
 | `RailGeometryTests` | Every ring the rail draws is reachable: each centre inside the rail, the last ring whole rather than clipped, each ring hit-testing to its own slot — across left/right/top and docked/floating. Plus the count itself: `shownSlotCount` is called with a reading that really splits, so a window measuring its rects in accounts rather than rings fails a test instead of a click (verified by reintroducing the bug). `PanelChromeTests` pins that tiny is below small, and that appearance pins or follows the Mac. |
 | `RailOffsetTests` | The rail's offsets measured against the frame the window was **granted**, not the one it asked for — the panel is taller than a laptop's usable screen and AppKit refuses that frame. [ui/panel-geometry.md](ui/panel-geometry.md) |
 | `ZaiHistoryReadTests` | What a history read found *out*: no key is not a failed request, and a successful reply with no rows is an answer |
+| `ActiveDisplayTests` | Following the pointer onto another display: the move keeps dock and both ratios, a held panel refuses and the refusal is *reported* so the display stays on offer, and returning to the display it is already on is quiet rather than a refusal. [ui/panel-geometry.md](ui/panel-geometry.md) |
 | `PanelHoldTests` | Nothing re-places the panel while it is held — including the gap between mouse-down and the first movement, where `isDragging` is still false. [ui/input.md](ui/input.md) |
-| `RailSlotTests` | The rail's order: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
+| `RefreshPacingTests` | What `.automatic` waits, and the one asymmetry in it: a provider whose spending this Mac cannot see is capped at five minutes instead of thirty, the cap only ever lowers a wait, and a constrained Mac or hidden panel still outranks it. Plus which providers a pass asks — only the **timer** honours the cadence, because everything else reaching `refresh()` is something happening, and skipping there is a control that does nothing rather than a slow refresh. [refresh-and-data.md](refresh-and-data.md) |
+| `RailSlotTests` | The rail's order — including the order before anybody arranges it, which is by name, and that an arrangement somebody made is not re-sorted under them: when a split account becomes two slots, when it stays one, and that unscoped windows never form a group. [ui/rings-and-surface.md](ui/rings-and-surface.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]` |
 | `KimiCodeTests` | A captured `/usages` reply → windows, and that device-code sign-in is configured. [providers/kimi-code.md](providers/kimi-code.md) |
 | `QoderParsingTests` | A captured Credits dashboard reply → plan and shared monthly windows, and that Add-on Credits inherits Team Plan's reset. [providers/qoder.md](providers/qoder.md) |
 | `UsageReportTests` | The `--json` shape, which is a contract other people build on. [json-output.md](json-output.md) |
+| `ConnectionDiagnosticTests` | Failures through real cache reconciliation, persisted origin, legacy unknown sources, capture freshness versus cache selection, allowlisted diagnostic copy, account-specific repair choices, and credential failures at pinned service boundaries without network calls |
+| `PulseLinkTests` | Encoded added-account ids, malformed/action-bearing URL rejection, existing-account navigation and repeated-link requests |
 | `VolcengineSignerTests` | Volcengine's request signature, cross-checked against a second implementation |
 | `ZaiHistoryTests` | The statistics endpoint's shape → a day-by-day ledger, and what may not be said about it |
 | `SecondWindowTests` | Which limit the second ring shows: the fullest in the headline's own model group, and the fallback when that group holds nothing more |
@@ -33,8 +37,13 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 | `ZaiErrorTests` | What the GLM Coding Plan's HTTP-200 refusals mean, from envelopes taken off both live hosts |
 | `VolcengineParsingTests` | Ark's three reply shapes, from second-hand fixtures. [providers/volcengine.md](providers/volcengine.md) |
 | `VolcengineProcessTests` | The `arkcli` subprocess: a stderr flood, an output flood, a child that ignores SIGTERM, one that closes its pipes and lives, descendant termination after the leader exits (with and without TERM handling), and how a non-zero exit is classified |
+| `CommandCodeParsingTests` | Command Code's four replies → windows, from second-hand fixtures. Chiefly **which question the monthly row answers**: a running plan against its inferred, labelled grant; an account without one against the pool it bought; a plan the table cannot size against *nothing* — not zero, not the pool. Plus what absence may not be read as: absent credit pots are not an empty wallet, a summary that never arrived is not nothing spent, an answered `data: null` is not a failed lookup, and a ceiling of zero or less is not a limit already reached — each of those drew a wrong ring before it was a test. Also stable org ids across a reordered array, epoch-millisecond resets, `exceeded` outranking the arithmetic, and equal lengths not shuffling. [providers/command-code.md](providers/command-code.md) |
+| `RailMoneyTests` | The figure a ring shows when a provider reports money: abbreviated past a thousand, truncated rather than rounded up, no early rollover at 999,999, the narrow currency symbol — and every form measured against the room the rail actually has, which is the bug it exists for. [providers/deepseek.md](providers/deepseek.md) |
+| `DeepSeekParsingTests` | Where each denominator comes from, for the one provider that reports none: the watched mark advancing only on a rise, a peak of zero drawing nothing, a budget of nothing drawing nothing, money strings parsed with absent kept distinct from zero, which currency the ring follows, and `is_available` being the only thing that may say spent. [providers/deepseek.md](providers/deepseek.md) |
 
 ## What is not, and why
+
+Developer integrations also have `Integrations/raycast/tests/report.mjs`: run `npm test` from that extension directory after `npm ci`. It exercises the TypeScript consumer and launches the actual shell formatter with synthetic JSON, covering gaps, balance-only accounts, estimates, age, exact account selection and tmux escaping. `npm run build` and `npm run typecheck` check the Raycast extension. These are not evidence of real Raycast/sketchybar UI or macOS URL delivery; those need the host applications and a bundled Pulse. Installation: [integrations.md](integrations.md).
 
 **No UI tests.** The panel is an accessory `NSPanel` whose hover cannot be driven by synthesised events — `hitTest` and synthetic `NSEvent`s both reported a handle as perfectly reachable while real clicks were being dropped, which is the lesson in [ui/input.md](ui/input.md). A UI test here would report the same thing.
 
@@ -42,7 +51,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 **No live provider calls.** Every route needs somebody's real credential and answers differently by plan. Fixtures are captured by hand from a real reply and committed; the capture is recorded in that provider's page.
 
-**A fixture written from another project's parser is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; a captured one replaces them the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
+**A fixture written from another project's parser, or from a vendor's own shipped client, is second-hand**, and has to say so where it lives. Volcengine's are, because nobody here holds that plan; Command Code's are written from the field names in its published npm bundle. A captured one replaces either the moment somebody with an account can produce one. Second-hand is enough to pin a shape against change, and not enough to claim the shape is right.
 
 **A subprocess test really spawns one.** `VolcengineProcessTests` runs `/bin/sh` on purpose: the two failures it covers — a child that fills the stderr pipe, and one that never exits — cannot be produced by a fake, and neither is visible by reading the code. The first version of that runner looked correct and had both; the *second* looked correct and still hung on a child that ignored SIGTERM. Neither was findable by reading. The deadline is a parameter so a test can use one second.
 
@@ -50,7 +59,7 @@ There was no test target until 2026-09-07. What prompted one was not a policy: t
 
 ## Two conventions
 
-**The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving 63 files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
+**The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving seventy-eight files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
 
 **A symbol may be `internal` instead of `private` so a test can hold it**, and when it is, the comment says so and says not to tidy it back. `AntigravityUsageService.Reply` and `windows(from:)` are the first two. Nothing outside the module can see them either way; the difference is only whether the fixture test compiles.
 

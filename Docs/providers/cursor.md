@@ -1,6 +1,6 @@
 # Cursor
 
-Service: [`CursorUsageService.swift`](../../Sources/Pulse/CursorUsageService.swift). Login: [`CursorAppLogin.swift`](../../Sources/Pulse/CursorAppLogin.swift).
+Service: [`CursorUsageService.swift`](../../Sources/Pulse/Providers/CursorUsageService.swift). Login: [`CursorAppLogin.swift`](../../Sources/Pulse/Auth/CursorAppLogin.swift).
 
 Extra accounts are **not** supported, and that is not an oversight. The same Cursor web sign-in Grok Bot uses would work, but Cursor’s usage summary is read from the **editor’s** stored login and a second account has no editor behind it. Grok Bot needs nothing but the token.
 

@@ -1,0 +1,2261 @@
+import AppKit
+import SwiftUI
+
+/// The settings window: a source list on the left, one pane at a time on the
+/// right, each pane a stack of grouped cards.
+struct SettingsView: View {
+    let store: UsageStore
+    let settings: AppSettings
+    let placement: PanelPlacement
+    let update: AppUpdate
+    let alerts: UsageAlerts
+
+    @Bindable var navigation: SettingsNavigation
+    private var pane: SettingsPane {
+        get { navigation.pane }
+        nonmutating set { navigation.pane = newValue }
+    }
+    @State private var hookGeneration = 0
+    /// Login-item state lives with the system, not in `AppSettings`, so it is
+    /// read back rather than stored — and nudged when it changes.
+    @State private var loginGeneration = 0
+
+    /// Read from the CLIs' own transcripts, which takes long enough on a cold
+    /// start to be worth holding on to while the window is open.
+    @State private var ledgers: [Provider: UsageLedger] = [:]
+    /// How each provider's last history read went — kept beside the ledger
+    /// rather than folded into it.
+    ///
+    /// An empty chart has several causes and they must not be said the same way:
+    /// telling somebody their account has no usage, because the Wi-Fi dropped,
+    /// beside a ring showing 80%, is the app inventing a reading — and so is
+    /// telling them the service failed when no key was ever pasted. Written on
+    /// **every** path that touches `ledgers`, so it cannot describe a read
+    /// other than the most recent one.
+    @State private var historyReads: [Provider: ZaiUsageService.HistoryRead] = [:]
+    @State private var codexAccount: CodexAccountUsage?
+    @State private var loadingHistory: Provider?
+    /// The key field's contents. Seeded from the store when the pane opens;
+    /// the store is a file, not something SwiftUI can observe.
+    @State private var apiKey = ""
+    /// The budget being typed, kept as text so a half-entered number is not
+    /// read as a denominator on every keystroke.
+    @State private var deepSeekBudget = ""
+    /// The low-balance figure being typed, kept as text for the same reason.
+    @State private var lowBalance = ""
+    @State private var savedKey = ""
+    /// The provider a browser sign-in is currently open for, and what went
+    /// wrong with the last one.
+    @State private var signingIn: Provider?
+    @State private var signInError: String?
+    /// Shown while a device-code sign-in is waiting: the code the provider
+    /// gave, and where to type it.
+    @State private var devicePrompt: OAuthLogin.DevicePrompt?
+    /// Copilot's own sign-in, which is GitHub's device flow rather than the
+    /// one the added-account button drives.
+    @State private var githubPrompt: GitHubDeviceLogin.Prompt?
+    @State private var githubTask: Task<Void, Never>?
+    @State private var githubError: String?
+    /// Bumped after Kimi Code's Pulse-owned login is written or forgotten, so
+    /// the Accounts row redraws. `AccountCredentialStore` is a file, not
+    /// something SwiftUI can observe.
+    @State private var kimiLoginTick = 0
+    /// What the last look through the browsers found.
+    @State private var sessionMessage: String?
+    /// Held so it can be called off. A device-code sign-in polls for fifteen
+    /// minutes, and a sign-in that failed in the browser gives this side no
+    /// sign at all — without a way out the button stays disabled for the whole
+    /// quarter of an hour.
+    @State private var signInTask: Task<Void, Never>?
+    /// Narrows the sidebar. Sixteen providers plus every added account is a
+    /// list that scrolls on any window worth opening.
+    @State private var search = ""
+    /// The row a reorder drag is currently over, so it can say so.
+    @State private var dropTarget: AccountKey?
+    @FocusState private var credentialFocused: Bool
+    @State private var repairMessages: [String: String] = [:]
+    @State private var connectionFocusRequest = 0
+
+    var body: some View {
+        NavigationSplitView {
+            List(selection: $navigation.pane) {
+                if matches(.general) {
+                    Section(String.localized("Panel")) {
+                        row(.general)
+                    }
+                }
+
+                if !matchingAccounts.isEmpty {
+                    Section(String.localized("Accounts")) {
+                        // Same order as the rail: a sidebar that disagreed with
+                        // the thing it configures is its own small confusion.
+                        ForEach(matchingAccounts) { account in
+                            row(.account(account))
+                        }
+                    }
+                }
+
+                if matches(.about) || matches(.integrations) {
+                    Section(String.localized("Application")) {
+                        if matches(.integrations) { row(.integrations) }
+                        if matches(.about) { row(.about) }
+                    }
+                }
+            }
+            .listStyle(.sidebar)
+            // Wide enough for the longest name the list can hold —
+            // "GitHub Copilot", with "Command Code" and "Ollama Cloud"
+            // behind it. At the old 170/180/220 every one of those truncated
+            // to an ellipsis, which on a list whose entire job is telling
+            // seventeen products apart is the one thing it must not do. These
+            // are brand names and are not translated, so the requirement does
+            // not move with the language.
+            //
+            // **`min` is the half that matters**, not `ideal`. AppKit saves the
+            // divider position, so `ideal` is only ever read once per install
+            // and anybody who has already opened this window keeps whatever
+            // width they had; `min` is a clamp and applies to all of them.
+            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 320)
+            // `.sidebar`, not `.automatic`: this window has no `NSToolbar` —
+            // see `SettingsWindowController` on why the title bar is left to
+            // AppKit — and automatic placement has nowhere to put the field.
+            .searchable(
+                text: $search,
+                placement: .sidebar,
+                prompt: Text(localized: "Search")
+            )
+            .overlay {
+                if isSearching, matchingAccounts.isEmpty, !matches(.general), !matches(.about), !matches(.integrations) {
+                    Text(localized: "No matches")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } detail: {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 22) {
+                        heading
+                            .id("heading")
+
+                        switch pane {
+                        case .general: general
+                        case .account(let account): accountPane(account)
+                        case .about: about
+                        case .integrations: DeveloperIntegrationsView(settings: settings)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(24)
+                }
+                .background(.windowBackground)
+                // Keyed on the pane and enabled state, so enabling an account
+                // also reconsiders its history's empty-state explanation.
+                .task(id: historyKey) { await loadHistory() }
+                .onChange(of: connectionFocusRequest) {
+                    proxy.scrollTo("connection", anchor: .top)
+                    credentialFocused = true
+                }
+                .onChange(of: navigation.requestID) { proxy.scrollTo("heading", anchor: .top) }
+            }
+        }
+        // No `navigationTitle`: each pane already prints its own heading, and
+        // the toolbar would repeat it right above.
+        .frame(minWidth: 720, minHeight: 460)
+        .onChange(of: navigation.requestID) { search = "" }
+        // Rebuild everything when the language changes — the strings are read
+        // through a plain function, so SwiftUI has nothing else to observe.
+        .id(settings.language)
+    }
+
+    private var heading: some View {
+        HStack(spacing: 9) {
+            if case .account(let account) = pane {
+                LobeIconView(provider: account.provider, size: 19)
+            }
+
+            Text(title(pane))
+                .font(.system(size: 17, weight: .semibold))
+        }
+    }
+
+    /// The pane's name. An account's is the user's own label, which the pane
+    /// itself cannot reach — two subscriptions to the same plan are told apart
+    /// by nothing else.
+    private func title(_ pane: SettingsPane) -> String {
+        if case .account(let account) = pane { return settings.label(for: account) }
+        return pane.title
+    }
+
+    /// What the sidebar is being narrowed to, or nothing.
+    private var query: String {
+        search.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var isSearching: Bool { !query.isEmpty }
+
+    /// Accounts whose name the search matches, in rail order.
+    ///
+    /// Matched against the provider's name **as well as** the user's label, not
+    /// instead of it. A second Claude subscription called "工作" is still a
+    /// Claude Code account, and typing the product name is the obvious way to
+    /// look for it — `title(_:)` alone would only know the label.
+    private var matchingAccounts: [AccountKey] {
+        guard isSearching else { return settings.orderedAccounts }
+        return settings.orderedAccounts.filter {
+            matches(title(.account($0))) || matches($0.provider.displayName)
+        }
+    }
+
+    private func matches(_ pane: SettingsPane) -> Bool {
+        guard isSearching else { return true }
+        return matches(title(pane))
+    }
+
+    /// Case- and accent-insensitive, and localized: `localizedStandardContains`
+    /// is what Finder searches with, so "z.ai" finds Z.ai and a stray accent
+    /// doesn't lose a row.
+    private func matches(_ text: String) -> Bool {
+        text.localizedStandardContains(query)
+    }
+
+    private func row(_ pane: SettingsPane) -> some View {
+        Label {
+            Text(title(pane))
+        } icon: {
+            switch pane {
+            case .account(let account):
+                LobeIconView(provider: account.provider, size: 14)
+            case .general, .about, .integrations:
+                Image(systemName: pane.symbol)
+            }
+        }
+        .tag(pane)
+    }
+
+    // MARK: - Panes
+
+    private var general: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SettingsGroup(String.localized("Floating panel")) {
+                SettingsRow(
+                    String.localized("Show floating panel"),
+                    subtitle: String.localized("The usage rail at the edge of the screen.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.isPanelVisible },
+                        set: { settings.isPanelVisible = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Hide in full screen"),
+                    subtitle: String.localized("Keep the floating panel out of full-screen apps.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.hidesInFullScreen },
+                        set: { settings.hidesInFullScreen = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Size"),
+                    subtitle: String.localized("Size of the rail on screen.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.panelSize },
+                        set: { settings.panelSize = $0 }
+                    )) {
+                        ForEach(PanelSize.allCases) { size in
+                            Text(size.title).tag(size)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 220, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Spacing"),
+                    subtitle: String.localized("How much air there is between the rings.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.railSpacing },
+                        set: { settings.railSpacing = $0 }
+                    )) {
+                        ForEach(RailSpacing.allCases) { spacing in
+                            Text(spacing.title).tag(spacing)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Appearance"),
+                    subtitle: appearanceSubtitle
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.panelAppearance },
+                        set: { settings.panelAppearance = $0 }
+                    )) {
+                        ForEach(PanelAppearance.allCases) { appearance in
+                            Text(appearance.title).tag(appearance)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: 220, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Hide until pointed at"),
+                    subtitle: String.localized("Against a screen edge, the rail shrinks to a sliver until you point at it.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.autoCollapse },
+                        set: { settings.autoCollapse = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Position"),
+                    subtitle: String.localized("Drag it anywhere; near an edge it snaps on.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { placement.dock },
+                        set: { placement.update(dock: $0) }
+                    )) {
+                        Text(localized: "Left").tag(PanelDock.edge(.left))
+                        Text(localized: "Top").tag(PanelDock.edge(.top))
+                        Text(localized: "Free").tag(PanelDock.floating)
+                        Text(localized: "Right").tag(PanelDock.edge(.right))
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Follow the active display"),
+                    subtitle: String.localized("With more than one display, the rail moves to the one the pointer is on.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.followsActiveDisplay },
+                        set: { settings.followsActiveDisplay = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Percentages at the side"),
+                    subtitle: String.localized("The figure under each ring, docked left or right.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.sideRailShowsPercentages },
+                        set: { settings.sideRailShowsPercentages = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Time until reset"),
+                    subtitle: String.localized("A second arc outside each ring, for how much of the window has passed.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsWindowClock },
+                        set: { settings.showsWindowClock = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Forecast"),
+                    subtitle: String.localized("Whether each limit lasts its window, on the card.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsForecast },
+                        set: { settings.showsForecast = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Second limit inside the ring"),
+                    subtitle: String.localized("A thinner ring for the next-fullest limit, where a provider has one.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsSecondRing },
+                        set: { settings.showsSecondRing = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Show what's left"),
+                    subtitle: String.localized("Counts down instead of up, figure and ring together.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.showsRemaining },
+                        set: { settings.showsRemaining = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Figure above the ring"),
+                    subtitle: String.localized("Swaps the two, wherever the panel is.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.labelAboveRing },
+                        set: { settings.labelAboveRing = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(
+                        !settings.isPanelVisible
+                            // Nothing to swap when neither rail shows a figure.
+                            || (!settings.sideRailShowsPercentages && !settings.topRailShowsPercentages)
+                    )
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Percentages on top"),
+                    subtitle: String.localized("Only when the panel is docked to the top.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.topRailShowsPercentages },
+                        set: { settings.topRailShowsPercentages = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+            }
+
+            SettingsGroup(String.localized("Notifications")) {
+                SettingsRow(
+                    String.localized("Warn at"),
+                    subtitle: alertsSubtitle
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.alertThreshold },
+                        set: {
+                            settings.alertThreshold = $0
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
+                        }
+                    )) {
+                        ForEach(AlertThreshold.allCases) { threshold in
+                            Text(threshold.title).tag(threshold)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!UsageAlerts.isSupported)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("When a limit comes back"),
+                    subtitle: String.localized("Only for one you were warned about.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.alertsOnReset },
+                        set: {
+                            settings.alertsOnReset = $0
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    // Nothing to fire about: a reset is only announced for a
+                    // window that was mentioned on the way up.
+                    .disabled(!UsageAlerts.isSupported || settings.alertThreshold == .off)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("When a reading stops arriving"),
+                    subtitle: String.localized("After several failed checks in a row, once per outage.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.alertsOnFailure },
+                        set: {
+                            settings.alertsOnFailure = $0
+                            Task {
+                                if await alerts.requestAuthorizationIfNeeded() {
+                                    store.reconsiderAlerts()
+                                }
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!UsageAlerts.isSupported)
+                }
+            }
+
+            SettingsGroup(String.localized("Celebrations")) {
+                SettingsRow(
+                    String.localized("Celebrate a reset"),
+                    subtitle: String.localized("Full-screen ribbons and a sound, named for the provider.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.celebratesReset },
+                        set: { settings.celebratesReset = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
+            SettingsGroup(String.localized("Refresh")) {
+                SettingsRow(
+                    String.localized("Check every"),
+                    subtitle: refreshSubtitle
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.refreshInterval },
+                        set: { settings.refreshInterval = $0 }
+                    )) {
+                        ForEach(RefreshInterval.allCases) { interval in
+                            Text(interval.title).tag(interval)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            }
+
+            SettingsGroup(String.localized("Order")) {
+                // **Drag, and the arrows as well.** This was arrows only, on
+                // the reasoning that four rows is not enough to make a drag
+                // worth learning and that an arrow which misses does nothing
+                // while a drag which misses does something. The first half of
+                // that stopped being true: there are seventeen providers now,
+                // plus every added account, and moving the bottom one to the
+                // top is sixteen clicks.
+                //
+                // The arrows stay rather than being replaced. They are the
+                // precise way to move one place, they are the only way that
+                // works from the keyboard, and they carry the accessibility
+                // labels — drag and drop has none to give.
+                ForEach(Array(settings.orderedAccounts.enumerated()), id: \.element) { index, account in
+                    if index > 0 { SettingsRowDivider() }
+
+                    SettingsRow(
+                        settings.label(for: account),
+                        // Moving something the rail isn't drawing looks like
+                        // the arrow did nothing; saying so is kinder than
+                        // hiding the row and renumbering everything.
+                        subtitle: settings.isEnabled(account) ? nil : String.localized("Not shown"),
+                        icon: account.provider
+                    ) {
+                        HStack(spacing: 4) {
+                            Button {
+                                settings.move(account, by: -1)
+                            } label: {
+                                Image(systemName: "chevron.up")
+                            }
+                            .disabled(index == 0)
+                            .accessibilityLabel(String.localized("Move \(settings.label(for: account)) up"))
+
+                            Button {
+                                settings.move(account, by: 1)
+                            } label: {
+                                Image(systemName: "chevron.down")
+                            }
+                            .disabled(index == settings.orderedAccounts.count - 1)
+                            .accessibilityLabel(String.localized("Move \(settings.label(for: account)) down"))
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                    // The whole row, not just the text: a drag that only
+                    // starts on the label is a drag most people conclude
+                    // isn't there.
+                    .contentShape(.rect)
+                    .background(dropTarget == account ? Color.accentColor.opacity(0.12) : .clear)
+                    .draggable(account.id) {
+                        // The system's own drag image is the row at full
+                        // width, which at 900pt is a slab. This is the two
+                        // things being moved: the mark and the name.
+                        HStack(spacing: 8) {
+                            LobeIconView(provider: account.provider, size: 15)
+                            Text(settings.label(for: account))
+                                .font(.system(size: 13))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                    }
+                    .dropDestination(for: String.self) { ids, _ in
+                        dropTarget = nil
+                        guard let dragged = ids.first.flatMap(AccountKey.init(id:)),
+                              settings.orderedAccounts.contains(dragged)
+                        else { return false }
+
+                        settings.move(dragged, onto: account)
+                        return true
+                    } isTargeted: { isTargeted in
+                        // Cleared by identity, not unconditionally: the row
+                        // being left and the row being entered report in an
+                        // order nobody promises, so a bare `nil` on exit can
+                        // wipe the highlight the next row has just set.
+                        if isTargeted {
+                            dropTarget = account
+                        } else if dropTarget == account {
+                            dropTarget = nil
+                        }
+                    }
+                }
+
+                // Last, and disabled while there is nothing to undo. A drag
+                // that went somewhere unintended is easy to make and, at
+                // seventeen rows, tedious to walk back by hand.
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Reset order"),
+                    subtitle: String.localized("Back to the order Pulse ships with.")
+                ) {
+                    Button(String.localized("Reset")) { settings.resetOrder() }
+                        .disabled(!settings.hasCustomOrder)
+                }
+            }
+
+            SettingsGroup(String.localized("Application")) {
+                SettingsRow(
+                    String.localized("Open at login"),
+                    subtitle: loginSubtitle
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: {
+                            _ = loginGeneration
+                            return LoginItem.isEnabled
+                        },
+                        set: {
+                            LoginItem.setEnabled($0)
+                            loginGeneration += 1
+                        }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
+            SettingsGroup(String.localized("Language")) {
+                SettingsRow(
+                    String.localized("Interface language"),
+                    subtitle: String.localized("Takes effect right away.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.language },
+                        set: { settings.language = $0 }
+                    )) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.title).tag(language)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            }
+        }
+    }
+
+    /// The login item's state is the system's to hold, so this says what the
+    /// system actually reports rather than what was asked for.
+    private var loginSubtitle: String {
+        _ = loginGeneration
+
+        return switch LoginItem.state {
+        case .needsApproval:
+            .localized("Waiting for approval in System Settings › General › Login Items.")
+        case .on, .off:
+            .localized("Start Pulse automatically when you log in.")
+        }
+    }
+
+    /// Says what the *system* thinks, which is the half the switches cannot
+    /// know. A switch left on while macOS is dropping everything Pulse posts is
+    /// a setting that lies, and permission can be withdrawn in System Settings
+    /// long after it was given.
+    private var alertsSubtitle: String {
+        guard UsageAlerts.isSupported else {
+            // The `swift run` case: a bare executable has no bundle, and the
+            // notification centre raises rather than refusing politely.
+            return .localized("Notifications need the bundled app.")
+        }
+
+        if settings.wantsAlerts, alerts.authorization == .denied {
+            return .localized("Turned off for Pulse in System Settings › Notifications.")
+        }
+        return .localized("Notify when a limit passes this, and again when it is spent.")
+    }
+
+    /// Glass is one of the appearance cases, not a second switch. The drag
+    /// caption still only applies while glass is actually on.
+    private var appearanceSubtitle: String {
+        let base = String.localized("Dark, light, match the Mac, or glass.")
+        guard settings.usesGlass else { return base }
+        let gap = base.hasSuffix("。") ? "" : " "
+        return base + gap + .localized("Drag it by a ring while this is on.")
+    }
+
+    /// On automatic the cadence is decided at each tick, so the setting says
+    /// what it has settled on — otherwise the choice is a black box that seems
+    /// to do nothing.
+    private var refreshSubtitle: String {
+        guard settings.refreshInterval == .automatic else {
+            return .localized("How often to fetch new figures.")
+        }
+
+        let minutes = Int((store.currentInterval / 60).rounded())
+        return .localized("2 to 30 minutes as needed. Now: \("\(minutes)") minutes.")
+    }
+
+    /// Finds this provider's session in whichever browser signed in.
+    ///
+    /// The default browser leads, because that is where the session actually
+    /// is — another browser may hold one months out of date, and finding that
+    /// is worse than the keychain asking. Whatever turns up goes through the
+    /// provider's own filter before it is kept, so only the cookies that
+    /// actually authenticate ever reach the store; everything else read along
+    /// the way is discarded unseen.
+    /// Names the browser about to be opened, and warns when opening it will
+    /// ask for the keychain.
+    private static func browserHint(_ chosen: BrowserCookies.Browser?) -> String {
+        // Named, it is the only one opened — the rest are not tried, so a
+        // failure is reported rather than answered from a browser the user
+        // never signed in to. That is the same bargain `UsageSource` makes.
+        if let chosen {
+            return chosen.promptsForKeychain
+                ? String.localized("Only \(chosen.name). It will ask for the keychain.")
+                : String.localized("Only \(chosen.name).")
+        }
+
+        guard let first = BrowserCookies.present().first else {
+            return String.localized("Finds it in the browser you signed in with.")
+        }
+
+        // "Starts with", not "looks in": if the session isn't there the rest
+        // are tried too, and a hint that promised one browser and then reported
+        // another reads as the app having ignored it.
+        return first.promptsForKeychain
+            ? String.localized("Starts with \(first.name). It will ask for the keychain.")
+            : String.localized("Starts with \(first.name).")
+    }
+
+    private func readSession(for account: AccountKey) {
+        // Named, that one and no other. Left automatic, the default browser
+        // leads and the rest follow.
+        let browsers = settings.sessionBrowser(for: account).map { [$0] } ?? BrowserCookies.present()
+
+        guard !browsers.isEmpty else {
+            sessionMessage = String.localized("No browser cookie store was found.")
+            return
+        }
+
+        Task {
+            // Off the main thread: this opens a database or two and may ask
+            // the keychain, and the settings window should not freeze while it
+            // does.
+            let found: BrowserCookies.Found? = await Task.detached(priority: .userInitiated) {
+                switch account.provider {
+                case .qoder:
+                    let hosts = ["qoder.com", "www.qoder.com", "qoder.com.cn", "www.qoder.com.cn"]
+                    for host in hosts {
+                        if let session = BrowserCookies.session(forHost: host, allowing: browsers, keep: {
+                            try? QoderSessionCookie.normalize($0)
+                        }) {
+                            return session
+                        }
+                    }
+                    return BrowserCookies.Found?.none
+                default:
+                    return BrowserCookies.session(forHost: "ollama.com", allowing: browsers) {
+                        try? OllamaSessionCookie.normalize($0)
+                    }
+                }
+            }.value
+
+            if let found {
+                guard APIKeyStore.setKey(found.header, for: account.provider) else { return }
+                store.loadAPIKeys()
+                store.refresh(account)
+                // The keychain dialog may outlive the pane that opened it.
+                if pane == .account(account) {
+                    apiKey = found.header
+                    savedKey = found.header
+                    sessionMessage = String.localized("Read from \(found.browser.name).")
+                }
+                return
+            }
+
+            if pane == .account(account) {
+                sessionMessage = account.provider == .qoder
+                    ? String.localized("No Qoder session found. Sign in at qoder.com first.")
+                    : String.localized("No Ollama session found. Sign in at ollama.com first.")
+            }
+        }
+    }
+
+    private func saveKey(for account: AccountKey) {
+        // Only call it saved if it was. Otherwise the Save button greys out
+        // over a key that never reached disk.
+        guard APIKeyStore.setKey(apiKey, for: account.provider) else { return }
+        savedKey = apiKey
+        // The store keeps keys for the life of the launch, so it has to be
+        // told; otherwise the key is saved and nothing uses it until restart.
+        store.loadAPIKeys()
+        // And a key is only worth entering if something tries it now.
+        store.refresh(account)
+        // Including the history, which otherwise keeps saying there is no key
+        // until the pane is left and come back to.
+        Task { await loadHistory() }
+    }
+
+    private func accountPane(_ account: AccountKey) -> some View {
+        let provider = account.provider
+        return accountPaneBody(account, provider)
+    }
+
+    private func accountPaneBody(_ account: AccountKey, _ provider: Provider) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SettingsGroup(String.localized("Panel")) {
+                SettingsRow(String.localized("Show in panel")) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.isEnabled(account) },
+                        set: { settings.setEnabled($0, for: account) }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    // The last one standing can't be switched off: an empty
+                    // rail has nothing to hover and nothing to drag.
+                    .disabled(settings.isEnabled(account) && settings.enabledAccounts.count == 1)
+                }
+
+                SettingsRowDivider()
+
+                ringWindowRow(for: account)
+
+                // Only where there is more than one budget to split. Every
+                // other provider reports one pool, and a switch that promises
+                // a second ring it can never draw is worse than no switch.
+                if provider.splitsByModelGroup {
+                    SettingsRowDivider()
+
+                    splitRow(for: account)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Ring colour"),
+                    // Which state it is in, said outright. A colour well always
+                    // shows *a* colour, so on its own it cannot tell "automatic"
+                    // from "they picked green" — and a greyed-out button next to
+                    // it reads as unavailable, not as the state you are in.
+                    subtitle: settings.ringTint(for: account) == nil
+                        ? String.localized("Coloured by how much is left.")
+                        : String.localized("A colour of your own, whatever the usage.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.ringTint(for: account) != nil },
+                        set: { custom in
+                            // Switching on lands on something visibly chosen
+                            // rather than on the colour the automatic mode
+                            // happened to be showing.
+                            settings.setRingTint(custom ? RingTint.suggestions.first : nil, for: account)
+                        }
+                    )) {
+                        Text(localized: "Automatic").tag(false)
+                        Text(localized: "Custom").tag(true)
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+
+                // Only when there is a colour to change. Shown otherwise it is
+                // a control that contradicts the row above it.
+                if let chosen = settings.ringTint(for: account) {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Colour"),
+                        subtitle: chosen.hexString
+                    ) {
+                        ColorPicker(
+                            "",
+                            selection: Binding(
+                                get: { chosen },
+                                set: { settings.setRingTint($0, for: account) }
+                            ),
+                            // A translucent ring reads as a dim one, and dim
+                            // already means "no reading".
+                            supportsOpacity: false
+                        )
+                        .labelsHidden()
+                    }
+                }
+            }
+
+            connection(for: account)
+                .id("connection")
+
+            ConnectionDiagnosticsView(
+                account: account, store: store, settings: settings,
+                isSigningIn: signingIn != nil || githubTask != nil,
+                repairMessage: repairMessages[account.id],
+                repair: { repair($0, for: account) }
+            )
+            .id(account)
+
+            accounts(for: account)
+
+            liveUsage(for: account)
+
+            // Both are built from the transcripts the CLI leaves behind, so
+            // for a provider that keeps none they would be a column of zeroes
+            // claiming nothing had been spent — and for an account Pulse
+            // signed in to itself they would be worse than that. Those
+            // transcripts belong to whichever account the CLI is signed in to,
+            // which is not this one, so showing them here would report one
+            // Its own group rather than a row under Connection, which is
+            // about credentials and routes. This is a notification, and the
+            // general pane's group of them is the wrong home too: the figure
+            // is per account, because the providers that report a balance do
+            // not price in the same currency.
+            if provider.reportsSpendableBalance {
+                SettingsGroup(String.localized("Notifications")) {
+                    lowBalanceRow(for: account)
+                }
+            }
+
+            // account's spending under another's name.
+            if provider.providesHistory, account.isPrimary {
+                // The estimate is money, and money needs the token split only
+                // a transcript carries. A provider whose history comes from
+                // its own statistics has tokens and nothing to price them
+                // with, so the estimate is left off rather than shown at zero.
+                if provider.keepsLocalTranscripts {
+                    estimatedValue(for: account)
+                }
+
+                history(for: account)
+            }
+        }
+        .onChange(of: provider, initial: true) { _, shown in
+            // The stored figure, shown in the field rather than left blank
+            // beside a ring that is measuring against it.
+            if shown == .deepSeek {
+                deepSeekBudget = settings.deepSeekBudget.map { String($0) } ?? ""
+            }
+            if shown.reportsSpendableBalance {
+                lowBalance = settings.lowBalanceAlert(for: AccountKey(shown)).map { String($0) } ?? ""
+            }
+            // Copilot has no key field, but its token lives in the same store
+            // and the pane needs to know whether there is one.
+            guard shown.usesAPIKey || shown == .copilot else { return }
+            apiKey = APIKeyStore.key(for: shown) ?? ""
+            savedKey = apiKey
+        }
+    }
+
+    /// What each limit is worth in money.
+    ///
+    /// The only inferred figure in the app, so it gets its own group and says
+    /// plainly where it came from — rather than sitting beside the reported
+    /// percentages as though it were one of them.
+    @ViewBuilder
+    private func estimatedValue(for account: AccountKey) -> some View {
+        let ledger = ledgers[account.provider] ?? .empty
+        let estimates = store.usage(for: account).windows.compactMap { window in
+            BudgetEstimator.estimate(for: window, ledger: ledger).map { (window, $0) }
+        }
+
+        if !estimates.isEmpty {
+            VStack(alignment: .leading, spacing: 8) {
+                SettingsGroup(String.localized("Estimated value")) {
+                    ForEach(Array(estimates.enumerated()), id: \.element.0.id) { index, entry in
+                        if index > 0 { SettingsRowDivider() }
+
+                        SettingsRow(
+                            entry.0.name,
+                            subtitle: String.localized("\(Self.approximateMoney(entry.1.spent)) used so far")
+                        ) {
+                            // Just what the whole window is worth. The
+                            // remainder used to sit here too, but it is only
+                            // the other two numbers subtracted — and the
+                            // percentage it comes from is already on screen,
+                            // in "Current usage" directly above.
+                            Text(Self.approximateMoney(entry.1.full))
+                                .font(.system(size: 13, weight: .medium))
+                                .monospacedDigit()
+                        }
+                    }
+                }
+
+                Text(localized: "An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. Work done on other machines isn't counted, which would put these low. Windows with too little use to extrapolate from are left out.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
+            }
+        }
+    }
+
+    private static func approximateMoney(_ amount: Double) -> String {
+        let text = amount.formatted(
+            .currency(code: "USD")
+                .precision(.fractionLength(amount >= 100 ? 0 : 2))
+                .locale(LocalizationSource.locale)
+        )
+        return "≈\(text)"
+    }
+
+    /// What has actually been spent over time, as opposed to how much of the
+    /// current limit is left.
+    @ViewBuilder
+    private func history(for account: AccountKey) -> some View {
+        if let ledger = ledgers[account.provider], !ledger.days.isEmpty {
+            AccountUsageCard(
+                provider: account.provider,
+                ledger: ledger,
+                credits: account.provider == .codex ? codexAccount : nil
+            )
+        } else {
+            SettingsGroup(String.localized("Usage history")) {
+                SettingsRow(
+                    loadingHistory == account.provider
+                        ? Self.loadingHistoryTitle(for: account.provider)
+                        : String.localized("No history yet"),
+                    subtitle: loadingHistory == account.provider
+                        ? nil
+                        : Self.emptyHistoryReason(
+                            for: account.provider,
+                            read: historyReads[account.provider]
+                        )
+                ) {
+                    if loadingHistory == account.provider {
+                        ProgressView().controlSize(.small)
+                    }
+                }
+            }
+        }
+    }
+
+    /// What a history read depends on. A change to any of it means the
+    /// sentence on screen is about to describe a read that no longer applies.
+    private var historyKey: String {
+        guard case .account(let account) = pane else { return "\(pane)" }
+        return "\(account.id)|\(settings.isEnabled(account))"
+    }
+
+    private func loadHistory() async {
+        // History is per provider — it is read from that CLI's transcripts,
+        // which do not say which account was signed in at the time.
+        guard case .account(let account) = pane else { return }
+        let provider = account.provider
+
+        loadingHistory = provider
+        // Only if it is still ours. `saveKey` starts an unstructured reload
+        // that no pane switch cancels, so a returning older read would
+        // otherwise drop the spinner the *current* pane is showing and let it
+        // fall through to a sentence about an account nothing has read yet.
+        defer { if loadingHistory == provider { loadingHistory = nil } }
+
+        // Asked of the provider rather than scanned off disk. Their own
+        // statistics cover the whole account, so there is nothing local to
+        // read and nothing to cache between panes.
+        if provider == .zai || provider == .glmCoding {
+            // A pane can be opened for an account that is switched off — it is
+            // how one gets switched on. Nothing on the refresh loop touches a
+            // disabled provider, and neither should this: it is the one place
+            // a key would otherwise leave the Mac for something the user has
+            // turned off.
+            guard settings.isEnabled(account) else {
+                ledgers[provider] = .empty
+                // Nothing was asked, and the empty state has to say so rather
+                // than report on a request that never happened.
+                historyReads[provider] = .notAsked
+                return
+            }
+
+            let key = APIKeyStore.key(for: provider)
+            let read = await ZaiUsageService(provider: provider, enteredKey: key).history()
+
+            // A pane switch cancels this task, and a cancelled request comes
+            // back looking exactly like a failed one. Recording it would leave
+            // "didn't answer" on a provider that was never given the chance to.
+            guard !Task.isCancelled else { return }
+
+            historyReads[provider] = read
+            ledgers[provider] = if case .answered(let ledger) = read { ledger } else { .empty }
+            return
+        }
+
+        // Refreshed rather than reused: the session running right now is
+        // appending to a log as this is read, and only that file is re-parsed.
+        let scanned = await UsageLedgerReader.shared.ledger(for: provider, refresh: true)
+        guard !Task.isCancelled else { return }
+        ledgers[provider] = scanned
+        // Reading this Mac's own files always answers, even when the answer is
+        // that there is nothing there.
+        historyReads[provider] = .answered(scanned)
+
+        if provider == .codex {
+            codexAccount = await store.codexAccountUsage()
+        }
+    }
+
+    /// Which of the provider's limits the rail's ring shows.
+    ///
+    /// The options are whatever that provider is reporting right now, so the
+    /// list changes as limits come and go — a per-model window appears only
+    /// once that model has one. A pin that stops matching falls back to the
+    /// automatic choice rather than leaving the ring blank.
+    private func ringWindowRow(for account: AccountKey) -> some View {
+        let usage = store.usage(for: account)
+
+        return SettingsRow(
+            String.localized("Ring shows"),
+            subtitle: String.localized("Which limit the rail's ring tracks.")
+        ) {
+            Picker("", selection: Binding(
+                get: {
+                    let pinned = settings.pinnedWindow(for: account)
+                    // Show "automatic" when the pin no longer matches anything.
+                    return usage.windows.contains { $0.id == pinned } ? pinned : nil
+                },
+                set: { settings.setPinnedWindow($0, for: account) }
+            )) {
+                Text(localized: "Highest usage").tag(String?.none)
+
+                ForEach(usage.windows) { window in
+                    Text(window.name).tag(String?.some(window.id))
+                }
+            }
+            .labelsHidden()
+            .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+            .disabled(usage.windows.isEmpty)
+        }
+    }
+
+    /// One ring per model group, for the one provider that has more than one.
+    ///
+    /// Off by default. It costs a slot on the rail, and the rail is the whole
+    /// of the panel when it is docked — a user who has not asked for a second
+    /// ring should not find the first one narrower for it.
+    private func splitRow(for account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("A ring for each model group"),
+            subtitle: String.localized("Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two.")
+        ) {
+            Toggle("", isOn: Binding(
+                get: { settings.isSplit(account) },
+                set: { settings.setSplit($0, for: account) }
+            ))
+            .labelsHidden()
+            .toggleStyle(.switch)
+        }
+    }
+
+    /// What to say under the key field.
+    ///
+    /// Usually just where it is kept — but z.ai and GLM are one company's two
+    /// storefronts, and a key from the wrong console is refused with no hint
+    /// as to why, so those two name the site instead of leaving the user to
+    /// guess which of the two they signed up for.
+    /// Both halves of the empty state have to name the **right** source.
+    ///
+    /// A history read from the provider's own statistics has nothing to do
+    /// with this Mac, and saying "nothing has been logged on this Mac" about
+    /// it sends somebody looking for a log directory that was never going to
+    /// exist. `Provider.keepsLocalTranscripts` is the question, not
+    /// `providesHistory`: the latter is true for both sources.
+    ///
+    /// The two original sentences are claims about the account, and neither is
+    /// one Pulse can make until a read has actually answered. A read that
+    /// failed, or that Pulse chose not to make, says that instead; one that
+    /// has not happened *yet* says nothing at all.
+    private static func emptyHistoryReason(for provider: Provider, read: ZaiUsageService.HistoryRead?) -> String? {
+        // Nothing read yet, so nothing may be said about the account. This is
+        // the first frame of a pane, before `.task` has even set the spinner.
+        guard let read else { return nil }
+
+        switch read {
+        case .failed:
+            return .localized("\(provider.displayName) didn't answer, so there is nothing to chart yet. Try again in a moment.")
+        case .notConfigured:
+            return .localized("Add a key above and Pulse can read this account's history.")
+        case .notAsked:
+            return .localized("This account is switched off, so Pulse hasn't asked for its history.")
+        case .answered:
+            break
+        }
+
+        return provider.keepsLocalTranscripts
+            ? .localized("Nothing has been logged on this Mac yet, so there is no history to add up.")
+            : .localized("This account hasn't used anything yet, so there is nothing to chart.")
+    }
+
+    private static func loadingHistoryTitle(for provider: Provider) -> String {
+        provider.keepsLocalTranscripts
+            ? .localized("Reading logs")
+            : .localized("Asking \(provider.displayName)")
+    }
+
+    /// DeepSeek reports money and no allowance, so the ring has no denominator
+    /// until one is chosen. Three modes because there are exactly three places
+    /// one can come from — see `DeepSeekBasis`.
+    private var deepSeekBasisRow: some View {
+        SettingsRow(
+            String.localized("Ring shows"),
+            subtitle: Self.deepSeekBasisSubtitle(settings.deepSeekBasis)
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.deepSeekBasis },
+                set: { settings.deepSeekBasis = $0 }
+            )) {
+                ForEach(DeepSeekBasis.allCases) { basis in
+                    Text(basis.title).tag(basis)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
+    }
+
+    private var deepSeekBudgetRow: some View {
+        SettingsRow(
+            String.localized("Full tank"),
+            subtitle: String.localized("What you call a full balance. The ring measures against it.")
+        ) {
+            HStack(spacing: 8) {
+                TextField("", text: $deepSeekBudget)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: SettingsLayout.controlWidth - 70)
+                    .onSubmit { saveDeepSeekBudget() }
+
+                Button(String.localized("Save")) { saveDeepSeekBudget() }
+            }
+        }
+    }
+
+    /// Blank clears it, which puts the ring back to showing the balance alone
+    /// rather than a fraction of nothing.
+    private func saveDeepSeekBudget() {
+        settings.deepSeekBudget = Self.money(deepSeekBudget)
+        deepSeekBudget = Self.text(settings.deepSeekBudget)
+    }
+
+    /// A figure typed into a settings field, or nil for anything that is not
+    /// one.
+    ///
+    /// **`Double(_:)` alone is not this.** It accepts `"inf"`, `"infinity"`
+    /// and `"1e999"`, all of which are `> 0`, and an infinite denominator makes
+    /// `usedFraction` NaN — which `min`/`max` propagate rather than clamp, and
+    /// which `Int(_:)` traps on. Persisted, that crashed the panel on every
+    /// launch until the field was cleared.
+    ///
+    /// Parsed through a formatter rather than `Double(_:)` so a comma decimal
+    /// separator is read rather than silently clearing the setting, and the
+    /// currency symbol somebody types out of habit is ignored.
+    private static func money(_ typed: String) -> Double? {
+        let trimmed = typed.trimmingCharacters(in: .whitespaces)
+            .filter { $0.isNumber || $0 == "." || $0 == "," || $0 == "-" }
+        guard !trimmed.isEmpty else { return nil }
+
+        let formatter = NumberFormatter()
+        formatter.locale = LocalizationSource.locale
+        formatter.numberStyle = .decimal
+        let value = formatter.number(from: trimmed)?.doubleValue
+            ?? Double(trimmed.replacingOccurrences(of: ",", with: "."))
+
+        guard let value, value.isFinite, value > 0 else { return nil }
+        return value
+    }
+
+    /// The stored figure back in the field — without the `.0` that
+    /// `String(_:)` puts on every whole number.
+    private static func text(_ amount: Double?) -> String {
+        guard let amount else { return "" }
+        return amount.formatted(.number.precision(.fractionLength(0...2)).grouping(.never)
+            .locale(LocalizationSource.locale))
+    }
+
+    private static func deepSeekBasisSubtitle(_ basis: DeepSeekBasis) -> String {
+        switch basis {
+        case .sinceTopUp:
+            .localized("How much of the balance Pulse last saw you top up to is gone.")
+        case .balanceOnly:
+            .localized("The money left, with no ring. DeepSeek reports no allowance.")
+        case .budget:
+            .localized("How much of the figure you set is gone.")
+        }
+    }
+
+    /// A prepaid balance has no percentage to warn at, so it gets a line of
+    /// its own: the money, not a fraction of an allowance nobody reports.
+    private func lowBalanceRow(for account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("Warn below"),
+            subtitle: String.localized("Notify once when the balance falls under this. Blank for never.")
+        ) {
+            HStack(spacing: 8) {
+                TextField("", text: $lowBalance)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: SettingsLayout.controlWidth - 70)
+                    .onSubmit { saveLowBalance(for: account) }
+
+                Button(String.localized("Save")) { saveLowBalance(for: account) }
+            }
+            // Greyed out in a build with no bundle, like every other alert
+            // control: `UNUserNotificationCenter` raises without one.
+            .disabled(!UsageAlerts.isSupported)
+        }
+    }
+
+    private func saveLowBalance(for account: AccountKey) {
+        settings.setLowBalanceAlert(Self.money(lowBalance), for: account)
+        lowBalance = Self.text(settings.lowBalanceAlert(for: account))
+        // **The only alert control that was not asking.** Its three siblings in
+        // the general pane all do, and without it a fresh install types a
+        // figure into a group headed "Notifications" and is never told
+        // anything: `observe` bails while authorization is `.notDetermined`,
+        // and nothing else was ever going to ask.
+        guard settings.lowBalanceAlert(for: account) != nil else { return }
+        Task {
+            // And reconsider straight away, like its siblings: a balance
+            // already under the line when the figure is entered is announced
+            // once, rather than waiting for a pass.
+            if await alerts.requestAuthorizationIfNeeded() { store.reconsiderAlerts() }
+        }
+    }
+
+    private static func keySubtitle(for provider: Provider) -> String {
+        switch provider {
+        case .qoder:
+            .localized("A Qoder personal token lasts. A browser session expires. Stored encrypted on this Mac.")
+        case _ where provider.usesSessionCookie:
+            .localized("Copied from your browser. Stored encrypted on this Mac.")
+        case .zai:
+            .localized("From z.ai. Stored encrypted on this Mac.")
+        case .glmCoding:
+            .localized("From bigmodel.cn. Stored encrypted on this Mac.")
+        case .minimax:
+            .localized("From platform.minimax.io. Stored encrypted on this Mac.")
+        case .minimaxCN:
+            .localized("From platform.minimaxi.com. Stored encrypted on this Mac.")
+        // The one field holding two secrets. Says the format, because a pair
+        // pasted the wrong way round fails as a signature mismatch — a 403
+        // with nothing in it to suggest what went wrong.
+        case .volcengine:
+            .localized("AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.")
+        case .kimiCode:
+            .localized("From the Kimi Code console. Optional if you sign in. Stored encrypted on this Mac.")
+        // Optional, like Volcengine's: `cmd auth login` already leaves a key
+        // Pulse can read, and this field is for anyone whose account is signed
+        // in somewhere other than this Mac.
+        case .commandCode:
+            .localized("From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac.")
+        case .deepSeek:
+            .localized("From platform.deepseek.com. Stored encrypted on this Mac.")
+        default:
+            .localized("Stored encrypted on this Mac.")
+        }
+    }
+
+    /// Where a provider's figures come from, plus anything that route needs
+    /// setting up.
+    ///
+    /// **Not drawn when it would be empty.** An added account of a provider
+    /// with one route has nothing here: no picker, no key field, and the
+    /// route row below is the primary account's. Drawn anyway it is a
+    /// "Connection" heading over an empty box, which reads as a control that
+    /// failed to load rather than as a section with nothing to say.
+    @ViewBuilder
+    private func connection(for account: AccountKey) -> some View {
+        let source = settings.source(for: account)
+
+        if hasConnectionControls(for: account) {
+        SettingsGroup(String.localized("Connection")) {
+            // A account.provider with a single route gets told, not asked. A picker
+            // with one entry is a control that cannot do anything.
+            if account.isPrimary, account.provider.hasSourceChoice {
+                SettingsRow(
+                    String.localized("Read usage from"),
+                    subtitle: source.detail(for: account.provider)
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.source(for: account) },
+                        set: { settings.setSource($0, for: account) }
+                    )) {
+                        // A route this Mac cannot take is a choice whose only
+                        // outcome is an error — the same rule the browser list
+                        // follows. A route already *pinned* is still offered,
+                        // so deleting the desktop app says so on the card
+                        // rather than silently switching to another route.
+                        ForEach(UsageSource.options(for: account).filter {
+                            $0 != .desktopApp || ClaudeDesktopSession.isAvailable || source == .desktopApp
+                        }) { option in
+                            Text(option.title(for: account.provider)).tag(option)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+            } else if account.provider == .copilot {
+                // A sign-in, not a pasted token. The endpoint would accept the
+                // one `gh` holds, but that carries `repo` and `workflow` — the
+                // run of someone's source code, handed over to draw a
+                // percentage. This asks for `read:user`.
+                SettingsRow(
+                    String.localized("GitHub account"),
+                    subtitle: githubError
+                        ?? (savedKey.isEmpty
+                            ? String.localized("Opens GitHub's own page. Pulse asks to read your profile, nothing else.")
+                            : String.localized("Signed in. Pulse holds a read-only token for this Mac."))
+                ) {
+                    if githubTask != nil {
+                        Button(String.localized("Cancel")) { endGitHubSignIn() }
+                    } else if savedKey.isEmpty {
+                        Button(String.localized("Sign in…")) { startGitHubSignIn() }
+                    } else {
+                        Button(String.localized("Sign out")) {
+                            _ = APIKeyStore.setKey(nil, for: .copilot)
+                            apiKey = ""
+                            savedKey = ""
+                            githubError = nil
+                            store.loadAPIKeys()
+                            store.refresh(account)
+                        }
+                    }
+                }
+
+                // While it waits, the code is the whole interaction: it is
+                // typed on GitHub's page, not here.
+                if let githubPrompt {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Code"),
+                        subtitle: String.localized("Copied — paste it on the page that opened.")
+                    ) {
+                        HStack(spacing: 10) {
+                            Text(githubPrompt.userCode)
+                                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                                .textSelection(.enabled)
+
+                            Button(String.localized("Copy")) { copy(githubPrompt.userCode) }
+
+                            Button(String.localized("Open page")) {
+                                NSWorkspace.shared.open(githubPrompt.verificationURL)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // **Its own `if`, not the tail of that chain.** A provider can want
+            // both a route picker *and* a credential — Volcengine does: the
+            // `arkcli` route needs nothing pasted and the signed-endpoint route
+            // needs an access key pair. Chained behind `hasSourceChoice` the
+            // field was never drawn at all, so the endpoint route it belongs to
+            // could not be configured from Settings by any means. A divider
+            // where both are shown, and none where the picker was not.
+            if account.provider.hasSourceChoice, account.provider.usesAPIKey,
+               !(account.provider == .kimiCode && source == .tooling) {
+                SettingsRowDivider()
+            }
+
+            if account.provider.usesAPIKey, !(account.provider == .kimiCode && source == .tooling) {
+                // Takes precedence over the key OpenCode saved for itself —
+                // see OpenCodeGoUsageService for why that way round.
+                // What this provider wants is not always a key. Ollama has no
+                // quota API, so the figures come from its signed-in settings
+                // page and a browser session is the only credential there is —
+                // calling it an API key would send people looking for one that
+                // does not exist.
+                SettingsRow(
+                    account.provider == .qoder
+                        ? String.localized("Token or session")
+                        : account.provider.usesSessionCookie
+                        ? String.localized("Session cookie")
+                        : account.provider.usesKeyPair
+                            ? String.localized("Access keys")
+                            : String.localized("API key"),
+                    subtitle: Self.keySubtitle(for: account.provider)
+                ) {
+                    HStack(spacing: 8) {
+                        SecureField("", text: $apiKey)
+                            .focused($credentialFocused)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: SettingsLayout.controlWidth)
+                            .onSubmit { saveKey(for: account) }
+
+                        Button(String.localized("Save")) { saveKey(for: account) }
+                            .disabled(apiKey == savedKey)
+                    }
+                }
+
+                // Only where a browser session *is* the credential. Every
+                // other provider borrows a login its own tool stored, and none
+                // of them should be going through anybody's cookies to do it.
+                if account.provider.usesSessionCookie {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Read from browser"),
+                        // Says which one it will open, and that it may ask —
+                        // Chromium keeps its cookies under a key in the login
+                        // keychain, and being told a second before the dialog
+                        // appears is the difference between a step and a scare.
+                        subtitle: sessionMessage ?? Self.browserHint(settings.sessionBrowser(for: account))
+                    ) {
+                        HStack(spacing: 8) {
+                            Picker("", selection: Binding(
+                                get: { settings.sessionBrowser(for: account) },
+                                set: {
+                                    settings.setSessionBrowser($0, for: account)
+                                    sessionMessage = nil
+                                }
+                            )) {
+                                Text(localized: "Automatic").tag(BrowserCookies.Browser?.none)
+
+                                // Only what is actually installed. A browser
+                                // that isn't there is a choice that can only
+                                // fail.
+                                ForEach(BrowserCookies.present()) { browser in
+                                    Text(browser.name).tag(BrowserCookies.Browser?.some(browser))
+                                }
+                            }
+                            .labelsHidden()
+                            .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+
+                            Button(String.localized("Read")) { readSession(for: account) }
+                        }
+                    }
+                }
+            } else {
+                // One route, so it is stated rather than offered — but what
+                // that route is differs: a server one of them runs while it is
+                // open, a login the others already saved. The wording belongs
+                // to the provider (`Provider.soleRoute`), where the switch is
+                // exhaustive: this was a ternary that gave every provider but
+                // Cursor Antigravity's sentence.
+                // Primary only. What this row names is the login the
+                // provider's own tool stored, and an account Pulse signed in
+                // to itself does not use it — `fetchAdded` goes straight over
+                // HTTP with the token Pulse holds. Stating the CLI's route
+                // there would name a credential this account never touches.
+                if account.isPrimary, let route = account.provider.soleRoute {
+                    SettingsRow(String.localized("Read usage from"), subtitle: route.note) {
+                        Text(route.name)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                            .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
+                    }
+                }
+            }
+
+            if account.provider == .deepSeek {
+                SettingsRowDivider()
+                deepSeekBasisRow
+                if settings.deepSeekBasis == .budget {
+                    SettingsRowDivider()
+                    deepSeekBudgetRow
+                }
+            }
+
+            // The status line has to be registered before it can report
+            // anything, so the control for that follows the choice that needs
+            // it.
+            if account.isPrimary, account.provider == .claudeCode, source != .endpoint {
+                SettingsRowDivider()
+                claudeCodeStatusLine
+            }
+        }
+        }
+    }
+
+    /// Whether `connection(for:)` has anything to put in its card — the same
+    /// four questions it asks, answered before the heading is drawn.
+    private func hasConnectionControls(for account: AccountKey) -> Bool {
+        guard account.isPrimary else { return false }
+        if account.provider.hasSourceChoice { return true }
+        if account.provider == .copilot { return true }
+        if account.provider.usesAPIKey { return true }
+        return account.isPrimary && account.provider.soleRoute != nil
+    }
+
+    private var kimiSignedIn: Bool {
+        _ = kimiLoginTick
+        return AccountCredentialStore.credentials(for: AccountKey(.kimiCode)) != nil
+    }
+
+    /// The primary Kimi Code subscription, signed in the same way Codex extras
+    /// are: a device-code button in Accounts, not a key in Connection.
+    @ViewBuilder
+    private func kimiPrimaryAccountRow(_ account: AccountKey) -> some View {
+        SettingsRow(
+            String.localized("Kimi Code account"),
+            subtitle: signInError
+                ?? (kimiSignedIn
+                    ? (settings.source(for: account) == .endpoint
+                        ? String.localized("Signed in. The API key in Connection is used instead.")
+                        : String.localized("Signed in. Pulse holds a login for this Mac."))
+                    : String.localized("Opens Kimi Code's own page. Pulse only reads usage."))
+        ) {
+            if signingIn == .kimiCode, !kimiSignedIn {
+                Button(String.localized("Cancel")) {
+                    signInTask?.cancel()
+                    signInTask = nil
+                    signingIn = nil
+                    devicePrompt = nil
+                    signInError = nil
+                }
+            } else if kimiSignedIn {
+                Button(String.localized("Sign out")) {
+                    _ = AccountCredentialStore.set(nil, for: account)
+                    kimiLoginTick += 1
+                    signInError = nil
+                    store.refresh(account)
+                }
+            } else {
+                Button(String.localized("Sign in…")) {
+                    signIn(to: .kimiCode, replacing: AccountKey(.kimiCode))
+                }
+            }
+        }
+    }
+
+    /// Signing in to another subscription of the same provider, and getting
+    /// rid of one.
+    ///
+    /// Only shown where it can work. The other providers are read from a login
+    /// their own tool stored, and that store holds exactly one — a second
+    /// account of theirs is not something Pulse can be shown, so offering it
+    /// would be a control that cannot do anything.
+    @ViewBuilder
+    private func accounts(for account: AccountKey) -> some View {
+        if account.provider.supportsMultipleAccounts {
+            SettingsGroup(String.localized("Accounts")) {
+                if account.isPrimary, account.provider == .kimiCode {
+                    kimiPrimaryAccountRow(account)
+                }
+
+                // Codex-shaped extras. Kimi hides "Add another" until the primary
+                // subscription is signed in, so the first Sign in… cannot be
+                // mistaken for adding a second ring. Extra accounts always get
+                // "Sign in again…".
+                if !account.isPrimary || account.provider != .kimiCode || kimiSignedIn {
+                    if account.isPrimary, account.provider == .kimiCode {
+                        SettingsRowDivider()
+                    }
+                    SettingsRow(
+                        account.isPrimary ? String.localized("Add another account") : String.localized("Sign in again…"),
+                        // The one thing someone should know before they start:
+                        // whose name is on the page that opens.
+                        subtitle: String.localized("Opens the provider's own sign-in page.")
+                    ) {
+                        if signingIn == nil {
+                            Button(String.localized("Sign in…")) {
+                                signIn(to: account.provider, replacing: account.isPrimary ? nil : account)
+                            }
+                        } else {
+                            Button(String.localized("Cancel")) {
+                                signInTask?.cancel()
+                                signInTask = nil
+                                signingIn = nil
+                                devicePrompt = nil
+                            }
+                        }
+                    }
+                }
+
+                // While a device-code sign-in is waiting, the code is the
+                // whole interaction: it is typed on the provider's page,
+                // not here, and nothing comes back to this Mac.
+                if let devicePrompt {
+                    SettingsRowDivider()
+                    SettingsRow(
+                        String.localized("Code"),
+                        // The sign-in half is not decoration: OpenAI's own
+                        // hand-off to a Google account fails with
+                        // `token_exchange_failed` when the browser has no
+                        // session, and this row is the only place that
+                        // says so. Which half is said depends on whether
+                        // the provider's own link already carries the
+                        // code — telling someone to paste on a page that
+                        // filled itself in is an instruction to undo.
+                        subtitle: devicePrompt.prefilled
+                            ? String.localized("Already on the page. Sign in there first if asked, then approve it.")
+                            : String.localized("Copied. Sign in there first if asked, then paste it.")
+                    ) {
+                        HStack(spacing: 10) {
+                            Text(devicePrompt.userCode)
+                                .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                                .textSelection(.enabled)
+
+                            Button(String.localized("Copy")) { copy(devicePrompt.userCode) }
+
+                            Button(String.localized("Open page")) {
+                                NSWorkspace.shared.open(devicePrompt.verificationURL)
+                            }
+                        }
+                    }
+                }
+
+                if let signInError {
+                    SettingsRowDivider()
+                    SettingsRow(String.localized("Sign-in"), subtitle: signInError) { EmptyView() }
+                }
+
+                if !account.isPrimary {
+                    SettingsRowDivider()
+                    SettingsRow(String.localized("Name")) {
+                        TextField("", text: Binding(
+                            get: { settings.label(for: account) },
+                            set: { settings.rename(account, to: $0) }
+                        ))
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: SettingsLayout.controlWidth)
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Remove account"),
+                        subtitle: String.localized("Forgets its login and takes it off the rail.")
+                    ) {
+                        Button(String.localized("Remove"), role: .destructive) {
+                            AccountCredentialStore.set(nil, for: account)
+                            settings.removeAccount(account)
+                            pane = .general
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// GitHub's device flow, for Copilot's quota.
+    private func startGitHubSignIn() {
+        githubError = nil
+        githubTask = Task {
+            defer {
+                // Only the attempt still on screen clears the pane; a cancelled
+                // one has already had its state cleared by the button.
+                if !Task.isCancelled {
+                    githubTask = nil
+                    githubPrompt = nil
+                }
+            }
+            do {
+                let prompt = try await GitHubDeviceLogin.start()
+                githubPrompt = prompt
+                // The clipboard is the whole convenience here: GitHub will not
+                // pre-fill its field from a link, deliberately, because that is
+                // the device-code phishing attack. A paste still leaves the
+                // consent where it belongs.
+                copy(prompt.userCode)
+                NSWorkspace.shared.open(prompt.verificationURL)
+
+                let token = try await GitHubDeviceLogin.awaitToken(prompt)
+                try Task.checkCancellation()
+                guard APIKeyStore.setKey(token, for: .copilot) else {
+                    githubError = String.localized("Couldn't save the login on this Mac.")
+                    return
+                }
+                if pane == .account(AccountKey(.copilot)) {
+                    apiKey = token
+                    savedKey = token
+                }
+                store.loadAPIKeys()
+                store.refresh(AccountKey(.copilot))
+            } catch let failure as GitHubDeviceLogin.Failure {
+                if !Task.isCancelled { githubError = failure.message }
+            } catch is CancellationError {
+                // Cancelling is not a failure, and nothing about it belongs in
+                // a pane that may already be showing the next attempt.
+            } catch {
+                if !Task.isCancelled { githubError = String.localized("Sign-in was cancelled.") }
+            }
+        }
+    }
+
+    private func copy(_ text: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    private func repair(_ remedy: ConnectionRemedy, for account: AccountKey) {
+        repairMessages[account.id] = nil
+        switch remedy {
+        case .signIn:
+            if account.provider == .copilot { startGitHubSignIn() }
+            else if !account.isPrimary { signIn(to: account.provider, replacing: account) }
+        case .editCredential:
+            connectionFocusRequest += 1
+        case .readBrowser:
+            readSession(for: account)
+        case .connectStatusLine:
+            let installed = StatusLineHook.install()
+            hookGeneration += 1
+            repairMessages[account.id] = installed
+                ? String.localized("Connected. Use Claude Code to send a new reading.")
+                : String.localized("Couldn't connect the status line. Open setup help.")
+            if installed { store.refresh(account) }
+        case .copyCommand(let command):
+            copy(command)
+            repairMessages[account.id] = String.localized("Copied — run \(command) in your terminal, then retry.")
+        case .openApp(let name):
+            let candidates = [
+                URL.applicationDirectory.appending(path: "\(name).app"),
+                URL.homeDirectory.appending(path: "Applications/\(name).app")
+            ]
+            guard let app = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) else {
+                repairMessages[account.id] = String.localized("Couldn't find \(name). Open setup help.")
+                return
+            }
+            Task {
+                do {
+                    _ = try await NSWorkspace.shared.openApplication(at: app, configuration: .init())
+                    store.refresh(account)
+                } catch {
+                    repairMessages[account.id] = String.localized("Couldn't open \(name). Open setup help.")
+                }
+            }
+        case .retry: store.refresh(account)
+        case .help: NSWorkspace.shared.open(ConnectionRemedy.helpURL(for: account.provider))
+        }
+    }
+
+    private func endGitHubSignIn() {
+        githubTask?.cancel()
+        githubTask = nil
+        githubPrompt = nil
+        githubError = nil
+    }
+
+    /// Runs the browser sign-in, then keeps whatever came back.
+    ///
+    /// `replacing` is set when signing in again to an extra account. Kimi Code's
+    /// subscription login for the **primary** account passes `AccountKey(.kimiCode)`
+    /// so Pulse holds the tokens without creating a second ring.
+    private func signIn(to provider: Provider, replacing existing: AccountKey? = nil) {
+        signingIn = provider
+        signInError = nil
+
+        signInTask = Task {
+            defer {
+                // Only an attempt that is still the one on screen clears the
+                // pane. A cancelled one has already had its state cleared by
+                // the button that cancelled it, and by the time it unwinds the
+                // user may well have started another — which would otherwise
+                // lose its Cancel button and its code to a sign-in nobody is
+                // waiting for any more.
+                if !Task.isCancelled {
+                    signingIn = nil
+                    devicePrompt = nil
+                    signInTask = nil
+                }
+            }
+            do {
+                let credentials: AccountCredentials
+                if provider == .grokBot {
+                    // Cursor has no OAuth for a third party to drive: its page
+                    // takes a challenge and a nonce and the tokens are polled
+                    // for afterwards. Nothing comes back to this Mac and there
+                    // is no code to type, so this branch shows neither.
+                    credentials = try await CursorWebLogin.signIn()
+                } else if OAuthLogin.usesDeviceCode(provider) {
+                    // A code shown on the provider's own page. No local
+                    // port to collide with the CLI's sign-in, and nothing
+                    // redirected back to this Mac. Whether the page fills the
+                    // code in itself is the provider's decision — GitHub and
+                    // OpenAI send no pre-filled link, xAI does — so the code
+                    // goes on the clipboard either way and the row's subtitle
+                    // follows `DevicePrompt.prefilled`.
+                    let prompt = try await OAuthLogin.startDevice(provider)
+                    devicePrompt = prompt
+                    // On the clipboard the moment it exists, like GitHub's. The
+                    // same reason applies here: neither page will pre-fill from
+                    // a link, so a paste is the shortest honest route.
+                    copy(prompt.userCode)
+                    NSWorkspace.shared.open(prompt.verificationURL)
+                    credentials = try await OAuthLogin.awaitDevice(prompt, for: provider)
+                } else {
+                    credentials = try await OAuthLogin.signIn(to: provider)
+                }
+                try Task.checkCancellation()
+                // Primary Kimi subscription: write onto the primary key, no extra ring.
+                if provider == .kimiCode, existing == AccountKey(.kimiCode) {
+                    guard AccountCredentialStore.set(credentials, for: existing!) else {
+                        signInError = String.localized("Couldn't save the login on this Mac.")
+                        return
+                    }
+                    kimiLoginTick += 1
+                    store.refresh(existing!)
+                    return
+                }
+                if let existing, !settings.allAccounts.contains(existing) { return }
+                let added = existing ?? settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
+                guard AccountCredentialStore.set(credentials, for: added) else {
+                    if existing == nil { settings.removeAccount(added) }
+                    signInError = String.localized("Couldn't save the login on this Mac.")
+                    return
+                }
+                store.refresh(added)
+                pane = .account(added)
+            } catch let failure as OAuthLogin.Failure {
+                if !Task.isCancelled { signInError = failure.message }
+            } catch is CancellationError {
+                // Cancelling is not a failure, and nothing about it belongs in
+                // a pane that may already be showing the next attempt.
+            } catch {
+                if !Task.isCancelled { signInError = String.localized("Sign-in was cancelled.") }
+            }
+        }
+    }
+
+    /// What to call a newly added account.
+    ///
+    /// The part of the address before the "@", because the card's header is
+    /// one line at a fixed width and a whole email address spends all of it.
+    /// A provider that names nothing gets a number, which at least counts.
+    /// Either way it is the user's to change.
+    private static func label(for credentials: AccountCredentials, provider: Provider, in settings: AppSettings) -> String {
+        if let name = credentials.accountName?.split(separator: "@").first, !name.isEmpty {
+            return String(name)
+        }
+
+        let existing = settings.extraAccounts.filter { $0.provider == provider }.count
+        return "\(provider.displayName) \(existing + 2)"
+    }
+
+    /// Registering Pulse as Claude Code's status line is the backup route for
+    /// its figures — the main one is the account's usage endpoint. It earns
+    /// its place because the stored login expires after a few hours and
+    /// nothing here renews it, so the status line covers the gap until Claude
+    /// Code is next used. Kept visible and reversible rather than being wired
+    /// up behind the user's back.
+    private var claudeCodeStatusLine: some View {
+        Group {
+            SettingsRow(
+                String.localized("Claude Code status line"),
+                subtitle: String.localized("A backup for when the saved login expires. Your own status line keeps working.")
+            ) {
+                Button(
+                    isHookInstalled
+                        ? String.localized("Disconnect")
+                        : String.localized("Connect")
+                ) {
+                    _ = isHookInstalled ? StatusLineHook.uninstall() : StatusLineHook.install()
+                    hookGeneration += 1
+                    store.refresh()
+                }
+            }
+        }
+    }
+
+    private func liveUsage(for account: AccountKey) -> some View {
+        let usage = store.usage(for: account)
+
+        return SettingsGroup(String.localized("Current usage")) {
+            // Says how current these figures are, and offers to make them
+            // current. The rail has the same on a ring click, but nobody
+            // reading a settings pane should have to go and find it there.
+            SettingsRow(String.localized("Last read")) {
+                HStack(spacing: 10) {
+                    // `Text`'s relative style keeps counting on its own. A
+                    // string worked out once said "just now" for the whole
+                    // half hour until something else redrew the view.
+                    if let observed = usage.observedAt {
+                        Text(observed, style: .relative)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            // Every other date in the app is pinned to the
+                            // language chosen in Settings; this one formats
+                            // with the environment's locale, which follows the
+                            // system. Without this, an English Pulse on a
+                            // Chinese Mac prints "4分钟" beside "Refresh".
+                            .environment(\.locale, LocalizationSource.locale)
+                    } else {
+                        Text(localized: "Not yet")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button(String.localized("Refresh")) { store.refresh(account) }
+                        // Any pass, not just this account.provider's: during a
+                        // background one the press would only queue, with
+                        // nothing on screen to say so.
+                        .disabled(store.isRefreshing)
+                }
+            }
+
+            SettingsRowDivider()
+
+            if usage.windows.isEmpty {
+                SettingsRow(
+                    String.localized("No reading"),
+                    subtitle: {
+                        if case .unavailable(let reason) = usage.state { return reason.message }
+                        return nil
+                    }()
+                ) {
+                    EmptyView()
+                }
+            } else {
+                ForEach(Array(usage.windows.enumerated()), id: \.element.id) { index, window in
+                    if index > 0 { SettingsRowDivider() }
+
+                    SettingsRow(window.name, subtitle: resetText(window)) {
+                        Text(window.percentText(remaining: settings.showsRemaining))
+                            .font(.system(size: 13, weight: .medium))
+                            .monospacedDigit()
+                    }
+                }
+            }
+
+            if let plan = usage.plan {
+                SettingsRowDivider()
+                SettingsRow(String.localized("Plan")) {
+                    Text(plan)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let credit = usage.creditBalance {
+                SettingsRowDivider()
+                SettingsRow(String.localized("Credit balance")) {
+                    Text(credit)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func resetText(_ window: UsageWindow) -> String? {
+        // **The same rule as `UsageDetailCard.resetText`, and it has to be
+        // stated in both places.** `windowSeconds` is sometimes a sort key
+        // rather than a measurement, and printing one here put a figure nobody
+        // reported under a heading that reads like a reported one — with the
+        // panel's own card, an inch away, deliberately saying nothing.
+        guard let resets = window.resetsAt else {
+            return window.reportsLength ? window.lengthText : nil
+        }
+        let formatter = DateFormatter()
+        formatter.locale = LocalizationSource.locale
+        formatter.setLocalizedDateFormatFromTemplate(
+            Calendar.current.isDateInToday(resets) ? "jmm" : "MMMdjmm"
+        )
+        return String.localized("Resets \(formatter.string(from: resets))")
+    }
+
+    /// Reading the settings file is cheap but not observable, so a counter
+    /// nudges SwiftUI to look again after connecting or disconnecting.
+    private var isHookInstalled: Bool {
+        _ = hookGeneration
+        return StatusLineHook.isInstalled
+    }
+
+    private var about: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            SettingsGroup {
+                SettingsRow(String.localized("Version"), subtitle: updateSubtitle) {
+                    if update.canCheck {
+                        // Sparkle puts up its own window with whatever it
+                        // finds, so this is the same button either way — there
+                        // is nothing for Pulse to draw on top of it.
+                        Button(
+                            update.newer.map { String.localized("Update to \($0.version)") }
+                                ?? String.localized("Check now")
+                        ) {
+                            update.check()
+                        }
+                        .disabled(update.isChecking)
+                    } else {
+                        Text(Self.version)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                if update.canCheck {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Check automatically"),
+                        subtitle: String.localized("Once a day. Updates are offered, never installed on their own.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { update.checksAutomatically },
+                            set: { update.checksAutomatically = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Usage data"),
+                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so.")
+                ) {
+                    EmptyView()
+                }
+            }
+
+            SettingsGroup(String.localized("Credits")) {
+                SettingsRow(
+                    "Vinz (@hivinz_)",
+                    subtitle: String.localized("Pulse is built from a design he posted on X.")
+                ) {
+                    Button(String.localized("Open")) {
+                        NSWorkspace.shared.open(
+                            URL(string: "https://x.com/hivinz_/status/2092996055248126353")!
+                        )
+                    }
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    "Lobe Icons",
+                    subtitle: String.localized("Provider marks from github.com/lobehub/lobe-icons.")
+                ) {
+                    EmptyView()
+                }
+            }
+        }
+    }
+
+    /// The version, and what is known about a newer one. All four states are
+    /// distinguishable on purpose: "no update" and "couldn't ask" look
+    /// identical otherwise, and a check that silently failed is worse than one
+    /// that says so.
+    private var updateSubtitle: String {
+        if let newer = update.newer {
+            return .localized("\(Self.version) installed · \(newer.version) available")
+        }
+        if update.isChecking { return .localized("Checking…") }
+        if update.didFail { return .localized("Couldn't reach the update feed.") }
+        if !update.canCheck { return .localized("Built from source — no update check.") }
+        return .localized("\(Self.version) · up to date")
+    }
+
+    private static var version: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1 (prototype)"
+    }
+}
+
+enum SettingsPane: Hashable {
+    case general
+    case account(AccountKey)
+    case about
+    case integrations
+
+    var title: String {
+        switch self {
+        case .general: .localized("General")
+        // Brand names, left as they are in every language.
+        // A fallback: the view titles these from the account's own label.
+        case .account(let account): account.provider.displayName
+        case .about: .localized("About")
+        case .integrations: .localized("Developer integrations")
+        }
+    }
+
+    /// Only meaningful for the panes drawn with an SF Symbol; provider panes
+    /// use the provider's own mark instead.
+    var symbol: String {
+        switch self {
+        case .general: "slider.horizontal.3"
+        case .account: "square.stack.3d.up"
+        case .about: "info.circle"
+        case .integrations: "terminal"
+        }
+    }
+}
+
+#Preview("Settings") {
+    SettingsView(
+        store: UsageStore(settings: AppSettings()),
+        settings: AppSettings(),
+        placement: PanelPlacement(),
+        update: AppUpdate(),
+        alerts: UsageAlerts(settings: AppSettings()),
+        navigation: SettingsNavigation()
+    )
+}
