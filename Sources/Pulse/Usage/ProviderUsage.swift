@@ -33,7 +33,7 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         var celebratesReset: Bool {
             switch self {
             case .weekly, .monthly: true
-            case .fiveHour, .spend, .other: false
+            case .fiveHour, .spend, .balance, .other: false
             }
         }
     }
