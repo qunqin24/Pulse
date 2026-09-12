@@ -15,6 +15,14 @@ body:
         想请求支持一个新的服务？请改用 **New provider · 新服务** 模板，
         那里的几个问题直接决定了能不能做。
 
+  - type: markdown
+    attributes:
+      value: >
+        **A title says what should change, not how it felt.** Good: "Show a
+        daily budget line under the ring". Bad: "有意思的想法". One request per
+        issue — if you want two things, open two. 标题写"要改什么"，不写感受。
+        一个 issue 只提一件事，两件就分开提。
+
   - type: dropdown
     id: kind
     attributes:
@@ -22,22 +30,73 @@ body:
       options:
         - The panel or the rail · 悬浮面板或胶囊
         - Settings, or an existing provider · 设置，或已支持的服务
+        - Notifications or alerts · 通知或提醒
+        - A new surface (Watch, widget, Shortcuts…) · 新的呈现方式（手表、小组件、快捷指令…）
         - Something else · 其他
     validations:
       required: true
 
   - type: textarea
-    id: request
+    id: problem
     attributes:
-      label: What would you like? / 你希望它做什么
+      label: What problem are you trying to solve? / 你想解决什么问题
+      description: >
+        Describe the situation, not the solution. What are you doing when this
+        comes up, and where does Pulse fall short today? 说清楚场景，先别写方案：
+        你在做什么的时候遇到的，Pulse 现在哪里不够用。
+      placeholder: |
+        I want to know early in the month whether I'm on pace to burn the plan
+        before the last week, but the ring only shows the month total.
+    validations:
+      required: true
+
+  - type: textarea
+    id: desired
+    attributes:
+      label: What exactly should Pulse do? / 希望 Pulse 具体怎么做
+      description: >
+        Where it appears, what it shows, and when it updates. Step by step.
+        在哪出现、显示什么、什么时候刷新，一步一步写。
+      placeholder: |
+        1. In the panel, under Claude Code's ring…
+        2. show a thin line at this day's pro-rata amount…
+        3. recompute on every refresh and at local midnight.
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: A concrete example / 一个具体的例子
+      description: >
+        Real numbers, dates or a sketch. This is what makes a request
+        buildable. 真实数字、日期或草图。有了它才好动手。
+      placeholder: |
+        Plan is 200M/month, I work Mon–Fri. Today is the 12th and I've used 5M.
+        I'd expect a line at 60%, or the text "5M / 9M today".
+    validations:
+      required: true
+
+  - type: dropdown
+    id: data_source
+    attributes:
+      label: Who provides this number? / 这个数字谁提供
+      description: >
+        Pulse does not invent usage percentages. If the figure has to be
+        computed rather than read, say so here. Pulse 从不自己推算用量百分比。
+        如果这个数字是要算出来的，而不是服务上报的，请在这里说明。
+      options:
+        - The provider already reports it · 服务方本来就上报
+        - Pulse would have to compute or estimate it · Pulse 需要自己算或估算
+        - It isn't a number (layout, wording, interaction) · 不是数字（布局、文案、交互）
+        - Not sure · 不确定
     validations:
       required: true
 
   - type: textarea
     id: why
     attributes:
-      label: Why / 为什么
-      description: What you do about it today. 你现在是怎么解决的。
+      label: What do you do today instead? / 你现在怎么代替它
     validations:
       required: false
 

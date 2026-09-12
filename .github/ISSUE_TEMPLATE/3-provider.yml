@@ -65,8 +65,9 @@ body:
     attributes:
       label: Does it publish a usage or quota API? / 它有没有查询用量的接口
       description: >
-        A link to the docs, or the request its own dashboard makes.
-        文档链接，或者它自己的控制台发的请求。
+        A link to the docs, or the request its own dashboard makes. Exact
+        output helps more than a description. 文档链接，或者它自己的控制台发的
+        请求。贴出返回内容比文字描述有用得多。
     validations:
       required: false
 
@@ -78,7 +79,17 @@ body:
         Some services run a mainland and an international site whose keys are
         not interchangeable — those get one entry each. Different *endpoints*
         for one account do not. 有些服务的国内站和国际站是两套账号、key 不通用，
-        这种会各占一个位置;同一个账号的多个接入点则不会。
+        这种会各占一个位置；同一个账号的多个接入点则不会。
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else / 还有什么
+      description: >
+        Screenshots of the usage page, what the number means to you, a link to
+        the pricing page. 用量页面截图、那个数字对你意味着什么、定价页链接。
     validations:
       required: false
 

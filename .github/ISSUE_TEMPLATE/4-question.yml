@@ -1,15 +1,32 @@
 name: Question or problem · 疑问或其他
 description: Anything else. 其他问题。
+title: "[Question] "
 labels: ["question"]
 body:
   - type: markdown
     attributes:
       value: "English or 中文， whichever you'd rather. 中英文都可以。"
 
+  - type: markdown
+    attributes:
+      value: >
+        If a reading looks wrong, use **Bug report** instead — it asks for the
+        version and what the service itself shows, which is what triage needs.
+        如果是读数不对，请改用 **Bug report**，那里会问版本和服务方自己的
+        显示，这才是排查需要的信息。
+
   - type: textarea
     id: detail
     attributes:
       label: What's going on? / 具体情况
+      description: >
+        What you tried, what you expected, and what actually happened. Name the
+        provider if it's about one. 你做了什么、期望什么、实际怎样。涉及某个
+        服务请写明是哪个。
+      placeholder: |
+        I'm trying to…
+        I expected…
+        What happened instead…
     validations:
       required: true
 
