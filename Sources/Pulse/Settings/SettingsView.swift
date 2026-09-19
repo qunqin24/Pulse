@@ -635,6 +635,21 @@ struct SettingsView: View {
                     .frame(maxWidth: SettingsLayout.controlWidth, alignment: .trailing)
                     .disabled(!settings.isPanelVisible)
                 }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Alert colour when docked"),
+                    subtitle: String.localized("Off keeps the collapsed rail neutral even when a limit needs attention.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.dockShowsAlertColor },
+                        set: { settings.dockShowsAlertColor = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
             }
 
             SettingsGroup(String.localized("Notifications")) {

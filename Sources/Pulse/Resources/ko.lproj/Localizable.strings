@@ -78,6 +78,8 @@
 "Percentages on top" = "위에 백분율 표시";
 "Turn red at" = "빨간색으로 바뀌는 지점";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "링이 노란색에서 빨간색으로 바뀌는 지점입니다. 다 쓴 한도는 이 설정과 상관없이 빨간색입니다.";
+"Alert colour when docked" = "가장자리에 붙였을 때 경고 색";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "꺼두면 한도에 주의가 필요해도 접힌 레일이 중립 색을 유지합니다.";
 "Percentages at the side" = "옆에 백분율 표시";
 "The figure under each ring, docked left or right." = "좌우에 붙였을 때 각 링 아래에 수치를 표시합니다.";
 "Time until reset" = "초기화까지 남은 시간";

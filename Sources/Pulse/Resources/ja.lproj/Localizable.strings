@@ -78,6 +78,8 @@
 "Percentages on top" = "上にパーセントを表示";
 "Turn red at" = "赤にする位置";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "リングが黄から赤に変わる位置です。使い切った上限はこの設定に関係なく赤になります。";
+"Alert colour when docked" = "端に寄せたときの警告色";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "オフにすると、上限に注意が必要なときでも折りたたんだレールは中立色のままになります。";
 "Percentages at the side" = "横にパーセントを表示";
 "The figure under each ring, docked left or right." = "左右に寄せているとき、各リングの下に数値を表示します。";
 "Time until reset" = "リセットまでの時間";

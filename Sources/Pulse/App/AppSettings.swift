@@ -587,6 +587,25 @@ final class AppSettings {
         }
     }
 
+    /// Whether the collapsed sliver takes on `warningThreshold`'s colour when
+    /// a limit is close.
+    ///
+    /// On by default. A rail full of accounts that all cross the threshold at
+    /// once turns the sliver into a permanent coloured line against the
+    /// screen edge — off locks it to its normal, alert-free colour, the same
+    /// one it would draw with nothing to report. The rings are unaffected:
+    /// this only touches the sliver `FloatingUsagePanelView.alertTint` feeds
+    /// `UsageDockView`.
+    ///
+    /// No `onChange?()`: nothing about the panel's frame depends on it, the
+    /// same as `warningThreshold`.
+    var dockShowsAlertColor: Bool {
+        didSet {
+            guard dockShowsAlertColor != oldValue else { return }
+            UserDefaults.standard.set(dockShowsAlertColor, forKey: Key.dockShowsAlertColor)
+        }
+    }
+
     /// How far back the Token spend pane counts.
     ///
     /// The last **week** until the reader picks another span, and their pick is
@@ -849,6 +868,7 @@ final class AppSettings {
         showsWindowClock: Bool = false,
         showsRemaining: Bool = false,
         warningThreshold: WarningThreshold = .default,
+        dockShowsAlertColor: Bool = true,
         showsForecast: Bool = false,
         showsSecondRing: Bool = false,
         splitAccounts: Set<String> = [],
@@ -891,6 +911,7 @@ final class AppSettings {
         self.showsWindowClock = showsWindowClock
         self.showsRemaining = showsRemaining
         self.warningThreshold = warningThreshold
+        self.dockShowsAlertColor = dockShowsAlertColor
         self.showsForecast = showsForecast
         self.showsSecondRing = showsSecondRing
         self.splitAccounts = splitAccounts
@@ -1153,6 +1174,7 @@ final class AppSettings {
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
             warningThreshold: (defaults.object(forKey: Key.warningThreshold) as? Int)
                 .flatMap(WarningThreshold.init(rawValue:)) ?? .default,
+            dockShowsAlertColor: defaults.object(forKey: Key.dockShowsAlertColor) as? Bool ?? true,
             showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
             showsSecondRing: defaults.object(forKey: Key.showsSecondRing) as? Bool ?? false,
             splitAccounts: Set(defaults.stringArray(forKey: Key.splitAccounts) ?? []),
@@ -1270,6 +1292,7 @@ final class AppSettings {
         static let botColours = "settings.botColours"
         static let showsRemaining = "settings.showsRemaining"
         static let warningThreshold = "settings.warningThreshold"
+        static let dockShowsAlertColor = "settings.dockShowsAlertColor"
         static let showsForecast = "settings.showsForecast"
         static let showsSecondRing = "settings.showsSecondRing"
         static let splitAccounts = "settings.splitAccounts"
