@@ -227,7 +227,13 @@ struct FloatingUsagePanelView: View {
 
     /// The colour of the sliver when a limit is close enough that hiding the
     /// rail would be hiding something worth seeing.
+    ///
+    /// `dockShowsAlertColor` off means never: some rails stay past the
+    /// threshold for as long as they are watched, and a permanently coloured
+    /// line welded to the screen edge is worse than the thing it is warning
+    /// about.
     private var alertTint: Color? {
+        guard settings.dockShowsAlertColor else { return nil }
         let worst = entries.compactMap(\.headline).max { $0.usedFraction < $1.usedFraction }
         guard let worst,
               worst.isExhausted || worst.usedFraction >= settings.warningThreshold.fraction

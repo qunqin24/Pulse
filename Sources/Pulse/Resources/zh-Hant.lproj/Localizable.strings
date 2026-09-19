@@ -78,6 +78,8 @@
 "Percentages on top" = "上方顯示百分比";
 "Turn red at" = "轉紅門檻";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "圓環由黃轉紅的位置。已用盡的額度一律顯示紅色。";
+"Alert colour when docked" = "貼邊警報色";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "關閉後，收合的細欄一律維持中性色，即使額度需要留意。";
 "Percentages at the side" = "側邊顯示百分比";
 "The figure under each ring, docked left or right." = "貼在左右兩側時，在圓環下方顯示百分比。";
 "Time until reset" = "距離重設的時間";

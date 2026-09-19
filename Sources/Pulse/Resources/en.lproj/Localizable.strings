@@ -78,6 +78,8 @@
 "Percentages on top" = "Percentages on top";
 "Turn red at" = "Turn red at";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "Where a ring stops being amber. A spent limit is red whatever this says.";
+"Alert colour when docked" = "Alert colour when docked";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "Off keeps the collapsed rail neutral even when a limit needs attention.";
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
 "Time until reset" = "Time until reset";
