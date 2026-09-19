@@ -78,6 +78,8 @@
 "Percentages on top" = "顶部显示百分比";
 "Turn red at" = "变红阈值";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "圆环从黄色转为红色的位置。已耗尽的限额无论如何都显示红色。";
+"Ring activity animation" = "圆环旋转动画";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "CLI 工作中或正在拉取新数据时，圆环上出现的旋转标记。关闭后圆环保持静止。";
 "Percentages at the side" = "侧边显示百分比";
 "The figure under each ring, docked left or right." = "吸附在左右两侧时，在圆环下方显示百分比。";
 "Time until reset" = "距离重置的时间";

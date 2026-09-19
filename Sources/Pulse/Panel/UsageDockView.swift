@@ -317,6 +317,9 @@ struct UsageDockView: View {
     var alert: Color?
     /// Liquid Glass instead of flat black.
     var usesGlass: Bool = false
+    /// Whether a ring turns while its CLI is working or Pulse is refreshing
+    /// it. See `AppSettings.animatesRingActivity`.
+    var animatesActivity: Bool = true
     /// Called as the pointer arrives on a provider's ring. The details flyout
     /// follows the pointer rather than a click, so this is what drives
     /// selection. Leaving is handled by `PanelPointerWatcher`, not here.
@@ -435,6 +438,7 @@ struct UsageDockView: View {
                     isSelected: selectedSlot == entry.slot.id,
                     isInteractive: isExpanded,
                     showsPercentage: DockLayout.showsPercentages(on: edge.axis),
+                    animatesActivity: animatesActivity,
                     onEnter: { onEnter(entry) },
                     onRefresh: { onRefresh(entry.slot.account) }
                 )
@@ -485,6 +489,8 @@ private struct UsageDockItem: View {
     /// False for a rail lying across the top with the labels switched off,
     /// which is the default there — see `AppSettings.topRailShowsPercentages`.
     var showsPercentage: Bool = true
+    /// Whether this ring turns while its CLI is working or being refreshed.
+    var animatesActivity: Bool = true
     let onEnter: () -> Void
     let onRefresh: () -> Void
 
@@ -533,6 +539,7 @@ private struct UsageDockItem: View {
             lineWidth: DockLayout.ringLineWidth,
             isBusy: entry.isRunning,
             isRefreshing: entry.isRefreshing,
+            animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,
             botTint: botTint,
             botPersona: botPersona,

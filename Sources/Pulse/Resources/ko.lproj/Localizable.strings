@@ -78,6 +78,8 @@
 "Percentages on top" = "위에 백분율 표시";
 "Turn red at" = "빨간색으로 바뀌는 지점";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "링이 노란색에서 빨간색으로 바뀌는 지점입니다. 다 쓴 한도는 이 설정과 상관없이 빨간색입니다.";
+"Ring activity animation" = "링 활동 애니메이션";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "CLI가 작동 중이거나 값을 가져오는 동안 나타나는 회전 표시입니다. 끄면 링이 움직이지 않습니다.";
 "Percentages at the side" = "옆에 백분율 표시";
 "The figure under each ring, docked left or right." = "좌우에 붙였을 때 각 링 아래에 수치를 표시합니다.";
 "Time until reset" = "초기화까지 남은 시간";

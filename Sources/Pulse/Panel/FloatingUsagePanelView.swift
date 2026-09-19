@@ -98,6 +98,7 @@ struct FloatingUsagePanelView: View {
                     isExpanded: isExpanded,
                     alert: alertTint,
                     usesGlass: settings.usesGlass,
+                    animatesActivity: settings.animatesRingActivity,
                     onEnter: select,
                     onRefresh: store.refresh,
                     onOpen: show

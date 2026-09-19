@@ -78,6 +78,8 @@
 "Percentages on top" = "Percentages on top";
 "Turn red at" = "Turn red at";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "Where a ring stops being amber. A spent limit is red whatever this says.";
+"Ring activity animation" = "Ring activity animation";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "The turning mark for a working CLI or a reading being fetched. Off leaves the ring still.";
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
 "Time until reset" = "Time until reset";

@@ -788,6 +788,22 @@ final class AppSettings {
         }
     }
 
+    /// Whether a ring turns while its CLI is working or Pulse is fetching it a
+    /// fresh reading.
+    ///
+    /// On by default — it is how those two facts are shown at all, see
+    /// `UsageRingView.isBusy`/`isRefreshing`. Off draws the ring exactly as it
+    /// would sit between events: the usage arc at full opacity, no travelling
+    /// mark, no refresh sweep. The facts themselves are unaffected — a busy
+    /// CLI is still busy — only the moving cue for them is withheld, for
+    /// anyone who finds a rail of turning rings more distracting than useful.
+    var animatesRingActivity: Bool {
+        didSet {
+            guard animatesRingActivity != oldValue else { return }
+            UserDefaults.standard.set(animatesRingActivity, forKey: Key.animatesRingActivity)
+        }
+    }
+
     func isSplit(_ account: AccountKey) -> Bool {
         account.provider.splitsByModelGroup && splitAccounts.contains(account.id)
     }
@@ -851,6 +867,7 @@ final class AppSettings {
         warningThreshold: WarningThreshold = .default,
         showsForecast: Bool = false,
         showsSecondRing: Bool = false,
+        animatesRingActivity: Bool = true,
         splitAccounts: Set<String> = [],
         spendSpan: SpendSpan = .default,
         readsTokenSpend: Bool = false,
@@ -893,6 +910,7 @@ final class AppSettings {
         self.warningThreshold = warningThreshold
         self.showsForecast = showsForecast
         self.showsSecondRing = showsSecondRing
+        self.animatesRingActivity = animatesRingActivity
         self.splitAccounts = splitAccounts
         self.spendSpan = spendSpan
         self.readsTokenSpend = readsTokenSpend
@@ -1155,6 +1173,7 @@ final class AppSettings {
                 .flatMap(WarningThreshold.init(rawValue:)) ?? .default,
             showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
             showsSecondRing: defaults.object(forKey: Key.showsSecondRing) as? Bool ?? false,
+            animatesRingActivity: defaults.object(forKey: Key.animatesRingActivity) as? Bool ?? true,
             splitAccounts: Set(defaults.stringArray(forKey: Key.splitAccounts) ?? []),
             spendSpan: Self.storedSpendSpan(in: defaults),
             readsTokenSpend: Self.storedReadsTokenSpend(in: defaults),
@@ -1272,6 +1291,7 @@ final class AppSettings {
         static let warningThreshold = "settings.warningThreshold"
         static let showsForecast = "settings.showsForecast"
         static let showsSecondRing = "settings.showsSecondRing"
+        static let animatesRingActivity = "settings.animatesRingActivity"
         static let splitAccounts = "settings.splitAccounts"
         static let spendSpan = "settings.spendSpan"
         static let readsTokenSpend = "settings.readsTokenSpend"

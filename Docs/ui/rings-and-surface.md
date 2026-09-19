@@ -66,6 +66,8 @@ The rail's `railTop` / `railLeading` offsets track a pointer, so they must sit *
 
 White arc on the empty ring between icon disc and usage stroke — **or just outside the icon disc when the second ring is on**, see above. Core Animation, not `TimelineView`. Reset `spinning` on disappear. **Not drawn at all while animated marks are on** — see below. [../refresh-and-data.md](../refresh-and-data.md)
 
+**`AppSettings.animatesRingActivity`, on by default, is the one switch over both this arc and the refresh mark that plays over the usage arc during a fetch.** `UsageRingView.isBusy`/`isRefreshing` keep tracking the real facts either way; off only withholds the turning cue for them — no travelling arc, no refresh sweep, no dimming of the usage arc while it fetches. [settings.md](settings.md)
+
 ## Animated marks
 
 <p align="center">
