@@ -221,7 +221,7 @@ final class UsageStore {
 
         // Only relevant when the app server is being used as a fallback; it
         // pushes when limits change, which saves waiting for the next tick.
-        Task { [appServer] in
+        Task { [appServer, self] in
             await appServer.setRateLimitsChangedHandler { [weak self] in
                 Task { @MainActor in self?.refresh() }
             }
