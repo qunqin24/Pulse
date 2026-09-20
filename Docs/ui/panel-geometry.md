@@ -17,6 +17,8 @@ History and the two bugs that taught this: [../decisions/panel-frame.md](../deci
 
 On the card, the window’s name has the top row to itself; spent and reset pair on the line below the bar. Sharing the top line fails when a limit is scoped to a model group.
 
+The compact Codex event summary has its own scaled `DetailCardLayout.resetSectionHeight` budget, included in the fixed maximum panel height before the card opens. Loading announcements changes only the measured overlay content, never the window size.
+
 ## Dock, float, displays
 
 `PanelPlacement`: `update(dock:)` changes placement **and** asks the window to move (`onChange` → `placePanel`). `record(...)` only stores; drag uses it because the window already moved. Settings picking a position must not use the store-only path (content mirrored, window stayed, rail stranded).

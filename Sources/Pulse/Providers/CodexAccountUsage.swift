@@ -3,8 +3,7 @@ import Foundation
 /// Codex's account-level history: how many tokens went through, day by day,
 /// plus the one-off credits that reset a rate limit early.
 ///
-/// This is background rather than at-a-glance, so it lives in settings and is
-/// fetched when that pane is opened — not on the panel's refresh loop.
+/// History and reset credits are fetched when settings opens.
 ///
 /// Codex reports tokens here and never money, so the cost shown alongside it
 /// in settings comes from `UsageLedger` instead — the local transcripts, which

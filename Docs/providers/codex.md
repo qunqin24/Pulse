@@ -56,6 +56,16 @@ Codex’s usage endpoint wants the account named in a header of its own; `Accoun
 
 Settings can also show the account’s real lifetime total from `account/usage/read`, which is **larger than anything on this Mac**. Without that row the local ledger total reads as simply wrong.
 
+## Reset details
+
+The floating Codex detail card shows one compact event summary from `https://aihot.news/api/v1/codex-resets`. It displays only the event's `title` and original `schedule.label`, preserving the API's wording and time-zone label. No account reset-credit read is triggered by this card.
+
+Eligible events have `schedule.through` strictly later than this Mac's current time. Of these, the event with the earliest `schedule.from` is selected, regardless of type or status. Missing schedules and expired events are excluded. When no event qualifies, or the feed is unavailable, the summary is hidden.
+
+The public feed uses Pulse's network session without credentials. It is fetched while a Codex detail card is open, refreshed every minute, and shared between cards with a one-minute minimum request interval. Closing the card stops the refresh loop; an in-flight read is allowed to finish. Other providers do not trigger this fetch.
+
+`CodexResetFeedTests` covers the public response captured on 2026-09-20, strict expiry boundaries, earliest-event selection, original text, missing schedules, and the scaled summary height budget.
+
 ## Ledger
 
 Codex’s `input_tokens` **includes** cached tokens; `cached_input_tokens` is the subset. Session usage is a **running total** — difference it, do not sum per-turn `last_token_usage` (measured 6% high on one long session). Shared ledger rules: [`../refresh-and-data.md`](../refresh-and-data.md).

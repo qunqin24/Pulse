@@ -138,6 +138,21 @@ final class UsageStore {
         return await CodexAccountUsageService(server: appServer).fetch()
     }
 
+    private(set) var codexResetFeed: CodexResetFeed?
+    private var codexResetsFetching = false
+    private var codexResetsFetchedAt: Date?
+
+    /// Shared between Codex cards; no credentials go to the public feed.
+    func refreshCodexResets() async {
+        guard settings.shownAccounts.contains(where: { $0.provider == .codex }), !codexResetsFetching,
+              codexResetsFetchedAt.map({ Date().timeIntervalSince($0) >= 60 }) ?? true
+        else { return }
+        codexResetsFetching = true
+        defer { codexResetsFetching = false }
+        codexResetFeed = await CodexResetFeed.fetch()
+        codexResetsFetchedAt = Date()
+    }
+
     /// Picks up a key that was just entered, or one that changed.
     func loadAPIKeys() {
         apiKeys = Dictionary(

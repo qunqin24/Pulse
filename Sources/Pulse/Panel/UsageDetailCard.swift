@@ -70,7 +70,9 @@ enum DetailCardLayout {
     /// not like a card that didn't fit. Providers report a variable number of
     /// limits (Codex adds one group per model with its own limits), so this
     /// budgets for more than are on screen today.
-    static var maximumHeight: CGFloat { height(forWindows: 5, footnote: true) }
+    static var maximumHeight: CGFloat { height(forWindows: 5, footnote: true) + contentSpacing + resetSectionHeight }
+
+    static var resetSectionHeight: CGFloat { 80 * PanelMetrics.scale }
 
     static func height(forWindows count: Int, footnote: Bool = false) -> CGFloat {
         padding * 2
@@ -92,6 +94,7 @@ struct UsageDetailCard: View {
     /// same plan are told apart by nothing else, and a card headed "Codex" on
     /// both of them is a card that cannot say which one you are looking at.
     var title: String?
+    var resetFeed: CodexResetFeed?
     /// Which screen edge the panel is docked against; the pointer goes on the
     /// side facing the rail.
     let edge: PanelEdge
@@ -157,6 +160,10 @@ struct UsageDetailCard: View {
                     .font(.system(size: DetailCardLayout.messageFontSize, weight: .regular, design: .rounded))
                     .foregroundStyle(.primary.opacity(0.55))
                     .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if usage.provider == .codex, let event = resetFeed?.nextEvent() {
+                CodexResetSection(event: event)
             }
 
             if let footnote {

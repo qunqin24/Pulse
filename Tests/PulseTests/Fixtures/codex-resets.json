@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "timezone": "Asia/Shanghai",
+  "checkedAt": "2026-09-20T17:42:54.887+08:00",
+  "historyFrom": "2026-06-12T00:00:00.000+08:00",
+  "count": 5,
+  "events": [
+    {
+      "id": "banked-2101352781219258527-1-1",
+      "type": "reset_credit",
+      "label": "发重置卡",
+      "status": "announced",
+      "title": "Tibo 预告发放重置卡",
+      "scope": "",
+      "createdAt": "2026-09-20T00:48:38.000+08:00",
+      "updatedAt": "2026-09-20T00:48:38.000+08:00",
+      "confirmedAt": null,
+      "occurredOn": null,
+      "confirmationBasis": null,
+      "schedule": {
+        "precision": "date",
+        "from": "2026-09-22T15:00:00.000+08:00",
+        "through": "2026-09-23T15:00:00.000+08:00",
+        "label": "北京时间预计 9月22日 15:00–9月23日 15:00"
+      },
+      "posts": [
+        {
+          "id": "2101352781219258527",
+          "publishedAt": "2026-09-20T00:48:38.000+08:00",
+          "stage": "发卡预告",
+          "text": "好吧。但它也仍然会在周二到来。",
+          "originalText": "OK fine. But it’s also still coming in Tuesday",
+          "url": "https://x.com/thsottiaux/status/2101352781219258527"
+        }
+      ],
+      "url": "https://aihot.news/codex-reset"
+    },
+    {
+      "id": "reset-2098612714704891959-1-1",
+      "type": "direct_reset",
+      "label": "全员重置",
+      "status": "confirmed",
+      "title": "Codex 额度重置已完成",
+      "scope": "",
+      "createdAt": "2026-09-12T11:20:36.000+08:00",
+      "updatedAt": "2026-09-12T16:09:17.000+08:00",
+      "confirmedAt": "2026-09-12T16:09:17.000+08:00",
+      "occurredOn": null,
+      "confirmationBasis": "source_post",
+      "schedule": {
+        "precision": "deadline",
+        "from": "2026-09-12T15:00:00.000+08:00",
+        "through": "2026-09-12T15:00:00.000+08:00",
+        "label": "北京时间预计 9月12日 15:00 前"
+      },
+      "posts": [
+        {
+          "id": "2098685367058612394",
+          "publishedAt": "2026-09-12T16:09:17.000+08:00",
+          "stage": "确认完成",
+          "text": "重置已全部推送完成。好梦。",
+          "originalText": "Reset all propagated.",
+          "url": "https://x.com/thsottiaux/status/2098685367058612394"
+        },
+        {
+          "id": "2098612714704891959",
+          "publishedAt": "2026-09-12T11:20:36.000+08:00",
+          "stage": "预告",
+          "text": "当然，一次重置也将在今天午夜前落地。",
+          "originalText": "And of course, a reset is also landing by midnight today.",
+          "url": "https://x.com/thsottiaux/status/2098612714704891959"
+        }
+      ],
+      "url": "https://aihot.news/codex-reset"
+    },
+    {
+      "id": "reset-2097043464538264003-1-1",
+      "type": "direct_reset",
+      "label": "全员重置",
+      "status": "confirmed",
+      "title": "Codex 额度重置已完成",
+      "scope": "所有付费订阅",
+      "createdAt": "2026-09-08T03:24:57.000+08:00",
+      "updatedAt": "2026-09-08T12:05:53.000+08:00",
+      "confirmedAt": "2026-09-08T12:05:53.000+08:00",
+      "occurredOn": null,
+      "confirmationBasis": "source_post",
+      "schedule": {
+        "precision": "window",
+        "from": "2026-09-08T09:00:00.000+08:00",
+        "through": "2026-09-08T10:00:00.000+08:00",
+        "label": "北京时间预计 9月8日 09:00–10:00"
+      },
+      "posts": [
+        {
+          "id": "2097174560412246215",
+          "publishedAt": "2026-09-08T12:05:53.000+08:00",
+          "stage": "确认完成",
+          "text": "所有人都已重置。享受与 Astra 共度的这一周。",
+          "originalText": "All reset for everyone.",
+          "url": "https://x.com/thsottiaux/status/2097174560412246215"
+        },
+        {
+          "id": "2097043464538264003",
+          "publishedAt": "2026-09-08T03:24:57.000+08:00",
+          "stage": "预告",
+          "text": "我们将会对所有付费订阅的用量进行一次全局重置，这样你们在尽情用 Blender 做有趣的 3D 建模、把用量全部烧完之后，还能继续享受 Astra。",
+          "originalText": "We will do a global reset of the usage for all paid subscriptions so that you can keep enjoying Astra after burning through all of it doing fun 3D modeling in blender.",
+          "url": "https://x.com/thsottiaux/status/2097043464538264003"
+        }
+      ],
+      "url": "https://aihot.news/codex-reset"
+    },
+    {
+      "id": "reset-2094144275957350900-1-1",
+      "type": "direct_reset",
+      "label": "全员重置",
+      "status": "announced",
+      "title": "Tibo 预告将重置额度",
+      "scope": "",
+      "createdAt": "2026-08-31T03:24:37.000+08:00",
+      "updatedAt": "2026-08-31T03:24:37.000+08:00",
+      "confirmedAt": null,
+      "occurredOn": null,
+      "confirmationBasis": null,
+      "schedule": {
+        "precision": "window",
+        "from": "2026-08-31T09:00:00.000+08:00",
+        "through": "2026-08-31T10:00:00.000+08:00",
+        "label": "北京时间预计 8月31日 09:00–10:00"
+      },
+      "posts": [
+        {
+          "id": "2094144275957350900",
+          "publishedAt": "2026-08-31T03:24:37.000+08:00",
+          "stage": "预告",
+          "text": "你们的 Codex 和 ChatGPT Work 重置将在太平洋标准时间下午6点到来。",
+          "originalText": "Your Codex and ChatGPT Work reset will land at 6pm PST.",
+          "url": "https://x.com/thsottiaux/status/2094144275957350900"
+        }
+      ],
+      "url": "https://aihot.news/codex-reset"
+    },
+    {
+      "id": "banked-2095651088502591861-1-1",
+      "type": "reset_credit",
+      "label": "发重置卡",
+      "status": "confirmed",
+      "title": "重置卡已发放",
+      "scope": "",
+      "createdAt": "2026-09-04T07:12:09.000+08:00",
+      "updatedAt": "2026-09-13T10:36:02.000+08:00",
+      "confirmedAt": null,
+      "occurredOn": "2026-09-04",
+      "confirmationBasis": "receipt_review",
+      "schedule": {
+        "precision": "approximate",
+        "from": "2026-09-04T10:12:09.000+08:00",
+        "through": "2026-09-04T10:12:09.000+08:00",
+        "label": "北京时间约 9月4日 10:12"
+      },
+      "posts": [
+        {
+          "id": "2095651088502591861",
+          "publishedAt": "2026-09-04T07:12:09.000+08:00",
+          "stage": "发卡预告",
+          "text": "从今天开始，只要你的付费 ChatGPT 套餐一天无法使用 Astra，我们就赠送一张重置卡。团队正全力以赴尽快恢复访问。第一张将在约 3 小时后到账。如果你还没有账号，现在还来得及创建。",
+          "originalText": "We will give one banked reset for every day you don't have access to Astra on your paid ChatGPT plan, starting today.",
+          "url": "https://x.com/thsottiaux/status/2095651088502591861"
+        }
+      ],
+      "url": "https://aihot.news/codex-reset"
+    }
+  ]
+}

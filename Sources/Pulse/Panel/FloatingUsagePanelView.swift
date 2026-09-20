@@ -110,11 +110,21 @@ struct FloatingUsagePanelView: View {
                             usesGlass: settings.usesGlass,
                             usage: selected,
                             title: selectedTitle ?? "",
+                            resetFeed: store.codexResetFeed,
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
                             showsForecast: settings.showsForecast,
                             pointerCenter: pointerCentre(for: index)
                         )
+                        .task(id: selected.account) {
+                            guard selected.provider == .codex else { return }
+                            while !Task.isCancelled {
+                                // Finish the in-flight read even if a brief hover ends.
+                                await Task { await store.refreshCodexResets() }.value
+                                do { try await Task.sleep(for: .seconds(60)) }
+                                catch { return }
+                            }
+                        }
                         .fixedSize()
                         .background(
                             GeometryReader { proxy in
