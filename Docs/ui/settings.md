@@ -22,9 +22,16 @@ A joined sentence needs no extra space after a Chinese full stop (`。`). `glass
 
 While Liquid Glass is on, the caption still says to drag the panel by a ring. That is current UI. The historical “glass swallows input” diagnosis is uncertain; [rings-and-surface.md](rings-and-surface.md).
 
-Group order in the general pane: **Floating panel → Notifications → Refresh → Network → Order → Application → Shortcuts → Language**. The groups that decide what Pulse does *on its own* sit directly under the panel group, above the housekeeping ones. Notifications was added at the bottom, between Refresh and Language, and that was too far down to find — the panel group alone is sixteen rows. Network follows Refresh because both decide how Pulse gets a new reading. [../networking.md](../networking.md)
+Group order in the general pane: **Floating panel → Notifications → Refresh → Network → Order → Application → Shortcuts → Language**. The groups that decide what Pulse does *on its own* sit directly under the panel group, above the housekeeping ones. Notifications was added at the bottom, between Refresh and Language, and that was too far down to find — the panel group alone is nineteen rows. Network follows Refresh because both decide how Pulse gets a new reading. [../networking.md](../networking.md)
 
-**Turn red at** lives at the foot of that group: `AppSettings.warningThreshold`, a picker of 60–90%. It moves only the amber→red step; spent is the provider's word and is red whatever the picker says, which is what its subtitle is for. The picker keeps its localized title for accessibility even though its visible label is supplied by the row. [rings-and-surface.md](rings-and-surface.md)
+
+**Round ends** sits with Size and Spacing, because like them it changes what the rail measures rather than what it says: `AppSettings.usesRoundEnds`, **off** by default. One switch over the rail's ends, the flare into the screen edge, the end padding and the card's tail — they are one idea, and split up they would let a round end sit on the softened style's padding, with the first ring hard against the curve it is meant to be centred in. Off is the rail Pulse shipped with. [panel-geometry.md](panel-geometry.md)
+
+**Turn red at** opens the three rows that close that group: `AppSettings.warningThreshold`, a picker of 60–90%. It moves only the amber→red step; spent is the provider's word and is red whatever the picker says, which is what its subtitle is for. The picker keeps its localized title for accessibility even though its visible label is supplied by the row. [rings-and-surface.md](rings-and-surface.md)
+
+**Alert colour when docked** follows it: `AppSettings.dockShowsAlertColor`, on by default. It only gates `FloatingUsagePanelView.alertTint`, the colour the *collapsed sliver* takes on — the rings are unaffected, and are not switched by this row. A rail where several accounts sit past the threshold at once otherwise leaves the sliver coloured for as long as it is watched, which against a screen edge reads as a fault rather than a warning; off locks the sliver to its normal, alert-free colour. [rings-and-surface.md](rings-and-surface.md)
+
+**Ring activity animation** closes the group: `AppSettings.animatesRingActivity`, on by default. It gates the two turning marks a ring can draw — white for a working CLI, the usage colour for a reading being fetched — without touching whether Pulse tracks either fact. Off, the ring simply sits at whatever it last read. [rings-and-surface.md](rings-and-surface.md)
 
 The usage-interval group is named **Refresh**, not Updates.
 

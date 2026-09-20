@@ -10,10 +10,37 @@ enum DockLayout {
     /// Measured from the panel's top edge, NOT from the rail body's flat top
     /// — the concave flare occupies the first `flareHeight` of it. So the
     /// breathing room actually visible above the first ring is
-    /// `verticalPadding - flareHeight`; budget for both when tuning this, and
-    /// never let it drop below `flareHeight` or content gets clipped by the
-    /// flare.
-    static var verticalPadding: CGFloat { 46 * PanelMetrics.scale }
+    /// `verticalPadding - flareHeight`. It can never drop below `flareHeight`,
+    /// which would clip the ring against the flare; both styles below clear
+    /// it by 22pt.
+    ///
+    /// Softened ends carry a **written** 46pt, tuned against the flatter
+    /// 24 × 38 flare beside them. Round ends **derive** it, so the first ring
+    /// keeps its place in the end it is centred in: its centre `endRingOffset`
+    /// further in than the centre of the end's circle, which is itself
+    /// `flareHeight + cornerRadius` in. 54pt at standard size — the rail is
+    /// 16pt longer that way, which is why this setting goes through
+    /// `onChange?()` like the other rail metrics.
+    static var verticalPadding: CGFloat {
+        guard PanelMetrics.usesRoundEnds else { return 46 * PanelMetrics.scale }
+        return flareHeight + cornerRadius - ringDiameter / 2 + endRingOffset
+    }
+
+    /// Room added at each end of the rail beyond what would sit the first
+    /// ring exactly on the centre of the rounded end: 20pt of black over that
+    /// ring instead of the 12pt beside it, at standard size.
+    ///
+    /// Zero is the concentric position, and it was built first. Set beside
+    /// the design this rail follows, it read cramped — a ring with no more
+    /// black over it than beside it looks pushed up against the end. Nothing,
+    /// 8 and 12 were drawn side by side and 8 was picked. The bottom end gets
+    /// the same, which is room under the last label.
+    ///
+    /// Zero with softened ends, whose 46pt padding was written rather than
+    /// derived: there is no end circle for a ring to be concentric with.
+    static var endRingOffset: CGFloat {
+        PanelMetrics.usesRoundEnds ? 8 * PanelMetrics.scale : 0
+    }
     static var horizontalPadding: CGFloat { 10 * PanelMetrics.scale }
     /// Balances the housing above the rings without moving the rings themselves.
     static var notchBottomPadding: CGFloat { 12 * PanelMetrics.scale }
@@ -60,17 +87,55 @@ enum DockLayout {
     static var secondRingDiameter: CGFloat { 26 * PanelMetrics.scale }
     static var secondRingLineWidth: CGFloat { 2.5 * PanelMetrics.scale }
 
-    /// Reach of the two convex corners on the rail's inner side. They are
-    /// drawn as superellipse ("squircle") corners rather than circular arcs —
-    /// see `DockBerthShape.appendCorner`. Constrained by
-    /// `cornerRadius + flareWidth <= width`, since the corner and the flare
-    /// share the rail's top and bottom edges.
-    static var cornerRadius: CGFloat { 26 * PanelMetrics.scale }
+    /// Reach of the two convex corners on the rail's inner side.
+    ///
+    /// **Round ends** (`AppSettings.usesRoundEnds`): half the rail, so each
+    /// end is a full half-circle. Not a taste for round things. A ring is
+    /// centred across the rail, so an end this round shares its centre line
+    /// with the ring nearest it and follows that ring round — 12pt of black
+    /// down both sides of it at standard size, a little more over it
+    /// (`endRingOffset`) — instead of squaring off above it. The rail, its
+    /// rings and the card's corners then read as one family of curves.
+    /// Circular for the reason the floating capsule is: at this radius the
+    /// corner meets the flare with no straight edge between them, and there
+    /// is nothing for a superellipse to ease into.
+    ///
+    /// **Softened ends** (the default): 26pt, drawn as a fourth-order
+    /// superellipse rather than a circular arc — see
+    /// `DockBerthShape.appendCorner`. A superellipse eases into the edge
+    /// beside it, so it reads tighter than its radius: about a 14pt circular
+    /// corner, squarer than the 20pt ring it wraps. That is the look Pulse
+    /// shipped with, and it is kept because it is the one people know.
+    ///
+    /// Either way, constrained by `cornerRadius + flareWidth <= width`, since
+    /// the corner and the flare share the rail's top and bottom edges. Both
+    /// styles land on exactly `width`.
+    static var cornerRadius: CGFloat {
+        PanelMetrics.usesRoundEnds ? width / 2 : 26 * PanelMetrics.scale
+    }
     /// How far the concave flare rises above the rail body's flat top edge
     /// (and drops below its bottom edge) on its way to the screen edge.
-    static var flareHeight: CGFloat { 24 * PanelMetrics.scale }
+    ///
+    /// With round ends this is the end's own circle turned inside out: as
+    /// tall as it is wide, and as wide as the half of the rail the corner
+    /// leaves. The two meet on the rail's centre line with one tangent, so
+    /// the end is a single S-curve into the screen edge rather than a corner
+    /// followed by a shoulder. Softened ends keep the written 24, a flatter
+    /// curve than the corner beside it.
+    static var flareHeight: CGFloat {
+        PanelMetrics.usesRoundEnds ? cornerRadius : 24 * PanelMetrics.scale
+    }
     /// How far in from the screen edge the flare starts sweeping.
-    static var flareWidth: CGFloat { 38 * PanelMetrics.scale }
+    ///
+    /// With round ends, the whole of the rail the corner does not take, so
+    /// `cornerRadius + flareWidth` is exactly `width` and the body's flat top
+    /// edge has no length at all. A top rail carrying labels is thicker than
+    /// `width`; there the difference is a short flat run between the corner
+    /// and the flare. Softened ends keep the written 38, which also sums to
+    /// `width` against their 26pt corner.
+    static var flareWidth: CGFloat {
+        PanelMetrics.usesRoundEnds ? width - cornerRadius : 38 * PanelMetrics.scale
+    }
 
     /// Height of one ring + its percent label.
     static var itemHeight: CGFloat { ringDiameter + ringToTextSpacing + percentTextHeight }
@@ -103,10 +168,12 @@ enum DockLayout {
     /// Less when the rail is floating, and that is not a taste: docked, the
     /// concave flare carves `flareHeight` out of each end, so the black you
     /// actually see above the first ring is the difference. Off the edge there
-    /// is no flare and the whole padding shows — 46pt against a 30pt gap
+    /// is no flare and the whole padding shows — 54pt against a 30pt gap
     /// between rings, which reads as the ends having been forgotten. Taking
     /// the flare off the number keeps the *visible* breathing room the same on
-    /// both, which is what anyone is actually looking at.
+    /// both, which is what anyone is actually looking at — and because the
+    /// flare is as tall as the rail is half wide, it also sits the end ring in
+    /// the capsule's round end exactly where it sits in the docked rail's.
     static func endPadding(docked: Bool) -> CGFloat {
         docked ? verticalPadding : verticalPadding - flareHeight
     }
@@ -320,6 +387,9 @@ struct UsageDockView: View {
     var alert: Color?
     /// Liquid Glass instead of flat black.
     var usesGlass: Bool = false
+    /// Whether a ring turns while its CLI is working or Pulse is refreshing
+    /// it. See `AppSettings.animatesRingActivity`.
+    var animatesActivity: Bool = true
     /// Called as the pointer arrives on a provider's ring. The details flyout
     /// follows the pointer rather than a click, so this is what drives
     /// selection. Leaving is handled by `PanelPointerWatcher`, not here.
@@ -456,6 +526,7 @@ struct UsageDockView: View {
                     isSelected: selectedSlot == entry.slot.id,
                     isInteractive: isExpanded,
                     showsPercentage: DockLayout.showsPercentages(on: edge.axis),
+                    animatesActivity: animatesActivity,
                     onEnter: { onEnter(entry) },
                     onRefresh: { onRefresh(entry.slot.account) }
                 )
@@ -506,6 +577,8 @@ private struct UsageDockItem: View {
     /// False for a rail lying across the top with the labels switched off,
     /// which is the default there — see `AppSettings.topRailShowsPercentages`.
     var showsPercentage: Bool = true
+    /// Whether this ring turns while its CLI is working or being refreshed.
+    var animatesActivity: Bool = true
     let onEnter: () -> Void
     let onRefresh: () -> Void
 
@@ -554,6 +627,7 @@ private struct UsageDockItem: View {
             lineWidth: DockLayout.ringLineWidth,
             isBusy: entry.isRunning,
             isRefreshing: entry.isRefreshing,
+            animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,
             botTint: botTint,
             botPersona: botPersona,
@@ -699,12 +773,13 @@ struct DockBerthShape: Shape {
 
     /// A true capsule: the ends are half circles, not rounded-off corners.
     ///
-    /// Deliberately circular rather than the squircle used everywhere else.
-    /// A squircle eases its curvature into the straight edge either side of
-    /// it, and at this width the two corners of an end meet with no straight
-    /// edge between them at all — so there is nothing to ease into and the
-    /// result reads as a flattened lozenge. Fully round ends are what a
-    /// free-standing pill is.
+    /// Circular, not a squircle. A squircle eases its curvature into the
+    /// straight edge either side of it, and at this width the two corners of
+    /// an end meet with no straight edge between them at all — so there is
+    /// nothing to ease into and the result reads as a flattened lozenge. Fully
+    /// round ends are what a free-standing pill is — and while
+    /// `AppSettings.usesRoundEnds` is on they are the docked rail's ends too,
+    /// less the flare.
     private func floating(in rect: CGRect) -> Path {
         let radius = min(rect.width, rect.height) / 2
         return Path(
@@ -756,27 +831,50 @@ struct DockBerthShape: Shape {
         // Body's flat bottom edge, right to left.
         path.addLine(to: CGPoint(x: r, y: h - f))
 
-        // Bottom-left corner: starts directly below the corner's center and
-        // ends directly to its left.
-        appendCorner(
-            to: &path,
-            center: CGPoint(x: r, y: h - f - r),
-            radius: r,
-            from: CGVector(dx: 0, dy: 1),
-            to: CGVector(dx: -1, dy: 0)
-        )
+        // The two convex corners. Round ends draw them as circular arcs —
+        // see `DockLayout.cornerRadius` for why not a squircle — each
+        // starting at the tangent point the path is already on: bottom edge
+        // round to the left edge, then left edge round to the top one.
+        // Softened ends sample a superellipse instead, which is the shape
+        // Pulse shipped with.
+        if PanelMetrics.usesRoundEnds {
+            path.addArc(
+                tangent1End: CGPoint(x: 0, y: h - f),
+                tangent2End: CGPoint(x: 0, y: f),
+                radius: r
+            )
 
-        // Left edge.
-        path.addLine(to: CGPoint(x: 0, y: f + r))
+            // Left edge.
+            path.addLine(to: CGPoint(x: 0, y: f + r))
 
-        // Top-left corner: starts to the left of its center, ends above it.
-        appendCorner(
-            to: &path,
-            center: CGPoint(x: r, y: f + r),
-            radius: r,
-            from: CGVector(dx: -1, dy: 0),
-            to: CGVector(dx: 0, dy: -1)
-        )
+            path.addArc(
+                tangent1End: CGPoint(x: 0, y: f),
+                tangent2End: CGPoint(x: w, y: f),
+                radius: r
+            )
+        } else {
+            // Bottom-left corner: starts directly below the corner's center
+            // and ends directly to its left.
+            appendCorner(
+                to: &path,
+                center: CGPoint(x: r, y: h - f - r),
+                radius: r,
+                from: CGVector(dx: 0, dy: 1),
+                to: CGVector(dx: -1, dy: 0)
+            )
+
+            // Left edge.
+            path.addLine(to: CGPoint(x: 0, y: f + r))
+
+            // Top-left corner: starts to the left of its center, ends above it.
+            appendCorner(
+                to: &path,
+                center: CGPoint(x: r, y: f + r),
+                radius: r,
+                from: CGVector(dx: -1, dy: 0),
+                to: CGVector(dx: 0, dy: -1)
+            )
+        }
 
         path.closeSubpath()
         return path
@@ -793,6 +891,10 @@ struct DockBerthShape: Shape {
     /// stroke. SwiftUI exposes this as `.continuous` for plain rounded
     /// rectangles, but the berth outline has to be drawn by hand, so it is
     /// sampled here instead.
+    ///
+    /// Only reached while `AppSettings.usesRoundEnds` is off. With it on the
+    /// corner is a half circle of half the rail, where there is no straight
+    /// edge left for a superellipse to ease into.
     ///
     /// `from` and `to` are unit directions from `center` to the corner's
     /// start and end points; they must be perpendicular and axis-aligned.

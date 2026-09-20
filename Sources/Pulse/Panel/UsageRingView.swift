@@ -44,6 +44,13 @@ struct UsageRingView: View {
     /// Whether Pulse is fetching a fresh usage reading. This rotates the
     /// coloured usage arc itself, keeping white reserved for CLI activity.
     var isRefreshing: Bool = false
+    /// Whether `isBusy`/`isRefreshing` are allowed to turn anything.
+    ///
+    /// On by default — see `AppSettings.animatesRingActivity`. Off, the two
+    /// facts above are still tracked but draw nothing extra: no travelling
+    /// mark, no refresh sweep, and the usage arc stays at full opacity while
+    /// a reading is fetched instead of dimming for the turn to sit in.
+    var animatesActivity: Bool = true
     /// Whether this ring's logo is replaced by an animated mark, which is a
     /// per-account choice — see `AppSettings.botMarks`.
     var showsBotMark: Bool = false
@@ -261,9 +268,9 @@ struct UsageRingView: View {
                 // gauge; turning it takes the reading away for as long as the
                 // refresh lasts, and puts it back with a jump when the spin
                 // stops at whatever angle it had reached.
-                .opacity(isRefreshing ? 0.3 : 1)
+                .opacity(isRefreshing && animatesActivity ? 0.3 : 1)
 
-            if isRefreshing { refreshMark }
+            if isRefreshing && animatesActivity { refreshMark }
 
             if showsBotMark {
                 // The mark has its own unavailable expression; keep it legible
@@ -302,7 +309,7 @@ struct UsageRingView: View {
             // bot's working state are one fact drawn twice, and the white arc
             // is the half that says nothing about which provider it belongs
             // to. The mark keeps it; the arc goes.
-            if isBusy && !showsBotMark {
+            if isBusy && !showsBotMark && animatesActivity {
                 Circle()
                     .trim(from: 0, to: Self.busySweep)
                     .stroke(

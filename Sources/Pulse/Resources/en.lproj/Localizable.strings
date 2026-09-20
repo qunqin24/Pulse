@@ -78,6 +78,10 @@
 "Percentages on top" = "Percentages on top";
 "Turn red at" = "Turn red at";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "Where a ring stops being amber. A spent limit is red whatever this says.";
+"Alert colour when docked" = "Alert colour when docked";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "Off keeps the collapsed rail neutral even when a limit needs attention.";
+"Ring activity animation" = "Ring activity animation";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "The turning mark for a working CLI or a reading being fetched. Off leaves the ring still.";
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
 "Time until reset" = "Time until reset";
@@ -260,6 +264,8 @@
 /* Panel size */
 "Size" = "Size";
 "Spacing" = "Spacing";
+"Round ends" = "Round ends";
+"The rail's ends and the card's tail follow the ring's own curve." = "The rail's ends and the card's tail follow the ring's own curve.";
 "How much air there is between the rings." = "How much air there is between the rings.";
 "Tight" = "Tight";
 "Loose" = "Loose";

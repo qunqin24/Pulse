@@ -93,6 +93,8 @@ The arc rides the **empty ring** between icon and usage stroke, Core Animation, 
 
 Providers without local transcripts (`keepsLocalTranscripts == false`) omit the mark rather than showing a permanent idle.
 
+**`AppSettings.animatesRingActivity`, on by default, gates both this arc and the coloured mark a refresh draws over the usage arc** (`UsageRingView.isRefreshing`, same idea, the provider's own colour instead of white). Off, `isBusy`/`isRefreshing` are still tracked — nothing about what Pulse knows changes — but the ring draws neither turning mark and stops dimming the usage arc while a reading is fetched. One switch for both, since they are the same kind of cue (something is happening right now) drawn two ways.
+
 ## Countdown, rounding, colour
 
 - `showsRemaining` (off by default) counts the same reading down instead of up. The **arc** follows the figure; **colour** still means closeness to the limit. No reading draws an empty track; spent fills the ring either way. Do not invert `usedFraction ?? 0`.

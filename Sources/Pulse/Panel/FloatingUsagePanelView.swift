@@ -108,6 +108,7 @@ struct FloatingUsagePanelView: View {
                     notchSize: placement.notch?.size,
                     alert: alertTint,
                     usesGlass: settings.usesGlass,
+                    animatesActivity: settings.animatesRingActivity,
                     onEnter: select,
                     onRefresh: store.refresh,
                     onOpen: show
@@ -224,7 +225,7 @@ struct FloatingUsagePanelView: View {
             // change. The last one is easy to forget and changes the rail's
             // *thickness*, so leaving it out draws the rings at one size in a
             // berth built for the other.
-            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)-\(settings.showsForecast)")
+            .id("\(settings.language.rawValue)-\(settings.panelSize.rawValue)-\(settings.topRailShowsPercentages)-\(settings.sideRailShowsPercentages)-\(settings.railSpacing.rawValue)-\(settings.labelAboveRing)-\(settings.showsForecast)-\(settings.usesRoundEnds)")
     }
 
     /// Whether the rail is drawn out in full.
@@ -257,7 +258,13 @@ struct FloatingUsagePanelView: View {
 
     /// The colour of the sliver when a limit is close enough that hiding the
     /// rail would be hiding something worth seeing.
+    ///
+    /// `dockShowsAlertColor` off means never: some rails stay past the
+    /// threshold for as long as they are watched, and a permanently coloured
+    /// line welded to the screen edge is worse than the thing it is warning
+    /// about.
     private var alertTint: Color? {
+        guard settings.dockShowsAlertColor else { return nil }
         let worst = entries.compactMap(\.headline).max { $0.usedFraction < $1.usedFraction }
         guard let worst,
               worst.isExhausted || worst.usedFraction >= settings.warningThreshold.fraction

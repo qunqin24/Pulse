@@ -527,6 +527,33 @@ final class AppSettings {
         }
     }
 
+    /// Whether the rail's ends are half circles taken from the ring, rather
+    /// than softened corners of their own.
+    ///
+    /// Off by default, which is the rail as it has always been drawn: 26pt
+    /// superellipse corners and a flatter 24 x 38 flare into the screen edge.
+    /// On, one circle sets every curve on the panel — each end becomes a half
+    /// circle of half the rail, the flare is that same circle turned inside
+    /// out so the two meet as a single S-curve, and the card's tail leaves
+    /// the card along its edge instead of at an angle.
+    ///
+    /// One switch rather than three, because the three are one idea. Split up
+    /// they would let a round end sit on the old end padding, which puts the
+    /// first ring hard against the curve it is supposed to be centred in.
+    ///
+    /// Set on `PanelMetrics` before the change is announced, like the other
+    /// rail metrics: the two styles sit the end ring differently, so the rail
+    /// is 16pt longer with round ends and whoever reacts is about to measure
+    /// it.
+    var usesRoundEnds: Bool {
+        didSet {
+            guard usesRoundEnds != oldValue else { return }
+            PanelMetrics.useRoundEnds(usesRoundEnds)
+            UserDefaults.standard.set(usesRoundEnds, forKey: Key.usesRoundEnds)
+            onChange?()
+        }
+    }
+
     /// Whether each ring also shows how far through its window the clock is.
     ///
     /// Off by default. It is a genuinely useful second reading — 80% spent a
@@ -584,6 +611,25 @@ final class AppSettings {
         didSet {
             guard warningThreshold != oldValue else { return }
             UserDefaults.standard.set(warningThreshold.rawValue, forKey: Key.warningThreshold)
+        }
+    }
+
+    /// Whether the collapsed sliver takes on `warningThreshold`'s colour when
+    /// a limit is close.
+    ///
+    /// On by default. A rail full of accounts that all cross the threshold at
+    /// once turns the sliver into a permanent coloured line against the
+    /// screen edge — off locks it to its normal, alert-free colour, the same
+    /// one it would draw with nothing to report. The rings are unaffected:
+    /// this only touches the sliver `FloatingUsagePanelView.alertTint` feeds
+    /// `UsageDockView`.
+    ///
+    /// No `onChange?()`: nothing about the panel's frame depends on it, the
+    /// same as `warningThreshold`.
+    var dockShowsAlertColor: Bool {
+        didSet {
+            guard dockShowsAlertColor != oldValue else { return }
+            UserDefaults.standard.set(dockShowsAlertColor, forKey: Key.dockShowsAlertColor)
         }
     }
 
@@ -788,6 +834,22 @@ final class AppSettings {
         }
     }
 
+    /// Whether a ring turns while its CLI is working or Pulse is fetching it a
+    /// fresh reading.
+    ///
+    /// On by default — it is how those two facts are shown at all, see
+    /// `UsageRingView.isBusy`/`isRefreshing`. Off draws the ring exactly as it
+    /// would sit between events: the usage arc at full opacity, no travelling
+    /// mark, no refresh sweep. The facts themselves are unaffected — a busy
+    /// CLI is still busy — only the moving cue for them is withheld, for
+    /// anyone who finds a rail of turning rings more distracting than useful.
+    var animatesRingActivity: Bool {
+        didSet {
+            guard animatesRingActivity != oldValue else { return }
+            UserDefaults.standard.set(animatesRingActivity, forKey: Key.animatesRingActivity)
+        }
+    }
+
     func isSplit(_ account: AccountKey) -> Bool {
         account.provider.splitsByModelGroup && splitAccounts.contains(account.id)
     }
@@ -846,11 +908,14 @@ final class AppSettings {
         topRailShowsPercentages: Bool = false,
         sideRailShowsPercentages: Bool = true,
         labelAboveRing: Bool = false,
+        usesRoundEnds: Bool = false,
         showsWindowClock: Bool = false,
         showsRemaining: Bool = false,
         warningThreshold: WarningThreshold = .default,
+        dockShowsAlertColor: Bool = true,
         showsForecast: Bool = false,
         showsSecondRing: Bool = false,
+        animatesRingActivity: Bool = true,
         splitAccounts: Set<String> = [],
         spendSpan: SpendSpan = .default,
         readsTokenSpend: Bool = false,
@@ -888,11 +953,14 @@ final class AppSettings {
         self.topRailShowsPercentages = topRailShowsPercentages
         self.sideRailShowsPercentages = sideRailShowsPercentages
         self.labelAboveRing = labelAboveRing
+        self.usesRoundEnds = usesRoundEnds
         self.showsWindowClock = showsWindowClock
         self.showsRemaining = showsRemaining
         self.warningThreshold = warningThreshold
+        self.dockShowsAlertColor = dockShowsAlertColor
         self.showsForecast = showsForecast
         self.showsSecondRing = showsSecondRing
+        self.animatesRingActivity = animatesRingActivity
         self.splitAccounts = splitAccounts
         self.spendSpan = spendSpan
         self.readsTokenSpend = readsTokenSpend
@@ -1149,12 +1217,15 @@ final class AppSettings {
             topRailShowsPercentages: defaults.object(forKey: Key.topRailShowsPercentages) as? Bool ?? false,
             sideRailShowsPercentages: defaults.object(forKey: Key.sideRailShowsPercentages) as? Bool ?? true,
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
+            usesRoundEnds: defaults.object(forKey: Key.usesRoundEnds) as? Bool ?? false,
             showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
             warningThreshold: (defaults.object(forKey: Key.warningThreshold) as? Int)
                 .flatMap(WarningThreshold.init(rawValue:)) ?? .default,
+            dockShowsAlertColor: defaults.object(forKey: Key.dockShowsAlertColor) as? Bool ?? true,
             showsForecast: defaults.object(forKey: Key.showsForecast) as? Bool ?? false,
             showsSecondRing: defaults.object(forKey: Key.showsSecondRing) as? Bool ?? false,
+            animatesRingActivity: defaults.object(forKey: Key.animatesRingActivity) as? Bool ?? true,
             splitAccounts: Set(defaults.stringArray(forKey: Key.splitAccounts) ?? []),
             spendSpan: Self.storedSpendSpan(in: defaults),
             readsTokenSpend: Self.storedReadsTokenSpend(in: defaults),
@@ -1172,6 +1243,7 @@ final class AppSettings {
         PanelMetrics.showTopPercentages(settings.topRailShowsPercentages)
         PanelMetrics.showSidePercentages(settings.sideRailShowsPercentages)
         PanelMetrics.putLabelAboveRing(settings.labelAboveRing)
+        PanelMetrics.useRoundEnds(settings.usesRoundEnds)
         PanelMetrics.showForecast(settings.showsForecast)
         PanelMetrics.makeRoom(for: settings.railSlotCount)
         return settings
@@ -1263,6 +1335,7 @@ final class AppSettings {
         static let topRailShowsPercentages = "settings.topRailShowsPercentages"
         static let sideRailShowsPercentages = "settings.sideRailShowsPercentages"
         static let labelAboveRing = "settings.labelAboveRing"
+        static let usesRoundEnds = "settings.usesRoundEnds"
         static let showsWindowClock = "settings.showsWindowClock"
         static let botMarks = "settings.botMarks"
         static let botPersonas = "settings.botPersonas"
@@ -1270,8 +1343,10 @@ final class AppSettings {
         static let botColours = "settings.botColours"
         static let showsRemaining = "settings.showsRemaining"
         static let warningThreshold = "settings.warningThreshold"
+        static let dockShowsAlertColor = "settings.dockShowsAlertColor"
         static let showsForecast = "settings.showsForecast"
         static let showsSecondRing = "settings.showsSecondRing"
+        static let animatesRingActivity = "settings.animatesRingActivity"
         static let splitAccounts = "settings.splitAccounts"
         static let spendSpan = "settings.spendSpan"
         static let readsTokenSpend = "settings.readsTokenSpend"

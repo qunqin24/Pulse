@@ -59,8 +59,11 @@ struct NotchGeometryTests {
         #expect(layout.frame.maxY == screen.maxY)
     }
 
-    @Test("Notch padding preserves ring positions and reserves the full detail-card budget at every scale")
-    func paddingBudget() {
+    @Test("Notch padding preserves ring positions and reserves the full detail-card budget at every scale", arguments: [false, true])
+    func paddingBudget(roundEnds: Bool) {
+        let previousEnds = PanelMetrics.usesRoundEnds
+        PanelMetrics.useRoundEnds(roundEnds)
+        defer { PanelMetrics.useRoundEnds(previousEnds) }
         let previousSize = PanelSize.allCases.first { $0.scale == PanelMetrics.scale } ?? .default
         let previousLabels = PanelMetrics.topRailShowsPercentages
         defer {
@@ -114,8 +117,11 @@ struct NotchGeometryTests {
         }
     }
 
-    @Test("The rectangular surface leaves every existing ring entirely inside it")
-    func ringsRemainInside() {
+    @Test("The rectangular surface leaves every existing ring entirely inside it", arguments: [false, true])
+    func ringsRemainInside(roundEnds: Bool) {
+        let previousEnds = PanelMetrics.usesRoundEnds
+        PanelMetrics.useRoundEnds(roundEnds)
+        defer { PanelMetrics.useRoundEnds(previousEnds) }
         for count in [1, 2, 6, 12] {
             let rail = DockLayout.size(for: count, on: .horizontal)
             let path = NotchBerthShape(notchSize: notch.size).path(in:

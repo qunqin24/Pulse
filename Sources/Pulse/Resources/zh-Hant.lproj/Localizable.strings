@@ -78,6 +78,10 @@
 "Percentages on top" = "上方顯示百分比";
 "Turn red at" = "轉紅門檻";
 "Where a ring stops being amber. A spent limit is red whatever this says." = "圓環由黃轉紅的位置。已用盡的額度一律顯示紅色。";
+"Alert colour when docked" = "貼邊警報色";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "關閉後，收合的細欄一律維持中性色，即使額度需要留意。";
+"Ring activity animation" = "圓環旋轉動畫";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "CLI 執行中或正在抓取新資料時，圓環上出現的旋轉標記。關閉後圓環保持靜止。";
 "Percentages at the side" = "側邊顯示百分比";
 "The figure under each ring, docked left or right." = "貼在左右兩側時，在圓環下方顯示百分比。";
 "Time until reset" = "距離重設的時間";
@@ -260,6 +264,8 @@
 /* Panel size */
 "Size" = "整體大小";
 "Spacing" = "間距";
+"Round ends" = "正圓端部";
+"The rail's ends and the card's tail follow the ring's own curve." = "細欄兩端和卡片尾巴跟著圓環本身的弧度走。";
 "How much air there is between the rings." = "調整圓環之間的間距。";
 "Tight" = "緊湊";
 "Loose" = "寬鬆";
