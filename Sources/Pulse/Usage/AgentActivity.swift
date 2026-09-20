@@ -64,11 +64,16 @@ enum AgentActivity {
     /// yet. Falls back to the crude "written to just now".
     static let unknownFormatWindow: TimeInterval = 30
 
-    static func states(now: Date = Date()) -> [Provider: State] {
+    static func states(
+        for providers: Set<Provider>,
+        now: Date = Date(),
+        home: URL = URL(fileURLWithPath: NSHomeDirectory())
+    ) -> [Provider: State] {
         var states: [Provider: State] = [:]
 
-        for provider in Provider.allCases {
-            let files = transcripts(for: provider)
+        for provider in providers where provider.keepsLocalTranscripts {
+            guard !Task.isCancelled else { break }
+            let files = transcripts(for: provider, home: home)
             var state = State(lastWrite: files.first?.modified, isWorking: false)
 
             // Any live session counts: two terminals can be running at once,
@@ -76,6 +81,7 @@ enum AgentActivity {
             // is the longest grace any verdict can claim, so nothing older is
             // worth opening.
             for file in files where now.timeIntervalSince(file.modified) <= Wait.tool.grace {
+                guard !Task.isCancelled else { break }
                 switch verdict(for: file.url, provider: provider) {
                 case .working(let wait, let at):
                     // Timed from the record's *own* stamp, not the file's.
@@ -246,8 +252,8 @@ enum AgentActivity {
     /// Every transcript for a provider with its modification date, newest
     /// first. Only file metadata is read here; measured at about 2ms across
     /// both trees on a machine holding a few hundred megabytes of them.
-    private static func transcripts(for provider: Provider) -> [(url: URL, modified: Date)] {
-        guard let root = root(for: provider) else { return [] }
+    private static func transcripts(for provider: Provider, home: URL) -> [(url: URL, modified: Date)] {
+        guard let root = root(for: provider, home: home) else { return [] }
 
         guard let walker = FileManager.default.enumerator(
             at: root,
@@ -257,6 +263,7 @@ enum AgentActivity {
 
         var found: [(url: URL, modified: Date)] = []
         for case let url as URL in walker {
+            guard !Task.isCancelled else { break }
             guard
                 url.pathExtension == "jsonl",
                 let modified = try? url.resourceValues(forKeys: [.contentModificationDateKey])
@@ -271,8 +278,10 @@ enum AgentActivity {
 
     /// Nil for an agent that leaves no transcripts, which is what keeps this
     /// from walking a directory that was never going to exist.
-    static func root(for provider: Provider) -> URL? {
-        let home = URL(fileURLWithPath: NSHomeDirectory())
+    static func root(
+        for provider: Provider,
+        home: URL = URL(fileURLWithPath: NSHomeDirectory())
+    ) -> URL? {
         return switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
@@ -294,7 +303,7 @@ enum AgentActivity {
 final class AgentActivityMonitor {
     /// Providers whose CLI is in the middle of a turn.
     private(set) var running: Set<Provider> = []
-    /// The most recent write from any provider, which is also what paces the
+    /// The most recent write from a monitored provider, which also paces the
     /// adaptive refresh interval.
     private(set) var lastWrite: Date?
 
@@ -312,16 +321,32 @@ final class AgentActivityMonitor {
     private static let interval: TimeInterval = 2
 
     private var timer: Timer?
-    private var isScanning = false
+    private var providers: Set<Provider> = []
+    private var scan: Task<Void, Never>?
+    private let readStates: @Sendable (Set<Provider>) async -> [Provider: AgentActivity.State]
     /// Bumped by `stop()`, so a scan that was already in flight can tell that
     /// it has outlived the monitor. See `sample()`.
     private var generation = 0
 
-    func start() {
-        guard timer == nil else { return }
+    /// The reader is injectable so tests can hold an old scan across a change
+    /// of providers without reading the user's transcripts.
+    init(
+        readStates: @escaping @Sendable (Set<Provider>) async -> [Provider: AgentActivity.State] = {
+            AgentActivity.states(for: $0)
+        }
+    ) {
+        self.readStates = readStates
+    }
+
+    func start(providers: Set<Provider>) {
+        let providers = providers.filter(\.keepsLocalTranscripts)
+        guard providers != self.providers || timer == nil else { return }
+        stop()
+        self.providers = providers
+        guard !providers.isEmpty else { return }
 
         let timer = Timer.scheduledTimer(withTimeInterval: Self.interval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.sample() }
+            MainActor.assumeIsolated { _ = self?.sample() }
         }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
@@ -332,43 +357,47 @@ final class AgentActivityMonitor {
         generation += 1
         timer?.invalidate()
         timer = nil
-        guard !running.isEmpty else { return }
+        scan?.cancel()
+        scan = nil
+        providers = []
         // Not a finish: the monitor stopping says nothing about the turn. A
         // celebration here would fire every time the panel was hidden.
         running = []
+        lastWrite = nil
+        finishedAt = [:]
     }
 
-    private func sample() {
-        guard !isScanning else { return }
-        isScanning = true
-
+    /// Internal, with the task returned, so tests can await a complete scan
+    /// and its publication without waiting for the timer.
+    @discardableResult
+    func sample() -> Task<Void, Never>? {
+        guard scan == nil, !providers.isEmpty else { return scan }
         let generation = self.generation
-        Task {
-            let states = await Task.detached(priority: .utility) { AgentActivity.states() }.value
-            self.isScanning = false
-
-            // **A scan that outlived the monitor says nothing.** `stop()`
-            // clears `running` on purpose and does not record a finish,
-            // because the monitor stopping is not a turn ending. A result
-            // arriving after that used to be written anyway, which left a
-            // provider marked as running with no timer left to clear it — and
-            // then, on the next `start()`, the diff against an empty scan
-            // reported a *finish* for a turn that had ended unobserved hours
-            // earlier. The rail celebrated it.
-            guard generation == self.generation, self.timer != nil else { return }
-
-            let active = Set(states.filter(\.value.isWorking).keys)
-            // Assign only on a change: this runs every couple of seconds, and
-            // `@Observable` would otherwise redraw the rail each time for
-            // nothing.
-            if active != running {
-                let now = Date()
-                for provider in running.subtracting(active) { finishedAt[provider] = now }
-                running = active
-            }
-
-            let newest = states.values.compactMap(\.lastWrite).max()
-            if newest != lastWrite { lastWrite = newest }
+        let providers = self.providers
+        let readStates = self.readStates
+        scan = Task.detached(priority: .utility) { [weak self] in
+            let states = await readStates(providers)
+            await self?.record(states, generation: generation)
         }
+        return scan
+    }
+
+    private func record(_ states: [Provider: AgentActivity.State], generation: Int) {
+        // A cancelled scan can still return. It must not publish old activity
+        // or clear the handle belonging to the new selection's scan.
+        guard generation == self.generation, timer != nil else { return }
+        scan = nil
+
+        let active = Set(states.filter(\.value.isWorking).keys)
+        // Assign only on a change: this runs every couple of seconds, and
+        // `@Observable` would otherwise redraw the rail each time for nothing.
+        if active != running {
+            let now = Date()
+            for provider in running.subtracting(active) { finishedAt[provider] = now }
+            running = active
+        }
+
+        let newest = states.values.compactMap(\.lastWrite).max()
+        if newest != lastWrite { lastWrite = newest }
     }
 }

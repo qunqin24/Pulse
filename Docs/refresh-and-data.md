@@ -81,6 +81,10 @@ The copied diagnostic report is a fixed allowlist: app version, provider, primar
 
 A white arc inside the ring while that provider’s CLI is working (`AgentActivity`), polled every 2s on its **own** clock. Usage moves in percent; a turn starts and finishes in seconds.
 
+The scanner receives the providers represented by enabled accounts and reads only those with local transcripts (Claude Code and Codex). With neither selected, no activity timer or scan runs. Activity remains per provider, including when only an added account is enabled: the local transcripts do not identify the Pulse account. This is independent of the Token Spend setting.
+
+Changing the monitored providers cancels the previous scan and starts a new observation. Directory walks and tail reads check cancellation between files; a read already in progress may finish, but its result cannot restore activity or overwrite the new scan. Stopping clears `running`, `lastWrite` and `finishedAt` without treating deselection or hiding the panel as a finished turn.
+
 “Working” is not “written to recently.” Both CLIs state the answer in the **tail** of live transcripts. Rules of thumb (detail and historical measurements: [providers/README.md](providers/README.md) and [decisions/reported-figures.md](decisions/reported-figures.md)):
 
 - Skip bookkeeping records; an interrupt record ends the turn.
