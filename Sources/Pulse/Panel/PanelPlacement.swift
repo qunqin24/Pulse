@@ -354,7 +354,7 @@ final class PanelPlacement {
     /// **not** the top of `visible`: the panel is drawn above the menu bar, so
     /// it goes to the display's physical edge. On a Mac with a notch that is
     /// as far as the notch allows and no further. When `notch` is available,
-    /// its bottom edge anchors the shoulder instead; the rail sits below it.
+    /// the surface starts at the physical top and the rings sit below it.
     func layout(in visible: CGRect, topEdge: CGFloat, panel: CGSize, rail: CGSize) -> Layout {
         // Along the top the free coordinate is the horizontal one, and the
         // panel hangs *down* from the rail instead of being centred on it,
@@ -365,13 +365,13 @@ final class PanelPlacement {
                     ?? (visible.minX + CGFloat(horizontalRatio) * max(visible.width - rail.width, 0)), visible.minX),
                 max(visible.maxX - rail.width, visible.minX)
             )
-            let railTopY = notch.map { $0.minY - DockLayout.notchShoulderHeight } ?? topEdge
+            let railTopY = notch?.minY ?? topEdge
 
             let windowX = min(
                 max(railX + rail.width / 2 - panel.width / 2, visible.minX),
                 max(visible.maxX - panel.width, visible.minX)
             )
-            let windowY = max((notch?.minY ?? railTopY) - panel.height, visible.minY)
+            let windowY = max((notch?.maxY ?? railTopY) - panel.height, visible.minY)
 
             return Layout(
                 frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),

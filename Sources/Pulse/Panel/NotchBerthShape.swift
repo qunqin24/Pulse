@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// A single surface from the housing's bottom edge to the existing rail.
-/// The shoulder lives above the rail so its rings and card keep their layout.
+/// An extension of the camera housing, flush with the physical screen top.
+/// The rings retain their layout below the housing; only the surface grows.
 struct NotchBerthShape: Shape {
-    var notchWidth: CGFloat
+    var notchSize: CGSize
     var openness: CGFloat = 1
 
     var animatableData: CGFloat {
@@ -14,38 +14,13 @@ struct NotchBerthShape: Shape {
     func path(in rect: CGRect) -> Path {
         let progress = min(max(openness, 0), 1)
         guard progress > 0 else { return Path() }
-        let neck = min(notchWidth, rect.width)
-        let width = neck + (rect.width - neck) * progress
-        let left = rect.midX - width / 2
-        let right = rect.midX + width / 2
-        let top = rect.minY
-        let shoulder = DockLayout.notchShoulderHeight * progress
-        let bottom = top + rect.height * progress
-        let radius = min(DockLayout.cornerRadius,
-                         max(rect.height - DockLayout.notchShoulderHeight, 0) / 2, width / 2) * progress
-        let neckLeft = rect.midX - neck / 2
-        let neckRight = rect.midX + neck / 2
-        let k: CGFloat = 0.5522847498
-
-        var path = Path()
-        path.move(to: CGPoint(x: neckLeft, y: top))
-        path.addLine(to: CGPoint(x: neckRight, y: top))
-        path.addCurve(to: CGPoint(x: right, y: top + shoulder),
-                      control1: CGPoint(x: neckRight, y: top + shoulder / 2),
-                      control2: CGPoint(x: right, y: top + shoulder / 2))
-        path.addLine(to: CGPoint(x: right, y: bottom - radius))
-        path.addCurve(to: CGPoint(x: right - radius, y: bottom),
-                      control1: CGPoint(x: right, y: bottom - radius * (1 - k)),
-                      control2: CGPoint(x: right - radius * (1 - k), y: bottom))
-        path.addLine(to: CGPoint(x: left + radius, y: bottom))
-        path.addCurve(to: CGPoint(x: left, y: bottom - radius),
-                      control1: CGPoint(x: left + radius * (1 - k), y: bottom),
-                      control2: CGPoint(x: left, y: bottom - radius * (1 - k)))
-        path.addLine(to: CGPoint(x: left, y: top + shoulder))
-        path.addCurve(to: CGPoint(x: neckLeft, y: top),
-                      control1: CGPoint(x: left, y: top + shoulder / 2),
-                      control2: CGPoint(x: neckLeft, y: top + shoulder / 2))
-        path.closeSubpath()
-        return path
+        let width = notchSize.width + (rect.width - notchSize.width) * progress
+        let height = notchSize.height + (rect.height - notchSize.height) * progress
+        let bounds = CGRect(x: rect.midX - width / 2, y: rect.minY, width: width, height: height)
+        return UnevenRoundedRectangle(
+            bottomLeadingRadius: DockLayout.cornerRadius,
+            bottomTrailingRadius: DockLayout.cornerRadius,
+            style: .continuous
+        ).path(in: bounds)
     }
 }

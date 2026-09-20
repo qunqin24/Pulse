@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 struct FloatingUsagePanelView: View {
@@ -23,7 +22,6 @@ struct FloatingUsagePanelView: View {
     /// A moment's grace before hiding, so clipping a corner of the panel on
     /// the way somewhere else doesn't make it flinch.
     @State private var hideAfterDelay: Task<Void, Never>?
-    @State private var showAfterDelay: Task<Void, Never>?
 
     /// Now, to the minute, and only read when the window clock is switched on.
     ///
@@ -50,8 +48,17 @@ struct FloatingUsagePanelView: View {
                 // the content. Tracking a position rather than enter/exit
                 // events means crossing from a ring to the card, or between
                 // two rings, never interrupts anything.
-                PanelPointerWatcher(externalScreenArea: placement.notch, onChange: pointerMoved)
+                PanelPointerWatcher(onChange: pointerMoved)
             )
+            .overlay(alignment: .topLeading) {
+                if let target = notchTarget {
+                    Color.clear
+                        .frame(width: target.width, height: target.height)
+                        .background(PointerEntryReporter(onEnter: show))
+                        .allowsHitTesting(false)
+                        .offset(x: target.minX, y: target.minY)
+                }
+            }
             // **Named, because the pointer is reported in this space.** The
             // watcher above fills this view and is flipped, so its points are
             // this view's points — which is what lets a mark deep in the rail
@@ -98,7 +105,7 @@ struct FloatingUsagePanelView: View {
                     edge: placement.edge,
                     isDocked: placement.isDocked,
                     isExpanded: isExpanded,
-                    notchWidth: placement.notch?.width,
+                    notchSize: placement.notch?.size,
                     alert: alertTint,
                     usesGlass: settings.usesGlass,
                     onEnter: select,
@@ -185,16 +192,12 @@ struct FloatingUsagePanelView: View {
                 if !pressed && placement.notch != nil { pointerMoved(pointerPoint) }
             }
             .onChange(of: placement.notch) {
-                showAfterDelay?.cancel()
-                showAfterDelay = nil
                 hideAfterDelay?.cancel()
                 hideAfterDelay = nil
                 if !placement.isDragging && !placement.isMenuOpen { isHovered = false }
                 deselect()
             }
             .onDisappear {
-                showAfterDelay?.cancel()
-                showAfterDelay = nil
                 hideAfterDelay?.cancel()
                 hideAfterDelay = nil
             }
@@ -254,7 +257,7 @@ struct FloatingUsagePanelView: View {
     private var notchTarget: CGRect? {
         placement.notch.map {
             CGRect(x: railLeading + railSize.width / 2 - $0.width / 2,
-                   y: railTop - DockLayout.notchShoulderHeight - $0.height,
+                   y: railTop - $0.height,
                    width: $0.width, height: $0.height)
         }
     }
@@ -362,7 +365,7 @@ struct FloatingUsagePanelView: View {
     /// The panel's own extent along that axis, which is what the card is
     /// clamped inside.
     private var panelAlong: CGFloat {
-        let panel = FloatingPanelController.Layout.size(for: placement.edge)
+        let panel = FloatingPanelController.Layout.size(for: placement.edge, notchSize: placement.notch?.size)
         return placement.edge.isVertical ? panel.height : panel.width
     }
 
@@ -528,25 +531,6 @@ struct FloatingUsagePanelView: View {
         // pointer leaving the panel altogether.
         if pointerPoint != point { pointerPoint = point }
 
-        if let point, notchTarget?.contains(point) == true {
-            hideAfterDelay?.cancel()
-            hideAfterDelay = nil
-            // A deliberate pause, not a fly-by across the menu bar. Keep the
-            // same task while the pointer moves within the housing.
-            if !isExpanded && showAfterDelay == nil {
-                showAfterDelay = Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(200))
-                    guard !Task.isCancelled else { return }
-                    showAfterDelay = nil
-                    guard placement.notch?.contains(NSEvent.mouseLocation) == true else { return }
-                    show()
-                }
-            }
-            return
-        }
-        showAfterDelay?.cancel()
-        showAfterDelay = nil
-
         if let point, isOverContent(point) {
             hideAfterDelay?.cancel()
             hideAfterDelay = nil
@@ -594,6 +578,7 @@ struct FloatingUsagePanelView: View {
     /// simply asking whether the pointer is inside the window would hold the
     /// card open across a large blank area well away from it.
     private func isOverContent(_ point: CGPoint) -> Bool {
+        if notchTarget?.contains(point) == true { return true }
         let edge = placement.edge
 
         // Collapsed, only the sliver's own target counts. Testing the rail's
@@ -608,8 +593,8 @@ struct FloatingUsagePanelView: View {
 
         let rail = PanelHitArea.rail(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
         if let notch = placement.notch {
-            if NotchBerthShape(notchWidth: notch.width)
-                .path(in: PanelHitArea.notchSurface(rail: rail)).contains(point) { return true }
+            if NotchBerthShape(notchSize: notch.size)
+                .path(in: PanelHitArea.notchSurface(rail: rail, notchSize: notch.size)).contains(point) { return true }
         }
         if rail.contains(point) { return true }
 
@@ -619,7 +604,7 @@ struct FloatingUsagePanelView: View {
         // stopping at the card's own edge, so the gap the pointer crosses
         // between the rail and the card is covered too. The slack along it
         // keeps the boundary from feeling like a trip wire at the card's edge.
-        let panel = FloatingPanelController.Layout.size(for: edge)
+        let panel = FloatingPanelController.Layout.size(for: edge, notchSize: placement.notch?.size)
         let start = railAlong + cardPadding(for: index) - PanelHitArea.slack
         let length = cardAlong + PanelHitArea.slack * 2
 
@@ -657,11 +642,12 @@ enum PanelHitArea {
     /// while `swift build` stayed happy.
     static let slack: CGFloat = 8
 
-    /// Includes the visible shoulder for hovering, dragging and secondary
-    /// clicks. Placement and ring clicks still measure the original rail.
-    static func notchSurface(rail: CGRect) -> CGRect {
-        CGRect(x: rail.minX, y: rail.minY - DockLayout.notchShoulderHeight,
-               width: rail.width, height: rail.height + DockLayout.notchShoulderHeight)
+    /// The surface extends up to the physical screen top and is at least as
+    /// wide as the housing, even when the rail only has one ring.
+    static func notchSurface(rail: CGRect, notchSize: CGSize) -> CGRect {
+        let width = max(rail.width, notchSize.width)
+        return CGRect(x: rail.midX - width / 2, y: rail.minY - notchSize.height,
+                      width: width, height: rail.height + notchSize.height)
     }
 
     /// The rail's rectangle inside the panel, in the panel's top-left space.

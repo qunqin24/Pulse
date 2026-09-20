@@ -69,8 +69,6 @@ enum DockLayout {
     static var flareHeight: CGFloat { 24 * PanelMetrics.scale }
     /// How far in from the screen edge the flare starts sweeping.
     static var flareWidth: CGFloat { 38 * PanelMetrics.scale }
-    /// Reserved above the unchanged rail/ring layout on a notch display.
-    static var notchShoulderHeight: CGFloat { 24 * PanelMetrics.scale }
 
     /// Height of one ring + its percent label.
     static var itemHeight: CGFloat { ringDiameter + ringToTextSpacing + percentTextHeight }
@@ -314,7 +312,7 @@ struct UsageDockView: View {
     var isDocked: Bool = true
     /// Open, or wound down to the sliver.
     var isExpanded: Bool = true
-    var notchWidth: CGFloat?
+    var notchSize: CGSize?
     /// Colours the sliver when a limit is close enough that hiding the rail
     /// would be hiding something worth seeing.
     var alert: Color?
@@ -355,8 +353,8 @@ struct UsageDockView: View {
                 )
         }
         .frame(width: railSize.width, height: railSize.height)
-        .allowsHitTesting(notchWidth == nil || isExpanded)
-        .accessibilityHidden(notchWidth != nil && !isExpanded)
+        .allowsHitTesting(notchSize == nil || isExpanded)
+        .accessibilityHidden(notchSize != nil && !isExpanded)
         // No drag handle lives here any more. A press only reaches a view
         // inside `NSHostingView` if SwiftUI claims it first, and it would not
         // claim the empty black between the rings: the berth opts out of hit
@@ -374,13 +372,13 @@ struct UsageDockView: View {
 
     @ViewBuilder
     private var berth: some View {
-        if let notchWidth {
+        if let notchSize {
             PanelSurface(
-                shape: NotchBerthShape(notchWidth: notchWidth, openness: isExpanded ? 1 : 0),
+                shape: NotchBerthShape(notchSize: notchSize, openness: isExpanded ? 1 : 0),
                 usesGlass: usesGlass
             )
-            .frame(width: railSize.width, height: railSize.height + DockLayout.notchShoulderHeight)
-            .offset(y: -DockLayout.notchShoulderHeight)
+            .frame(width: max(railSize.width, notchSize.width), height: railSize.height + notchSize.height)
+            .offset(y: -notchSize.height)
             .frame(width: railSize.width, height: railSize.height, alignment: .top)
         } else {
             ordinaryBerth

@@ -23,24 +23,26 @@ struct NotchGeometryTests {
         }
     }
 
-    @Test("Notch docking closes the menu-bar seam and keeps the window fixed")
+    @Test("Notch docking reaches the physical screen top and keeps controls below the housing")
     func attachedLayout() {
         let placement = PanelPlacement(dock: .edge(.top), horizontalRatio: 0.2)
         placement.notch = notch
-        let panel = FloatingPanelController.Layout.size(for: .top)
+        let panel = FloatingPanelController.Layout.size(for: .top, notchSize: notch.size)
         for count in [1, 6, 12] {
             let rail = DockLayout.size(for: count, on: .horizontal)
             let layout = placement.layout(in: visible, topEdge: visible.maxY, panel: panel, rail: rail)
             let offsets = PanelPlacement.offsets(forRailTopLeft: layout.railOrigin, in: layout.frame, rail: rail)
             #expect(abs(layout.railOrigin.x + rail.width / 2 - notch.midX) < 0.01)
-            #expect(layout.railOrigin.y + DockLayout.notchShoulderHeight == notch.minY)
-            #expect(layout.frame.maxY == notch.minY)
-            #expect(offsets.top == DockLayout.notchShoulderHeight)
+            #expect(layout.railOrigin.y == notch.minY)
+            #expect(layout.frame.maxY == screen.maxY)
+            #expect(offsets.top == notch.height)
             let localRail = CGRect(x: offsets.leading, y: offsets.top, width: rail.width, height: rail.height)
-            let surface = PanelHitArea.notchSurface(rail: localRail)
+            let surface = PanelHitArea.notchSurface(rail: localRail, notchSize: notch.size)
             #expect(surface.minY == 0)
             #expect(surface.contains(localRail))
             #expect(surface.maxY == localRail.maxY)
+            #expect(surface.width >= notch.width)
+            #expect(panel.width >= surface.width)
             #expect(layout.frame.size == panel)
             #expect(placement.horizontalRatio == 0.2)
         }
@@ -57,32 +59,33 @@ struct NotchGeometryTests {
         #expect(layout.frame.maxY == screen.maxY)
     }
 
-    @Test("The collapsed notch surface draws nothing; the open neck never exceeds the housing")
+    @Test("The collapsed surface is empty; the expanded rectangle has straight sides from the screen top")
     func silhouette() {
         for count in [1, 6, 12] {
             let rail = DockLayout.size(for: count, on: .horizontal)
-            let rect = CGRect(x: 0, y: -DockLayout.notchShoulderHeight,
-                              width: rail.width, height: rail.height + DockLayout.notchShoulderHeight)
-            #expect(NotchBerthShape(notchWidth: notch.width, openness: 0).path(in: rect).isEmpty)
+            let rect = PanelHitArea.notchSurface(rail: CGRect(origin: .zero, size: rail), notchSize: notch.size)
+            #expect(NotchBerthShape(notchSize: notch.size, openness: 0).path(in: rect).isEmpty)
             for progress in [0.1, 0.5, 1.0] {
-                let path = NotchBerthShape(notchWidth: notch.width, openness: progress).path(in: rect)
-                #expect(path.boundingRect.minY == -DockLayout.notchShoulderHeight)
+                let path = NotchBerthShape(notchSize: notch.size, openness: progress).path(in: rect)
+                #expect(path.boundingRect.minY == -notch.height)
                 #expect(path.boundingRect.maxY <= rail.height + 0.01)
-                #expect(path.boundingRect.width <= rail.width + 0.01)
-                let top = -DockLayout.notchShoulderHeight + 0.001
-                #expect(path.contains(CGPoint(x: rail.width / 2, y: top)))
-                #expect(!path.contains(CGPoint(x: rail.width / 2 + notch.width / 2 + 1, y: top)))
+                #expect(path.boundingRect.width <= rect.width + 0.01)
+                let top = -notch.height + 0.001
+                #expect(path.contains(CGPoint(x: rect.midX, y: top)))
+                // The old neck and flared shoulder failed here: these pixels
+                // beside the housing must be filled all the way to the top.
+                #expect(path.contains(CGPoint(x: path.boundingRect.minX + 1, y: top)))
+                #expect(path.contains(CGPoint(x: path.boundingRect.maxX - 1, y: top)))
             }
         }
     }
 
-    @Test("The new shoulder leaves every existing ring entirely inside the surface")
+    @Test("The rectangular surface leaves every existing ring entirely inside it")
     func ringsRemainInside() {
         for count in [1, 2, 6, 12] {
             let rail = DockLayout.size(for: count, on: .horizontal)
-            let path = NotchBerthShape(notchWidth: notch.width).path(in:
-                CGRect(x: 0, y: -DockLayout.notchShoulderHeight,
-                       width: rail.width, height: rail.height + DockLayout.notchShoulderHeight))
+            let path = NotchBerthShape(notchSize: notch.size).path(in:
+                PanelHitArea.notchSurface(rail: CGRect(origin: .zero, size: rail), notchSize: notch.size))
             for index in 0..<count {
                 let x = DockLayout.firstRingAlong(on: .horizontal)
                     + CGFloat(index) * DockLayout.ringStep(on: .horizontal)

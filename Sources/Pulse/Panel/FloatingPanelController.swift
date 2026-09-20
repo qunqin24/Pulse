@@ -21,14 +21,14 @@ final class FloatingPanelController {
     /// nothing: it is transparent, and macOS routes clicks through the
     /// transparent parts of a non-opaque window.
     enum Layout {
-        /// The panel's size for a given dock, which is the only thing about it
-        /// that ever changes — and it changes only when the rail is re-docked
-        /// onto the other axis, never while a card opens. That distinction is
+        /// The panel's size for a given dock and display housing. It changes
+        /// when the axis or screen geometry changes, never while a card opens
+        /// or the notch surface expands. That distinction is
         /// the whole point: growing the window mid-animation moves the
         /// coordinate space the rail is laid out in, so the rail lurches
         /// sideways and slides back every time a card appears. Re-docking
         /// happens under the pointer, with no card open, and has to resize.
-        static func size(for edge: PanelEdge) -> CGSize {
+        static func size(for edge: PanelEdge, notchSize: CGSize? = nil) -> CGSize {
             // Card + its pointer + the gap after it, which is the room the
             // card unfolds into whichever way it unfolds.
             let reach = DetailCardLayout.width
@@ -49,9 +49,9 @@ final class FloatingPanelController {
             case .horizontal:
                 return CGSize(
                     // Wide enough for whichever is wider, for the same reason.
-                    width: max(DockLayout.maximumLength(on: .horizontal), DetailCardLayout.width),
+                    width: max(DockLayout.maximumLength(on: .horizontal), DetailCardLayout.width, notchSize?.width ?? 0),
                     height: DockLayout.thickness(on: .horizontal)
-                        + DockLayout.notchShoulderHeight
+                        + (notchSize?.height ?? 0)
                         + DetailCardLayout.horizontalGap
                         + DetailCardLayout.pointerWidth
                         + DetailCardLayout.maximumHeight
@@ -182,7 +182,7 @@ final class FloatingPanelController {
             let size = DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: placement.edge.axis, docked: placement.isDocked)
             if placement.isRailExpanded {
                 let rail = PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
-                return placement.notch != nil ? PanelHitArea.notchSurface(rail: rail) : rail
+                return placement.notch.map { PanelHitArea.notchSurface(rail: rail, notchSize: $0.size) } ?? rail
             }
             return PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
         }
@@ -373,7 +373,7 @@ final class FloatingPanelController {
         let layout = placement.layout(
             in: screen.visibleFrame,
             topEdge: FloatingPanel.topEdge(of: screen),
-            panel: Layout.size(for: edge),
+            panel: Layout.size(for: edge, notchSize: placement.notch?.size),
             rail: railSize
         )
 
@@ -615,7 +615,8 @@ private final class FloatingPanel: NSPanel {
             placement.edge
         }
         let landingRail = railSize?(landing, dock.isDocked) ?? rail
-        let landingPanel = FloatingPanelController.Layout.size(for: landing)
+        let landingNotch = dock.edge == .top ? PanelScreen.notch(of: screen) : nil
+        let landingPanel = FloatingPanelController.Layout.size(for: landing, notchSize: landingNotch?.size)
 
         // Under the pointer, in the new orientation. Carrying the old grab
         // offset across a quarter turn would put the rail somewhere the hand
@@ -662,7 +663,7 @@ private final class FloatingPanel: NSPanel {
             display: PanelScreen.identifier(of: screen)
         )
 
-        placement.notch = dock.edge == .top ? PanelScreen.notch(of: screen) : nil
+        placement.notch = landingNotch
 
         // One source of truth for the geometry: ask the placement where that
         // puts things rather than working it out a second way here.

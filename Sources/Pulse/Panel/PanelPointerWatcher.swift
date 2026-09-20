@@ -6,8 +6,7 @@ import SwiftUI
 ///
 /// The location is given in the tracked view's own coordinates, with the
 /// origin at its top-left corner to match SwiftUI, or `nil` when the pointer
-/// is outside both the panel and its optional physical-notch target.
-/// Callers decide what counts as "still on
+/// is outside the panel altogether. Callers decide what counts as "still on
 /// the panel" — the window's frame is not a useful answer to that, because
 /// most of this panel is transparent space the content does not occupy.
 ///
@@ -20,20 +19,16 @@ import SwiftUI
 ///
 /// Attach as a background of a view that fills the panel.
 struct PanelPointerWatcher: NSViewRepresentable {
-    /// A physical notch can be hovered even though it is outside the window.
-    var externalScreenArea: CGRect?
     let onChange: (CGPoint?) -> Void
 
     func makeNSView(context: Context) -> WatcherView {
         let view = WatcherView()
         view.onChange = onChange
-        view.externalScreenArea = externalScreenArea
         return view
     }
 
     func updateNSView(_ view: WatcherView, context: Context) {
         view.onChange = onChange
-        view.externalScreenArea = externalScreenArea
     }
 
     static func dismantleNSView(_ view: WatcherView, coordinator: ()) {
@@ -42,11 +37,6 @@ struct PanelPointerWatcher: NSViewRepresentable {
 
     final class WatcherView: NSView {
         var onChange: ((CGPoint?) -> Void)?
-        var externalScreenArea: CGRect? {
-            didSet {
-                if externalScreenArea != oldValue { lastReported = nil }
-            }
-        }
 
         /// Matches SwiftUI's top-left origin, so the reported point can be
         /// compared against SwiftUI frames without flipping it first.
@@ -88,7 +78,7 @@ struct PanelPointerWatcher: NSViewRepresentable {
             let inWindow = window.convertPoint(fromScreen: screenPoint)
             let local = convert(inWindow, from: nil)
             let point = window.isVisible && window.isOnActiveSpace
-                && (bounds.contains(local) || externalScreenArea?.contains(screenPoint) == true) ? local : nil
+                && bounds.contains(local) ? local : nil
 
             // Only speak up when something actually changed, so a resting
             // pointer doesn't churn SwiftUI state six times a second.
