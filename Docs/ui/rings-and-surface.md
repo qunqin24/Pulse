@@ -20,6 +20,8 @@ Where amber becomes red is `AppSettings.warningThreshold` (`WarningThreshold`, 6
 
 Per-account `RingTint` is opt-in. Spent still uses the spent colour (`UsageRingView.isSpent` from the **provider**, not from the fraction — a lock can happen well short of 100%). System colour well, stored as hex, converted through **sRGB**. No opacity (translucent reads as “no reading”).
 
+The **collapsed sliver** takes this colour too, but through a second, switchable path: `FloatingUsagePanelView.alertTint` finds the worst headline window across the rail and, past `warningThreshold` or exhausted, hands its `UsageTint` colour to `UsageDockView.alert` — which `PanelSurface` only ever applies while the berth is *collapsed* (`isExpanded ? nil : alert`; expanded, the rings already say which limit is where). `AppSettings.dockShowsAlertColor` (on by default) gates this at the source, in `alertTint` itself, so off is not a fainter tint but the same `nil` an all-green rail would produce. It exists because several accounts crossing the threshold together otherwise leaves the sliver coloured for as long as it is watched — a welded-on coloured line reads as a stuck pixel, not a warning. [settings.md](settings.md)
+
 Countdown (`showsRemaining`): arc follows the figure; colour still means closeness to the limit. No reading → empty track either way; spent fills the ring. Do not invert `nil` to a full “100% left” circle. [../refresh-and-data.md](../refresh-and-data.md)
 
 ## Hover halo

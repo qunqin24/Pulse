@@ -26,6 +26,8 @@ Group order in the general pane: **Floating panel → Notifications → Refresh 
 
 **Turn red at** lives at the foot of that group: `AppSettings.warningThreshold`, a picker of 60–90%. It moves only the amber→red step; spent is the provider's word and is red whatever the picker says, which is what its subtitle is for. The picker keeps its localized title for accessibility even though its visible label is supplied by the row. [rings-and-surface.md](rings-and-surface.md)
 
+**Alert colour when docked** follows it: `AppSettings.dockShowsAlertColor`, on by default. It only gates `FloatingUsagePanelView.alertTint`, the colour the *collapsed sliver* takes on — the rings are unaffected, and are not switched by this row. A rail where several accounts sit past the threshold at once otherwise leaves the sliver coloured for as long as it is watched, which against a screen edge reads as a fault rather than a warning; off locks the sliver to its normal, alert-free colour. [rings-and-surface.md](rings-and-surface.md)
+
 **Ring activity animation** closes the group: `AppSettings.animatesRingActivity`, on by default. It gates the two turning marks a ring can draw — white for a working CLI, the usage colour for a reading being fetched — without touching whether Pulse tracks either fact. Off, the ring simply sits at whatever it last read. [rings-and-surface.md](rings-and-surface.md)
 
 The usage-interval group is named **Refresh**, not Updates.

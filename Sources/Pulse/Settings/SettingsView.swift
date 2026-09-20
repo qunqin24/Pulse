@@ -639,6 +639,21 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
+                    String.localized("Alert colour when docked"),
+                    subtitle: String.localized("Off keeps the collapsed rail neutral even when a limit needs attention.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.dockShowsAlertColor },
+                        set: { settings.dockShowsAlertColor = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
                     String.localized("Ring activity animation"),
                     subtitle: String.localized("The turning mark for a working CLI or a reading being fetched. Off leaves the ring still.")
                 ) {
