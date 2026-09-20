@@ -86,17 +86,28 @@ struct UsageBubbleShape: Shape {
         // the overlap with the body punched a gap between them.
         let sweep = edge.isLeft ? -half : half
 
+        // Each flank leaves the card **along its edge** — the first control
+        // point sits on the edge itself — and bends out to the tip, so the
+        // tail grows out of the card the way the rail's flare grows out of
+        // the screen edge. It used to leave at an angle, which put a crease
+        // where it met the card and made it read as a triangle stuck on.
+        // The control point nearest the tip sets how the flanks meet: about
+        // 50° at the tip, sharp enough to aim at a ring.
+        let hug: CGFloat = 0.5
+        let approach: CGFloat = 0.45
+        let rise: CGFloat = 0.22
+
         var path = Path()
         path.move(to: CGPoint(x: baseX, y: centre - sweep))
         path.addCurve(
             to: CGPoint(x: tipX, y: centre),
-            control1: CGPoint(x: baseX + reach * 0.24, y: centre - sweep * 0.44),
-            control2: CGPoint(x: baseX + reach * 0.55, y: centre - sweep * 0.24)
+            control1: CGPoint(x: baseX, y: centre - sweep * hug),
+            control2: CGPoint(x: baseX + reach * (1 - approach), y: centre - sweep * rise)
         )
         path.addCurve(
             to: CGPoint(x: baseX, y: centre + sweep),
-            control1: CGPoint(x: baseX + reach * 0.55, y: centre + sweep * 0.24),
-            control2: CGPoint(x: baseX + reach * 0.24, y: centre + sweep * 0.44)
+            control1: CGPoint(x: baseX + reach * (1 - approach), y: centre + sweep * rise),
+            control2: CGPoint(x: baseX, y: centre + sweep * hug)
         )
         // Bite back into the body so the join is covered by the fill rather
         // than leaving a seam along the edge.

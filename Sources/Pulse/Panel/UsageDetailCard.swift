@@ -8,7 +8,15 @@ import SwiftUI
 enum DetailCardLayout {
     static var width: CGFloat { 250 * PanelMetrics.scale }
     static var padding: CGFloat { 18 * PanelMetrics.scale }
-    static var cornerRadius: CGFloat { 20 * PanelMetrics.scale }
+    /// The rings' own curve: the outer edge of a ring's stroke, 20pt at
+    /// standard size.
+    ///
+    /// One circle sets every curve on the panel — the rail's ends are this
+    /// plus the band beside a ring (`DockLayout.cornerRadius`), the card's
+    /// corners are this — so the three shapes read as one family instead of
+    /// three radii picked separately. It also sits where the card's own
+    /// content puts it: 18pt of padding round a bar whose ends are 3pt round.
+    static var cornerRadius: CGFloat { (DockLayout.ringDiameter + DockLayout.ringLineWidth) / 2 }
 
     static var pointerWidth: CGFloat { 20 * PanelMetrics.scale }
     static var pointerHeight: CGFloat { 40 * PanelMetrics.scale }
