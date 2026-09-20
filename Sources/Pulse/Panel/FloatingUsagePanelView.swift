@@ -183,19 +183,9 @@ struct FloatingUsagePanelView: View {
             // is noise; the pointer is sweeping the rings, not reading them.
             .onChange(of: placement.isDragging) { _, dragging in
                 if dragging { deselect() }
-                else if placement.notch != nil { pointerMoved(pointerPoint) }
             }
-            .onChange(of: placement.isMenuOpen) { _, open in
-                if !open && placement.notch != nil { pointerMoved(pointerPoint) }
-            }
-            .onChange(of: placement.isPressed) { _, pressed in
-                if !pressed && placement.notch != nil { pointerMoved(pointerPoint) }
-            }
-            .onChange(of: placement.notch) {
-                hideAfterDelay?.cancel()
-                hideAfterDelay = nil
-                if !placement.isDragging && !placement.isMenuOpen { isHovered = false }
-                deselect()
+            .onChange(of: isNotchHeld) { _, held in
+                if !held && placement.notch != nil { pointerMoved(pointerPoint) }
             }
             .onDisappear {
                 hideAfterDelay?.cancel()
@@ -249,8 +239,11 @@ struct FloatingUsagePanelView: View {
     /// Derived rather than stored, so both this and switching auto-hide off in
     /// settings take effect at once rather than at the pointer's next visit.
     private var isExpanded: Bool {
-        !settings.autoCollapse || !placement.isDocked || isHovered
-            || (placement.notch != nil && (placement.isPressed || placement.isDragging || placement.isMenuOpen))
+        !settings.autoCollapse || !placement.isDocked || isHovered || isNotchHeld
+    }
+
+    private var isNotchHeld: Bool {
+        placement.notch != nil && (placement.isPressed || placement.isDragging || placement.isMenuOpen)
     }
 
     /// The hardware target in the watcher's flipped, panel-local coordinates.
@@ -461,7 +454,10 @@ struct FloatingUsagePanelView: View {
                 + DetailCardLayout.horizontalGap
             return CGSize(width: inset * placement.edge.cardDirection, height: 0)
         case .horizontal:
-            return CGSize(width: 0, height: railSize.height + DetailCardLayout.horizontalGap)
+            let bottom = placement.notch.map {
+                PanelHitArea.notchSurface(rail: CGRect(origin: .zero, size: railSize), notchSize: $0.size).maxY
+            } ?? railSize.height
+            return CGSize(width: 0, height: bottom + DetailCardLayout.horizontalGap)
         }
     }
 
@@ -565,8 +561,7 @@ struct FloatingUsagePanelView: View {
             // panel's own menu is up, for the same reason — the pointer is on
             // the menu, which is not the panel. Both re-arm: `hideAfterDelay`
             // is already nil here, so the watcher's next tick asks again.
-            guard !placement.isDragging, !placement.isMenuOpen,
-                  !(placement.notch != nil && placement.isPressed) else { return }
+            guard !placement.isDragging, !placement.isMenuOpen, !isNotchHeld else { return }
             isHovered = false
         }
     }
@@ -647,7 +642,7 @@ enum PanelHitArea {
     static func notchSurface(rail: CGRect, notchSize: CGSize) -> CGRect {
         let width = max(rail.width, notchSize.width)
         return CGRect(x: rail.midX - width / 2, y: rail.minY - notchSize.height,
-                      width: width, height: rail.height + notchSize.height)
+                      width: width, height: rail.height + notchSize.height + DockLayout.notchBottomPadding)
     }
 
     /// The rail's rectangle inside the panel, in the panel's top-left space.

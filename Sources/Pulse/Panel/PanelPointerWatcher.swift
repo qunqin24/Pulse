@@ -74,11 +74,9 @@ struct PanelPointerWatcher: NSViewRepresentable {
         private func sample() {
             guard let window else { return }
 
-            let screenPoint = NSEvent.mouseLocation
-            let inWindow = window.convertPoint(fromScreen: screenPoint)
+            let inWindow = window.convertPoint(fromScreen: NSEvent.mouseLocation)
             let local = convert(inWindow, from: nil)
-            let point = window.isVisible && window.isOnActiveSpace
-                && bounds.contains(local) ? local : nil
+            let point = bounds.contains(local) ? local : nil
 
             // Only speak up when something actually changed, so a resting
             // pointer doesn't churn SwiftUI state six times a second.

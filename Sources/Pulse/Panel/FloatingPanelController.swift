@@ -51,7 +51,7 @@ final class FloatingPanelController {
                     // Wide enough for whichever is wider, for the same reason.
                     width: max(DockLayout.maximumLength(on: .horizontal), DetailCardLayout.width, notchSize?.width ?? 0),
                     height: DockLayout.thickness(on: .horizontal)
-                        + (notchSize?.height ?? 0)
+                        + (notchSize.map { $0.height + DockLayout.notchBottomPadding } ?? 0)
                         + DetailCardLayout.horizontalGap
                         + DetailCardLayout.pointerWidth
                         + DetailCardLayout.maximumHeight

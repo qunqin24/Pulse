@@ -40,7 +40,7 @@ struct NotchGeometryTests {
             let surface = PanelHitArea.notchSurface(rail: localRail, notchSize: notch.size)
             #expect(surface.minY == 0)
             #expect(surface.contains(localRail))
-            #expect(surface.maxY == localRail.maxY)
+            #expect(surface.maxY == localRail.maxY + DockLayout.notchBottomPadding)
             #expect(surface.width >= notch.width)
             #expect(panel.width >= surface.width)
             #expect(layout.frame.size == panel)
@@ -59,6 +59,40 @@ struct NotchGeometryTests {
         #expect(layout.frame.maxY == screen.maxY)
     }
 
+    @Test("Notch padding preserves ring positions and reserves the full detail-card budget at every scale")
+    func paddingBudget() {
+        let previousSize = PanelSize.allCases.first { $0.scale == PanelMetrics.scale } ?? .default
+        let previousLabels = PanelMetrics.topRailShowsPercentages
+        defer {
+            PanelMetrics.use(previousSize)
+            PanelMetrics.showTopPercentages(previousLabels)
+        }
+        for size in PanelSize.allCases {
+            PanelMetrics.use(size)
+            for labels in [false, true] {
+                PanelMetrics.showTopPercentages(labels)
+                let railSize = DockLayout.size(for: 6, on: .horizontal)
+                let rail = CGRect(x: 100, y: notch.height, width: railSize.width, height: railSize.height)
+                let surface = PanelHitArea.notchSurface(rail: rail, notchSize: notch.size)
+                #expect(abs(surface.maxY - rail.maxY - 12 * size.scale) < 0.01)
+                #expect(surface.minY == 0)
+                #expect(surface.midX == rail.midX)
+                let ordinary = FloatingPanelController.Layout.size(for: .top)
+                let attached = FloatingPanelController.Layout.size(for: .top, notchSize: notch.size)
+                #expect(abs(attached.height - ordinary.height - notch.height - 12 * size.scale) < 0.01)
+                let cardTop = surface.maxY + DetailCardLayout.horizontalGap
+                #expect(abs(attached.height - cardTop - DetailCardLayout.pointerWidth - DetailCardLayout.maximumHeight) < 0.01)
+                // The old window budgets remain intact away from a notch.
+                #expect(ordinary.height == railSize.height + DetailCardLayout.horizontalGap
+                        + DetailCardLayout.pointerWidth + DetailCardLayout.maximumHeight)
+                for edge in [PanelEdge.left, .right] {
+                    #expect(FloatingPanelController.Layout.size(for: edge, notchSize: notch.size)
+                            == FloatingPanelController.Layout.size(for: edge))
+                }
+            }
+        }
+    }
+
     @Test("The collapsed surface is empty; the expanded rectangle has straight sides from the screen top")
     func silhouette() {
         for count in [1, 6, 12] {
@@ -68,7 +102,7 @@ struct NotchGeometryTests {
             for progress in [0.1, 0.5, 1.0] {
                 let path = NotchBerthShape(notchSize: notch.size, openness: progress).path(in: rect)
                 #expect(path.boundingRect.minY == -notch.height)
-                #expect(path.boundingRect.maxY <= rail.height + 0.01)
+                #expect(path.boundingRect.maxY <= rect.maxY + 0.01)
                 #expect(path.boundingRect.width <= rect.width + 0.01)
                 let top = -notch.height + 0.001
                 #expect(path.contains(CGPoint(x: rect.midX, y: top)))
