@@ -51,6 +51,7 @@ final class FloatingPanelController {
                     // Wide enough for whichever is wider, for the same reason.
                     width: max(DockLayout.maximumLength(on: .horizontal), DetailCardLayout.width),
                     height: DockLayout.thickness(on: .horizontal)
+                        + DockLayout.notchShoulderHeight
                         + DetailCardLayout.horizontalGap
                         + DetailCardLayout.pointerWidth
                         + DetailCardLayout.maximumHeight
@@ -177,10 +178,13 @@ final class FloatingPanelController {
             DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: edge.axis, docked: docked)
         }
         panel.grabArea = { [settings, store, placement] in
+            if placement.notch != nil && !placement.isRailExpanded { return .zero }
             let size = DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: placement.edge.axis, docked: placement.isDocked)
-            return placement.isRailExpanded
-                ? PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
-                : PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
+            if placement.isRailExpanded {
+                let rail = PanelHitArea.rail(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
+                return placement.notch != nil ? PanelHitArea.notchSurface(rail: rail) : rail
+            }
+            return PanelHitArea.strip(edge: placement.edge, railSize: size, railTop: placement.railTop, railLeading: placement.railLeading)
         }
         panel.onClick = { [settings, placement, store] point in
             guard placement.isRailExpanded else { return }
@@ -360,6 +364,7 @@ final class FloatingPanelController {
         else { return }
 
         let edge = placement.edge
+        placement.notch = edge == .top ? PanelScreen.notch(of: screen) : nil
         let railSize = DockLayout.size(
             for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }),
             on: edge.axis,
@@ -656,6 +661,8 @@ private final class FloatingPanel: NSPanel {
             verticalRatio: ratios.v,
             display: PanelScreen.identifier(of: screen)
         )
+
+        placement.notch = dock.edge == .top ? PanelScreen.notch(of: screen) : nil
 
         // One source of truth for the geometry: ask the placement where that
         // puts things rather than working it out a second way here.

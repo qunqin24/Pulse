@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct FloatingUsagePanelView: View {
@@ -22,6 +23,7 @@ struct FloatingUsagePanelView: View {
     /// A moment's grace before hiding, so clipping a corner of the panel on
     /// the way somewhere else doesn't make it flinch.
     @State private var hideAfterDelay: Task<Void, Never>?
+    @State private var showAfterDelay: Task<Void, Never>?
 
     /// Now, to the minute, and only read when the window clock is switched on.
     ///
@@ -48,7 +50,7 @@ struct FloatingUsagePanelView: View {
                 // the content. Tracking a position rather than enter/exit
                 // events means crossing from a ring to the card, or between
                 // two rings, never interrupts anything.
-                PanelPointerWatcher(onChange: pointerMoved)
+                PanelPointerWatcher(externalScreenArea: placement.notch, onChange: pointerMoved)
             )
             // **Named, because the pointer is reported in this space.** The
             // watcher above fills this view and is flipped, so its points are
@@ -96,6 +98,7 @@ struct FloatingUsagePanelView: View {
                     edge: placement.edge,
                     isDocked: placement.isDocked,
                     isExpanded: isExpanded,
+                    notchWidth: placement.notch?.width,
                     alert: alertTint,
                     usesGlass: settings.usesGlass,
                     onEnter: select,
@@ -173,6 +176,27 @@ struct FloatingUsagePanelView: View {
             // is noise; the pointer is sweeping the rings, not reading them.
             .onChange(of: placement.isDragging) { _, dragging in
                 if dragging { deselect() }
+                else if placement.notch != nil { pointerMoved(pointerPoint) }
+            }
+            .onChange(of: placement.isMenuOpen) { _, open in
+                if !open && placement.notch != nil { pointerMoved(pointerPoint) }
+            }
+            .onChange(of: placement.isPressed) { _, pressed in
+                if !pressed && placement.notch != nil { pointerMoved(pointerPoint) }
+            }
+            .onChange(of: placement.notch) {
+                showAfterDelay?.cancel()
+                showAfterDelay = nil
+                hideAfterDelay?.cancel()
+                hideAfterDelay = nil
+                if !placement.isDragging && !placement.isMenuOpen { isHovered = false }
+                deselect()
+            }
+            .onDisappear {
+                showAfterDelay?.cancel()
+                showAfterDelay = nil
+                hideAfterDelay?.cancel()
+                hideAfterDelay = nil
             }
             // Only while the clock arc is actually being drawn. Started and
             // stopped by `.task(id:)` on the setting, so switching it off
@@ -223,6 +247,16 @@ struct FloatingUsagePanelView: View {
     /// settings take effect at once rather than at the pointer's next visit.
     private var isExpanded: Bool {
         !settings.autoCollapse || !placement.isDocked || isHovered
+            || (placement.notch != nil && (placement.isPressed || placement.isDragging || placement.isMenuOpen))
+    }
+
+    /// The hardware target in the watcher's flipped, panel-local coordinates.
+    private var notchTarget: CGRect? {
+        placement.notch.map {
+            CGRect(x: railLeading + railSize.width / 2 - $0.width / 2,
+                   y: railTop - DockLayout.notchShoulderHeight - $0.height,
+                   width: $0.width, height: $0.height)
+        }
     }
 
     /// The colour of the sliver when a limit is close enough that hiding the
@@ -494,6 +528,25 @@ struct FloatingUsagePanelView: View {
         // pointer leaving the panel altogether.
         if pointerPoint != point { pointerPoint = point }
 
+        if let point, notchTarget?.contains(point) == true {
+            hideAfterDelay?.cancel()
+            hideAfterDelay = nil
+            // A deliberate pause, not a fly-by across the menu bar. Keep the
+            // same task while the pointer moves within the housing.
+            if !isExpanded && showAfterDelay == nil {
+                showAfterDelay = Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(200))
+                    guard !Task.isCancelled else { return }
+                    showAfterDelay = nil
+                    guard placement.notch?.contains(NSEvent.mouseLocation) == true else { return }
+                    show()
+                }
+            }
+            return
+        }
+        showAfterDelay?.cancel()
+        showAfterDelay = nil
+
         if let point, isOverContent(point) {
             hideAfterDelay?.cancel()
             hideAfterDelay = nil
@@ -528,7 +581,8 @@ struct FloatingUsagePanelView: View {
             // panel's own menu is up, for the same reason — the pointer is on
             // the menu, which is not the panel. Both re-arm: `hideAfterDelay`
             // is already nil here, so the watcher's next tick asks again.
-            guard !placement.isDragging, !placement.isMenuOpen else { return }
+            guard !placement.isDragging, !placement.isMenuOpen,
+                  !(placement.notch != nil && placement.isPressed) else { return }
             isHovered = false
         }
     }
@@ -546,12 +600,17 @@ struct FloatingUsagePanelView: View {
         // full extent would hold the panel open across sixty points of empty
         // space it isn't drawing in.
         if !isExpanded {
+            if placement.notch != nil { return false }
             return PanelHitArea
                 .strip(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
                 .contains(point)
         }
 
         let rail = PanelHitArea.rail(edge: edge, railSize: railSize, railTop: railTop, railLeading: railLeading)
+        if let notch = placement.notch {
+            if NotchBerthShape(notchWidth: notch.width)
+                .path(in: PanelHitArea.notchSurface(rail: rail)).contains(point) { return true }
+        }
         if rail.contains(point) { return true }
 
         guard let index = selectedIndex else { return false }
@@ -597,6 +656,13 @@ enum PanelHitArea {
     /// rules and an error under Swift 6's, which is how it broke in Xcode
     /// while `swift build` stayed happy.
     static let slack: CGFloat = 8
+
+    /// Includes the visible shoulder for hovering, dragging and secondary
+    /// clicks. Placement and ring clicks still measure the original rail.
+    static func notchSurface(rail: CGRect) -> CGRect {
+        CGRect(x: rail.minX, y: rail.minY - DockLayout.notchShoulderHeight,
+               width: rail.width, height: rail.height + DockLayout.notchShoulderHeight)
+    }
 
     /// The rail's rectangle inside the panel, in the panel's top-left space.
     static func rail(edge: PanelEdge, railSize: CGSize, railTop: CGFloat, railLeading: CGFloat) -> CGRect {
