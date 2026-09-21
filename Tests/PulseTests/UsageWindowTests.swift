@@ -59,6 +59,76 @@ struct UsageWindowTests {
         // No reset time, nothing to measure against.
         #expect(window(used: 0.5).elapsedFraction(at: now) == nil)
     }
+
+    @Test("The window clock can count down from the same evidenced window")
+    func clockCanShowTimeRemaining() {
+        let now = Date()
+        let halfway = window(used: 0.5, resetsAt: now.addingTimeInterval(2.5 * 3_600))
+
+        #expect(halfway.windowClockFraction(direction: .elapsed, at: now).map {
+            abs($0 - 0.5) < 0.01
+        } == true)
+        #expect(halfway.windowClockFraction(direction: .remaining, at: now).map {
+            abs($0 - 0.5) < 0.01
+        } == true)
+
+        let justOpened = window(used: 0, resetsAt: now.addingTimeInterval(5 * 3_600))
+        #expect(justOpened.windowClockFraction(direction: .elapsed, at: now) == 0)
+        #expect(justOpened.windowClockFraction(direction: .remaining, at: now) == 1)
+
+        let expired = window(used: 1, resetsAt: now.addingTimeInterval(-60))
+        #expect(expired.windowClockFraction(direction: .elapsed, at: now) == 1)
+        #expect(expired.windowClockFraction(direction: .remaining, at: now) == 0)
+    }
+
+    @Test("Countdown never invents a window length")
+    func remainingClockNeedsAStatedLength() {
+        let now = Date()
+        let sortKeyOnly = window(
+            used: 0.5,
+            resetsAt: now.addingTimeInterval(3_600),
+            reportsLength: false
+        )
+        #expect(sortKeyOnly.windowClockFraction(direction: .remaining, at: now) == nil)
+        #expect(window(used: 0.5).windowClockFraction(direction: .remaining, at: now) == nil)
+    }
+}
+
+@Suite("Window clock direction preference")
+struct WindowClockDirectionPreferenceTests {
+    private func withIsolatedDefaults(_ body: (UserDefaults) throws -> Void) rethrows {
+        let name = "PulseTests.windowClockDirection.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: name)!
+        defaults.removePersistentDomain(forName: name)
+        defer { defaults.removePersistentDomain(forName: name) }
+        try body(defaults)
+    }
+
+    @Test("Existing installs keep the elapsed-time direction")
+    func elapsedIsTheBackwardCompatibleDefault() {
+        withIsolatedDefaults { defaults in
+            #expect(AppSettings.storedWindowClockDirection(in: defaults) == .elapsed)
+            #expect(AppSettings().windowClockDirection == .elapsed)
+        }
+    }
+
+    @Test("Every offered direction survives a round trip")
+    func everyDirectionIsKept() {
+        withIsolatedDefaults { defaults in
+            for direction in WindowClockDirection.allCases {
+                AppSettings.storeWindowClockDirection(direction, in: defaults)
+                #expect(AppSettings.storedWindowClockDirection(in: defaults) == direction)
+            }
+        }
+    }
+
+    @Test("An unreadable stored direction falls back to elapsed")
+    func unreadableDirectionFallsBack() {
+        withIsolatedDefaults { defaults in
+            defaults.set("sideways", forKey: AppSettings.windowClockDirectionDefaultsKey)
+            #expect(AppSettings.storedWindowClockDirection(in: defaults) == .elapsed)
+        }
+    }
 }
 
 /// Which limit the second ring shows. Off by default, so most people never see

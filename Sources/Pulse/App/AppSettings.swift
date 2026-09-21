@@ -572,6 +572,30 @@ final class AppSettings {
         }
     }
 
+    /// Whether the outer clock arc fills with elapsed time or empties with the
+    /// time remaining. Elapsed is the persisted fallback so existing installs
+    /// keep the display they chose before this direction setting existed.
+    var windowClockDirection: WindowClockDirection {
+        didSet {
+            guard windowClockDirection != oldValue else { return }
+            Self.storeWindowClockDirection(windowClockDirection, in: .standard)
+        }
+    }
+
+    static func storedWindowClockDirection(in defaults: UserDefaults) -> WindowClockDirection {
+        defaults.string(forKey: Key.windowClockDirection)
+            .flatMap(WindowClockDirection.init(rawValue:)) ?? .default
+    }
+
+    static func storeWindowClockDirection(
+        _ direction: WindowClockDirection,
+        in defaults: UserDefaults
+    ) {
+        defaults.set(direction.rawValue, forKey: Key.windowClockDirection)
+    }
+
+    static var windowClockDirectionDefaultsKey: String { Key.windowClockDirection }
+
     /// Show what is **left** rather than what is gone.
     ///
     /// The same reading either way — 12% used and 88% left are one fact — but
@@ -910,6 +934,7 @@ final class AppSettings {
         labelAboveRing: Bool = false,
         usesRoundEnds: Bool = false,
         showsWindowClock: Bool = false,
+        windowClockDirection: WindowClockDirection = .default,
         showsRemaining: Bool = false,
         warningThreshold: WarningThreshold = .default,
         dockShowsAlertColor: Bool = true,
@@ -955,6 +980,7 @@ final class AppSettings {
         self.labelAboveRing = labelAboveRing
         self.usesRoundEnds = usesRoundEnds
         self.showsWindowClock = showsWindowClock
+        self.windowClockDirection = windowClockDirection
         self.showsRemaining = showsRemaining
         self.warningThreshold = warningThreshold
         self.dockShowsAlertColor = dockShowsAlertColor
@@ -1219,6 +1245,7 @@ final class AppSettings {
             labelAboveRing: defaults.object(forKey: Key.labelAboveRing) as? Bool ?? false,
             usesRoundEnds: defaults.object(forKey: Key.usesRoundEnds) as? Bool ?? false,
             showsWindowClock: defaults.object(forKey: Key.showsWindowClock) as? Bool ?? false,
+            windowClockDirection: Self.storedWindowClockDirection(in: defaults),
             showsRemaining: defaults.object(forKey: Key.showsRemaining) as? Bool ?? false,
             warningThreshold: (defaults.object(forKey: Key.warningThreshold) as? Int)
                 .flatMap(WarningThreshold.init(rawValue:)) ?? .default,
@@ -1337,6 +1364,7 @@ final class AppSettings {
         static let labelAboveRing = "settings.labelAboveRing"
         static let usesRoundEnds = "settings.usesRoundEnds"
         static let showsWindowClock = "settings.showsWindowClock"
+        static let windowClockDirection = "settings.windowClockDirection"
         static let botMarks = "settings.botMarks"
         static let botPersonas = "settings.botPersonas"
         static let botShapes = "settings.botShapes"

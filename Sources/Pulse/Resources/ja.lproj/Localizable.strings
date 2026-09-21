@@ -85,6 +85,11 @@
 "Percentages at the side" = "横にパーセントを表示";
 "The figure under each ring, docked left or right." = "左右に寄せているとき、各リングの下に数値を表示します。";
 "Time until reset" = "リセットまでの時間";
+"A second arc outside each ring, showing progress through the current window." = "各リングの外側に、現在の期間の時間経過を示すリングを表示します。";
+"Time ring direction" = "時間リングの方向";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "外側のリングを経過時間で満たすか、残り時間で減らすかを選択します。";
+"Elapsed" = "経過";
+"Remaining" = "残り";
 "Animated mark" = "アニメーションマーク";
 "Bot personality" = "ボットの性格";
 "Bot shape" = "ボットの形";
@@ -121,7 +126,6 @@
 "Stoic" = "むひょう";
 "Proud" = "どうどう";
 "Draw a bot that reacts to this account instead of the provider's logo." = "プロバイダのロゴの代わりに、このアカウントの状態に反応するボットを表示します。";
-"A second arc outside each ring, for how much of the window has passed." = "リングの外側にもう一本の弧を描き、今の期間がどれだけ過ぎたかを示します。";
 "Figure above the ring" = "数値をリングの上に";
 "Show what's left" = "残りを表示";
 "Forecast" = "使い切り予測";

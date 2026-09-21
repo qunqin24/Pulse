@@ -85,6 +85,11 @@
 "Percentages at the side" = "옆에 백분율 표시";
 "The figure under each ring, docked left or right." = "좌우에 붙였을 때 각 링 아래에 수치를 표시합니다.";
 "Time until reset" = "초기화까지 남은 시간";
+"A second arc outside each ring, showing progress through the current window." = "각 링 바깥쪽에 현재 한도 주기의 시간 진행률을 표시합니다.";
+"Time ring direction" = "시간 링 방향";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "바깥쪽 링을 경과 시간에 따라 채울지, 남은 시간에 따라 줄일지 선택합니다.";
+"Elapsed" = "경과";
+"Remaining" = "남음";
 "Animated mark" = "애니메이션 마크";
 "Bot personality" = "봇 성격";
 "Bot shape" = "봇 모양";
@@ -121,7 +126,6 @@
 "Stoic" = "무표정";
 "Proud" = "당당함";
 "Draw a bot that reacts to this account instead of the provider's logo." = "제공자 로고 대신 이 계정의 상태에 반응하는 봇을 표시합니다.";
-"A second arc outside each ring, for how much of the window has passed." = "링 바깥에 호를 하나 더 그려, 이번 주기가 얼마나 지났는지 보여 줍니다.";
 "Figure above the ring" = "수치를 링 위에";
 "Show what's left" = "남은 양 표시";
 "Forecast" = "소진 예측";

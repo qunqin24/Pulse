@@ -542,7 +542,7 @@ struct SettingsView: View {
 
                 SettingsRow(
                     String.localized("Time until reset"),
-                    subtitle: String.localized("A second arc outside each ring, for how much of the window has passed.")
+                    subtitle: String.localized("A second arc outside each ring, showing progress through the current window.")
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.showsWindowClock },
@@ -551,6 +551,26 @@ struct SettingsView: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                     .disabled(!settings.isPanelVisible)
+                }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Time ring direction"),
+                    subtitle: String.localized("Choose whether the outer arc fills with elapsed time or empties with time remaining.")
+                ) {
+                    Picker("", selection: Binding(
+                        get: { settings.windowClockDirection },
+                        set: { settings.windowClockDirection = $0 }
+                    )) {
+                        ForEach(WindowClockDirection.allCases) { direction in
+                            Text(direction.title).tag(direction)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    .disabled(!settings.isPanelVisible || !settings.showsWindowClock)
                 }
 
                 SettingsRowDivider()

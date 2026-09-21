@@ -315,8 +315,11 @@ struct FloatingUsagePanelView: View {
             // apart by the one thing that differs between them.
             title: slot.group.map { "\(label) · \($0)" } ?? label,
             // Nil unless it is switched on *and* the window says enough to
-            // work it out — a reset time on its own is not enough.
-            elapsed: settings.showsWindowClock ? headline?.elapsedFraction(at: minute) : nil,
+            // work it out — a reset time on its own is not enough. Direction
+            // only chooses which end of that same evidenced window to show.
+            windowClock: settings.showsWindowClock
+                ? headline?.windowClockFraction(direction: settings.windowClockDirection, at: minute)
+                : nil,
             figure: figure,
             second: settings.showsSecondRing ? usage.secondWindow(preferring: pinned) : nil,
             showsRemaining: settings.showsRemaining

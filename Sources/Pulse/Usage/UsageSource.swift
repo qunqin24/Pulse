@@ -250,6 +250,28 @@ enum RailSpacing: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+/// Which end of an allowance window the neutral outer clock arc measures.
+///
+/// Elapsed keeps the behaviour Pulse shipped with. Remaining turns the same
+/// provider-reported reset and duration into a countdown: full when the window
+/// opens, empty when it resets. Neither direction invents a duration where the
+/// provider did not state one.
+enum WindowClockDirection: String, CaseIterable, Identifiable, Sendable {
+    case elapsed
+    case remaining
+
+    static let `default` = WindowClockDirection.elapsed
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .elapsed: .localized("Elapsed")
+        case .remaining: .localized("Remaining")
+        }
+    }
+}
+
 /// The scale every panel measurement is multiplied by.
 ///
 /// A stored value rather than something threaded through every call site,

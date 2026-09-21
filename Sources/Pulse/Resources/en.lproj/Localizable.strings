@@ -85,6 +85,11 @@
 "Percentages at the side" = "Percentages at the side";
 "The figure under each ring, docked left or right." = "The figure under each ring, docked left or right.";
 "Time until reset" = "Time until reset";
+"A second arc outside each ring, showing progress through the current window." = "A second arc outside each ring, showing progress through the current window.";
+"Time ring direction" = "Time ring direction";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "Choose whether the outer arc fills with elapsed time or empties with time remaining.";
+"Elapsed" = "Elapsed";
+"Remaining" = "Remaining";
 "Animated mark" = "Animated mark";
 "Bot personality" = "Bot personality";
 "Bot shape" = "Bot shape";
@@ -121,7 +126,6 @@
 "Stoic" = "Stoic";
 "Proud" = "Proud";
 "Draw a bot that reacts to this account instead of the provider's logo." = "Draw a bot that reacts to this account instead of the provider's logo.";
-"A second arc outside each ring, for how much of the window has passed." = "A second arc outside each ring, for how much of the window has passed.";
 "Figure above the ring" = "Figure above the ring";
 "Show what's left" = "Show what's left";
 "Forecast" = "Forecast";

@@ -237,6 +237,17 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         return min(max(1 - remaining / Double(windowSeconds), 0), 1)
     }
 
+    /// The fraction the outer window-clock arc should draw in the selected
+    /// direction. The evidence requirement stays in `elapsedFraction`: both
+    /// directions are nil unless the provider stated a reset and a duration.
+    func windowClockFraction(
+        direction: WindowClockDirection,
+        at now: Date = Date()
+    ) -> Double? {
+        guard let elapsed = elapsedFraction(at: now) else { return nil }
+        return direction == .remaining ? 1 - elapsed : elapsed
+    }
+
     var name: String {
         let base: String = switch kind {
         case .fiveHour: .localized("5-hour limit")

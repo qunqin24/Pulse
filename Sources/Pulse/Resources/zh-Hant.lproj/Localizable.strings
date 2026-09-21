@@ -85,6 +85,11 @@
 "Percentages at the side" = "側邊顯示百分比";
 "The figure under each ring, docked left or right." = "貼在左右兩側時，在圓環下方顯示百分比。";
 "Time until reset" = "距離重設的時間";
+"A second arc outside each ring, showing progress through the current window." = "在圓環外側顯示一圈進度，指示目前額度週期的時間進程。";
+"Time ring direction" = "時間圓環方向";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "選擇外圈依已經過時間逐漸填滿，或依剩餘時間逐漸縮短。";
+"Elapsed" = "已經過";
+"Remaining" = "剩餘";
 "Animated mark" = "小機器人";
 "Bot personality" = "小機器人個性";
 "Bot shape" = "小機器人形狀";
@@ -121,7 +126,6 @@
 "Stoic" = "冷面";
 "Proud" = "得意";
 "Draw a bot that reacts to this account instead of the provider's logo." = "代替服務商圖示，跟著這個帳號的狀態做動作。";
-"A second arc outside each ring, for how much of the window has passed." = "在圓環外側加一圈弧線，顯示本輪已經過了多少。";
 "Figure above the ring" = "數字顯示在圓環上方";
 "Show what's left" = "顯示剩餘額度";
 "Forecast" = "用盡預測";

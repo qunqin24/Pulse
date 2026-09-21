@@ -30,7 +30,7 @@ The pointed-at halo hangs on the **progress arc**, not the ring view. Its inward
 
 ## Window-clock arc
 
-`showsWindowClock`, default off. **Outside** the usage ring (inside is the activity mark). Neutral, low opacity, not a second hue. Applied as an overlay **after** `.frame(width: diameter…)`, never a ZStack child (a wider child grew the usage ring). Nil when the provider gives `resetsAt` or length without the other; `reportsLength` must be true. Own 60s ticker, not the usage loop.
+`showsWindowClock`, default off. **Outside** the usage ring (inside is the activity mark). Neutral, low opacity, not a second hue. `windowClockDirection` chooses whether it fills with elapsed time (the backwards-compatible default) or empties with time remaining. Both directions use the same provider-reported reset and duration; neither draws when one is missing. Applied as an overlay **after** `.frame(width: diameter…)`, never a ZStack child (a wider child grew the usage ring). Nil when the provider gives `resetsAt` or length without the other; `reportsLength` must be true. Own 60s ticker, not the usage loop.
 
 ## Second ring
 

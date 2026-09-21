@@ -85,6 +85,11 @@
 "Percentages at the side" = "侧边显示百分比";
 "The figure under each ring, docked left or right." = "吸附在左右两侧时，在圆环下方显示百分比。";
 "Time until reset" = "距离重置的时间";
+"A second arc outside each ring, showing progress through the current window." = "在圆环外侧显示一圈进度，指示当前额度周期的时间进程。";
+"Time ring direction" = "时间圆环方向";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "选择外圈按已过去时间逐渐填满，或按剩余时间逐渐缩短。";
+"Elapsed" = "已过去";
+"Remaining" = "剩余";
 "Animated mark" = "小机器人";
 "Bot personality" = "小机器人性格";
 "Bot shape" = "小机器人形状";
@@ -121,7 +126,6 @@
 "Stoic" = "冷面";
 "Proud" = "得意";
 "Draw a bot that reacts to this account instead of the provider's logo." = "代替供应商图标，跟着这个账号的状态做动作。";
-"A second arc outside each ring, for how much of the window has passed." = "在圆环外侧显示一圈进度，指示当前额度周期已过去多少。";
 "Figure above the ring" = "数字显示在圆环上方";
 "Show what's left" = "显示剩余额度";
 "Forecast" = "用尽预测";

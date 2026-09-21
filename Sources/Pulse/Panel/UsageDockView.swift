@@ -327,16 +327,16 @@ struct RailEntry: Identifiable, Equatable {
     var botEvent: BotMarkEvent?
     /// A colour chosen for this ring's mark, or nil for its brand colour.
     var botColour: Color?
-    /// How much of the headline window's clock has run, or nil to leave the
-    /// outer arc off — either because the setting is off, or because this
-    /// window doesn't report enough to work it out.
     /// Which ring this is. An unsplit account's slot keeps the account's own
     /// id, so nothing stored before slots existed stops matching.
     var slot: RailSlot
     /// What the card calls it: the account's label, and the model group after
     /// it where an account has been split into one ring per group.
     var title: String
-    var elapsed: Double?
+    /// How much of the headline window's clock to draw in the chosen direction,
+    /// or nil to leave the outer arc off — either because the setting is off,
+    /// or because this window doesn't report enough to work it out.
+    var windowClock: Double?
     /// What to draw in the ring when there is no percentage to draw.
     ///
     /// DeepSeek sells prepaid credit and reports no allowance, so on "balance
@@ -616,7 +616,7 @@ private struct UsageDockItem: View {
             botPointer: pointer,
             botQuiet: isQuiet,
             highlight: isSelected,
-            elapsedFraction: entry.elapsed,
+            windowClockFraction: entry.windowClock,
             secondFraction: entry.second?.usedFraction,
             secondIsSpent: UsageTint.isSpent(entry.second)
         )
