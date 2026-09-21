@@ -9,6 +9,11 @@ Kiro remains responsible for authentication and token refresh. Pulse does not
 open Kiro's SQLite database, request Keychain access, copy an access token, or
 store Kiro credentials.
 
+Each pending RPC owns its 20-second timeout, cancelled when the request
+finishes or the connection closes. Request IDs continue across refreshes;
+old timeout callbacks and queued data from a closed pipe cannot affect the
+next helper. Connection teardown also discards any incomplete JSON.
+
 ## Requirements
 
 - Kiro CLI with the v3 ACP engine and `_kiro/account/getUsage` support

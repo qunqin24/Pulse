@@ -22,11 +22,25 @@ actor CodexAppServer {
     /// on a closed pipe is a busy loop**, not a leak that merely wastes
     /// memory — see `startReading`.
     private var reader: FileHandle?
+    // Keep IDs unique across helper restarts, including callbacks already
+    // queued on the actor when an old request was completed or cancelled.
     private var nextID = 1
     // Results cross an actor boundary, and a JSON dictionary isn't Sendable,
     // so they travel as raw bytes and are decoded on the far side.
-    private var pending: [Int: CheckedContinuation<Data, Error>] = [:]
+    private struct PendingRequest {
+        let continuation: CheckedContinuation<Data, Error>
+        let timeout: Task<Void, Never>
+    }
+    private var pending: [Int: PendingRequest] = [:]
     private var buffer = Data()
+    private let executable: URL?
+    private let requestTimeout: Duration
+
+    // Tests use an isolated helper without changing PATH or touching a login.
+    init(executable: URL? = nil, requestTimeout: Duration = .seconds(20)) {
+        self.executable = executable
+        self.requestTimeout = requestTimeout
+    }
 
     enum Failure: Error {
         /// Codex isn't installed, or isn't anywhere we thought to look.
@@ -69,13 +83,11 @@ actor CodexAppServer {
     func stopReading() {
         reader?.readabilityHandler = nil
         reader = nil
+        buffer.removeAll(keepingCapacity: false)
     }
 
     private func failAllPending() {
-        for (_, continuation) in pending {
-            continuation.resume(throwing: Failure.startFailed)
-        }
-        pending.removeAll()
+        for id in Array(pending.keys) { finish(id, with: .failure(Failure.startFailed)) }
     }
 
     // MARK: - Process
@@ -88,9 +100,9 @@ actor CodexAppServer {
         // Without this, every restart left one more spinning thread behind:
         // three of them was 290% of a CPU for eleven hours, with no child
         // process left to blame (issue #25).
-        stopReading()
+        shutDown()
 
-        guard let executable = Self.locateCodex() else { throw Failure.executableNotFound }
+        guard let executable = executable ?? Self.locateCodex() else { throw Failure.executableNotFound }
 
         let process = Process()
         process.executableURL = executable
@@ -114,7 +126,6 @@ actor CodexAppServer {
 
         self.process = process
         self.stdin = input.fileHandleForWriting
-        self.nextID = 1
 
         // The protocol opens with a handshake before anything else is accepted.
         _ = try await send(
@@ -153,7 +164,7 @@ actor CodexAppServer {
                 Task { await self?.readerClosed(handle) }
                 return
             }
-            Task { await self?.consume(chunk) }
+            Task { await self?.consume(chunk, from: handle) }
         }
     }
 
@@ -178,7 +189,6 @@ actor CodexAppServer {
     /// one's EOF must not tear down the helper that replaced it.
     func readerClosed(_ handle: FileHandle) {
         guard handle === reader else { return }
-        reader = nil
         // **Terminated, not merely forgotten.** EOF on stdout usually means
         // the helper exited, but it can also mean a helper that is still
         // running with its output closed. Dropping the `Process` there leaves
@@ -186,10 +196,7 @@ actor CodexAppServer {
         // terminates a `process` that is by then nil — so quitting Pulse would
         // leave it behind. `terminate()` on one that has already exited is a
         // no-op.
-        process?.terminate()
-        process = nil
-        stdin = nil
-        failAllPending()
+        shutDown()
     }
 
     /// Where `codex` tends to live. A GUI app inherits almost no `PATH`, so
@@ -243,23 +250,19 @@ actor CodexAppServer {
                 return
             }
 
-            pending[id] = continuation
-            guard write(data, to: stdin) else {
-                pending[id] = nil
-                continuation.resume(throwing: Failure.startFailed)
-                return
-            }
-
             // Strongly held, deliberately. Weakly, this server going away
             // before the timeout fires leaves every request it was carrying
             // suspended with nobody left to resume them — which Swift reports
             // as a leaked continuation and the caller experiences as a hang.
             // A strong reference costs at most twenty seconds of lifetime and
             // makes that impossible.
-            Task { [self] in
-                try? await Task.sleep(for: .seconds(20))
-                self.timeOut(id)
+            let timeout = Task { [self] in
+                do { try await Task.sleep(for: requestTimeout) }
+                catch { return }
+                finish(id, with: .failure(Failure.timedOut))
             }
+            pending[id] = PendingRequest(continuation: continuation, timeout: timeout)
+            write(data, to: stdin)
         }
     }
 
@@ -270,10 +273,10 @@ actor CodexAppServer {
             let stdin
         else { return }
 
-        _ = write(data, to: stdin)
+        write(data, to: stdin)
     }
 
-    /// One line to the helper's standard input, or false if it has gone.
+    /// One line to the helper's standard input; close the connection if it has gone.
     ///
     /// **Writing to a pipe whose far end has closed raises SIGPIPE, and the
     /// default for SIGPIPE is to kill the process.** The helper exiting — it
@@ -283,28 +286,27 @@ actor CodexAppServer {
     /// (see `AppDelegate`) so the write returns an error instead; this is the
     /// half that then treats the error as "the helper is gone" rather than
     /// carrying on writing into a dead pipe.
-    private func write(_ data: Data, to handle: FileHandle) -> Bool {
+    private func write(_ data: Data, to handle: FileHandle) {
         do {
             try handle.write(contentsOf: data)
             try handle.write(contentsOf: Data("\n".utf8))
-            return true
         } catch {
             // Whatever is left of it is not usable, and the next call will
             // start a fresh one.
-            process = nil
-            stdin = nil
-            return false
+            shutDown()
         }
     }
 
-    private func timeOut(_ id: Int) {
-        guard let continuation = pending.removeValue(forKey: id) else { return }
-        continuation.resume(throwing: Failure.timedOut)
+    private func finish(_ id: Int, with result: Result<Data, Error>) {
+        guard let request = pending.removeValue(forKey: id) else { return }
+        request.timeout.cancel()
+        request.continuation.resume(with: result)
     }
 
     /// Messages arrive as newline-delimited JSON, and a read can land
     /// mid-line, so hold the remainder until the next chunk completes it.
-    private func consume(_ chunk: Data) {
+    private func consume(_ chunk: Data, from source: FileHandle) {
+        guard source === reader else { return }
         buffer.append(chunk)
 
         while let newline = buffer.firstIndex(of: UInt8(ascii: "\n")) {
@@ -318,14 +320,14 @@ actor CodexAppServer {
     }
 
     private func handle(_ message: [String: Any]) {
-        if let id = message["id"] as? Int, let continuation = pending.removeValue(forKey: id) {
+        if let id = message["id"] as? Int, pending[id] != nil {
             if let error = message["error"] as? [String: Any] {
                 let text = error["message"] as? String ?? "unknown"
-                continuation.resume(throwing: Failure.server(text))
+                finish(id, with: .failure(Failure.server(text)))
             } else {
                 let result = message["result"] as? [String: Any] ?? [:]
                 let data = (try? JSONSerialization.data(withJSONObject: result)) ?? Data("{}".utf8)
-                continuation.resume(returning: data)
+                finish(id, with: .success(data))
             }
             return
         }

@@ -40,6 +40,8 @@ Two layers made it worse than one stuck handler. `ensureRunning` returns early w
 
 `VolcengineUsageService` has cleared its handler at EOF since it was written; this path simply never learned it. `CodexAppServerTests` drives the reader against a plain `Pipe`, so it needs no `codex` on the machine.
 
+Each pending RPC owns its 20-second timeout. A reply, write failure, EOF or shutdown completes it once and cancels that task. Request IDs continue across helper restarts, so an old callback cannot complete a new request. Closing the reader discards incomplete JSON, and queued data is accepted only from the current pipe. `RPCRequestLifecycleTests` exercises reconnects and deadlines with isolated subprocesses; it does not call a signed-in Codex.
+
 Locating the executable cannot rely on `PATH`: a GUI app inherits almost none of it. `CodexAppServer.locateCodex` checks usual install locations, including versioned Node directories.
 
 ## Proxies

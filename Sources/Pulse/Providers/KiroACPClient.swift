@@ -19,9 +19,23 @@ actor KiroACPClient {
     private var stdin: FileHandle?
     private var reader: FileHandle?
     private var errorReader: FileHandle?
+    // IDs belong to the client, not the child process: a timeout already
+    // queued on this actor must never find a new request under its old ID.
     private var nextID = 1
-    private var pending: [Int: CheckedContinuation<Data, Error>] = [:]
+    private struct PendingRequest {
+        let continuation: CheckedContinuation<Data, Error>
+        let timeout: Task<Void, Never>
+    }
+    private var pending: [Int: PendingRequest] = [:]
     private var buffer = Data()
+    private let executable: URL?
+    private let requestTimeout: Duration
+
+    // Tests use an isolated helper without changing PATH or touching a login.
+    init(executable: URL? = nil, requestTimeout: Duration = .seconds(20)) {
+        self.executable = executable
+        self.requestTimeout = requestTimeout
+    }
 
     func usage() async throws -> Data {
         try start()
@@ -53,7 +67,7 @@ actor KiroACPClient {
     }
 
     private func start() throws {
-        guard let executable = Self.locateKiro() else { throw Failure.executableNotFound }
+        guard let executable = executable ?? Self.locateKiro() else { throw Failure.executableNotFound }
 
         let process = Process()
         process.executableURL = executable
@@ -73,14 +87,12 @@ actor KiroACPClient {
         do {
             try process.run()
         } catch {
-            reader.readabilityHandler = nil
-            errorReader.readabilityHandler = nil
+            shutDown()
             throw Failure.startFailed
         }
 
         self.process = process
         stdin = input.fileHandleForWriting
-        nextID = 1
     }
 
     private static func locateKiro() -> URL? {
@@ -119,19 +131,17 @@ actor KiroACPClient {
                 continuation.resume(throwing: Failure.closed)
                 return
             }
-            pending[id] = continuation
+            let timeout = Task { [self] in
+                do { try await Task.sleep(for: requestTimeout) }
+                catch { return }
+                finish(id, with: .failure(Failure.timedOut))
+            }
+            pending[id] = PendingRequest(continuation: continuation, timeout: timeout)
             do {
                 try stdin.write(contentsOf: data)
                 try stdin.write(contentsOf: Data("\n".utf8))
             } catch {
-                pending[id] = nil
-                continuation.resume(throwing: Failure.closed)
-                return
-            }
-
-            Task { [self] in
-                try? await Task.sleep(for: .seconds(20))
-                timeOut(id)
+                shutDown()
             }
         }
     }
@@ -145,7 +155,7 @@ actor KiroACPClient {
                 Task { await self?.readerClosed(handle) }
                 return
             }
-            Task { await self?.consume(chunk) }
+            Task { await self?.consume(chunk, from: handle) }
         }
     }
 
@@ -163,11 +173,7 @@ actor KiroACPClient {
 
     private func readerClosed(_ handle: FileHandle) {
         guard handle === reader else { return }
-        reader = nil
-        process?.terminate()
-        process = nil
-        stdin = nil
-        failAllPending(with: .closed)
+        shutDown()
     }
 
     private func errorReaderClosed(_ handle: FileHandle) {
@@ -175,7 +181,8 @@ actor KiroACPClient {
         errorReader = nil
     }
 
-    private func consume(_ chunk: Data) {
+    private func consume(_ chunk: Data, from source: FileHandle) {
+        guard source === reader else { return }
         buffer.append(chunk)
         while let newline = buffer.firstIndex(of: UInt8(ascii: "\n")) {
             let line = buffer[buffer.startIndex..<newline]
@@ -188,26 +195,24 @@ actor KiroACPClient {
     }
 
     private func handle(_ message: [String: Any]) {
-        guard let id = message["id"] as? Int,
-              let continuation = pending.removeValue(forKey: id)
-        else { return }
+        guard let id = message["id"] as? Int, pending[id] != nil else { return }
 
         if let error = message["error"] as? [String: Any] {
-            continuation.resume(throwing: Failure.server(error["message"] as? String ?? "unknown"))
+            finish(id, with: .failure(Failure.server(error["message"] as? String ?? "unknown")))
             return
         }
         let result = message["result"] as? [String: Any] ?? [:]
         let data = (try? JSONSerialization.data(withJSONObject: result)) ?? Data("{}".utf8)
-        continuation.resume(returning: data)
+        finish(id, with: .success(data))
     }
 
-    private func timeOut(_ id: Int) {
-        guard let continuation = pending.removeValue(forKey: id) else { return }
-        continuation.resume(throwing: Failure.timedOut)
+    private func finish(_ id: Int, with result: Result<Data, Error>) {
+        guard let request = pending.removeValue(forKey: id) else { return }
+        request.timeout.cancel()
+        request.continuation.resume(with: result)
     }
 
     private func failAllPending(with failure: Failure) {
-        for continuation in pending.values { continuation.resume(throwing: failure) }
-        pending.removeAll()
+        for id in Array(pending.keys) { finish(id, with: .failure(failure)) }
     }
 }
