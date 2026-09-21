@@ -1192,7 +1192,7 @@ struct SettingsView: View {
             case .xiaomiMiMo:
                 host = XiaomiMiMoClient.host
                 keep = { try? XiaomiMiMoCookie.normalize($0) }
-            case .claudeCode, .codex, .antigravity, .cursor, .openCodeGo,
+            case .claudeCode, .codex, .kiro, .antigravity, .cursor, .openCodeGo,
                  .kimiCode, .zai, .glmCoding, .minimax, .minimaxCN, .copilot,
                  .grok, .grokBot, .volcengine, .commandCode, .deepSeek, .devin:
                 // Not session-based: `readSession` sends those to

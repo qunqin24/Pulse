@@ -1,10 +1,10 @@
 # Providers
 
-Pulse tracks **nineteen** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
+Pulse tracks **twenty** `Provider` cases. There is no Pulse backend and no Pulse account. Each provider reports its own usage by whatever route that product actually offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that only exists while an editor is open.
 
 This directory is the home for routes, credentials, cookies, extra logins, and the failure lessons that belong to those. Current service code is authoritative. Historical measurements and “do not repeat” notes are labelled as such. Nothing here claims a runtime test of a live account.
 
-This page is about **quota providers** — the nineteen cases Pulse can draw a ring for. Token spend readers are a different, overlapping catalogue of agents that left records on this Mac, most of which Pulse draws no ring for; they and their stores are documented in [`../token-spend.md`](../token-spend.md) and [`../token-spend-sources.md`](../token-spend-sources.md), not here. Do not add a spend reader to this directory.
+This page is about **quota providers** — the twenty cases Pulse can draw a ring for. Token spend readers are a different, overlapping catalogue of agents that left records on this Mac, most of which Pulse draws no ring for; they and their stores are documented in [`../token-spend.md`](../token-spend.md) and [`../token-spend-sources.md`](../token-spend-sources.md), not here. Do not add a spend reader to this directory.
 
 Shared types: [`../../Sources/Pulse/Usage/UsageProvider.swift`](../../Sources/Pulse/Usage/UsageProvider.swift), [`../../Sources/Pulse/Usage/MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift), [`../../Sources/Pulse/Usage/ProviderUsage.swift`](../../Sources/Pulse/Usage/ProviderUsage.swift), [`../../Sources/Pulse/Usage/UsageSource.swift`](../../Sources/Pulse/Usage/UsageSource.swift). Sign-in machinery: [authentication.md](authentication.md).
 
@@ -18,13 +18,14 @@ Accounts the stored rail does not mention are appended **in name order**, not in
 |---|---|---|---|---|---|---|---|
 | `.claudeCode` | Claude Code | `claude` | Borrow CLI login; Pulse OAuth for extras | yes | endpoint / desktop / status line | yes | `~/.claude`, Claude support directory, or `Claude.app` exists |
 | `.codex` | Codex | `openai` | Borrow `~/.codex/auth.json`; Pulse OAuth for extras | yes | endpoint / app-server | yes | `~/.codex` exists |
+| `.kiro` | Kiro | `kiro` | Borrow Kiro CLI login through ACP | no | native ACP | no | Kiro CLI data or app exists |
 | `.antigravity` | Antigravity | `antigravity` | Loopback language server while the app is open | no | one, named | no | `Antigravity.app` |
 | `.cursor` | Cursor | `cursor` | Cookie built from the editor’s stored token | no (deliberate) | one, named | no | Cursor `state.vscdb` exists |
 | `.openCodeGo` | OpenCode Go | `opencode` | Pasted key, else OpenCode’s `auth.json` | no | pasted / found key | no | OpenCode `auth.json` exists |
 | `.kimiCode` | Kimi Code | `kimi` | Pasted key | no | pasted key | no | none — stays off until switched on |
 | `.ollamaCloud` | Ollama Cloud | `ollama` | Browser session cookie (not an API key) | no | session | no | none |
 | `.zai` | z.ai | `zai` | Pasted key | no | pasted key | no | none |
-| `.glmCoding` | Zhipu | `qingyan` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
+| `.glmCoding` | Zhipu | `zai` | Pasted key, else mainland files | no | pasted / found key | no | mainland key file |
 | `.minimax` | MiniMax | `minimax` | Pasted key | no | pasted key | no | none |
 | `.minimaxCN` | MiniMax CN | `minimax` | Pasted key | no | pasted key | no | none |
 | `.copilot` | GitHub Copilot | `github` | GitHub device login; token in `keys.dat` | no | sign-in | no | none |
@@ -36,7 +37,7 @@ Accounts the stored rail does not mention are appended **in name order**, not in
 | `.devin` | Devin | `devin` | Browser `localStorage` (no keychain); optional pasted `token org` | no | saved plan / endpoint | no | the app's `state.vscdb` exists |
 | `.xiaomiMiMo` | Xiaomi Coding Plan | `xiaomimimo` | Browser session for `platform.xiaomimimo.com`, or a pasted `Cookie:` header | no | one, named | no | none |
 
-Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md), [command-code.md](command-code.md), [deepseek.md](deepseek.md), [devin.md](devin.md), [xiaomi-coding-plan.md](xiaomi-coding-plan.md).
+Per-provider pages: [claude-code.md](claude-code.md), [codex.md](codex.md), [kiro.md](kiro.md), [antigravity.md](antigravity.md), [cursor.md](cursor.md), [opencode-go.md](opencode-go.md), [kimi-code.md](kimi-code.md), [ollama-cloud.md](ollama-cloud.md), [zai.md](zai.md), [minimax.md](minimax.md), [copilot.md](copilot.md), [grok.md](grok.md), [grok-bot.md](grok-bot.md), [volcengine.md](volcengine.md), [command-code.md](command-code.md), [deepseek.md](deepseek.md), [devin.md](devin.md), [xiaomi-coding-plan.md](xiaomi-coding-plan.md).
 
 Ollama Cloud and Xiaomi Coding Plan are the two read from a **browser session** rather than a key or another tool's files; they share [`BrowserCookies.swift`](../../Sources/Pulse/Auth/BrowserCookies.swift) and nothing else, because what counts as a session differs per site and a shared filter would forward whichever cookie either one adds next.
 
@@ -82,7 +83,7 @@ Chooser, legacy restoration, offer-once and empty-rail rules: [`../architecture.
 
 `ProviderDiscovery.swift` checks only whether named files, directories or app bundles exist. It does not open a database, parse a key file, read browser storage or query Keychain. OpenCode Go, mainland GLM and Command Code therefore count as **detected even if their files are empty or unreadable**. Detection is a hint, not evidence of a valid account or a paid plan, and never enables a ring. Every provider appears in the initial chooser with its checkbox off.
 
-`ProviderAccess.swift` supplies the descriptions shown before selection, also used above a disabled provider's Settings controls. Claude describes both CLI Keychain/file access and the desktop cookie-store grant; Codex names its auth file and helper; Cursor and Grok Bot name Cursor's local database; Grok names its own auth file; Devin names Chromium web storage and the saved desktop plan, with no Keychain prompt. Ollama and Xiaomi explain that browser sessions are imported from Settings and that importing can ask for browser Keychain access. The key-only providers describe the entered key, OpenCode/Zhipu/Command Code name their local fallbacks, Copilot names its Settings login, Volcengine names arkcli/access keys, and Antigravity names the local server and connection token.
+`ProviderAccess.swift` supplies the descriptions shown before selection, also used above a disabled provider's Settings controls. Claude describes both CLI Keychain/file access and the desktop cookie-store grant; Codex names its auth file and helper; Kiro names its native ACP helper and states that credentials remain inside Kiro; Cursor and Grok Bot name Cursor's local database; Grok names its own auth file; Devin names Chromium web storage and the saved desktop plan, with no Keychain prompt. Ollama and Xiaomi explain that browser sessions are imported from Settings and that importing can ask for browser Keychain access. The key-only providers describe the entered key, OpenCode/Zhipu/Command Code name their local fallbacks, Copilot names its Settings login, Volcengine names arkcli/access keys, and Antigravity names the local server and connection token.
 
 ### Seeded state is not “Loading…”
 

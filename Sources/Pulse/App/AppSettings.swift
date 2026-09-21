@@ -332,7 +332,7 @@ final class AppSettings {
     /// keyed by account. A missing entry means the logo, which is the default.
     ///
     /// **Per account, not one switch for the rail.** A logo says which of
-    /// eighteen products a ring belongs to, and a mark gives that up for
+    /// twenty products a ring belongs to, and a mark gives that up for
     /// motion — which is a trade worth making for the two or three rings
     /// somebody actually watches work, and not for the rest. Per account
     /// rather than per provider for the same reason `ringTints` is: two

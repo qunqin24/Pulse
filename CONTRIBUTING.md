@@ -4,10 +4,11 @@ Pulse is a macOS menu-bar app. There is no linter; there is a test target (`swif
 
 ## Workflow
 
-1. Read the **topic doc** for the area you are changing ([Docs/README.md](Docs/README.md)). If the change is about *why* something is the way it is, also read the linked decision.
-2. Change code and the **authoritative topic doc in the same patch**. Do not leave CLAUDE.md as a second source of truth, and do not grow it with new architecture.
-3. Run the verification that area needs ([Docs/development.md](Docs/development.md), [Docs/build-from-source.md](Docs/build-from-source.md)). At minimum, a Swift 6 warning-clean build if you touched Swift, and `./Scripts/check-localization.sh` if you touched user-visible strings.
-4. Do not claim a behaviour is verified unless you used a method that can actually see it. See evidence levels below.
+1. Open an issue before starting a new feature or substantial change, and wait for a maintainer to accept the direction. Acceptance of the problem does not automatically approve a particular implementation. A large PR submitted without prior agreement may be closed even if the implementation is complete.
+2. Read the **topic doc** for the area you are changing ([Docs/README.md](Docs/README.md)). If the change is about *why* something is the way it is, also read the linked decision.
+3. Change code and the **authoritative topic doc in the same patch**. Do not leave CLAUDE.md as a second source of truth, and do not grow it with new architecture.
+4. Run the verification that area needs ([Docs/development.md](Docs/development.md), [Docs/build-from-source.md](Docs/build-from-source.md)). At minimum, a Swift 6 warning-clean build if you touched Swift, and `./Scripts/check-localization.sh` if you touched user-visible strings.
+5. Do not claim a behaviour is verified unless you used a method that can actually see it. See evidence levels below.
 
 Provider routes, auth, cookies, and extra-account login belong in [Docs/providers/README.md](Docs/providers/README.md), not in UI or architecture docs.
 

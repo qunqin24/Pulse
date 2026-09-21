@@ -1,0 +1,17 @@
+{
+  "success": true,
+  "message": "Plan: KIRO PRO+ | 2 usage breakdowns",
+  "data": {
+    "planName": "KIRO PRO+",
+    "billingCycleReset": "2099-10-01",
+    "overagesEnabled": false,
+    "isEnterprise": true,
+    "usageBreakdowns": [
+      {"resourceType":"CREDIT","displayName":"Credits","used":123.45,"limit":2000,"percentage":6,"currentOverages":0,"overageRate":0.04,"overageCharges":0,"currency":"USD","hasLimit":true},
+      {"resourceType":"BONUS_CREDIT","displayName":"Bonus credits","used":25,"limit":100,"percentage":25,"hasLimit":true}
+    ],
+    "bonusCredits": [],
+    "addOnCredits": [],
+    "overageCapable": true
+  }
+}

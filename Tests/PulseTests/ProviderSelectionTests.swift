@@ -126,10 +126,10 @@ struct ProviderSelectionTests {
     @Test("Detection includes user Applications and an empty CLI directory")
     func appAndDirectoryDiscovery() {
         let home = URL(fileURLWithPath: "/synthetic-home")
-        let paths = Set([".codex", "Applications/Grok Bot.app", "Applications/Antigravity.app", ".claude"]
+        let paths = Set([".codex", ".kiro", "Applications/Grok Bot.app", "Applications/Antigravity.app", ".claude"]
             .map { home.appending(path: $0).path })
         #expect(Provider.installedOnThisMac(home: home, exists: paths.contains)
-            == [.codex, .grokBot, .antigravity, .claudeCode])
+            == [.codex, .kiro, .grokBot, .antigravity, .claudeCode])
     }
 
     @Test("Before selection every store entry point stays idle")

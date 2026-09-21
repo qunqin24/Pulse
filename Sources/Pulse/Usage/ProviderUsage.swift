@@ -398,6 +398,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case codexNotInstalled
         /// Found `codex`, but `codex app-server` wouldn't start.
         case codexServerFailed
+        /// Kiro CLI is absent, too old for the native usage method, or signed out.
+        case kiroNotInstalled
+        case kiroVersionUnsupported
+        case kiroSignInRequired
         /// Antigravity's limits live in a server it only runs while it is open.
         case antigravityNotRunning
         /// It **is** open, and every helper it runs refused this RPC — a
@@ -505,6 +509,9 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .claudeDesktopSessionExpired: .localized("The Claude desktop app's session was refused. Open it and sign in again.")
             case .codexNotInstalled: .localized("Codex isn't installed.")
             case .codexServerFailed: .localized("Couldn't start the Codex helper.")
+            case .kiroNotInstalled: .localized("Kiro CLI isn't installed.")
+            case .kiroVersionUnsupported: .localized("Update Kiro CLI to read subscription usage.")
+            case .kiroSignInRequired: .localized("Sign in to Kiro CLI to see usage.")
             case .antigravityNotRunning: .localized("Open Antigravity to see its usage.")
             case .antigravityNotAnswering: .localized("Antigravity is open but didn't answer. Restarting it usually helps.")
             case .cursorSignInRequired: .localized("Sign in to Cursor to see usage.")

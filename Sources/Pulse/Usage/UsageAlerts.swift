@@ -412,7 +412,8 @@ struct AlertMemory: Codable, Sendable, Equatable {
         // of them worth a banner on a timer.
         case .loading, .notConnected, .awaitingResponse,
              .signInRequired, .claudeSignInRequired, .claudeDesktopNotSignedIn,
-             .codexNotInstalled, .antigravityNotRunning, .antigravityNotAnswering,
+             .codexNotInstalled, .kiroNotInstalled, .kiroVersionUnsupported,
+             .kiroSignInRequired, .antigravityNotRunning, .antigravityNotAnswering,
              .cursorSignInRequired, .grokSignInRequired, .notSignedIn,
              .ollamaSessionMissing, .xiaomiSessionMissing,
              .apiKeyMissing, .volcengineCLIMissing,

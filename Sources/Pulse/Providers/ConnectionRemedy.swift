@@ -22,6 +22,7 @@ enum ConnectionRemedy: Equatable {
         case .notConnected: return .connectStatusLine
         case .claudeSignInRequired, .claudeLoginExpired: return .copyCommand("claude auth login")
         case .signInRequired: return .copyCommand("codex login")
+        case .kiroSignInRequired: return .copyCommand("kiro-cli login")
         case .grokSignInRequired, .grokLoginExpired: return .copyCommand("grok")
         case .volcengineSignInRequired: return .copyCommand("arkcli auth login")
         case .claudeDesktopNotSignedIn, .claudeDesktopSessionExpired: return .openApp("Claude")
@@ -37,7 +38,8 @@ enum ConnectionRemedy: Equatable {
              .xiaomiSessionMissing, .xiaomiSessionExpired: return .readBrowser
         case .claudeDesktopKeyRefused, .unreachable, .rateLimited, .serverError,
              .codexServerFailed: return .retry
-        case .codexNotInstalled, .volcengineCLIMissing, .noLimitsReported,
+        case .codexNotInstalled, .kiroNotInstalled, .kiroVersionUnsupported,
+             .volcengineCLIMissing, .noLimitsReported,
              .grokBotNotIncluded, .zaiNoCodingPlan, .xiaomiNoCodingPlan,
              .ollamaPageChanged, .unreadableReply:
             return .help
@@ -61,6 +63,7 @@ enum ConnectionRemedy: Equatable {
         let page: String = switch provider {
         case .claudeCode: "claude-code"
         case .codex: "codex"
+        case .kiro: "kiro"
         case .antigravity: "antigravity"
         case .cursor: "cursor"
         case .openCodeGo: "opencode-go"

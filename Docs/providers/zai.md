@@ -5,11 +5,13 @@ One service, two providers: [`ZaiUsageService.swift`](../../Sources/Pulse/Provid
 | Provider | Ring name | Host | Icon |
 |---|---|---|---|
 | `.zai` | z.ai | `https://api.z.ai` | `zai` |
-| `.glmCoding` | Zhipu | `https://open.bigmodel.cn` | `qingyan` |
+| `.glmCoding` | Zhipu | `https://open.bigmodel.cn` | `zai` |
 
 They are one company’s international and mainland storefronts, answering the same JSON on different hosts — **separate accounts with separate keys**. A key for one is refused by the other. CodexBar models this as one provider with a region switch; Pulse gives each a ring so someone with only the mainland plan does not have to know an international one exists.
 
-The marks are the two products' own — z.ai's and 清言's — rather than one of them wearing the corporate Zhipu logo. On a rail carrying both rows the icon is the only thing distinguishing them at a glance, and a parent-company wordmark next to a product mark reads as "the same company as the row above", which is the very confusion these two rows exist to prevent.
+**Both rows carry the same mark**, the way MiniMax's two do — one company, one Z. Earlier versions gave the mainland row 清言's mark and then BigModel's boxed Z, each time so the rail could tell the two apart; neither survived, because naming the row after a product that does not own the quota is worse than not naming it at all.
+
+What this costs is real and is accepted: on the rail there is nothing left distinguishing them — the ring names are only read on the card. A reader with both rows tells them apart by position and by hovering. Issue #13 is what happens when they cannot.
 
 **The rings are named for the two shops, not for the product** — that is issue #13. They were `Z.ai` and `GLM Coding Plan`; but **z.ai sells its plan under the name "GLM Coding Plan" too**, so an international subscriber picked the row literally called that, pasted a z.ai key, and had it sent to BigModel. The company is the one thing that differs and the one thing a buyer knows, so it is the whole name — and neither row keeps the ambiguous one.
 

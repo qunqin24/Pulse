@@ -95,6 +95,8 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             // Never shown: `options(for:)` doesn't offer it, and `source(for:)`
             // won't return it for anything but Claude Code.
             .localized("Use the endpoint when possible, the other route when not.")
+        case (_, .kiro):
+            .localized("Asks Kiro CLI over ACP, using the login it already saved.")
         case (.endpoint, .volcengine):
             .localized("Signs Volcengine's usage API with the access keys you entered.")
         case (.tooling, .volcengine):

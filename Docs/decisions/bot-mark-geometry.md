@@ -26,4 +26,4 @@ Nothing above is legal advice and none of it has been checked with anyone; it is
 
 ## Why it is off by default
 
-`AppSettings.botMarks` ships empty, and it is a choice per account rather than one switch: a rail of provider logos is the app telling you which nineteen products it is watching, and a rail of identical bots in different colours is not. Switched on where somebody wants to watch a ring work, off everywhere else. Current behaviour: [../ui/rings-and-surface.md](../ui/rings-and-surface.md).
+`AppSettings.botMarks` ships empty, and it is a choice per account rather than one switch: a rail of provider logos is the app telling you which twenty products it is watching, and a rail of identical bots in different colours is not. Switched on where somebody wants to watch a ring work, off everywhere else. Current behaviour: [../ui/rings-and-surface.md](../ui/rings-and-surface.md).

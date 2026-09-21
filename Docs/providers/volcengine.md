@@ -31,7 +31,7 @@ The Ark Coding Plan, sold on Volcengine (火山引擎). Named for the platform r
 
 A manual proxy is added to each `arkcli` process as `HTTP_PROXY` / `HTTPS_PROXY` or `ALL_PROXY`, plus a loopback `NO_PROXY`; Follow System leaves its inherited environment alone. SOCKS5 support is up to `arkcli`. [../networking.md](../networking.md)
 
-Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it — and with three guarantees that are enforced rather than merely commented, because a pass that never finishes never calls `scheduleNext` and the rail then freezes for **all nineteen** providers, not just this one:
+Run with stdin at `/dev/null` so a CLI that decides to prompt gets EOF instead of blocking the refresh pass behind it — and with three guarantees that are enforced rather than merely commented, because a pass that never finishes never calls `scheduleNext` and the rail then freezes for **all twenty** providers, not just this one:
 
 - **Both pipes are drained at once.** Reading stdout to EOF and only then reading stderr deadlocks the moment the child writes more than a 64 KiB pipe buffer to stderr before closing stdout — a panic, a debug build, a TLS dump. The child blocks writing, Pulse blocks reading, neither returns.
 - **Reading never stops early.** Past the 512 KiB ceiling the bytes are dropped but the pipe is still drained; a reader that walks away is the same deadlock wearing a different hat.

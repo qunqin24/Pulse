@@ -614,6 +614,13 @@
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "使用在設定中輸入的金鑰，或讀取 ~/.commandcode/auth.json。不會出現鑰匙圈提示。";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "讀取本機 Chromium 瀏覽器中 Devin 網頁版的登入資訊，不會跳出授權視窗；也可能讀取桌面版儲存的方案。";
 "Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "啟動 arkcli 使用已儲存的登入，或使用在設定中輸入的存取金鑰。Pulse 不會要求鑰匙圈存取權限。";
+"Kiro CLI ACP" = "Kiro CLI ACP";
+"Uses Kiro CLI's signed-in session without reading its credentials." = "使用 Kiro CLI 已登入的工作階段，不讀取其憑證。";
+"Kiro CLI isn't installed." = "尚未安裝 Kiro CLI。";
+"Update Kiro CLI to read subscription usage." = "請更新 Kiro CLI 以讀取訂閱用量。";
+"Sign in to Kiro CLI to see usage." = "請先登入 Kiro CLI 以查看用量。";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "透過 Kiro CLI 原生 ACP 用量方法使用其已儲存的登入。Pulse 不讀取或儲存 Kiro 憑證。";
+"Asks Kiro CLI over ACP, using the login it already saved." = "透過 ACP 查詢 Kiro CLI，並使用它已儲存的登入。";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "使用你在設定中匯入的瀏覽器登入工作階段。匯入時可能要求瀏覽器的鑰匙圈存取權限。";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "使用你在設定中連結的 GitHub 登入。不會出現鑰匙圈提示。";
 "Uses only the API key you enter in Settings. No Keychain prompt." = "只使用你在設定中輸入的 API 金鑰。不會出現鑰匙圈提示。";

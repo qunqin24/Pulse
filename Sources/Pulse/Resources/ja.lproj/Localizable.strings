@@ -614,6 +614,13 @@
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "設定で入力したキーを使うか、~/.commandcode/auth.json を読み取ります。キーチェーンの確認はありません。";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "この Mac の Chromium 系ブラウザから Devin の Web ログインを読み取ります。確認ダイアログは出ません。デスクトップアプリの保存済みプランも読む場合があります。";
 "Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "保存済みのログインで arkcli を起動するか、設定で入力したアクセスキーを使います。Pulse はキーチェーンへのアクセスを求めません。";
+"Kiro CLI ACP" = "Kiro CLI ACP";
+"Uses Kiro CLI's signed-in session without reading its credentials." = "Kiro CLI のサインイン済みセッションを使い、認証情報は読み取りません。";
+"Kiro CLI isn't installed." = "Kiro CLI がインストールされていません。";
+"Update Kiro CLI to read subscription usage." = "サブスクリプション使用量を読むには Kiro CLI を更新してください。";
+"Sign in to Kiro CLI to see usage." = "使用量を表示するには Kiro CLI にサインインしてください。";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "保存済みログインで Kiro CLI のネイティブ ACP 使用量メソッドを実行します。Pulse は Kiro の認証情報を読み取りも保存もしません。";
+"Asks Kiro CLI over ACP, using the login it already saved." = "ACP 経由で Kiro CLI に問い合わせ、保存済みのログインを使います。";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "設定で読み込んだブラウザのログインセッションを使います。読み込み時にブラウザのキーチェーンへのアクセスを求めることがあります。";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "設定で連携した GitHub のログインを使います。キーチェーンの確認はありません。";
 "Uses only the API key you enter in Settings. No Keychain prompt." = "設定で入力した API キーだけを使います。キーチェーンの確認はありません。";

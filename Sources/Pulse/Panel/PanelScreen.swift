@@ -9,6 +9,21 @@ import CoreGraphics
 /// UUID does not — that is the same physical display every time — so that is
 /// what gets stored.
 enum PanelScreen {
+    /// The camera housing, in AppKit's global screen coordinates. The safe
+    /// inset alone is a height, not evidence of the housing's width.
+    static func notch(of screen: NSScreen) -> CGRect? {
+        notch(in: screen.frame, topInset: screen.safeAreaInsets.top,
+              left: screen.auxiliaryTopLeftArea, right: screen.auxiliaryTopRightArea)
+    }
+
+    static func notch(in frame: CGRect, topInset: CGFloat, left: CGRect?, right: CGRect?) -> CGRect? {
+        guard topInset > 0, let left, let right,
+              left.width > 0, right.width > 0, right.minX > left.maxX
+        else { return nil }
+        return CGRect(x: left.maxX, y: frame.maxY - topInset,
+                      width: right.minX - left.maxX, height: topInset)
+    }
+
     /// A name for this display that survives a reboot and a reconnection.
     static func identifier(of screen: NSScreen) -> String? {
         guard let number = screen.deviceDescription[.init("NSScreenNumber")] as? NSNumber

@@ -614,6 +614,13 @@
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "설정에 입력한 키를 사용하거나 ~/.commandcode/auth.json을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "이 Mac의 Chromium 계열 브라우저에서 Devin 웹 로그인을 확인 창 없이 읽습니다. 데스크톱 앱에 저장된 플랜도 읽을 수 있습니다.";
 "Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "저장된 로그인으로 arkcli를 실행하거나 설정에 입력한 액세스 키를 사용합니다. Pulse는 키체인 접근 권한을 요청하지 않습니다.";
+"Kiro CLI ACP" = "Kiro CLI ACP";
+"Uses Kiro CLI's signed-in session without reading its credentials." = "Kiro CLI의 로그인된 세션을 사용하며 자격 증명은 읽지 않습니다.";
+"Kiro CLI isn't installed." = "Kiro CLI가 설치되어 있지 않습니다.";
+"Update Kiro CLI to read subscription usage." = "구독 사용량을 읽으려면 Kiro CLI를 업데이트하십시오.";
+"Sign in to Kiro CLI to see usage." = "사용량을 보려면 Kiro CLI에 로그인하십시오.";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "저장된 로그인으로 Kiro CLI의 네이티브 ACP 사용량 메서드를 실행합니다. Pulse는 Kiro 자격 증명을 읽거나 저장하지 않습니다.";
+"Asks Kiro CLI over ACP, using the login it already saved." = "ACP를 통해 Kiro CLI에 요청하고 이미 저장된 로그인을 사용합니다.";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "설정에서 가져온 브라우저 로그인 세션을 사용합니다. 가져올 때 브라우저의 키체인 접근 권한을 요청할 수 있습니다.";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "설정에서 연결한 GitHub 로그인을 사용합니다. 키체인 확인 창은 표시되지 않습니다.";
 "Uses only the API key you enter in Settings. No Keychain prompt." = "설정에 입력한 API 키만 사용합니다. 키체인 확인 창은 표시되지 않습니다.";

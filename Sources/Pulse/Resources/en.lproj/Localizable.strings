@@ -614,6 +614,13 @@
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt.";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan.";
 "Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access.";
+"Kiro CLI ACP" = "Kiro CLI ACP";
+"Uses Kiro CLI's signed-in session without reading its credentials." = "Uses Kiro CLI's signed-in session without reading its credentials.";
+"Kiro CLI isn't installed." = "Kiro CLI isn't installed.";
+"Update Kiro CLI to read subscription usage." = "Update Kiro CLI to read subscription usage.";
+"Sign in to Kiro CLI to see usage." = "Sign in to Kiro CLI to see usage.";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials.";
+"Asks Kiro CLI over ACP, using the login it already saved." = "Asks Kiro CLI over ACP, using the login it already saved.";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "Uses a browser session you import in Settings. Importing may ask for browser Keychain access.";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "Uses the GitHub login you connect in Settings. No Keychain prompt.";
 "Uses only the API key you enter in Settings. No Keychain prompt." = "Uses only the API key you enter in Settings. No Keychain prompt.";

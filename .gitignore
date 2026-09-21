@@ -23,3 +23,7 @@ Scripts/__pycache__/
 Integrations/raycast/node_modules/
 Integrations/raycast/dist/
 Integrations/raycast/raycast-env.d.ts
+
+# IDEs
+.idea/
+.vscode/

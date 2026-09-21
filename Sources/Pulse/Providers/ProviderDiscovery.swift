@@ -20,6 +20,8 @@ extension Provider {
         case .claudeCode:
             return [local(".claude"), local("Library/Application Support/Claude")] + app("Claude")
         case .codex: return [local(".codex")]
+        case .kiro:
+            return [local(".kiro"), local("Library/Application Support/kiro-cli")] + app("Kiro") + app("Kiro CLI")
         case .grok: return [local(".grok")]
         case .grokBot: return app("Grok Bot")
         case .antigravity: return app("Antigravity")

@@ -85,8 +85,8 @@ struct BotMarkTests {
 
     /// The whole point of dealing colours is that the rail is not a row of
     /// identical bots. A hash over the ids was tried first and collided: six
-    /// of the ten shared two colours.
-    @Test("A rail of colourless providers gets ten different colours")
+    /// of the original set shared two colours.
+    @Test("A rail of colourless providers gives every provider a distinct colour")
     func dealtColoursAreDistinct() {
         let colourless = Provider.allCases.filter { BotMarkTint.brand(for: $0) == nil }
         let colours = BotMarkTint.deal(over: colourless).map(\.hexString)

@@ -13,6 +13,8 @@ Two `NSViewRepresentable` backgrounds:
 - `PointerEntryReporter` — `.activeAlways` `NSTrackingArea`, reports **only entering** a ring.
 - `PanelPointerWatcher` — samples `NSEvent.mouseLocation` on a timer. `FloatingUsagePanelView.isOverContent` tests against the **rail and the card**, not the window frame (the panel is full-size and mostly transparent).
 
+For a top-docked notch rail, an unpainted `PointerEntryReporter` covers exactly the physical housing rectangle and calls the existing `show()` method on entry. It does not claim clicks. The same rectangle is included in `isOverContent`, so the ordinary 150ms sampler can also open and retain the rail. There is no separate dwell timer. The hidden rail has no sliver or grab target. Once expanded, the full surface from the screen top through the added bottom padding counts as content. One derived `isNotchHeld` state covers a press, drag, or open menu; releasing the last of these re-evaluates the pointer so a stationary pointer cannot leave it stuck open.
+
 **Do not close on exit events.** Views appearing, moving, or animating under a stationary pointer fire spurious exits; closing reopens; it loops. Enter from tracking areas, leave from sampling the real pointer. That loop is then structurally impossible.
 
 The sliver’s tracking area cannot be the only way `isHovered` gets set: a floating panel dragged onto an edge docks with `isHovered` still false and snaps shut in the hand. `pointerMoved` sets it from the same test that decides when to hide.

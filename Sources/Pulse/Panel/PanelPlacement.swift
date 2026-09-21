@@ -131,6 +131,9 @@ final class PanelPlacement {
     /// one edge of the panel and this stays zero.
     private(set) var railLeading: CGFloat = 0
 
+    /// Present only while attached to a physical notch; never persisted.
+    var notch: CGRect?
+
     /// Which display the rail was left on, as `PanelScreen` names them.
     ///
     /// The two ratios are fractions of one screen's usable area, so they say
@@ -350,24 +353,25 @@ final class PanelPlacement {
     /// `topEdge` is where a top-docked rail's own top edge belongs, which is
     /// **not** the top of `visible`: the panel is drawn above the menu bar, so
     /// it goes to the display's physical edge. On a Mac with a notch that is
-    /// as far as the notch allows and no further — nothing can be drawn under
-    /// it — which lands back on the menu bar's own line.
+    /// as far as the notch allows and no further. When `notch` is available,
+    /// the surface starts at the physical top and the rings sit below it.
     func layout(in visible: CGRect, topEdge: CGFloat, panel: CGSize, rail: CGSize) -> Layout {
         // Along the top the free coordinate is the horizontal one, and the
         // panel hangs *down* from the rail instead of being centred on it,
         // because that is the only direction the card can unfold into.
         if case .edge(.top) = dock {
             let railX = min(
-                max(visible.minX + CGFloat(horizontalRatio) * max(visible.width - rail.width, 0), visible.minX),
+                max(notch.map { $0.midX - rail.width / 2 }
+                    ?? (visible.minX + CGFloat(horizontalRatio) * max(visible.width - rail.width, 0)), visible.minX),
                 max(visible.maxX - rail.width, visible.minX)
             )
-            let railTopY = topEdge
+            let railTopY = notch?.minY ?? topEdge
 
             let windowX = min(
                 max(railX + rail.width / 2 - panel.width / 2, visible.minX),
                 max(visible.maxX - panel.width, visible.minX)
             )
-            let windowY = max(railTopY - panel.height, visible.minY)
+            let windowY = max((notch?.maxY ?? railTopY) - panel.height, visible.minY)
 
             return Layout(
                 frame: CGRect(x: windowX, y: windowY, width: panel.width, height: panel.height),
