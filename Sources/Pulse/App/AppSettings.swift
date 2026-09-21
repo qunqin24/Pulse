@@ -14,6 +14,19 @@ final class AppSettings {
         }
     }
 
+    /// Whether Pulse removes its menu bar icon.
+    ///
+    /// Off by default so existing installs keep the current entry point. This
+    /// setting deliberately does not call `onChange`: the menu bar scene reads
+    /// it directly, and changing it must not trigger a provider refresh.
+    var hidesMenuBarIcon: Bool {
+        didSet {
+            guard hidesMenuBarIcon != oldValue else { return }
+            UserDefaults.standard.set(hidesMenuBarIcon, forKey: Key.hidesMenuBarIcon)
+            onMenuBarIconChange?()
+        }
+    }
+
     /// Whether the floating panel stays out of other apps' full-screen Spaces.
     ///
     /// On by default: a usage glance is useful on the desktop, but sitting over
@@ -876,9 +889,14 @@ final class AppSettings {
     /// Called after any change that the AppKit side has to react to — showing
     /// or hiding the panel, or resizing it because the rail got shorter.
     var onChange: (() -> Void)?
+    /// Called only when the menu bar status item should be inserted or removed.
+    /// Kept separate from `onChange` so a presentation preference cannot start
+    /// a provider refresh.
+    var onMenuBarIconChange: (() -> Void)?
 
     init(
         isPanelVisible: Bool = true,
+        hidesMenuBarIcon: Bool = false,
         hidesInFullScreen: Bool = true,
         followsActiveDisplay: Bool = false,
         openSettingsShortcut: GlobalShortcut? = nil,
@@ -924,6 +942,7 @@ final class AppSettings {
         alertsOnFailure: Bool = false
     ) {
         self.isPanelVisible = isPanelVisible
+        self.hidesMenuBarIcon = hidesMenuBarIcon
         self.hidesInFullScreen = hidesInFullScreen
         self.followsActiveDisplay = followsActiveDisplay
         self.openSettingsShortcut = openSettingsShortcut
@@ -1182,6 +1201,7 @@ final class AppSettings {
 
         let settings = AppSettings(
             isPanelVisible: visible,
+            hidesMenuBarIcon: defaults.object(forKey: Key.hidesMenuBarIcon) as? Bool ?? false,
             hidesInFullScreen: defaults.object(forKey: Key.hidesInFullScreen) as? Bool ?? true,
             followsActiveDisplay: defaults.object(forKey: Key.followsActiveDisplay) as? Bool ?? false,
             openSettingsShortcut: defaults.string(forKey: Key.openSettingsShortcut)
@@ -1308,6 +1328,7 @@ final class AppSettings {
 
     private enum Key {
         static let panelVisible = "settings.panelVisible"
+        static let hidesMenuBarIcon = "settings.hidesMenuBarIcon"
         static let extraAccounts = "settings.extraAccounts"
         static let hidesInFullScreen = "settings.hidesInFullScreen"
         static let followsActiveDisplay = "settings.followsActiveDisplay"

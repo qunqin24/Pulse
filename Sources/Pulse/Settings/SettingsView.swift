@@ -963,6 +963,20 @@ struct SettingsView: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                 }
+
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Hide menu bar icon"),
+                    subtitle: String.localized("Remove Pulse from the menu bar; use the panel menu or shortcut to open settings.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.hidesMenuBarIcon },
+                        set: { settings.hidesMenuBarIcon = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
             }
 
             SettingsGroup(String.localized("Shortcuts")) {

@@ -279,6 +279,10 @@
 "Start Pulse automatically when you log in." = "macOS에 로그인하면 Pulse를 자동으로 실행합니다.";
 "Waiting for approval in System Settings › General › Login Items." = "시스템 설정 › 일반 › 로그인 항목에서 허용하기를 기다리는 중입니다.";
 
+/* 메뉴 막대 아이콘 */
+"Hide menu bar icon" = "메뉴 막대 아이콘 숨기기";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "메뉴 막대에서 Pulse를 숨깁니다. 설정은 패널 메뉴나 단축키로 열 수 있습니다.";
+
 /* Liquid Glass */
 "Liquid Glass" = "리퀴드 글래스";
 "Frosted glass instead of solid black." = "완전한 검정 대신 반투명 유리 재질을 씁니다.";

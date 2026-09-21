@@ -279,6 +279,10 @@
 "Start Pulse automatically when you log in." = "登入 macOS 後自動啟動 Pulse。";
 "Waiting for approval in System Settings › General › Login Items." = "等待在「系統設定 › 一般 › 登入項目」中允許。";
 
+/* 選單列圖示 */
+"Hide menu bar icon" = "隱藏選單列圖示";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "從選單列移除 Pulse；需要設定時可用面板選單或快速鍵開啟。";
+
 /* Liquid Glass */
 "Liquid Glass" = "液態玻璃";
 "Frosted glass instead of solid black." = "改用半透明材質，取代純黑背景。";

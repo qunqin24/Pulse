@@ -1,11 +1,11 @@
 import AppKit
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    /// Not private: the menu bar scene reads the language from it so the menu
-    /// rebuilds when the language changes.
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    /// Not private: the status-item menu reads the language from it so the
+    /// menu rebuilds when the language changes.
     let settings = AppSettings.restored()
-    /// Not private for the same reason: the menu bar scene shows a newer
+    /// Not private for the same reason: the status-item menu shows a newer
     /// version when there is one.
     let update = AppUpdate()
     private let placement = PanelPlacement.restored()
@@ -18,12 +18,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var store = UsageStore(settings: settings, alerts: alerts)
 
     private var panelController: FloatingPanelController?
+    private var statusItem: NSStatusItem?
     private var settingsWindow: SettingsWindowController?
     private var providerSetupWindow: ProviderSetupWindowController?
     private var preparedClaude = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.setActivationPolicy(.accessory)
+
+        settings.onMenuBarIconChange = { [weak self] in
+            self?.updateMenuBarItem()
+        }
+        updateMenuBarItem()
 
         // **Writing to a pipe whose far end has closed raises SIGPIPE, whose
         // default is to kill the process.** Pulse writes to one: the Codex
@@ -143,6 +149,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// one is on it — an `NSMenu` held as a property would still be showing
     /// whatever was true when it was made.
     private func panelMenu() -> NSMenu {
+        makeMenu()
+    }
+
+    private func updateMenuBarItem() {
+        if settings.hidesMenuBarIcon {
+            if let statusItem {
+                NSStatusBar.system.removeStatusItem(statusItem)
+                self.statusItem = nil
+            }
+            return
+        }
+
+        guard statusItem == nil else { return }
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = item.button {
+            button.image = NSImage(
+                systemSymbolName: "chart.pie.fill",
+                accessibilityDescription: "Pulse"
+            )
+            button.image?.isTemplate = true
+            button.toolTip = "Pulse"
+        }
+        let menu = makeMenu()
+        menu.delegate = self
+        item.menu = menu
+        statusItem = item
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        let fresh = makeMenu()
+        for item in fresh.items {
+            menu.addItem(item)
+        }
+    }
+
+    private func makeMenu() -> NSMenu {
         let menu = NSMenu()
 
         if let newer = update.newer {

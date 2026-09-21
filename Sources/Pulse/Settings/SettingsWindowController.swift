@@ -5,9 +5,9 @@ import SwiftUI
 ///
 /// Pulse runs as an `.accessory` app, so it has no Dock icon and is normally
 /// not the active application. A settings window therefore has to activate the
-/// app explicitly, or it opens behind whatever the user was looking at. That
-/// is also why this is a plain `NSWindowController` rather than SwiftUI's
-/// `Settings` scene: the window's activation and lifetime need to be handled
+/// app explicitly, or it opens behind whatever the user was looking at. The
+/// visible window is AppKit-owned rather than the inert SwiftUI `Settings`
+/// scene declared by `PulseApp`, so its activation and lifetime can be handled
 /// directly.
 @MainActor
 final class SettingsWindowController {

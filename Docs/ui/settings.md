@@ -35,6 +35,8 @@ Group order in the general pane: **Floating panel → Notifications → Refresh 
 
 The usage-interval group is named **Refresh**, not Updates.
 
+The **Application** group contains **Open at login** and **Hide menu bar icon**. The latter is off by default, preserving the menu bar entry point. When it is on, Pulse removes only its AppKit status item; the floating panel's secondary-click menu and the optional global shortcut still open Settings, so the switch can be turned off again. It is stored in `AppSettings.hidesMenuBarIcon` and changing it does not refresh provider data.
+
 **Shortcuts** sits with Application because both are about the app rather than about a reading, and above Language because Language is the last thing anybody looks for. Two rows, both empty until set, each a `ShortcutField`: click it, press the combination, ⎋ leaves it alone and ⌫ takes it away. The subtitle is the row's own line **unless** the window server refused the combination, in which case the clash takes the line over — that is the only thing the monitor knows and the pane does not. Setting one writes the setting and calls `GlobalShortcutMonitor.apply` there and then; shortcuts deliberately do **not** go through `AppSettings.onChange`, which refetches every provider. Rules and why hot keys rather than an event tap: [input.md](input.md).
 
 An account pane grows a **Notifications** group of its own where `Provider.reportsSpendableBalance` is true — a "warn below" figure in money. Not a row under Connection, which is about credentials and routes, and not in the general pane's Notifications group either: the figure is per account, because the providers that report a balance do not price in the same currency. [../notifications.md](../notifications.md)

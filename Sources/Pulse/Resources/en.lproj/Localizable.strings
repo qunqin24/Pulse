@@ -279,6 +279,10 @@
 "Start Pulse automatically when you log in." = "Start Pulse automatically when you log in.";
 "Waiting for approval in System Settings › General › Login Items." = "Waiting for approval in System Settings › General › Login Items.";
 
+/* Menu bar icon */
+"Hide menu bar icon" = "Hide menu bar icon";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "Remove Pulse from the menu bar; use the panel menu or shortcut to open settings.";
+
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
 "Frosted glass instead of solid black." = "Frosted glass instead of solid black.";

@@ -6,7 +6,7 @@ Provider routes, credentials, cookies, and extra-account OAuth belong in [provid
 
 ## App shell
 
-- `PulseApp.swift` — `@main`. Declares only a `MenuBarExtra` (Settings, Quit). Usage is shown solely in the floating panel.
+- `PulseApp.swift` — `@main`. Supplies the required SwiftUI scene; the AppKit delegate owns the `NSStatusItem` (Settings, Quit) so `AppSettings.hidesMenuBarIcon` can remove it at runtime. Usage is shown solely in the floating panel; when the icon is hidden, the panel menu and global shortcut remain entry points.
 - `AppDelegate.swift` — activation policy `.accessory` (no Dock icon). Owns `AppSettings`, `PanelPlacement`, `FloatingPanelController`, and the settings window. Ignores `SIGPIPE` process-wide so a helper (for example Codex app-server) exiting cannot take Pulse down with it (`Terminated due to signal 13`).
 - `FloatingPanelController.swift` — owns a custom `NSPanel` (`FloatingPanel`: borderless, non-activating, `canBecomeKey` / `canBecomeMain` both false) hosting SwiftUI through `NSHostingView`. **The AppKit controller computes and animates the panel frame.** SwiftUI has no say over outer size; expand/collapse is `NSAnimationContext` / `panel.animator()`, not a SwiftUI transition.
 - Full-screen Spaces: `AppSettings.hidesInFullScreen` selects `.fullScreenNone` (default) or `.fullScreenAuxiliary`. Both keep `.canJoinAllSpaces` for ordinary desktops. This is public window collection behaviour, not a guessed full-screen detector.
@@ -27,7 +27,7 @@ Hand-rolled `SettingsWindowController`, not SwiftUI’s `Settings` scene: an `.a
 
 Four, and the menu bar is only one of them — an icon in a full menu bar is not reachable at all ([issue #24](https://github.com/qunqin24/Pulse/issues/24)):
 
-- The `MenuBarExtra` menu (`PulseApp`).
+- The AppKit status-item menu (`AppDelegate`), unless the user has hidden its icon.
 - A **secondary click on the rail**, which puts up `AppDelegate.panelMenu()`. [ui/input.md](ui/input.md)
 - A **global shortcut**, unset until somebody sets one. `GlobalShortcutMonitor`, held by the app delegate for the life of the process and re-applied by the settings pane whenever a combination changes. The panel's own shortcut goes through `settings.isPanelVisible` rather than `FloatingPanelController.toggle()`, so the panel is in the state the switch in settings claims and stays that way across a launch.
 - A `pulse://` link, below.
@@ -42,7 +42,7 @@ SwiftUI tree inside the panel: `FloatingUsagePanelView` → `UsageDockView` (rai
 
 ## Settings and persistence
 
-`AppSettings` is `@Observable`, stored in `UserDefaults`. `onChange` is how AppKit hears about it.
+`AppSettings` is `@Observable`, stored in `UserDefaults`. `onChange` is how AppKit hears about settings that affect the panel or refresh loop. `hidesMenuBarIcon` is the exception: its dedicated callback removes or restores the AppKit status item without refetching providers. It defaults to `false` to preserve the existing menu bar entry point.
 
 - Once monitoring starts the **rail** must not be empty (nothing to hover, nothing to grab). Before the initial choice, an empty account set is valid and the panel is not created. An added account alone is a valid rail; rebuilding from `Provider.allCases` must never overwrite that choice.
 - `providerOrder` / `orderedAccounts`: never trust the stored list as written. Drop unknown names; append accounts the list does not mention **in name order** after whatever arrangement is stored. The settings sidebar follows the same order. Reorder does **not** call `onChange` — that path refetches everything.
