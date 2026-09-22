@@ -3,7 +3,9 @@ import Testing
 @testable import Pulse
 
 /// Real pipes and isolated shell helpers; no installed CLI or account needed.
-@Suite("RPC request lifecycle")
+/// Serialized because every case starts child processes with short deadlines;
+/// running the whole matrix at once can starve a helper and fake a timeout.
+@Suite("RPC request lifecycle", .serialized)
 struct RPCRequestLifecycleTests {
     enum Client: CaseIterable, Sendable {
         case codex, kiro
@@ -95,10 +97,10 @@ struct RPCRequestLifecycleTests {
         let helper = try Helper(first: "silent", secondDelay: "3")
         defer { helper.remove() }
         let connection = client.connect(to: helper.executable)
-        let waiting = Task.detached { try await connection.read() }
-        // Helper startup can be delayed when the whole suite is launching
-        // subprocesses. This bound is only for readiness; the RPC keeps its
-        // own four-second deadline after it is sent.
+        let waiting = Task { try await connection.read() }
+        // Helper startup can be delayed on a loaded test host. This bound is
+        // only for readiness; the RPC keeps its own four-second deadline after
+        // it is sent.
         let deadline = ContinuousClock.now.advanced(by: .seconds(10))
         while !FileManager.default.fileExists(atPath: helper.ready.path), ContinuousClock.now < deadline {
             try await Task.sleep(for: .milliseconds(10))
