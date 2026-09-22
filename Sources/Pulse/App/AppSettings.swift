@@ -17,8 +17,9 @@ final class AppSettings {
     /// Whether Pulse removes its menu bar icon.
     ///
     /// Off by default so existing installs keep the current entry point. This
-    /// setting deliberately does not call `onChange`: the menu bar scene reads
-    /// it directly, and changing it must not trigger a provider refresh.
+    /// setting deliberately does not call `onChange`: the status item reacts
+    /// through its dedicated callback, and changing it must not trigger a
+    /// provider refresh.
     var hidesMenuBarIcon: Bool {
         didSet {
             guard hidesMenuBarIcon != oldValue else { return }

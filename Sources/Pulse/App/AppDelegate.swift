@@ -179,15 +179,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let fresh = makeMenu()
-        for item in fresh.items {
-            menu.addItem(item)
-        }
+        populateMenu(menu)
     }
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
+        populateMenu(menu)
+        return menu
+    }
 
+    private func populateMenu(_ menu: NSMenu) {
         if let newer = update.newer {
             let item = NSMenuItem(
                 title: .localized("Pulse \(newer.version) is available"),
@@ -202,7 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let settingsItem = NSMenuItem(
             title: .localized("Settings…"),
             action: #selector(openSettingsFromMenu),
-            keyEquivalent: ""
+            keyEquivalent: ","
         )
         settingsItem.target = self
         menu.addItem(settingsItem)
@@ -212,12 +213,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let quit = NSMenuItem(
             title: .localized("Quit Pulse"),
             action: #selector(NSApplication.terminate(_:)),
-            keyEquivalent: ""
+            keyEquivalent: "q"
         )
         quit.target = NSApp
         menu.addItem(quit)
-
-        return menu
     }
 
     @objc private func openSettingsFromMenu() {

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 @testable import Pulse
@@ -25,5 +26,19 @@ struct MenuBarIconSettingTests {
         settings.hidesMenuBarIcon = true
         #expect(menuBarChanges == 1)
         #expect(panelChanges == 0)
+    }
+
+    @Test("The status menu can be rebuilt and keeps its keyboard shortcuts")
+    @MainActor
+    func statusMenuRebuild() {
+        let delegate = AppDelegate()
+        let menu = NSMenu()
+
+        delegate.menuNeedsUpdate(menu)
+        delegate.menuNeedsUpdate(menu)
+
+        #expect(menu.items.map(\.keyEquivalent) == [",", "", "q"])
+        #expect(menu.items[0].keyEquivalentModifierMask == .command)
+        #expect(menu.items[2].keyEquivalentModifierMask == .command)
     }
 }
