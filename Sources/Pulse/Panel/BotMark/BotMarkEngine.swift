@@ -899,7 +899,9 @@ final class BotMarkEngine {
                                direction: Double.random(in: 0...1) < 0.5 ? 1 : -1, turns: turns)
     }
 
-    private func startBounce(_ now: Double) {
+    // Engine time in milliseconds. Frame tests trigger the same gesture here
+    // without waiting for the random ambient scheduler to choose it.
+    func startBounce(_ now: Double) {
         if bounceStartedAt < 0 { bounceStartedAt = now }
     }
 
@@ -1196,8 +1198,8 @@ final class BotMarkEngine {
         // stay the upstream's and only what is drawn is kept inside. Morph
         // poses are left alone: an effect brings its own wider viewBox.
         let room = 12.0
-        let travelX = BotMath.clamp((headX.value + directX) * normal, -room, room)
-        let travelY = BotMath.clamp((headY.value + directY) * normal, -room, room)
+        let travelX = (headX.value + directX) * normal
+        let travelY = (headY.value + directY) * normal
         let rawX = travelX + pose.x
         let rawY = travelY + pose.y
         let rawDegrees = rotation.value * 180 / .pi * geometry.tiltScale * normal
@@ -1207,8 +1209,13 @@ final class BotMarkEngine {
             carryY = Self.carry(drawn.y - rawY)
             carryDegrees = Self.carry(Self.wrapped(drawn.degrees - rawDegrees, period: 360))
         }
-        let translateX = rawX + carryX.value
-        let translateY = rawY + carryY.value
+        // A state handoff contributes motion too. Bound the complete body
+        // translation, then add the effect's own pose. Fade the constraint
+        // with the body so a carried morph pose does not snap at the boundary.
+        let shiftedX = travelX + carryX.value
+        let shiftedY = travelY + carryY.value
+        let translateX = BotMath.mix(BotMath.clamp(shiftedX, -room, room), shiftedX, morphAmount) + pose.x
+        let translateY = BotMath.mix(BotMath.clamp(shiftedY, -room, room), shiftedY, morphAmount) + pose.y
         let degrees = rawDegrees + carryDegrees.value
         drawn = (translateX, translateY, degrees, turnAngle)
         drawnState = state
