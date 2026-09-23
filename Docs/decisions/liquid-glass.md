@@ -18,4 +18,10 @@ The first write-up treated rings-only drag with glass on as a **system** bug: ma
 
 This cannot be reproduced in a harness: probes bypass whatever the material installs. When a symptom survives every local probe, that is not evidence it is glass.
 
+## Stale backdrop (issue #36)
+
+Reported on 26.2, not reproduced on 26.7. The reporter's recording: over a page that turned white, the rail stayed dark glass until the pointer entered; the reverse too. Harness on 26.7 (five capsules over a backdrop flipped black → white → black, following the system / pinned dark / pinned light / pinned + window appearance): every variant tracked the backdrop immediately. Pinning `colorScheme` darkens the tint but over white still reads light grey with white text — the reporter, in dark mode, was already effectively pinned dark. So the fault is the **sample** going stale, not an appearance decision, and an Auto/Light/Dark option would not have touched it.
+
+Rebuilding the glass view with a new identity every 0.3s changed no captured pixel on 26.7 (28 captures), so the nudge is invisible where it is not needed. Whether it clears the fault on 26.2 is **not known** until the reporter tries it.
+
 Current rules: [../ui/rings-and-surface.md](../ui/rings-and-surface.md), [../ui/input.md](../ui/input.md).

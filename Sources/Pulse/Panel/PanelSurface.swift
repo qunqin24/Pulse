@@ -21,6 +21,9 @@ struct PanelSurface<S: Shape>: View {
     /// Tints the surface when a limit is close enough to matter. Nil leaves it
     /// neutral.
     var tint: Color?
+    /// Bumped to make the glass look behind the window again — see
+    /// `GlassResample`.
+    @Environment(\.glassResample) private var resample
 
     var body: some View {
         // Deliberately hit-testable, and the panel cannot be dragged without
@@ -45,11 +48,15 @@ struct PanelSurface<S: Shape>: View {
     private var surface: some View {
         if usesGlass {
             glass
+                // A new identity is a new material layer, and a new layer
+                // samples what is behind the window now rather than whenever
+                // the old one last did. Measured on 26.7 (where it is never
+                // bumped): rebuilding every 0.3s changed no pixel.
+                .id(resample)
         } else {
             shape.fill(tint ?? .black)
         }
     }
-
 
 
     /// `.clear`, not `.regular`. Measured over a bright, busy backdrop:
@@ -72,5 +79,40 @@ struct PanelSurface<S: Shape>: View {
                 .fill(.ultraThinMaterial)
                 .overlay { tint.map { shape.fill($0.opacity(0.28)) } }
         }
+    }
+}
+
+/// Nudges Liquid Glass into re-reading what is behind the panel, on the
+/// systems where it stops doing that by itself.
+///
+/// On macOS 26.2 (issue #36) the material over this panel kept showing the
+/// backdrop it last sampled: light glass stayed light after the page behind it
+/// went dark, and the other way round, until the pointer made the panel redraw.
+/// 26.7 tracks the backdrop live and does not have the fault, so it never pays
+/// for this. Versions in between are unknown and get the nudge.
+///
+/// **Not verified on an affected system.** The evidence is only that a redraw
+/// cleared it in the reporter's recording. If it does not help there, take it
+/// out rather than tuning the interval.
+enum GlassResample {
+    /// How long a stale surface can last when nothing else moves it — a tab
+    /// switched inside one app says nothing to Pulse.
+    static let interval: Duration = .seconds(2)
+
+    static var isNeeded: Bool {
+        let info = ProcessInfo.processInfo
+        return info.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 0, patchVersion: 0))
+            && !info.isOperatingSystemAtLeast(OperatingSystemVersion(majorVersion: 26, minorVersion: 7, patchVersion: 0))
+    }
+}
+
+private struct GlassResampleKey: EnvironmentKey {
+    static let defaultValue = 0
+}
+
+extension EnvironmentValues {
+    var glassResample: Int {
+        get { self[GlassResampleKey.self] }
+        set { self[GlassResampleKey.self] = newValue }
     }
 }

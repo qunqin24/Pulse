@@ -34,6 +34,9 @@ struct FloatingUsagePanelView: View {
     /// What the system is set to, so glass can follow it instead of being
     /// pinned to the panel's own dark.
     @Environment(\.colorScheme) private var colorScheme
+    /// Handed to every glass surface; bumping it makes them sample the
+    /// backdrop again. Only moves where `GlassResample.isNeeded`.
+    @State private var glassEpoch = 0
 
 
     var body: some View {
@@ -203,6 +206,24 @@ struct FloatingUsagePanelView: View {
                     try? await Task.sleep(for: .seconds(60))
                 }
             }
+            // Only with glass on and only on a system that needs it, so
+            // everyone else keeps a panel that does nothing while idle.
+            .task(id: settings.usesGlass) {
+                guard settings.usesGlass, GlassResample.isNeeded else { return }
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: GlassResample.interval)
+                    glassEpoch &+= 1
+                }
+            }
+            // Switching app or Space is the common way the backdrop changes
+            // wholesale, so those resample at once rather than on the tick.
+            .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)) { _ in
+                resampleGlass()
+            }
+            .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.activeSpaceDidChangeNotification)) { _ in
+                resampleGlass()
+            }
+            .environment(\.glassResample, glassEpoch)
             // Pinned dark only on the black panel, and pinned through the
             // *environment* rather than `preferredColorScheme` — the latter is
             // a window-wide preference, not a view-level override, so it can't
@@ -519,6 +540,12 @@ struct FloatingUsagePanelView: View {
     /// which is what keeps this from looping: a view appearing under a
     /// stationary pointer can fire a spurious exit, but never a spurious
     /// entry into something that was already under it.
+    /// A no-op wherever glass keeps up on its own.
+    private func resampleGlass() {
+        guard settings.usesGlass, GlassResample.isNeeded else { return }
+        glassEpoch &+= 1
+    }
+
     private func show() {
         hideAfterDelay?.cancel()
         hideAfterDelay = nil
