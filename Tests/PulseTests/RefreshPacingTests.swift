@@ -69,17 +69,17 @@ struct RefreshPacingTests {
         #expect(Self.interval(constrained, isWatched: false) == AdaptiveRefresh.ceiling)
     }
 
-    // MARK: - Which providers a pass asks
+    // MARK: - Which accounts a pass asks
 
     private static let deepSeek = AccountKey(.deepSeek)
     private static let claude = AccountKey(.claudeCode)
 
-    private static func asked(_ seconds: TimeInterval) -> [String: Date] {
-        [deepSeek.id: now.addingTimeInterval(-seconds), claude.id: now.addingTimeInterval(-seconds)]
+    private static func asked(_ seconds: TimeInterval) -> [AccountKey: Date] {
+        [deepSeek: now.addingTimeInterval(-seconds), claude: now.addingTimeInterval(-seconds)]
     }
 
-    private static func toAsk(dueOnly: Bool, askedAt: [String: Date]) -> Set<Provider> {
-        UsageStore.providersToAsk(
+    private static func toAsk(dueOnly: Bool, askedAt: [AccountKey: Date]) -> Set<AccountKey> {
+        UsageStore.accountsToAsk(
             from: [deepSeek, claude],
             dueOnly: dueOnly,
             askedAt: askedAt,
@@ -95,23 +95,23 @@ struct RefreshPacingTests {
     /// on screen for up to five minutes.
     @Test("Anything but the timer asks everything, however recently it was asked")
     func onlyTheTimerHonoursTheCadence() {
-        #expect(Self.toAsk(dueOnly: false, askedAt: Self.asked(1)) == [.deepSeek, .claudeCode])
+        #expect(Self.toAsk(dueOnly: false, askedAt: Self.asked(1)) == [Self.deepSeek, Self.claude])
     }
 
     @Test("The timer asks only what its own cadence says is due")
     func theTimerAsksWhatIsDue() {
         // Six minutes: past DeepSeek's five-minute cap, nowhere near the
         // half-hour ceiling the other one is on.
-        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(6 * 60)) == [.deepSeek])
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(6 * 60)) == [Self.deepSeek])
         // Neither, a minute in.
         #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(60)).isEmpty)
         // Both, once the slower one comes round.
-        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(31 * 60)) == [.deepSeek, .claudeCode])
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(31 * 60)) == [Self.deepSeek, Self.claude])
     }
 
     @Test("An account never asked is due")
     func neverAskedIsDue() {
-        #expect(Self.toAsk(dueOnly: true, askedAt: [:]) == [.deepSeek, .claudeCode])
+        #expect(Self.toAsk(dueOnly: true, askedAt: [:]) == [Self.deepSeek, Self.claude])
     }
 
     /// A timer that fires a hair early must not skip the very provider it woke
@@ -119,7 +119,67 @@ struct RefreshPacingTests {
     @Test("A tick landing just short of the interval still counts as due")
     func theSlackCoversAnEarlyTick() {
         let justShort = AdaptiveRefresh.unwatchedCeiling - UsageStore.dueSlack / 2
-        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(justShort)).contains(.deepSeek))
+        #expect(Self.toAsk(dueOnly: true, askedAt: Self.asked(justShort)).contains(Self.deepSeek))
+    }
+
+    @Test("A faster provider does not pull an added account onto its cadence")
+    func addedAccountKeepsItsCadence() {
+        let extra = AccountKey(.codex, slot: "extra")
+        let accounts = [Self.deepSeek, extra]
+        let askedAt = Dictionary(uniqueKeysWithValues: accounts.map { ($0, Self.now) })
+        let interval: (Provider) -> TimeInterval = {
+            $0 == .deepSeek ? AdaptiveRefresh.unwatchedCeiling : AdaptiveRefresh.ceiling
+        }
+        let fiveMinutesLater = Self.now.addingTimeInterval(5 * 60)
+        #expect(UsageStore.accountsToAsk(
+            from: accounts, dueOnly: true, askedAt: askedAt, interval: interval, now: fiveMinutesLater
+        ) == [Self.deepSeek])
+        #expect(UsageStore.accountsToAsk(
+            from: accounts, dueOnly: false, askedAt: askedAt, interval: interval, now: fiveMinutesLater
+        ) == Set(accounts))
+        #expect(UsageStore.accountsToAsk(
+            from: accounts, dueOnly: true, askedAt: askedAt, interval: interval,
+            now: Self.now.addingTimeInterval(30 * 60)
+        ) == Set(accounts))
+    }
+
+    @Test("Accounts of one provider have separate deadlines")
+    func eachAccountHasItsOwnDeadline() {
+        let primary = AccountKey(.codex)
+        let extra = AccountKey(.codex, slot: "extra")
+        let askedAt = [primary: Self.now, extra: Self.now.addingTimeInterval(-300)]
+        #expect(UsageStore.accountsToAsk(
+            from: [primary, extra], dueOnly: true, askedAt: askedAt, interval: { _ in 300 }, now: Self.now
+        ) == [extra])
+    }
+
+    @Test("Only added accounts still schedule the chosen fixed interval")
+    func addedAccountsSetTheTimer() {
+        let first = AccountKey(.codex, slot: "first")
+        let second = AccountKey(.codex, slot: "second")
+        let askedAt = [first: Self.now, second: Self.now.addingTimeInterval(-60)]
+        #expect(UsageStore.nextRefreshDelay(
+            from: [first, second], askedAt: askedAt, interval: { _ in 300 }, now: Self.now
+        ) == 240)
+        #expect(UsageStore.nextRefreshDelay(
+            from: [first, second], askedAt: [first: Self.now], interval: { _ in 300 }, now: Self.now
+        ) == 0)
+    }
+
+    @Test("Off-rail accounts neither get asked nor set the timer")
+    func onlyShownAccountsCount() {
+        let enabled = AccountKey(.codex, slot: "enabled")
+        let disabled = AccountKey(.codex, slot: "disabled")
+        let askedAt = [enabled: Self.now, disabled: Self.now.addingTimeInterval(-3_600)]
+        #expect(UsageStore.accountsToAsk(
+            from: [enabled], dueOnly: true, askedAt: askedAt, interval: { _ in 300 }, now: Self.now
+        ).isEmpty)
+        #expect(UsageStore.nextRefreshDelay(
+            from: [enabled], askedAt: askedAt, interval: { _ in 300 }, now: Self.now
+        ) == 300)
+        #expect(UsageStore.nextRefreshDelay(
+            from: [], askedAt: askedAt, interval: { _ in 300 }, now: Self.now
+        ) == nil)
     }
 
     /// The list is short on purpose: it is the providers whose spending moves

@@ -40,6 +40,7 @@ final class UsageStore {
     private let grok = GrokUsageService()
     private let grokBot = GrokBotUsageService()
     private let cursor = CursorUsageService()
+    private let readAddedAccount: @MainActor (AccountKey) async -> ProviderUsage
     private var timer: Timer?
     /// Kept with the centre each was registered on: workspace notifications
     /// don't come from the default centre, and removing them there does
@@ -82,7 +83,7 @@ final class UsageStore {
     /// Asked, because this paces requests: one that failed still spent the
     /// request, and one that never commits — a provider refusing every time —
     /// would otherwise read as permanently due and spin the loop.
-    private var askedAt: [String: Date] = [:]
+    private var askedAt: [AccountKey: Date] = [:]
     private var screensAsleep = false
 
     /// Whether either CLI is working right now. Its own clock — see
@@ -92,12 +93,20 @@ final class UsageStore {
     /// celebrate one. Independent of the alert rules; see `ResetWatch`.
     private let resetWatch = ResetWatch()
 
-    init(settings: AppSettings, alerts: UsageAlerts? = nil, activity: AgentActivityMonitor = AgentActivityMonitor()) {
+    init(
+        settings: AppSettings,
+        alerts: UsageAlerts? = nil,
+        activity: AgentActivityMonitor = AgentActivityMonitor(),
+        readAddedAccount: (@MainActor (AccountKey) async -> ProviderUsage)? = nil
+    ) {
         self.settings = settings
         self.activity = activity
         networkProxy = settings.networkProxy
         self.alerts = alerts
         codex = CodexUsageService(server: appServer)
+        self.readAddedAccount = readAddedAccount ?? { [codex, claudeCode, grok, grokBot] account in
+            await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
+        }
 
         for account in settings.allAccounts {
             usage[account.id] = Self.initialState(for: account)
@@ -271,7 +280,7 @@ final class UsageStore {
     /// very provider it woke up for and sleep another full interval.
     nonisolated static let dueSlack: TimeInterval = 1
 
-    /// Which providers a pass should ask.
+    /// Which accounts a pass should ask, including added accounts.
     ///
     /// **`dueOnly` is true for exactly one caller: the timer.** Everything else
     /// that reaches `refresh()` is something happening — a setting changed, a
@@ -287,23 +296,32 @@ final class UsageStore {
     /// `nonisolated static` and pure, so the rule is arguable: it reads none of
     /// the store's state, the clock is passed in, and so is the cadence — which
     /// is the store's own `interval(for:)` in production.
-    nonisolated static func providersToAsk(
+    nonisolated static func accountsToAsk(
         from accounts: [AccountKey],
         dueOnly: Bool,
-        askedAt: [String: Date],
+        askedAt: [AccountKey: Date],
         interval: (Provider) -> TimeInterval,
         now: Date
-    ) -> Set<Provider> {
-        Set(
-            accounts
-                .filter(\.isPrimary)
-                .map(\.provider)
-                .filter { provider in
-                    guard dueOnly else { return true }
-                    guard let asked = askedAt[AccountKey(provider).id] else { return true }
-                    return now.timeIntervalSince(asked) >= interval(provider) - dueSlack
-                }
-        )
+    ) -> Set<AccountKey> {
+        Set(accounts.filter { account in
+            guard dueOnly else { return true }
+            guard let asked = askedAt[account] else { return true }
+            return now.timeIntervalSince(asked) >= interval(account.provider) - dueSlack
+        })
+    }
+
+    /// The next enabled account's deadline. Added accounts also set the alarm
+    /// when no primary account is on the rail.
+    nonisolated static func nextRefreshDelay(
+        from accounts: [AccountKey],
+        askedAt: [AccountKey: Date],
+        interval: (Provider) -> TimeInterval,
+        now: Date
+    ) -> TimeInterval? {
+        accounts.map { account in
+            guard let asked = askedAt[account] else { return 0 }
+            return max(interval(account.provider) - now.timeIntervalSince(asked), 0)
+        }.min()
     }
 
     /// Whether the newest reading is older than the loop's own cadence allows.
@@ -371,7 +389,7 @@ final class UsageStore {
     private static let passCeiling: TimeInterval = 180
 
     /// - Parameter dueOnly: leave every provider alone whose own cadence has
-    ///   not come round yet. True only from the timer; see `providersToAsk`.
+    ///   not come round yet. True only from the timer; see `accountsToAsk`.
     func refresh(dueOnly: Bool = false) {
         guard !settings.needsProviderSelection else { return }
         if isRefreshing, let started = refreshStartedAt,
@@ -388,7 +406,9 @@ final class UsageStore {
             // Dropped, this used to be — and `settingsChanged()` is its main
             // caller, so switching a provider on mid-pass left it on `.loading`
             // until the next tick, which can be half an hour away.
-            queuedFullPass = true
+            // A timer tick is already covered by the running pass's next
+            // deadline. Queuing it as a forced pass would ask everything again.
+            if !dueOnly { queuedFullPass = true }
             return
         }
         isRefreshing = true
@@ -446,18 +466,18 @@ final class UsageStore {
         // it. Everything not asked keeps the reading it already has: the
         // commit loop below is gated on this same set.
         let now = Date()
-        let wanted = Self.providersToAsk(
+        let accounts = Self.accountsToAsk(
             from: settings.shownAccounts,
             dueOnly: dueOnly,
             askedAt: askedAt,
             interval: { self.interval(for: $0) },
             now: now
         )
-        for provider in wanted { askedAt[AccountKey(provider).id] = now }
-        // Added accounts stay on the loop's own cadence: every one of them is
-        // an agent whose transcripts this Mac can see, so the signals are not
-        // blind to any of them.
-        let extras = settings.shownAccounts.filter { !$0.isPrimary }
+        let wanted = Set(accounts.filter(\.isPrimary).map(\.provider))
+        for account in accounts where account.isPrimary { askedAt[account] = now }
+        // Keep rail order for the sequential reads, but use the same due set
+        // as primary accounts. Another provider's timer is not a reason to ask.
+        let extras = settings.shownAccounts.filter { !$0.isPrimary && accounts.contains($0) }
 
         Task { [codex, kiro, claudeCode, antigravity, cursor, grok, grokBot] in
             // Independent, so they run side by side rather than one waiting on
@@ -608,7 +628,9 @@ final class UsageStore {
             // all. Every one of these went over a newer reading.
             var fetchedExtras: [(String, ProviderUsage, ProviderUsage)] = []
             for account in extras {
-                let raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
+                guard pass == self.currentPass else { return }
+                self.askedAt[account] = Date()
+                let raw = await self.readAddedAccount(account)
                 guard pass == self.currentPass else { return }
                 fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw), raw))
             }
@@ -712,9 +734,10 @@ final class UsageStore {
         let v2ex = V2EXUsageService(enteredKey: key)
 
         Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
+            self.askedAt[account] = Date()
             let raw: ProviderUsage
             if !account.isPrimary {
-                raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
+                raw = await self.readAddedAccount(account)
             } else {
             switch provider {
             case .codex:
@@ -959,15 +982,16 @@ final class UsageStore {
         // The soonest anything is due, so the provider on the shortest cadence
         // sets the alarm and the rest are simply not asked when it goes off.
         let now = Date()
-        let waits = settings.shownAccounts.filter(\.isPrimary).map { account -> TimeInterval in
-            let due = interval(for: account.provider)
-            guard let asked = askedAt[account.id] else { return 0 }
-            return max(due - now.timeIntervalSince(asked), 0)
-        }
+        let next = Self.nextRefreshDelay(
+            from: settings.shownAccounts,
+            askedAt: askedAt,
+            interval: { self.interval(for: $0) },
+            now: now
+        )
         // A floor on the *timer* rather than on any provider's cadence: with
         // nothing enabled, or with something perpetually due, this is what
         // stops the loop spinning.
-        let wait = max(waits.min() ?? AdaptiveRefresh.interval(for: signals), 15)
+        let wait = max(next ?? AdaptiveRefresh.interval(for: signals), 15)
 
         // **`currentInterval` is the cadence, not the countdown.** Settings
         // renders it as "Now: X minutes" and `isOverdue` multiplies it, and
