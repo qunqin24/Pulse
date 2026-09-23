@@ -117,9 +117,7 @@ enum AntigravityCLIReader {
                             output: usage.output + usage.reasoning
                         ),
                         sessionID: session,
-                        project: anchor.workspace.map {
-                            URL(fileURLWithPath: $0).lastPathComponent
-                        },
+                        project: anchor.workspace,
                         deduplicationID: usage.responseID.map {
                             "antigravity:\(session):\($0)"
                         } ?? "antigravity:\(session):\(generation.index)",

@@ -102,7 +102,7 @@ struct TencentBuddyReaderTests {
         #expect(records.filter { $0.deduplicationID == "codebuddy:sess-a:msg-1" }.count == 1)
         let merged = try #require(records.first { $0.deduplicationID == "codebuddy:sess-a:msg-1" })
         #expect(merged.tally == TokenTally(input: 150, cacheWrite: 25, cacheRead: 40, output: 50))
-        #expect(merged.project == "pulse")
+        #expect(merged.project == "/work/pulse")
 
         let bare = try #require(records.first { $0.deduplicationID == "codebuddy:sess-a:msg-5" })
         #expect(bare.tally == TokenTally())
@@ -274,7 +274,7 @@ struct TencentBuddyReaderTests {
         let record = records[0]
         #expect(record.model == "gpt-5")
         #expect(record.sessionID == "s1")
-        #expect(record.project == "pulse")
+        #expect(record.project == "/work/pulse")
         #expect(record.tally == TokenTally())
         #expect(record.unclassifiedTokens == 1234)
         #expect(record.isAggregate)

@@ -225,7 +225,7 @@ struct AgentCacheTests {
     @Test("A kept session's buckets survive the cache round-trip")
     func sessionSlotsRoundTrip() throws {
         let stored = AgentCache.StoredSession(
-            id: "s", name: "n", title: "T", project: "Pulse",
+            id: "s", name: "n", title: "T", project: UsageProject("Pulse"),
             start: Date(timeIntervalSince1970: 0), end: Date(timeIntervalSince1970: 200),
             tokens: 15, cost: 1.5, unpricedTokens: 0,
             slots: [AgentCache.StoredSlot(

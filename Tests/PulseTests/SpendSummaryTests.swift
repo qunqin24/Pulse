@@ -295,7 +295,7 @@ struct SpendSummaryTests {
     ) -> UsageLedger.Session {
         let end = calendar.date(byAdding: .day, value: -endedDaysAgo, to: today)!
         return UsageLedger.Session(
-            id: "/tmp/\(name).jsonl", name: name, title: nil, project: project,
+            id: "/tmp/\(name).jsonl", name: name, title: nil, project: UsageProject(project),
             start: end, end: end, tokens: tokens, cost: cost
         )
     }
@@ -409,7 +409,7 @@ struct SpendSummaryTests {
         var ledger = Self.ledger([Self.day(1, tokens: 900, cost: 9), Self.day(0, tokens: 100, cost: 1)])
         ledger.sessions = [
             UsageLedger.Session(
-                id: "/tmp/long.jsonl", name: "long", title: "Long", project: "Pulse",
+                id: "/tmp/long.jsonl", name: "long", title: "Long", project: UsageProject("Pulse"),
                 start: lateYesterday, end: noonToday, tokens: 1000, cost: 10,
                 slots: [
                     .init(start: lateYesterday, tokens: 900, cost: 9),
@@ -443,7 +443,7 @@ struct SpendSummaryTests {
         var ledger = Self.ledger((0..<3).map { Self.day($0, tokens: 100, cost: 1) })
         ledger.sessions = [
             UsageLedger.Session(
-                id: "/tmp/resumed.jsonl", name: "resumed", title: nil, project: "Pulse",
+                id: "/tmp/resumed.jsonl", name: "resumed", title: nil, project: UsageProject("Pulse"),
                 start: slots[2].start, end: slots[0].start, tokens: 300, cost: 3, slots: slots
             ),
         ]
@@ -474,7 +474,7 @@ struct SpendSummaryTests {
         var ledger = Self.ledger([Self.day(1, tokens: 500, cost: 5), Self.day(0, tokens: 300, cost: 3)])
         ledger.sessions = [
             UsageLedger.Session(
-                id: "a", name: "a", title: nil, project: "Pulse",
+                id: "a", name: "a", title: nil, project: UsageProject("Pulse"),
                 start: yesterdayLate, end: afternoon, tokens: 600, cost: 6,
                 slots: [
                     .init(start: yesterdayLate, tokens: 500, cost: 5),
@@ -482,7 +482,7 @@ struct SpendSummaryTests {
                 ]
             ),
             UsageLedger.Session(
-                id: "b", name: "b", title: nil, project: "Pulse",
+                id: "b", name: "b", title: nil, project: UsageProject("Pulse"),
                 start: morning, end: morning, tokens: 200, cost: 2,
                 slots: [.init(start: morning, tokens: 200, cost: 2)]
             ),

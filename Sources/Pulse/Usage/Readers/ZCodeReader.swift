@@ -180,7 +180,7 @@ enum ZCodeReader {
                             output: rawOutput
                         ),
                         sessionID: sessionID,
-                        project: directory.map { URL(fileURLWithPath: $0).lastPathComponent },
+                        project: directory,
                         deduplicationID: "zcode:\(file.path):\(identifier)",
                         unclassifiedTokens: unclassified
                     )

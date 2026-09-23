@@ -189,7 +189,7 @@ enum AgentUsageLedger {
             let unpriced = extra + (price == nil ? known : 0)
             let name = Self.nonBlank(record.sessionName)
             let title = Self.nonBlank(record.title)
-            let project = Self.nonBlank(record.project)
+            let project = UsageProject(record.project)
 
             if var running = sessions[sessionID] {
                 running.tokens = running.tokens + total
@@ -384,7 +384,7 @@ enum AgentUsageLedger {
         var end: Date
         var name: String?
         var title: String?
-        var project: String?
+        var project: UsageProject?
         var hasAggregate: Bool
         var slots: [String: (tokens: Int, cost: Double, unpriced: Int)] = [:]
         var days: [Date: (tokens: Int, cost: Double, unpriced: Int)] = [:]

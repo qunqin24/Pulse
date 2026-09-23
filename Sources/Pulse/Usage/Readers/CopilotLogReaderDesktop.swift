@@ -160,7 +160,7 @@ enum CopilotDesktopReader {
                             isPartial: delta.omittedReasoning,
                             sessionID: row.id,
                             title: row.title,
-                            project: project(workspace),
+                            project: workspace,
                             deduplicationID: "copilot-desktop:\(row.id):shutdown:\(identity):\(model)"
                         )
                     else { continue }
@@ -185,7 +185,7 @@ enum CopilotDesktopReader {
                 isPartial: remainder.omittedReasoning,
                 sessionID: row.id,
                 title: row.title,
-                project: project(workspace),
+                project: workspace,
                 deduplicationID: "copilot-desktop:\(row.id):row"
             ) {
                 records.append(record)
@@ -302,10 +302,6 @@ enum CopilotDesktopReader {
             return CopilotLogReader.stableHash(text)
         }
         return "idx-\(index)"
-    }
-
-    private static func project(_ workspace: String?) -> String? {
-        workspace.map { URL(fileURLWithPath: $0).lastPathComponent }
     }
 
     // MARK: - Database

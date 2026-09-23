@@ -142,20 +142,9 @@ enum StructuredLogSupport {
         url.resolvingSymlinksInPath().path
     }
 
-    /// A project named from an explicit directory the store wrote.
-    ///
-    /// The catalogue's built-in readers name a project by the **last path
-    /// component** of the working directory, so the same directory reached as
-    /// `/Users/me/Code/Pulse` and as `Pulse` is one row rather than two. These
-    /// stores write an absolute path, so it is reduced the same way; a value
-    /// that is already a bare name is returned unchanged, and a real project
-    /// label is never truncated. Nil for an empty value or the filesystem root.
+    /// Keep the stated path or label intact until project identity is built.
     static func project(_ value: String?) -> String? {
-        guard let value = nonBlank(value) else { return nil }
-        var path = value
-        while path.count > 1, path.hasSuffix("/") { path.removeLast() }
-        guard path != "/" else { return nil }
-        return nonBlank(URL(fileURLWithPath: path).lastPathComponent)
+        nonBlank(value)
     }
 
     /// The base directory an environment variable names, or nil.

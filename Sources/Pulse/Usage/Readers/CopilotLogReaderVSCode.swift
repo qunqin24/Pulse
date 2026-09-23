@@ -42,7 +42,7 @@ enum CopilotVSCodeReader {
 
     private static func records(from file: URL) -> [AgentUsageRecord] {
         let session = file.deletingPathExtension().lastPathComponent
-        let workspace = workspaceName(for: file)
+        let workspace = Self.workspace(for: file)
         let requests = reconstruct(AgentLogIO.jsonLines(at: file))
 
         var records: [AgentUsageRecord] = []
@@ -134,13 +134,15 @@ enum CopilotVSCodeReader {
         }
     }
 
-    private static func workspaceName(for file: URL) -> String? {
+    private static func workspace(for file: URL) -> String? {
         let hashDirectory = file.deletingLastPathComponent().deletingLastPathComponent()
         let object = AgentLogIO.object(AgentLogIO.json(at: hashDirectory.appending(path: "workspace.json")))
         let uri = AgentLogIO.text(object?["folder"]) ?? AgentLogIO.text(object?["workspace"])
         guard let uri else { return nil }
-        if let url = URL(string: uri) { return url.lastPathComponent }
-        return URL(fileURLWithPath: uri).lastPathComponent
+        if let url = URL(string: uri), url.isFileURL, url.host == nil || url.host == "" || url.host == "localhost" {
+            return url.path
+        }
+        return uri
     }
 
     // MARK: - Reconstructing the append/patch log

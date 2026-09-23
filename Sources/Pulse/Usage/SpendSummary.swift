@@ -74,13 +74,21 @@ struct SpendSummary: Equatable, Sendable {
         var id: String { session.id }
     }
 
-    /// One working directory, across every session in it.
-    ///
-    /// **Claude Code only, for now.** It keeps a directory per project; Codex
-    /// files sit under a date and say nothing about where the work happened.
-    /// Sessions with no project are not put in an "other" row — a bucket that
-    /// large says nothing and would outrank every real project on the list.
+    /// One identified project, across every session in the selected span.
     struct Project: Identifiable, Equatable, Sendable {
+        struct ID: Hashable, Sendable {
+            let identity: UsageProject.Identity
+            // A label alone cannot prove that two agents mean the same project.
+            let agent: SpendAgent?
+
+            init(_ project: UsageProject, agent: SpendAgent) {
+                identity = project.identity
+                if case .label = project.identity { self.agent = agent }
+                else { self.agent = nil }
+            }
+        }
+
+        let id: ID
         let name: String
         let tokens: Int
         let cost: Double
@@ -88,8 +96,12 @@ struct SpendSummary: Equatable, Sendable {
         var estimatedCost: Double? { tokens > 0 && unpricedTokens == tokens ? nil : cost }
         let sessions: Int
         let lastUsed: Date
+    }
 
-        var id: String { name }
+    func projectName(for row: Session) -> String? {
+        guard let project = row.session.project else { return nil }
+        let id = Project.ID(project, agent: row.agent)
+        return projects.first { $0.id == id }?.name ?? project.name
     }
 
     var tokens = 0
@@ -275,11 +287,12 @@ struct SpendSummary: Equatable, Sendable {
         var modelTokens: [String: Int] = [:]
         var modelAgents: [String: Set<SpendAgent>] = [:]
         var unpriced: Set<String> = []
-        var projectTokens: [String: Int] = [:]
-        var projectCost: [String: Double] = [:]
-        var projectUnpriced: [String: Int] = [:]
-        var projectSessions: [String: Int] = [:]
-        var projectLastUsed: [String: Date] = [:]
+        var projectTokens: [Project.ID: Int] = [:]
+        var projectCost: [Project.ID: Double] = [:]
+        var projectUnpriced: [Project.ID: Int] = [:]
+        var projectSessions: [Project.ID: Int] = [:]
+        var projectLastUsed: [Project.ID: Date] = [:]
+        var projectMetadata: [Project.ID: UsageProject] = [:]
         var hasAggregate = false
         var hasPartial = false
 
@@ -346,7 +359,9 @@ struct SpendSummary: Equatable, Sendable {
                     )
                 )
 
-                guard let project = session.project else { continue }
+                guard let metadata = session.project else { continue }
+                let project = Project.ID(metadata, agent: agent)
+                projectMetadata[project] = metadata
                 projectTokens[project, default: 0] += windowed.tokens
                 projectCost[project, default: 0] += windowed.cost
                 projectUnpriced[project, default: 0] += windowed.unpriced
@@ -430,15 +445,21 @@ struct SpendSummary: Equatable, Sendable {
             .sorted { $0.date < $1.date }
 
         summary.sessions.sort { $0.session.end > $1.session.end }
+        let knownProjects = Set(projectMetadata.values)
         summary.projects = projectTokens
-            .map { name, tokens in
-                Project(
-                    name: name,
+            .map { id, tokens in
+                let metadata = projectMetadata[id]!
+                var name = UsageProject.displayName(for: metadata, among: knownProjects)
+                if let agent = id.agent, projectMetadata.keys.contains(where: { $0 != id && projectMetadata[$0]?.name == name }) {
+                    name += " · " + agent.displayName
+                }
+                return Project(
+                    id: id, name: name,
                     tokens: tokens,
-                    cost: projectCost[name] ?? 0,
-                    unpricedTokens: projectUnpriced[name] ?? 0,
-                    sessions: projectSessions[name] ?? 0,
-                    lastUsed: projectLastUsed[name] ?? .distantPast
+                    cost: projectCost[id] ?? 0,
+                    unpricedTokens: projectUnpriced[id] ?? 0,
+                    sessions: projectSessions[id] ?? 0,
+                    lastUsed: projectLastUsed[id] ?? .distantPast
                 )
             }
             .sorted { $0.tokens > $1.tokens }

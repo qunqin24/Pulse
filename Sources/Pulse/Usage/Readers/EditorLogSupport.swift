@@ -109,14 +109,9 @@ enum EditorLog {
         return tail.isEmpty ? raw : tail
     }
 
-    /// The last component of a working directory the store stated.
-    ///
-    /// The record's `project` is a short label — the same shape every other
-    /// reader's session row carries — while the full path stays in the store.
+    /// Keep the stated directory; display names are derived after grouping.
     static func project(_ path: String?) -> String? {
-        guard let path = AgentLogIO.text(path) else { return nil }
-        let name = URL(fileURLWithPath: path).lastPathComponent
-        return name.isEmpty ? nil : name
+        AgentLogIO.text(path)
     }
 
     // MARK: - Timestamps

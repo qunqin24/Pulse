@@ -368,7 +368,7 @@ struct CopilotLogReaderTests {
         #expect(run1.isAggregate)
         #expect(run1.sessionID == "desk1")
         #expect(run1.title == "Ring")
-        #expect(run1.project == "Pulse")
+        #expect(run1.project == "/Users/me/Code/Pulse")
 
         // The second snapshot is the first minus the baseline; it lands on its
         // own calendar day. Output stays as reported (120, not 150): the 30
@@ -503,7 +503,7 @@ struct CopilotLogReaderTests {
         #expect(firstRecord.model == "gpt-4o")
         #expect(firstRecord.tally == TokenTally(input: 100, output: 25))
         #expect(firstRecord.sessionID == "vscode-session-1")
-        #expect(firstRecord.project == "Pulse")
+        #expect(firstRecord.project == "/Users/me/Code/Pulse")
         #expect(firstRecord.isAggregate == false)
         #expect(firstRecord.timestamp == Date(timeIntervalSince1970: 1_788_267_600))
 

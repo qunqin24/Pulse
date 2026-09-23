@@ -37,9 +37,7 @@ enum KiroReader {
 
         let session = AgentLogIO.text(header["session_id"]) ?? DatabaseReaderSupport.stem(headerFile)
         let model = Self.modelID(header) ?? "auto"
-        let project = AgentLogIO.text(header["cwd"]).map {
-            URL(fileURLWithPath: $0).lastPathComponent
-        }
+        let project = AgentLogIO.text(header["cwd"])
         let prompts = promptTimestamps(beside: headerFile)
 
         guard
