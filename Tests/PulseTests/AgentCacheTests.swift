@@ -254,7 +254,7 @@ struct AgentCacheTests {
         )
         AgentCache.save(ledger, stamp: .init(source: "s", prices: "p"), for: .cursor, at: file)
         let saved = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-        for version: Int? in [nil, 5, 6, 8] {
+        for version: Int? in [nil, 5, 6, 7, 9] {
             var changed = saved
             changed["version"] = version
             try JSONSerialization.data(withJSONObject: changed).write(to: file)
