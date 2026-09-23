@@ -120,7 +120,7 @@ struct ZCodeReaderTests {
         #expect(first.tally == TokenTally(input: 75, cacheWrite: 5, cacheRead: 20, output: 50))
         #expect(first.unclassifiedTokens == 0)
         #expect(first.sessionID == "s1")
-        #expect(first.project == "pulse")
+        #expect(first.project == "/work/pulse")
         #expect(!first.isAggregate)
 
         let second = try #require(records.first { $0.deduplicationID?.hasSuffix(":r2") == true })

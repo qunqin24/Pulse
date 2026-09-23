@@ -126,3 +126,5 @@ PULSE_BOT_PREVIEW=/path/to/existing/folder/bot-personalities.png swift test --fi
 Captured payloads carry no account name, email, or token — check before committing one. A quota reply is bucket ids, display names, fractions and reset times, and that is all it should be.
 
 **A temporary fixture removes only the root it created.** A test asks for a unique root, writes its database and logs inside that root, and deletes just the root on the way out. It never calls `deletingLastPathComponent()` from a fixture path to find something to clean up: one level above a file in the system temporary directory is the system temporary directory, which is not the test's to remove. `AgentStoreTests` is the example — its `temporary(_:)` hands back the owned root, and every test defers a `removeItem` on exactly that URL.
+
+`ProjectIdentityTests` covers same-name transcript directories through both cache layers, repeated paths across agents, source-only labels and Claude fallback folders. These are synthetic-store checks, not live-client validation.

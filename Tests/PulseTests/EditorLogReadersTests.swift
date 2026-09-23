@@ -356,7 +356,7 @@ struct ClineCLIReaderTests {
         #expect(record.tally == TokenTally(input: 50, cacheWrite: 20, cacheRead: 30, output: 40))
         #expect(record.model == "gpt-5")
         #expect(record.sessionID == "sess-1")
-        #expect(record.project == "pulse")
+        #expect(record.project == "/work/pulse")
         #expect(record.title == "Fix the ring")
         #expect(record.deduplicationID == "cline:sess-1:m1")
     }

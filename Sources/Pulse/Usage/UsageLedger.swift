@@ -222,12 +222,9 @@ struct UsageLedger: Sendable, Equatable {
         /// What the conversation was called: the title the user set, else the
         /// words it opened with. Nil for a transcript that carries neither.
         let title: String?
-        /// The working directory the session ran in, where the path says.
-        ///
-        /// Taken from the `cwd` the transcript states, which both CLIs
-        /// write — so this is the directory's real name rather than the
-        /// folder-name heuristic it replaced.
-        let project: String?
+        /// The stated directory or source-scoped project, with identity kept
+        /// separately from the short name shown in the pane.
+        let project: UsageProject?
         let start: Date
         let end: Date
         let tokens: Int
@@ -584,7 +581,7 @@ actor UsageLedgerReader {
                     id: path,
                     name: url.deletingPathExtension().lastPathComponent,
                     title: entry.title,
-                    project: entry.cwd.map { URL(fileURLWithPath: $0).lastPathComponent }
+                    project: UsageProject(entry.cwd)
                         ?? Self.project(of: url, provider: provider),
                     start: start,
                     end: end,
@@ -605,13 +602,13 @@ actor UsageLedgerReader {
     /// segment of that is the best guess available — it is a guess, which is
     /// why the stated `cwd` is preferred wherever there is one. Codex files
     /// sit under a date and carry no directory in the path at all.
-    static func project(of file: URL, provider: Provider) -> String? {
+    static func project(of file: URL, provider: Provider) -> UsageProject? {
         guard provider == .claudeCode else { return nil }
 
         let folder = file.deletingLastPathComponent().lastPathComponent
         let parts = folder.split(separator: "-", omittingEmptySubsequences: true)
         guard let last = parts.last.map(String.init), !last.isEmpty else { return nil }
-        return last
+        return UsageProject(source: file.deletingLastPathComponent().path, name: last)
     }
 
     private static func logFiles(for provider: Provider, home: URL) -> [URL] {

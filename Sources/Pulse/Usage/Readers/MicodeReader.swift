@@ -97,7 +97,7 @@ enum MicodeReader {
                         model: model,
                         tally: tally,
                         sessionID: session,
-                        project: workspace.map { URL(fileURLWithPath: $0).lastPathComponent },
+                        project: workspace,
                         deduplicationID: embedded ?? "micode:\(file.path):\(rowID)"
                     )
                 )

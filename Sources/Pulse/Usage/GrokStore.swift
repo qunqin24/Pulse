@@ -32,9 +32,7 @@ enum GrokStore {
         for directory in directories {
             guard !Task.isCancelled else { return .empty }
             // The folder is the working directory, percent-encoded.
-            let project = directory.lastPathComponent.removingPercentEncoding.map {
-                URL(fileURLWithPath: $0).lastPathComponent
-            }
+            let project = UsageProject(directory.lastPathComponent.removingPercentEncoding)
 
             let runs = (try? manager.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? []
             for run in runs {

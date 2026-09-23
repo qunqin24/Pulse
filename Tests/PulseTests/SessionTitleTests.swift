@@ -46,7 +46,7 @@ struct SessionTitleTests {
         // wherever a transcript has one, and this is what is left when it does
         // not.
         let claude = URL(fileURLWithPath: "/Users/me/.claude/projects/-Users-me-Code-Pulse/abc.jsonl")
-        #expect(UsageLedgerReader.project(of: claude, provider: .claudeCode) == "Pulse")
+        #expect(UsageLedgerReader.project(of: claude, provider: .claudeCode)?.name == "Pulse")
 
         let codex = URL(fileURLWithPath: "/Users/me/.codex/sessions/2026/09/14/rollout-x.jsonl")
         #expect(UsageLedgerReader.project(of: codex, provider: .codex) == nil)

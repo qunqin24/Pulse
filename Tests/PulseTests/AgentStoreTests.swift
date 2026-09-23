@@ -67,7 +67,7 @@ struct AgentStoreTests {
         let session = try #require(ledger.sessions.first)
         #expect(session.title == "Fix the ring")
         // The directory's last component, not the whole path.
-        #expect(session.project == "Pulse")
+        #expect(session.project?.name == "Pulse")
     }
 
     // MARK: - Grok Build
@@ -101,7 +101,7 @@ struct AgentStoreTests {
         #expect(day.tally == TokenTally(input: 100, cacheWrite: 20, cacheRead: 300, output: 15))
 
         let session = try #require(ledger.sessions.first)
-        #expect(session.project == "Pulse")
+        #expect(session.project?.name == "Pulse")
         #expect(session.title == "Fix the ring")
     }
 

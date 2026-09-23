@@ -753,12 +753,7 @@ struct TokenSpendView: View {
 
     // MARK: - Where the work happened
 
-    /// One row a working directory.
-    ///
-    /// **Claude Code only.** It keeps a directory per project; Codex files sit
-    /// under a date and carry no directory, so its sessions are counted in
-    /// everything above and are simply not on this list — which the caption
-    /// says, rather than leaving a reader to wonder where half the money went.
+    /// One row per project identity, with ambiguous directory names expanded.
     private func projects(_ summary: SpendSummary) -> some View {
         let total = max(summary.projects.reduce(0) { $0 + $1.tokens }, 1)
 
@@ -804,8 +799,8 @@ struct TokenSpendView: View {
                         // the fallback and the file's own name the last
                         // resort — a uuid tells the reader nothing, but it is
                         // at least what the session is called.
-                        row.session.title ?? row.session.project ?? row.session.name,
-                        subtitle: Self.sessionSubtitle(row),
+                        row.session.title ?? summary.projectName(for: row) ?? row.session.name,
+                        subtitle: Self.sessionSubtitle(row, project: summary.projectName(for: row)),
                         icon: row.agent.iconResource
                     ) {
                         HStack(spacing: 10) {
@@ -835,14 +830,14 @@ struct TokenSpendView: View {
 
     /// When it ran and for how long, and the file's own name where the row's
     /// title is already the directory.
-    private static func sessionSubtitle(_ row: SpendSummary.Session) -> String {
+    private static func sessionSubtitle(_ row: SpendSummary.Session, project: String?) -> String {
         let when = row.session.end.formatted(
             .dateTime.month(.abbreviated).day().hour().minute().locale(LocalizationSource.locale)
         )
         // The directory belongs here once the title has taken the row's own
         // line — it is what tells two conversations about the same thing
         // apart.
-        guard let project = row.session.project, row.session.title != nil else { return when }
+        guard let project, row.session.title != nil else { return when }
         return "\(when) · \(project)"
     }
 

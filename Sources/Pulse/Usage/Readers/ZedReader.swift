@@ -149,9 +149,9 @@ enum ZedReader {
         return tally.total > 0 ? tally : TokenTally()
     }
 
-    /// The workspace's label: `folder_paths` is newline-separated and
+    /// The workspace's directory: `folder_paths` is newline-separated and
     /// `folder_paths_order` names the original index of the first one. The
-    /// final path component is the label, never the whole path.
+    /// full path is retained for project identity.
     private static func project(paths: String?, order: String?) -> String? {
         guard let paths else { return nil }
         let list = paths
@@ -167,7 +167,7 @@ enum ZedReader {
            list.indices.contains(index) {
             chosen = list[index]
         }
-        return URL(fileURLWithPath: chosen).lastPathComponent
+        return chosen
     }
 
     // MARK: - Payloads

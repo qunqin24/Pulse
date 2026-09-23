@@ -133,7 +133,7 @@ enum OpenCodeReviewReader {
                     model: model,
                     tally: parts.tally,
                     sessionID: session,
-                    project: cwd.map { URL(fileURLWithPath: $0).lastPathComponent },
+                    project: cwd,
                     deduplicationID: identity,
                     unclassifiedTokens: parts.unclassified
                 )

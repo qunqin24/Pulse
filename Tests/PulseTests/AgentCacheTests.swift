@@ -225,7 +225,7 @@ struct AgentCacheTests {
     @Test("A kept session's buckets survive the cache round-trip")
     func sessionSlotsRoundTrip() throws {
         let stored = AgentCache.StoredSession(
-            id: "s", name: "n", title: "T", project: "Pulse",
+            id: "s", name: "n", title: "T", project: UsageProject("Pulse"),
             start: Date(timeIntervalSince1970: 0), end: Date(timeIntervalSince1970: 200),
             tokens: 15, cost: 1.5,
             slots: [AgentCache.StoredSlot(
@@ -254,7 +254,7 @@ struct AgentCacheTests {
         )
         AgentCache.save(ledger, stamp: .init(source: "s", prices: "p"), for: .cursor, at: file)
         let saved = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: file)) as? [String: Any])
-        for version: Int? in [nil, 5, 7] {
+        for version: Int? in [nil, 5, 6, 8] {
             var changed = saved
             changed["version"] = version
             try JSONSerialization.data(withJSONObject: changed).write(to: file)

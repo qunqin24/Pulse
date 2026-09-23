@@ -150,9 +150,7 @@ enum DevinDesktopReader {
                         model: modelName(model ?? resolved?.model),
                         tally: tally,
                         sessionID: resolved?.id ?? DatabaseReaderSupport.stem(file),
-                        project: resolved?.directory.map {
-                            URL(fileURLWithPath: $0).lastPathComponent
-                        },
+                        project: resolved?.directory,
                         deduplicationID: "devin-desktop:\(file.path):usage",
                         isAggregate: true
                     )
@@ -248,9 +246,7 @@ enum DevinDesktopReader {
                 model: modelName(hinted ?? resolved?.model),
                 tally: tally,
                 sessionID: resolved?.id ?? DatabaseReaderSupport.stem(file),
-                project: resolved?.directory.map {
-                    URL(fileURLWithPath: $0).lastPathComponent
-                },
+                project: resolved?.directory,
                 deduplicationID: "devin-desktop:\(file.path):\(index)"
             )
         }

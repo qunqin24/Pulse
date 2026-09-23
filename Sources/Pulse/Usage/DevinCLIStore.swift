@@ -69,7 +69,7 @@ enum DevinCLIStore {
                 id: "\(file.path)#\(id)",
                 name: id,
                 title: session?.title,
-                project: session?.directory.map { URL(fileURLWithPath: $0).lastPathComponent },
+                project: UsageProject(session?.directory),
                 start: totals.start,
                 end: totals.end,
                 tokens: totals.tokens,

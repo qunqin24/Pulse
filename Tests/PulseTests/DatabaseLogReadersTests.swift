@@ -351,7 +351,7 @@ struct DatabaseLogReadersTests {
         // Entry a (100/10/read 30/write 20), entry b skipped as empty, entry c
         // as numeric strings with a negative cache read clamped to zero.
         #expect(z1.tally == TokenTally(input: 150, cacheWrite: 20, cacheRead: 30, output: 11))
-        #expect(z1.project == "Two")
+        #expect(z1.project == "b/Two")
         #expect(z1.deduplicationID == "zed:z1")
 
         let z2 = try #require(records.first { $0.sessionID == "z2" })
@@ -491,7 +491,7 @@ struct DatabaseLogReadersTests {
         #expect(record.tally == TokenTally(input: 100, output: 10))
         #expect(record.model == "priced")
         #expect(record.sessionID == "s1")
-        #expect(record.project == "Pulse")
+        #expect(record.project == "/Users/me/Code/Pulse")
         #expect(record.deduplicationID == "s1:0")
         #expect(record.timestamp == Date(timeIntervalSince1970: 1_789_372_800))
         #expect(!record.isAggregate)
@@ -627,7 +627,7 @@ struct DatabaseLogReadersTests {
         #expect(record.tally.total == 145)
         #expect(record.model == "priced")
         #expect(record.sessionID == "conv-a")
-        #expect(record.project == "Pulse")
+        #expect(record.project == "/Users/me/Code/Pulse")
         #expect(record.timestamp == Date(timeIntervalSince1970: 1_789_372_900))
         #expect(record.deduplicationID == "antigravity:conv-a:resp-1")
         // An explicit per-generation timestamp is an exact event time.
@@ -758,7 +758,7 @@ struct DatabaseLogReadersTests {
         #expect(ledger.sessions.count == 2)
         let session = try #require(ledger.sessions.first { $0.id == "micode#s1" })
         #expect(session.tokens == 165)
-        #expect(session.project == "Pulse")
+        #expect(session.project?.name == "Pulse")
 
         // One raw model across two sessions is one model row.
         let model = ModelSpendSummary.of(
@@ -800,7 +800,7 @@ struct DatabaseLogReadersTests {
         // latest input 150 − read 40 = 110 fresh; summed output 10 + 5 = 15.
         #expect(aggregate.tally == TokenTally(input: 110, cacheWrite: 25, cacheRead: 40, output: 15))
         #expect(aggregate.sessionID == "d1")
-        #expect(aggregate.project == "Pulse")
+        #expect(aggregate.project == "/Users/me/Code/Pulse")
         #expect(aggregate.isAggregate)
         #expect(aggregate.timestamp == Self.iso("2026-09-15T12:01:00Z"))
 

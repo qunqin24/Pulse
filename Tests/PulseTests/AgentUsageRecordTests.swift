@@ -172,7 +172,7 @@ struct AgentUsageRecordTests {
         #expect(session.id == "opencode#id-1")
         #expect(session.name == "slug")
         #expect(session.title == "Fix the ring")
-        #expect(session.project == "Pulse")
+        #expect(session.project?.name == "Pulse")
     }
 
     @Test("A record with no session id counts toward totals and creates no session row")

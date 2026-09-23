@@ -12,7 +12,7 @@ import Foundation
 enum AgentCache {
     /// Also versions reader semantics: a valid old shape can contain totals
     /// from the old pricing, source-precedence or rewind rules.
-    private static let version = 6
+    private static let version = 7
 
     /// Whether the stores' real inputs, and the money behind their cost, are
     /// the same as when the ledger was kept.
@@ -262,7 +262,7 @@ enum AgentCache {
         let id: String
         let name: String
         let title: String?
-        let project: String?
+        let project: UsageProject?
         let start: Date
         let end: Date
         let tokens: Int
@@ -405,6 +405,7 @@ enum AgentCache {
         // hour, or trusted as a whole, so it must not decode.
         // Version 6 adds session calendar days and invalidates the former
         // vendor-pricing, Devin mirror and Command Code rewind totals.
+        // Version 7 preserves project identity independently of its display name.
         directory.appending(path: "agent-\(version)-\(agent.rawValue).json")
     }
 }
