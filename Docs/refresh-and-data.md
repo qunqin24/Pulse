@@ -81,11 +81,11 @@ The copied diagnostic report is a fixed allowlist: app version, provider, primar
 
 A white arc inside the ring while that provider’s CLI is working (`AgentActivity`), polled every 2s on its **own** clock. Usage moves in percent; a turn starts and finishes in seconds.
 
-The scanner receives the providers represented by enabled accounts and reads only those with local transcripts (Claude Code and Codex). With neither selected, no activity timer or scan runs. Activity remains per provider, including when only an added account is enabled: the local transcripts do not identify the Pulse account. This is independent of the Token Spend setting.
+The scanner receives the providers represented by enabled accounts and reads only those with a supported local lifecycle source: Claude Code and Codex transcripts, Kiro Desktop/CLI/ACP sessions, or ZCode telemetry when its configured endpoint identifies the enabled Zhipu or z.ai storefront. With none selected, no activity timer or scan runs. Activity remains per provider, including when only an added account is enabled: the local records do not identify the Pulse account. This is independent of the Token Spend setting.
 
 Changing the monitored providers cancels the previous scan and starts a new observation. Directory walks and tail reads check cancellation between files; a read already in progress may finish, but its result cannot restore activity or overwrite the new scan. Stopping clears `running`, `lastWrite` and `finishedAt` without treating deselection or hiding the panel as a finished turn.
 
-“Working” is not “written to recently.” Both CLIs state the answer in the **tail** of live transcripts. Rules of thumb (detail and historical measurements: [providers/README.md](providers/README.md) and [decisions/reported-figures.md](decisions/reported-figures.md)):
+“Working” is not “written to recently.” The supported agents state the answer in the **tail** of their local lifecycle records. ZCode Desktop, its native TUI and `zcode-acp` app-server use the same turn events; overlapping turn ids are reconciled independently. Kiro's v1 Prompt/ToolResults/AssistantMessage records and v2 Desktop/ACP turn events distinguish model work, tool work, a user interaction wait and a finished reply. Rules of thumb (detail and historical measurements: [providers/README.md](providers/README.md) and [decisions/reported-figures.md](decisions/reported-figures.md)):
 
 - Skip bookkeeping records; an interrupt record ends the turn.
 - Grace depends on what the turn is waiting for (model vs tool), from the **record timestamp**, not the file’s mtime.
@@ -95,7 +95,7 @@ Changing the monitored providers cancels the previous scan and starts a new obse
 
 The arc rides the **empty ring** between icon and usage stroke, Core Animation, not `TimelineView`. Reset `spinning` on disappear.
 
-Providers without local transcripts (`keepsLocalTranscripts == false`) omit the mark rather than showing a permanent idle.
+Providers without a supported local activity source (`supportsLocalActivity == false`) omit the mark rather than showing a permanent idle. This capability is separate from `keepsLocalTranscripts`: lifecycle records can drive an honest activity mark without containing the token buckets needed for a local cost estimate.
 
 **`AppSettings.animatesRingActivity`, on by default, gates both this arc and the coloured mark a refresh draws over the usage arc** (`UsageRingView.isRefreshing`, same idea, the provider's own colour instead of white). Off, `isBusy`/`isRefreshing` are still tracked — nothing about what Pulse knows changes — but the ring draws neither turning mark and stops dimming the usage arc while a reading is fetched. One switch for both, since they are the same kind of cue (something is happening right now) drawn two ways.
 
@@ -122,7 +122,7 @@ Two sources, and `UsageLedger.Origin` says which. **Local transcripts** (Claude 
 
 Neither money nor per-day history is reported by providers. Both are reconstructed from CLI transcripts (`UsageLedger`) at published API prices (`ModelPrices`, `models.dev`, cached a day). A model with no published price is left out, never given a plausible rate.
 
-`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate and the “working right now” mark — both need what only a transcript carries. **History is the wider `providesHistory`**, which Z.ai and Zhipu also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
+`keepsLocalTranscripts` (Claude Code and Codex today) gates the labelled estimate. The “working right now” mark has its own `supportsLocalActivity` capability because Kiro and ZCode lifecycle records do not carry the token buckets the estimate needs. **History is the wider `providesHistory`**, which Z.ai and Zhipu also answer from their own statistics. Everyone else **omits** those rather than showing zeroes. OpenCode keeps sessions in its own store, not the JSONL the ledger reads, so it stays false for now.
 
 Ledger notes (verify again after changing the counting; historical independent check agreed to the cent on one machine):
 

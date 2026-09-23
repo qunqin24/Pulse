@@ -66,6 +66,6 @@ When checking the key by hand, `plutil -extract … -o -`. Without `-o -` `pluti
 - New panel chrome: take size from `PanelMetrics`; keep the card an overlay; do not resize the window while a card opens ([ui/panel-geometry.md](ui/panel-geometry.md)).
 - New pointer behaviour: not `.onHover`; not exit events ([ui/input.md](ui/input.md)).
 - New settings copy: one-line subtitles. Reasoning belongs in docs, not on screen, except the money card’s provenance ([ui/settings.md](ui/settings.md)).
-- New `Provider` case: SVG, service returning `ProviderUsage`, branches in `UsageStore.refresh` / `refresh(_:)`, answers to `keepsLocalTranscripts` / `hasSourceChoice` / `supportsMultipleAccounts`, presence-only discovery and a five-language `monitoringAccessDescription`. `AgentActivity.root(for:)` and `UsageLedger.logFiles(for:)` return optional roots. Routes and auth: [providers/README.md](providers/README.md).
+- New `Provider` case: SVG, service returning `ProviderUsage`, branches in `UsageStore.refresh` / `refresh(_:)`, answers to `keepsLocalTranscripts` / `supportsLocalActivity` / `hasSourceChoice` / `supportsMultipleAccounts`, presence-only discovery and a five-language `monitoringAccessDescription`. `AgentActivity.root(for:)` and `UsageLedger.logFiles(for:)` return optional roots. Routes and auth: [providers/README.md](providers/README.md).
 
 `ImageRenderer` cannot draw `NavigationSplitView` or AppKit-backed controls — check Settings by running the app.

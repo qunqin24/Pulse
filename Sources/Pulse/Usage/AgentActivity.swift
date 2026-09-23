@@ -1,15 +1,15 @@
 import Foundation
 import Observation
 
-/// Whether Claude Code and Codex are working, read from the transcripts their
-/// CLIs write as they go.
+/// Whether a supported local agent is working, read from the lifecycle records
+/// its CLI writes as it goes.
 ///
 /// The obvious approach — "written to in the last N seconds" — is wrong in
 /// both directions at once, and no value of N fixes it. A turn that is running
 /// a slow tool writes nothing for minutes, so a short N stops the spinner
 /// while the agent is still busy; a finished turn goes on spinning for the
 /// rest of N. What is actually wanted is *is this turn still in flight*, and
-/// both tools happen to say so outright:
+/// the supported agents happen to say so outright:
 ///
 /// - Claude Code stamps every assistant record with a `stop_reason`.
 ///   `tool_use` means it is handing off to a tool and will be back; `end_turn`
@@ -19,6 +19,10 @@ import Observation
 /// - Codex brackets each turn with `task_started` and `task_complete` events,
 ///   and its tool calls and their results say which half of a turn is in
 ///   flight.
+/// - Kiro Desktop and ACP share v2 turn events; the CLI's v1 records state the
+///   same lifecycle with Prompt, ToolResults and AssistantMessage records.
+/// - ZCode Desktop, its TUI and `zcode-acp` share turn lifecycle telemetry,
+///   including a stable turn id when several turns overlap.
 ///
 /// So only the tail of the newest transcripts is read, and the answer is exact
 /// rather than a guess with a timer attached.
@@ -71,7 +75,7 @@ enum AgentActivity {
     ) -> [Provider: State] {
         var states: [Provider: State] = [:]
 
-        for provider in providers where provider.keepsLocalTranscripts {
+        for provider in providers where provider.supportsLocalActivity {
             guard !Task.isCancelled else { break }
             let files = transcripts(for: provider, home: home)
             var state = State(lastWrite: files.first?.modified, isWorking: false)
@@ -124,7 +128,12 @@ enum AgentActivity {
     /// Reads backwards from the end of a transcript for the first record that
     /// settles the question, so a 20MB file costs a few kilobytes to consult.
     static func verdict(for url: URL, provider: Provider) -> Verdict {
-        for line in tail(of: url).reversed() {
+        let lines = tail(of: url, limit: provider == .zai || provider == .glmCoding ? 2 * 1024 * 1024 : 128 * 1024)
+        if provider == .zai || provider == .glmCoding {
+            return zcodeVerdict(in: lines)
+        }
+
+        for line in lines.reversed() {
             guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
 
             switch provider {
@@ -180,7 +189,36 @@ enum AgentActivity {
                     continue
                 }
 
-            case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+            case .kiro:
+                switch (record["payload"] as? [String: Any])?["type"] as? String {
+                case "turn_end":
+                    return .finished
+                case "turn_start", "tool_result", "interaction_resolved", "assistant",
+                     "sub_agent_complete":
+                    return .working(.model, at: stamp(of: record))
+                case "tool_call", "sub_agent_start":
+                    return .working(.tool, at: stamp(of: record))
+                case "pending_interaction":
+                    // The turn is open but is waiting for a person, not doing
+                    // work. Do not animate a provider that needs attention.
+                    return .finished
+                default:
+                    break
+                }
+
+                switch record["kind"] as? String {
+                case "Prompt", "ToolResults":
+                    return .working(.model, at: stamp(of: record))
+                case "AssistantMessage":
+                    let content = (record["data"] as? [String: Any])?["content"] as? [[String: Any]] ?? []
+                    return content.contains { ($0["kind"] as? String) == "toolUse" }
+                        ? .working(.tool, at: stamp(of: record))
+                        : .finished
+                default:
+                    continue
+                }
+
+            case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo:
                 // None of these leaves transcripts Pulse reads, so nothing
@@ -190,6 +228,54 @@ enum AgentActivity {
         }
 
         return .unknown
+    }
+
+    /// ZCode's native TUI and `zcode-acp` app-server both write this telemetry
+    /// stream. Turns can overlap, so a completion only settles its own turn;
+    /// the newest other turn may still be working.
+    private static func zcodeVerdict(in lines: [Data]) -> Verdict {
+        var completed: Set<String> = []
+        var latest: [String: (wait: Wait, at: Date?)] = [:]
+
+        for line in lines.reversed() {
+            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  let event = record["event"] as? String,
+                  let turn = record["turnId"] as? String
+            else { continue }
+
+            switch event {
+            case "turn.completed", "turn.failed", "turn.cancelled":
+                completed.insert(turn)
+            case "tool.call.started":
+                if completed.contains(turn) { continue }
+                latest[turn] = latest[turn] ?? (.tool, stamp(of: record))
+            case "tool.call.completed", "tool.call.failed", "model.request.started",
+                 "model.request.completed", "model.request.failed":
+                if completed.contains(turn) { continue }
+                latest[turn] = latest[turn] ?? (.model, stamp(of: record))
+            case "turn.started":
+                guard !completed.contains(turn) else { continue }
+                let state = latest[turn] ?? (.model, stamp(of: record))
+                return .working(state.wait, at: state.at)
+            default:
+                continue
+            }
+        }
+
+        // A very verbose turn can push its start beyond the bounded tail. A
+        // recent event without a later completion is still exact evidence of
+        // an in-flight turn; a later completion would necessarily be nearer
+        // the end and would have put the id in `completed` above.
+        if let state = latest
+            .filter({ !completed.contains($0.key) })
+            .map(\.value)
+            .max(by: { ($0.at ?? .distantPast) < ($1.at ?? .distantPast) })
+        {
+            return .working(state.wait, at: state.at)
+        }
+        // The same log also receives process heartbeat records while ZCode is
+        // idle. Their fresh file timestamp is not evidence of a working turn.
+        return .finished
     }
 
     /// Claude Code records an interrupted turn as a user message saying so,
@@ -257,7 +343,7 @@ enum AgentActivity {
 
         guard let walker = FileManager.default.enumerator(
             at: root,
-            includingPropertiesForKeys: [.contentModificationDateKey],
+            includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey],
             options: [.skipsHiddenFiles, .skipsPackageDescendants]
         ) else { return [] }
 
@@ -265,15 +351,27 @@ enum AgentActivity {
         for case let url as URL in walker {
             guard !Task.isCancelled else { break }
             guard
-                url.pathExtension == "jsonl",
-                let modified = try? url.resourceValues(forKeys: [.contentModificationDateKey])
-                    .contentModificationDate
+                isActivityFile(url, provider: provider),
+                let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+                let modified = values.contentModificationDate,
+                (values.fileSize ?? 0) > 0
             else { continue }
 
             found.append((url, modified))
         }
 
         return found.sorted { $0.modified > $1.modified }
+    }
+
+    private static func isActivityFile(_ url: URL, provider: Provider) -> Bool {
+        guard url.pathExtension == "jsonl" else { return false }
+        guard provider == .kiro else { return true }
+
+        // v1 CLI sessions are flat under `cli`; v2 Desktop and ACP sessions
+        // use `messages.jsonl`. Their `sub-executions` files carry a different
+        // schema and must not trigger the unknown-format freshness fallback.
+        return url.lastPathComponent == "messages.jsonl"
+            || url.deletingLastPathComponent().lastPathComponent == "cli"
     }
 
     /// Nil for an agent that leaves no transcripts, which is what keeps this
@@ -285,10 +383,36 @@ enum AgentActivity {
         return switch provider {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
-        case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
+        // Kiro CLI's v1 files live directly under `cli`; Kiro Desktop and ACP
+        // v2 sessions live in workspace/session subdirectories. One recursive
+        // walk covers both without treating the desktop process itself as work.
+        case .kiro: home.appending(path: ".kiro/sessions")
+        case .zai, .glmCoding:
+            zcodeStorefront(home: home) == provider ? home.appending(path: ".zcode/cli/log") : nil
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+             .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo: nil
         }
+    }
+
+    /// ZCode can use many providers. Attribute its activity only when the
+    /// selected provider's configured endpoint identifies one of Pulse's GLM
+    /// storefronts; otherwise showing either ring would be a false claim.
+    private static func zcodeStorefront(home: URL) -> Provider? {
+        let config = home.appending(path: ".zcode/cli/config.json")
+        guard let data = try? Data(contentsOf: config),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let model = (object["model"] as? [String: Any])?["main"] as? String,
+              let providerID = model.split(separator: "/", maxSplits: 1).first.map(String.init),
+              let provider = (object["provider"] as? [String: Any])?[providerID] as? [String: Any],
+              let options = provider["options"] as? [String: Any],
+              let base = options["baseURL"] as? String,
+              let host = URL(string: base)?.host?.lowercased()
+        else { return nil }
+
+        if host == "open.bigmodel.cn" || host.hasSuffix(".bigmodel.cn") { return .glmCoding }
+        if host == "api.z.ai" || host.hasSuffix(".z.ai") { return .zai }
+        return nil
     }
 }
 
@@ -339,7 +463,7 @@ final class AgentActivityMonitor {
     }
 
     func start(providers: Set<Provider>) {
-        let providers = providers.filter(\.keepsLocalTranscripts)
+        let providers = providers.filter(\.supportsLocalActivity)
         guard providers != self.providers || timer == nil else { return }
         stop()
         self.providers = providers

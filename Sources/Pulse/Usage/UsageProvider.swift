@@ -135,12 +135,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Whether this agent leaves transcripts on disk that Pulse can read.
     ///
     /// The two CLIs write one JSONL file per session, carrying both the token
-    /// counts every local figure is built from and the turn boundaries the
-    /// activity mark is read from. Antigravity is an editor rather than a CLI
-    /// and keeps no such record, so anything derived from transcripts — the
-    /// spending history, the estimated value of a window, the "working right
-    /// now" mark — simply doesn't apply to it and is left out rather than
-    /// shown as zero.
+    /// counts every local spend figure is built from. This is intentionally
+    /// narrower than `supportsLocalActivity`: lifecycle-only records can drive
+    /// an honest activity mark without being usable for a cost estimate.
     var keepsLocalTranscripts: Bool {
         switch self {
         case .claudeCode, .codex: true
@@ -152,6 +149,19 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo: false
+        }
+    }
+
+    /// Whether Pulse can determine that this provider's local agent is in the
+    /// middle of a turn. This is deliberately separate from
+    /// `keepsLocalTranscripts`: Kiro and ZCode leave enough lifecycle records
+    /// for an activity mark, but not the token buckets the spend ledger needs.
+    var supportsLocalActivity: Bool {
+        switch self {
+        case .claudeCode, .codex, .kiro, .zai, .glmCoding: true
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+             .minimax, .minimaxCN, .copilot, .grok, .grokBot, .volcengine,
+             .commandCode, .deepSeek, .devin, .xiaomiMiMo: false
         }
     }
 
