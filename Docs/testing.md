@@ -118,6 +118,8 @@ Developer integrations also have `Integrations/raycast/tests/report.mjs`: run `n
 PULSE_BOT_PREVIEW=/path/to/existing/folder/bot-personalities.png swift test --filter renderContactSheet
 ```
 
+A [local contact sheet](images/bot-transition-poses.png), rendered after the transition-bound correction with the command above, shows the production drawing. It is not a recording of a running panel or evidence for the frame-to-frame bounds.
+
 **The animated mark is tested where it fails silently.** `BotMarkTests` covers the mood rule (busy outranks spent; no reading is unavailable), the persona rule (no character may play a state that contradicts the reading, and each wears a real, distinct shape), the colour deal (neighbouring rings never within 30° of hue, the same rail dealt the same way twice) and the contrast rule (no provider's body sinks into the disc, eyes always clear the body), plus that every state named anywhere exists in the bundled table and that the table is whole — 18 shapes of 96 points, 25 eye pairs, 39 states. None of those crash when they break: a mark that quietly reads `idle` about a signed-out provider, or a black body on a black disc, just looks like nothing. What the animation *looks like* is a screenshot question and is not tested.
 
 **No network, no clock, no disk in a rule test.** `AlertMemory.alerts` takes `now` as an argument for exactly this reason. `UsageCache.init(file:)` takes a path for exactly this reason. Anything that has to reach for a real one is not a rule test.
