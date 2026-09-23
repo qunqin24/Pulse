@@ -6,6 +6,14 @@ import Testing
 @Suite("Added account refresh", .serialized)
 @MainActor
 struct AccountRefreshTests {
+    private final class Clock {
+        var now = Date(timeIntervalSince1970: 1_800_000_000)
+
+        func advance(by seconds: TimeInterval) {
+            now = now.addingTimeInterval(seconds)
+        }
+    }
+
     private final class Requests {
         var accounts: [AccountKey] = []
         func read(_ account: AccountKey) -> ProviderUsage {
@@ -35,13 +43,17 @@ struct AccountRefreshTests {
             enabledAccounts: [Provider.deepSeek.rawValue, extra.key.id], extraAccounts: [extra]
         )
         let requests = Requests()
+        let clock = Clock()
         let store = UsageStore(settings: settings, activity: AgentActivityMonitor { _ in [:] },
+                               now: { clock.now },
                                readAddedAccount: { requests.read($0) })
         defer { store.stop() }
         store.refresh(dueOnly: true)
         await idle(store)
         #expect(requests.accounts == [extra.key])
         let before = store.diagnostics[Provider.deepSeek.rawValue]?.checkedAt
+        #expect(before == clock.now)
+        clock.advance(by: 10)
         store.refresh(dueOnly: true)
         await idle(store)
         #expect(requests.accounts == [extra.key])
@@ -53,17 +65,46 @@ struct AccountRefreshTests {
         #expect(requests.accounts == [extra.key, extra.key])
     }
 
+    @Test("A failed added-account read becomes due at the fixed interval, including timer slack")
+    func addedAccountBecomesDue() async {
+        let extra = ExtraAccount(provider: .codex, slot: "deadline", label: "Deadline")
+        let settings = AppSettings(enabledAccounts: [extra.key.id], extraAccounts: [extra],
+                                   refreshInterval: .fiveMinutes)
+        let requests = Requests()
+        let clock = Clock()
+        let store = UsageStore(settings: settings, activity: AgentActivityMonitor { _ in [:] },
+                               now: { clock.now }, readAddedAccount: { requests.read($0) })
+        defer { store.stop() }
+
+        store.refresh(dueOnly: true)
+        await idle(store)
+        #expect(requests.accounts == [extra.key])
+
+        clock.advance(by: 298)
+        store.refresh(dueOnly: true)
+        await idle(store)
+        #expect(requests.accounts == [extra.key])
+
+        clock.advance(by: 1)
+        store.refresh(dueOnly: true)
+        await idle(store)
+        #expect(requests.accounts == [extra.key, extra.key])
+    }
+
     @Test("A manual check advances only that account's schedule")
     func manualRefreshCounts() async {
         let first = ExtraAccount(provider: .codex, slot: "first", label: "First")
         let second = ExtraAccount(provider: .codex, slot: "second", label: "Second")
         let settings = AppSettings(enabledAccounts: [first.key.id, second.key.id], extraAccounts: [first, second])
         let requests = Requests()
+        let clock = Clock()
         let store = UsageStore(settings: settings, activity: AgentActivityMonitor { _ in [:] },
+                               now: { clock.now },
                                readAddedAccount: { requests.read($0) })
         defer { store.stop() }
         store.refresh(first.key)
         await idle(store)
+        clock.advance(by: 10)
         store.refresh(dueOnly: true)
         await idle(store)
         #expect(requests.accounts == [first.key, second.key])
@@ -74,8 +115,10 @@ struct AccountRefreshTests {
         let extra = ExtraAccount(provider: .codex, slot: "overlap", label: "Overlap")
         let settings = AppSettings(enabledAccounts: [extra.key.id], extraAccounts: [extra])
         let requests = Requests()
+        let clock = Clock()
         var duringRead: (() -> Void)?
         let store = UsageStore(settings: settings, activity: AgentActivityMonitor { _ in [:] },
+                               now: { clock.now },
                                readAddedAccount: { account in
             let tick = duringRead
             duringRead = nil

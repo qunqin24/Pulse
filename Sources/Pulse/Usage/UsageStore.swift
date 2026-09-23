@@ -40,6 +40,7 @@ final class UsageStore {
     private let grok = GrokUsageService()
     private let grokBot = GrokBotUsageService()
     private let cursor = CursorUsageService()
+    private let now: @MainActor () -> Date
     private let readAddedAccount: @MainActor (AccountKey) async -> ProviderUsage
     private var timer: Timer?
     /// Kept with the centre each was registered on: workspace notifications
@@ -97,10 +98,12 @@ final class UsageStore {
         settings: AppSettings,
         alerts: UsageAlerts? = nil,
         activity: AgentActivityMonitor = AgentActivityMonitor(),
+        now: @escaping @MainActor () -> Date = { Date() },
         readAddedAccount: (@MainActor (AccountKey) async -> ProviderUsage)? = nil
     ) {
         self.settings = settings
         self.activity = activity
+        self.now = now
         networkProxy = settings.networkProxy
         self.alerts = alerts
         codex = CodexUsageService(server: appServer)
@@ -242,11 +245,11 @@ final class UsageStore {
     /// The user hovered the rail to read a card, which is the clearest sign
     /// they want these numbers to be current.
     func noteLooked() {
-        signals.lastLooked = Date()
+        signals.lastLooked = self.now()
 
         // A rail is crossed ring by ring, so this is called several times a
         // second. Asking once is the point; asking once per ring is a storm.
-        let asked = lastLookRefresh.map { Date().timeIntervalSince($0) < Self.lookCooldown } ?? false
+        let asked = lastLookRefresh.map { self.now().timeIntervalSince($0) < Self.lookCooldown } ?? false
 
         // Reading a stale card is the moment a slow cadence is most obviously
         // wrong, so this asks straight away rather than tightening the loop
@@ -259,7 +262,7 @@ final class UsageStore {
         // than the cadence that was chosen for it is the evidence, and the
         // pointer arriving is the cheapest place to act on it.
         if !asked, currentInterval > AdaptiveRefresh.floor || isOverdue {
-            lastLookRefresh = Date()
+            lastLookRefresh = self.now()
             refresh()
         } else {
             scheduleNext()
@@ -273,7 +276,7 @@ final class UsageStore {
     /// paces providers differently, and only ever to ask sooner.
     private func interval(for provider: Provider) -> TimeInterval {
         settings.refreshInterval.seconds
-            ?? AdaptiveRefresh.interval(for: signals, isWatched: provider.spendingIsWatchedLocally)
+            ?? AdaptiveRefresh.interval(for: signals, isWatched: provider.spendingIsWatchedLocally, now: now())
     }
 
     /// A second of slack, so a timer that fires a hair early does not skip the
@@ -337,7 +340,7 @@ final class UsageStore {
         // per ring: measured, thirteen calls for twelve rings. Every signal in
         // this loop may only make it wait *longer*.
         guard let newest = usage.values.compactMap(\.observedAt).max() else { return false }
-        return Date().timeIntervalSince(newest) > currentInterval * 2 + 60
+        return self.now().timeIntervalSince(newest) > currentInterval * 2 + 60
     }
 
     /// Re-reads settings that affect the loop itself, then refreshes.
@@ -393,7 +396,7 @@ final class UsageStore {
     func refresh(dueOnly: Bool = false) {
         guard !settings.needsProviderSelection else { return }
         if isRefreshing, let started = refreshStartedAt,
-           Date().timeIntervalSince(started) > Self.passCeiling {
+           self.now().timeIntervalSince(started) > Self.passCeiling {
             // Whatever it was waiting for is not coming. Letting the next pass
             // through is the only thing that can restart the loop — and the
             // abandoned one is disowned here rather than merely unblocked, or
@@ -412,7 +415,7 @@ final class UsageStore {
             return
         }
         isRefreshing = true
-        refreshStartedAt = Date()
+        refreshStartedAt = self.now()
         refreshingAccount = nil
         generation += 1
         currentPass = generation
@@ -465,7 +468,7 @@ final class UsageStore {
         // woken for DeepSeek must not drag sixteen other services along with
         // it. Everything not asked keeps the reading it already has: the
         // commit loop below is gated on this same set.
-        let now = Date()
+        let now = self.now()
         let accounts = Self.accountsToAsk(
             from: settings.shownAccounts,
             dueOnly: dueOnly,
@@ -629,7 +632,7 @@ final class UsageStore {
             var fetchedExtras: [(String, ProviderUsage, ProviderUsage)] = []
             for account in extras {
                 guard pass == self.currentPass else { return }
-                self.askedAt[account] = Date()
+                self.askedAt[account] = self.now()
                 let raw = await self.readAddedAccount(account)
                 guard pass == self.currentPass else { return }
                 fetchedExtras.append((account.id, await UsageCache.shared.reconciled(raw), raw))
@@ -663,7 +666,7 @@ final class UsageStore {
             // slot was never written — cannot compare as "moved" on every pass
             // and pin the adaptive interval at its floor.
             if Self.didAnythingMove(results, previous: previous) {
-                self.signals.lastChange = Date()
+                self.signals.lastChange = self.now()
             }
 
             self.scheduleNext()
@@ -684,7 +687,7 @@ final class UsageStore {
         // path sets the flag too, so a ring click that never came back would
         // block every refresh after it.
         if isRefreshing, let started = refreshStartedAt,
-           Date().timeIntervalSince(started) > Self.passCeiling {
+           self.now().timeIntervalSince(started) > Self.passCeiling {
             isRefreshing = false
         }
 
@@ -693,7 +696,7 @@ final class UsageStore {
             return
         }
         isRefreshing = true
-        refreshStartedAt = Date()
+        refreshStartedAt = self.now()
         refreshingAccount = account
         generation += 1
         currentPass = generation
@@ -734,7 +737,7 @@ final class UsageStore {
         let v2ex = V2EXUsageService(enteredKey: key)
 
         Task { [codex, claudeCode, antigravity, cursor, grok, grokBot] in
-            self.askedAt[account] = Date()
+            self.askedAt[account] = self.now()
             let raw: ProviderUsage
             if !account.isPrimary {
                 raw = await self.readAddedAccount(account)
@@ -794,7 +797,7 @@ final class UsageStore {
             self.commit(fetched, raw: raw, for: account.id)
 
             if previous?.windows != fetched.windows {
-                self.signals.lastChange = Date()
+                self.signals.lastChange = self.now()
             }
 
             // A local/status-line read can finish within one frame. Keep the
@@ -917,7 +920,7 @@ final class UsageStore {
         usage[id] = fetched
         diagnostics[id] = ConnectionDiagnostic(
             raw: raw.recordingSoleRoute(), displayed: fetched,
-            previous: diagnostics[id], now: Date()
+            previous: diagnostics[id], now: self.now()
         )
         guard let account = AccountKey(id: id) else { return }
         // Before the alert rules, and regardless of whether they are on: the
@@ -943,7 +946,7 @@ final class UsageStore {
     /// successful pass.
     func reconsiderAlerts() {
         guard let alerts else { return }
-        let now = Date()
+        let now = self.now()
         var needsRefresh = false
         for account in settings.shownAccounts {
             let reading = usage(for: account)
@@ -981,7 +984,7 @@ final class UsageStore {
 
         // The soonest anything is due, so the provider on the shortest cadence
         // sets the alarm and the rest are simply not asked when it goes off.
-        let now = Date()
+        let now = self.now()
         let next = Self.nextRefreshDelay(
             from: settings.shownAccounts,
             askedAt: askedAt,
@@ -991,7 +994,7 @@ final class UsageStore {
         // A floor on the *timer* rather than on any provider's cadence: with
         // nothing enabled, or with something perpetually due, this is what
         // stops the loop spinning.
-        let wait = max(next ?? AdaptiveRefresh.interval(for: signals), 15)
+        let wait = max(next ?? AdaptiveRefresh.interval(for: signals, now: now), 15)
 
         // **`currentInterval` is the cadence, not the countdown.** Settings
         // renders it as "Now: X minutes" and `isOverdue` multiplies it, and
@@ -1002,7 +1005,7 @@ final class UsageStore {
         // the rail. The wait is a scheduling detail; this is the answer to
         // "how often is Pulse asking", which is still the ordinary cadence.
         currentInterval = settings.refreshInterval.seconds
-            ?? AdaptiveRefresh.interval(for: signals)
+            ?? AdaptiveRefresh.interval(for: signals, now: now)
 
         let timer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in
             // **The one caller that honours each provider's own cadence.**
