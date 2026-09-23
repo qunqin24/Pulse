@@ -64,9 +64,6 @@ enum QoderError: Error, Equatable {
     /// elsewhere. Separate from `missingCookie`, because one is "set this up"
     /// and the other is "you already did, do it again".
     case sessionExpired
-    /// The session works and the account holds no credits at all: a limit of
-    /// zero. A complete answer, not a fault, and not a ring at 100% either.
-    case noCredits
     case unreadableReply
     case rateLimited
     case serverError
@@ -216,7 +213,17 @@ struct QoderClient: Sendable {
         guard let personal = reply.totalQuota?.quotaSummary.flatMap(Self.pool) else {
             throw QoderError.unreadableReply
         }
-        let shared = reply.sharedQuota?.quotaSummary.flatMap(Self.pool).flatMap { $0.limit > 0 ? $0 : nil }
+        let shared: QoderSnapshot.Pool?
+        if let container = reply.sharedQuota {
+            // An absent team pool is normal; an unreadable one is not proof
+            // that no allowance remains. Only a valid zero pool is omitted.
+            guard let pool = container.quotaSummary.flatMap(Self.pool) else {
+                throw QoderError.unreadableReply
+            }
+            shared = pool.limit > 0 ? pool : nil
+        } else {
+            shared = nil
+        }
         return QoderSnapshot(personal: personal, shared: shared, resetsAt: reply.nextResetAt)
     }
 
@@ -330,7 +337,8 @@ struct QoderUsageService: Sendable {
         do {
             let snapshot = try await client.fetch(cookie: cookie, site: site)
             let windows = Self.windows(from: snapshot)
-            guard !windows.isEmpty else { throw QoderError.noCredits }
+            // A complete answer: the account has no allowance to display.
+            guard !windows.isEmpty else { return .unavailable(.qoder, reason: .qoderNoCredits) }
             return .init(account: AccountKey(.qoder),
                          windows: windows,
                          observedAt: Date(),
@@ -341,7 +349,6 @@ struct QoderUsageService: Sendable {
             let reason: ProviderUsage.Unavailability = switch error {
             case .missingCookie, .invalidCookie: .qoderSessionMissing
             case .sessionExpired: .qoderSessionExpired
-            case .noCredits: .qoderNoCredits
             case .rateLimited: .rateLimited
             case .serverError: .serverError
             case .unreadableReply: .unreadableReply

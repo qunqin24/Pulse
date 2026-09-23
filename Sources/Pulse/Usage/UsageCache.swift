@@ -72,6 +72,13 @@ actor UsageCache {
     /// something, whichever was actually taken later.
     func reconciled(_ result: ProviderUsage) -> ProviderUsage {
         let fetched = result.recordingSoleRoute()
+        // Qoder confirmed there is no allowance. It supersedes the old
+        // figures, including on the next launch and in the cached JSON export.
+        // A failed or unreadable request still uses the ordinary fallback.
+        if fetched.state == .unavailable(.qoderNoCredits) {
+            discard(for: fetched.account)
+            return fetched
+        }
         let now = Date()
         let valid = fetched.current(at: now)
 
@@ -192,6 +199,13 @@ actor UsageCache {
     private static func mayStandIn(for a: ProviderUsage, _ b: ProviderUsage) -> Bool {
         guard a.requiresScopeMatch else { return true }
         return UsageScope.match(a.sourceScope, b.sourceScope)
+    }
+
+    private func discard(for account: AccountKey) {
+        var all = load()
+        guard all.removeValue(forKey: account.id) != nil else { return }
+        readings = all
+        write(all)
     }
 
     private func store(_ usage: ProviderUsage) {

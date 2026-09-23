@@ -9,7 +9,7 @@ Qoder's credits, read through the account page's own request.
 - `Provider.qoder`. Icon `qoder` (lobe-icons). Brand colour `#2ADB5C`. Extra accounts: no. Transcripts: no. Spending history: no.
 - First run: offered unchecked in the chooser. Detected hint when `~/Library/Application Support/Qoder` or `QoderCN`, or `Qoder.app`, exists — a hint only; nothing the app keeps is read.
 - `usesAPIKey` and `usesSessionCookie` are true, so Settings draws a **session cookie** row and the "Read from browser" row, as for Ollama and Xiaomi.
-- Service: [`QoderUsageService.swift`](../../Sources/Pulse/Providers/QoderUsageService.swift). Tests: `QoderParsingTests`, and the site/session case in `UsageCacheTests`. Fixtures `Tests/PulseTests/Fixtures/qoder-*.json`.
+- Service: [`QoderUsageService.swift`](../../Sources/Pulse/Providers/QoderUsageService.swift). Tests: `QoderParsingTests`, `QoderCacheTests`, and the site/session case in `UsageCacheTests`. Fixtures `Tests/PulseTests/Fixtures/qoder-*.json`.
 
 ## Two sites, one row
 
@@ -56,7 +56,9 @@ Both: fraction is `usedValue / limitValue` (not the rounded `usagePercentage`); 
 
 **A purchase is not a reset.** Buying a pack raises `limitValue` and drops the fraction with nothing turned over, so for these kinds `hasTurnedOver` accepts only a `nextResetAt` that moved forward, never the forty-point fall ([../notifications.md](../notifications.md)).
 
-**A limit of zero is not drawn.** No ring at 100% for an allowance never granted: a zero shared pool is a placeholder and is dropped, and a zero personal allowance with nothing else is `qoderNoCredits` — an answer, not an outage (`UsageAlerts.standing` → `.answered`).
+**A limit of zero is not drawn.** No ring at 100% for an allowance never granted: a zero shared pool is a placeholder and is dropped, and a zero personal allowance with nothing else is `qoderNoCredits` — an answer, not an outage (`UsageAlerts.standing` → `.answered`). This clears the account's previous reading from memory and disk, so a later failure, relaunch or `--json` export cannot restore an allowance Qoder has withdrawn. An exhausted allowance with a positive limit is still a reading at 100%.
+
+An absent or null `sharedQuota` means no team pool. A present pool must contain a readable summary with nonnegative used and limit values; malformed or incomplete figures are `unreadableReply`, never proof that the account has no credits. Those failures keep the usual same-site/session cache fallback. `QoderCacheTests` covers these transitions through the service and cache with synthetic HTTP responses, not a live account.
 
 ## Unconfirmed
 
