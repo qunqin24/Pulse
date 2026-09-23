@@ -118,6 +118,7 @@ struct UsageLedger: Sendable, Equatable {
         let start: Date
         let tokens: Int
         let cost: Double
+        var unpricedTokens: Int = 0
         /// The quarter-hour's tokens split by **raw model id**, where the
         /// reader kept them.
         ///
@@ -211,6 +212,7 @@ struct UsageLedger: Sendable, Equatable {
             let date: Date
             let tokens: Int
             let cost: Double
+            var unpricedTokens: Int = 0
         }
 
         /// The file's path, which is unique and stable.
@@ -232,6 +234,8 @@ struct UsageLedger: Sendable, Equatable {
         let end: Date
         let tokens: Int
         let cost: Double
+        var unpricedTokens: Int = 0
+        var estimatedCost: Double? { tokens > 0 && unpricedTokens == tokens ? nil : cost }
         /// The session's own quarter-hour buckets, priced — the same ones the
         /// day totals are folded from.
         ///
@@ -376,12 +380,12 @@ actor UsageLedgerReader {
     /// session's own detail is cut — and can be windowed — the same way the
     /// day totals are. The key is the one `slotKey(for:)` produced.
     nonisolated static func sessionSlots(
-        _ totals: [String: (tokens: Int, cost: Double)]
+        _ totals: [String: (tokens: Int, cost: Double, unpriced: Int)]
     ) -> [UsageLedger.Slot] {
         totals
             .compactMap { key, value in
                 sharedSlotFormatter.date(from: key).map {
-                    UsageLedger.Slot(start: $0, tokens: value.tokens, cost: value.cost)
+                    UsageLedger.Slot(start: $0, tokens: value.tokens, cost: value.cost, unpricedTokens: value.unpriced)
                 }
             }
             .sorted { $0.start < $1.start }
@@ -454,7 +458,7 @@ actor UsageLedgerReader {
                 }
             }
 
-            slots.append(UsageLedger.Slot(start: start, tokens: tokens, cost: cost, models: models))
+            slots.append(UsageLedger.Slot(start: start, tokens: tokens, cost: cost, unpricedTokens: unpricedTokens, models: models))
 
             dayTokens[day, default: 0] += tokens
             dayCost[day, default: 0] += cost
@@ -553,6 +557,7 @@ actor UsageLedgerReader {
             guard !Task.isCancelled else { return [] }
             var tokens = 0
             var cost = 0.0
+            var unpricedTokens = 0
             var start: Date?
             var end: Date?
             var slots: [UsageLedger.Slot] = []
@@ -564,6 +569,7 @@ actor UsageLedgerReader {
 
                 var slotTokens = 0
                 var slotCost = 0.0
+                var slotUnpriced = 0
                 for (model, tally) in models {
                     tokens += tally.total
                     slotTokens += tally.total
@@ -571,9 +577,12 @@ actor UsageLedgerReader {
                         let money = tally.cost(at: price)
                         cost += money
                         slotCost += money
+                    } else {
+                        unpricedTokens += tally.total
+                        slotUnpriced += tally.total
                     }
                 }
-                slots.append(.init(start: at, tokens: slotTokens, cost: slotCost))
+                slots.append(.init(start: at, tokens: slotTokens, cost: slotCost, unpricedTokens: slotUnpriced))
             }
 
             guard tokens > 0, let start, let end else { continue }
@@ -590,6 +599,7 @@ actor UsageLedgerReader {
                     end: end,
                     tokens: tokens,
                     cost: cost,
+                    unpricedTokens: unpricedTokens,
                     slots: slots.sorted { $0.start < $1.start }
                 )
             )

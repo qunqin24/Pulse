@@ -519,7 +519,7 @@ struct AgentUsageRecordTests {
         #expect(session.tokens == 500)
         // Known calendar dates survive without inventing an hour series.
         #expect(session.slots.isEmpty)
-        #expect(session.days == [.init(date: day.date, tokens: 500, cost: session.cost)])
+        #expect(session.days == [.init(date: day.date, tokens: 500, cost: session.cost, unpricedTokens: 400)])
         #expect(abs(session.cost - 0.1) < 1e-12)
 
         let combined = SpendSummary.of(

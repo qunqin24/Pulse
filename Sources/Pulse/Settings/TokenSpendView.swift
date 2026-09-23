@@ -570,6 +570,8 @@ struct TokenSpendView: View {
         return summary.agents.contains { partial($0.unpricedTokens, $0.tokens) }
             || summary.days.contains { partial($0.unpricedTokens, $0.tokens) }
             || summary.months.contains { partial($0.unpricedTokens, $0.tokens) }
+            || summary.projects.contains { partial($0.unpricedTokens, $0.tokens) }
+            || summary.sessions.contains { partial($0.session.unpricedTokens, $0.session.tokens) }
     }
 
     /// Whole months, for the spans long enough to have more than one.
@@ -775,7 +777,7 @@ struct TokenSpendView: View {
                             ShareBar(share: Double(project.tokens) / Double(total))
                                 .frame(width: 64, height: 6)
 
-                            Text(SpendFormat.money(project.cost))
+                            CostText(cost: project.estimatedCost, unpriced: project.unpricedTokens)
                                 .font(.system(size: 12))
                                 .monospacedDigit()
                                 .lineLimit(1)
@@ -816,7 +818,7 @@ struct TokenSpendView: View {
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
 
-                            Text(SpendFormat.money(row.session.cost))
+                            CostText(cost: row.session.estimatedCost, unpriced: row.session.unpricedTokens)
                                 .font(.system(size: 12))
                                 .monospacedDigit()
                                 .lineLimit(1)

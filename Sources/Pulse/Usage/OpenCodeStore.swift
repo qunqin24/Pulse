@@ -38,11 +38,11 @@ enum OpenCodeStore {
         let sessions = Self.sessions(handle)
 
         var buckets: [String: [String: TokenTally]] = [:]
-        var perSession: [String: (tally: TokenTally, cost: Double, start: Date, end: Date)] = [:]
+        var perSession: [String: (tally: TokenTally, cost: Double, unpriced: Int, start: Date, end: Date)] = [:]
         // A session resumed across days is several quarter-hours, and the
         // project totals need to be able to count only the ones inside the
         // span on screen.
-        var sessionSlots: [String: [String: (tokens: Int, cost: Double)]] = [:]
+        var sessionSlots: [String: [String: (tokens: Int, cost: Double, unpriced: Int)]] = [:]
         let calendar = Calendar.current
 
         Self.each(handle, "SELECT session_id, data FROM message") { statement in
@@ -70,23 +70,27 @@ enum OpenCodeStore {
             )
             guard tally.total > 0 else { return }
 
-            let cost = ModelPrices.price(for: model, in: prices, vendor: vendor).map { tally.cost(at: $0) } ?? 0
+            let price = ModelPrices.price(for: model, in: prices, vendor: vendor)
+            let cost = price.map { tally.cost(at: $0) } ?? 0
+            let unpriced = price == nil ? tally.total : 0
             let key = UsageLedgerReader.slotKey(for: at)
             buckets[key, default: [:]][model] = (buckets[key]?[model] ?? TokenTally()) + tally
 
-            var slot = sessionSlots[session, default: [:]][key] ?? (tokens: 0, cost: 0)
+            var slot = sessionSlots[session, default: [:]][key] ?? (tokens: 0, cost: 0, unpriced: 0)
             slot.tokens += tally.total
             slot.cost += cost
+            slot.unpriced += unpriced
             sessionSlots[session, default: [:]][key] = slot
 
             if var running = perSession[session] {
                 running.tally = running.tally + tally
                 running.cost += cost
+                running.unpriced += unpriced
                 running.start = min(running.start, at)
                 running.end = max(running.end, at)
                 perSession[session] = running
             } else {
-                perSession[session] = (tally, cost, at, at)
+                perSession[session] = (tally, cost, unpriced, at, at)
             }
         }
 
@@ -105,6 +109,7 @@ enum OpenCodeStore {
                     end: totals.end,
                     tokens: totals.tally.total,
                     cost: totals.cost,
+                    unpricedTokens: totals.unpriced,
                     slots: UsageLedgerReader.sessionSlots(sessionSlots[id] ?? [:])
                 )
             }

@@ -12,7 +12,7 @@ import Foundation
 enum AgentCache {
     /// Also versions reader semantics: a valid old shape can contain totals
     /// from the old pricing, source-precedence or rewind rules.
-    private static let version = 6
+    private static let version = 7
 
     /// Whether the stores' real inputs, and the money behind their cost, are
     /// the same as when the ledger was kept.
@@ -251,6 +251,7 @@ enum AgentCache {
         let start: Date
         let tokens: Int
         let cost: Double
+        let unpricedTokens: Int
         /// **Required, not defaulted**, for the same reason as
         /// `StoredDay.modelTallies`: a model's own hours come only from here,
         /// and a slot that silently decoded with none would let a drill-down
@@ -267,6 +268,7 @@ enum AgentCache {
         let end: Date
         let tokens: Int
         let cost: Double
+        let unpricedTokens: Int
         /// **Required, not defaulted.** A cache written before sessions
         /// carried their buckets would otherwise decode with none, leaving
         /// project totals unable to respect the selected span. Missing it has to
@@ -280,6 +282,7 @@ enum AgentCache {
         let date: Date
         let tokens: Int
         let cost: Double
+        let unpricedTokens: Int
     }
 
     /// Reads the kept ledger back.
@@ -319,18 +322,18 @@ enum AgentCache {
             unpricedModels: saved.ledger.unpricedModels,
             modelNames: saved.ledger.modelNames,
             slots: saved.ledger.slots.map {
-                .init(start: $0.start, tokens: $0.tokens, cost: $0.cost, models: $0.models)
+                .init(start: $0.start, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens, models: $0.models)
             }
         )
         ledger.sessions = saved.ledger.sessions.map {
             .init(
                 id: $0.id, name: $0.name, title: $0.title, project: $0.project,
-                start: $0.start, end: $0.end, tokens: $0.tokens, cost: $0.cost,
+                start: $0.start, end: $0.end, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens,
                 slots: $0.slots.map {
-                    .init(start: $0.start, tokens: $0.tokens, cost: $0.cost, models: $0.models)
+                    .init(start: $0.start, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens, models: $0.models)
                 },
                 days: $0.days.map {
-                    .init(date: $0.date, tokens: $0.tokens, cost: $0.cost)
+                    .init(date: $0.date, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens)
                 }
             )
         }
@@ -364,19 +367,19 @@ enum AgentCache {
             sessions: ledger.sessions.map {
                 StoredSession(
                     id: $0.id, name: $0.name, title: $0.title, project: $0.project,
-                    start: $0.start, end: $0.end, tokens: $0.tokens, cost: $0.cost,
+                    start: $0.start, end: $0.end, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens,
                     slots: $0.slots.map {
-                        StoredSlot(start: $0.start, tokens: $0.tokens, cost: $0.cost, models: $0.models)
+                        StoredSlot(start: $0.start, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens, models: $0.models)
                     },
                     days: $0.days.map {
-                        StoredSessionDay(date: $0.date, tokens: $0.tokens, cost: $0.cost)
+                        StoredSessionDay(date: $0.date, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens)
                     }
                 )
             },
             unpricedModels: ledger.unpricedModels,
             modelNames: ledger.modelNames,
             slots: ledger.slots.map {
-                StoredSlot(start: $0.start, tokens: $0.tokens, cost: $0.cost, models: $0.models)
+                StoredSlot(start: $0.start, tokens: $0.tokens, cost: $0.cost, unpricedTokens: $0.unpricedTokens, models: $0.models)
             }
         )
 
@@ -405,6 +408,7 @@ enum AgentCache {
         // hour, or trusted as a whole, so it must not decode.
         // Version 6 adds session calendar days and invalidates the former
         // vendor-pricing, Devin mirror and Command Code rewind totals.
+        // Version 7 retains unpriced counts in sessions and their time buckets.
         directory.appending(path: "agent-\(version)-\(agent.rawValue).json")
     }
 }

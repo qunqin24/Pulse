@@ -43,10 +43,11 @@ enum GrokStore {
 
                 var tokens = 0
                 var cost = 0.0
+                var unpricedTokens = 0
                 var first: Date?
                 var last: Date?
                 var title: String?
-                var runSlots: [String: (tokens: Int, cost: Double)] = [:]
+                var runSlots: [String: (tokens: Int, cost: Double, unpriced: Int)] = [:]
 
                 for root in AgentLogIO.jsonLines(at: file) {
                     guard let params = root["params"] as? [String: Any],
@@ -83,14 +84,18 @@ enum GrokStore {
                         )
                         guard tally.total > 0 else { continue }
 
-                        let money = ModelPrices.price(for: model, in: prices).map { tally.cost(at: $0) } ?? 0
+                        let price = ModelPrices.price(for: model, in: prices)
+                        let money = price.map { tally.cost(at: $0) } ?? 0
+                        let unpriced = price == nil ? tally.total : 0
                         buckets[key, default: [:]][model] = (buckets[key]?[model] ?? TokenTally()) + tally
                         tokens += tally.total
                         cost += money
+                        unpricedTokens += unpriced
 
-                        var slot = runSlots[key] ?? (tokens: 0, cost: 0)
+                        var slot = runSlots[key] ?? (tokens: 0, cost: 0, unpriced: 0)
                         slot.tokens += tally.total
                         slot.cost += money
+                        slot.unpriced += unpriced
                         runSlots[key] = slot
                     }
                 }
@@ -99,7 +104,7 @@ enum GrokStore {
                 sessions.append(
                     UsageLedger.Session(
                         id: file.path, name: run.lastPathComponent, title: title,
-                        project: project, start: first, end: last, tokens: tokens, cost: cost,
+                        project: project, start: first, end: last, tokens: tokens, cost: cost, unpricedTokens: unpricedTokens,
                         slots: UsageLedgerReader.sessionSlots(runSlots)
                     )
                 )

@@ -28,9 +28,10 @@ enum KimiCLIStore {
 
             var tokens = 0
             var cost = 0.0
+            var unpricedTokens = 0
             var first: Date?
             var last: Date?
-            var sessionSlots: [String: (tokens: Int, cost: Double)] = [:]
+            var sessionSlots: [String: (tokens: Int, cost: Double, unpriced: Int)] = [:]
             let model = "kimi (unnamed)"
 
             for root in AgentLogIO.jsonLines(at: file) {
@@ -58,14 +59,18 @@ enum KimiCLIStore {
                 last = max(last ?? at, at)
 
                 let key = UsageLedgerReader.slotKey(for: at)
-                let money = ModelPrices.price(for: model, in: prices).map { tally.cost(at: $0) } ?? 0
+                let price = ModelPrices.price(for: model, in: prices)
+                let money = price.map { tally.cost(at: $0) } ?? 0
+                let unpriced = price == nil ? tally.total : 0
                 buckets[key, default: [:]][model] = (buckets[key]?[model] ?? TokenTally()) + tally
                 tokens += tally.total
                 cost += money
+                unpricedTokens += unpriced
 
-                var slot = sessionSlots[key] ?? (tokens: 0, cost: 0)
+                var slot = sessionSlots[key] ?? (tokens: 0, cost: 0, unpriced: 0)
                 slot.tokens += tally.total
                 slot.cost += money
+                slot.unpriced += unpriced
                 sessionSlots[key] = slot
             }
 
@@ -78,7 +83,7 @@ enum KimiCLIStore {
                     // wire log. Neither carries a working directory.
                     title: Self.title(besideWire: file),
                     project: nil,
-                    start: first, end: last, tokens: tokens, cost: cost,
+                    start: first, end: last, tokens: tokens, cost: cost, unpricedTokens: unpricedTokens,
                     slots: UsageLedgerReader.sessionSlots(sessionSlots)
                 )
             )

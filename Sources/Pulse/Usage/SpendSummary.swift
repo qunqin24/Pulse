@@ -84,6 +84,8 @@ struct SpendSummary: Equatable, Sendable {
         let name: String
         let tokens: Int
         let cost: Double
+        var unpricedTokens: Int = 0
+        var estimatedCost: Double? { tokens > 0 && unpricedTokens == tokens ? nil : cost }
         let sessions: Int
         let lastUsed: Date
 
@@ -213,29 +215,31 @@ struct SpendSummary: Equatable, Sendable {
     private static func window(
         _ session: UsageLedger.Session,
         cutoff: Date?
-    ) -> (tokens: Int, cost: Double, last: Date)? {
-        guard let cutoff else { return (session.tokens, session.cost, session.end) }
+    ) -> (tokens: Int, cost: Double, unpriced: Int, last: Date)? {
+        guard let cutoff else { return (session.tokens, session.cost, session.unpricedTokens, session.end) }
 
         guard !session.slots.isEmpty else {
             if !session.days.isEmpty {
                 let days = session.days.filter { $0.date >= cutoff }
                 guard let last = days.map(\.date).max() else { return nil }
-                return (days.reduce(0) { $0 + $1.tokens }, days.reduce(0.0) { $0 + $1.cost }, last)
+                return (days.reduce(0) { $0 + $1.tokens }, days.reduce(0.0) { $0 + $1.cost }, days.reduce(0) { $0 + $1.unpricedTokens }, last)
             }
-            return session.end >= cutoff ? (session.tokens, session.cost, session.end) : nil
+            return session.end >= cutoff ? (session.tokens, session.cost, session.unpricedTokens, session.end) : nil
         }
 
         var tokens = 0
         var cost = 0.0
+        var unpriced = 0
         var last = cutoff
         var found = false
         for slot in session.slots where slot.start >= cutoff {
             found = true
             tokens += slot.tokens
             cost += slot.cost
+            unpriced += slot.unpricedTokens
             last = max(last, slot.start)
         }
-        return found ? (tokens, cost, last) : nil
+        return found ? (tokens, cost, unpriced, last) : nil
     }
 
     /// Adds the ledgers up over the last `span` days, or over everything when
@@ -273,6 +277,7 @@ struct SpendSummary: Equatable, Sendable {
         var unpriced: Set<String> = []
         var projectTokens: [String: Int] = [:]
         var projectCost: [String: Double] = [:]
+        var projectUnpriced: [String: Int] = [:]
         var projectSessions: [String: Int] = [:]
         var projectLastUsed: [String: Date] = [:]
         var hasAggregate = false
@@ -336,7 +341,7 @@ struct SpendSummary: Equatable, Sendable {
                         session: UsageLedger.Session(
                             id: session.id, name: session.name, title: session.title,
                             project: session.project, start: session.start, end: session.end,
-                            tokens: windowed.tokens, cost: windowed.cost, slots: session.slots, days: session.days
+                            tokens: windowed.tokens, cost: windowed.cost, unpricedTokens: windowed.unpriced, slots: session.slots, days: session.days
                         )
                     )
                 )
@@ -344,6 +349,7 @@ struct SpendSummary: Equatable, Sendable {
                 guard let project = session.project else { continue }
                 projectTokens[project, default: 0] += windowed.tokens
                 projectCost[project, default: 0] += windowed.cost
+                projectUnpriced[project, default: 0] += windowed.unpriced
                 projectSessions[project, default: 0] += 1
                 projectLastUsed[project] = max(projectLastUsed[project] ?? windowed.last, windowed.last)
             }
@@ -430,6 +436,7 @@ struct SpendSummary: Equatable, Sendable {
                     name: name,
                     tokens: tokens,
                     cost: projectCost[name] ?? 0,
+                    unpricedTokens: projectUnpriced[name] ?? 0,
                     sessions: projectSessions[name] ?? 0,
                     lastUsed: projectLastUsed[name] ?? .distantPast
                 )
