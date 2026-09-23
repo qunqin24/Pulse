@@ -10,7 +10,7 @@ final class AppSettings {
         didSet {
             guard isPanelVisible != oldValue else { return }
             UserDefaults.standard.set(isPanelVisible, forKey: Key.panelVisible)
-            onChange?()
+            onChange?(.visibility)
         }
     }
 
@@ -39,7 +39,7 @@ final class AppSettings {
         didSet {
             guard hidesInFullScreen != oldValue else { return }
             UserDefaults.standard.set(hidesInFullScreen, forKey: Key.hidesInFullScreen)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -57,16 +57,14 @@ final class AppSettings {
         didSet {
             guard followsActiveDisplay != oldValue else { return }
             UserDefaults.standard.set(followsActiveDisplay, forKey: Key.followsActiveDisplay)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
     /// The key combination that opens settings from anywhere, or nil.
     ///
-    /// Deliberately no `onChange`: that is the usage loop's hook and it
-    /// refetches every provider when it fires. A shortcut is not a reading.
-    /// Whoever sets one tells `GlobalShortcutMonitor` directly, which is the
-    /// only thing that has to hear about it.
+    /// Whoever sets one tells `GlobalShortcutMonitor` directly; neither the
+    /// panel's layout nor the quota readers need a settings-change event.
     var openSettingsShortcut: GlobalShortcut? {
         didSet {
             guard openSettingsShortcut != oldValue else { return }
@@ -94,7 +92,7 @@ final class AppSettings {
         didSet {
             guard deepSeekBasis != oldValue else { return }
             UserDefaults.standard.set(deepSeekBasis.rawValue, forKey: Key.deepSeekBasis)
-            onChange?()
+            onChange?(.usage([AccountKey(.deepSeek)]))
         }
     }
 
@@ -104,7 +102,7 @@ final class AppSettings {
         didSet {
             guard deepSeekBudget != oldValue else { return }
             UserDefaults.standard.set(deepSeekBudget, forKey: Key.deepSeekBudget)
-            onChange?()
+            onChange?(.usage([AccountKey(.deepSeek)]))
         }
     }
 
@@ -114,7 +112,7 @@ final class AppSettings {
         didSet {
             guard deepSeekCurrency != oldValue else { return }
             UserDefaults.standard.set(deepSeekCurrency, forKey: Key.deepSeekCurrency)
-            onChange?()
+            onChange?(.usage([AccountKey(.deepSeek)]))
         }
     }
 
@@ -130,7 +128,7 @@ final class AppSettings {
         didSet {
             guard qoderSite != oldValue else { return }
             UserDefaults.standard.set(qoderSite.rawValue, forKey: Key.qoderSite)
-            onChange?()
+            onChange?(.usage([AccountKey(.qoder)]))
         }
     }
 
@@ -151,7 +149,7 @@ final class AppSettings {
         didSet {
             guard serverAddresses != oldValue else { return }
             UserDefaults.standard.set(serverAddresses, forKey: Key.serverAddresses)
-            onChange?()
+            onChange?(.usage(Self.changedAccounts(from: oldValue, to: serverAddresses)))
         }
     }
 
@@ -165,7 +163,7 @@ final class AppSettings {
         didSet {
             guard lowBalanceAlerts != oldValue else { return }
             UserDefaults.standard.set(lowBalanceAlerts, forKey: Key.lowBalanceAlerts)
-            onChange?()
+            // The notification control reconsiders readings after authorization.
         }
     }
 
@@ -181,11 +179,8 @@ final class AppSettings {
         didSet {
             guard providerOrder != oldValue else { return }
             UserDefaults.standard.set(providerOrder, forKey: Key.providerOrder)
-            // Deliberately no `onChange`: that is how the AppKit side hears
-            // about settings the *usage loop* cares about, and it refetches
-            // every provider when it fires. Rearranging the rail is a layout
-            // change — the panel is `@Observable` and redraws on its own, and
-            // nobody's rate limit should pay for a reorder.
+            // Ordering changes neither the panel's size nor a reading.
+            // SwiftUI observes it directly.
         }
     }
 
@@ -199,7 +194,13 @@ final class AppSettings {
             PanelMetrics.makeRoom(for: railSlotCount)
             let data = try? JSONEncoder().encode(extraAccounts)
             UserDefaults.standard.set(data, forKey: Key.extraAccounts)
-            onChange?()
+            let previous = Set(oldValue.map(\.key))
+            let current = Set(extraAccounts.map(\.key))
+            if previous == current {
+                onChange?(.appearance)
+            } else {
+                onChange?(.accounts(added: current.subtracting(previous).intersection(shownAccounts)))
+            }
         }
     }
 
@@ -333,7 +334,7 @@ final class AppSettings {
                 return
             }
             UserDefaults.standard.set(Array(enabledAccounts), forKey: ProviderSelection.enabledKey)
-            onChange?()
+            onChange?(.accounts(added: Set(shownAccounts.filter { !oldValue.contains($0.id) })))
         }
     }
 
@@ -355,7 +356,7 @@ final class AppSettings {
             guard language != oldValue else { return }
             LocalizationSource.use(language)
             UserDefaults.standard.set(language.rawValue, forKey: Key.language)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -365,7 +366,7 @@ final class AppSettings {
         didSet {
             guard pinnedWindows != oldValue else { return }
             UserDefaults.standard.set(pinnedWindows, forKey: Key.pinnedWindows)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -459,7 +460,7 @@ final class AppSettings {
         didSet {
             guard sources != oldValue else { return }
             UserDefaults.standard.set(sources, forKey: Key.sources)
-            onChange?()
+            onChange?(.usage(Self.changedAccounts(from: oldValue, to: sources)))
         }
     }
 
@@ -468,7 +469,7 @@ final class AppSettings {
         didSet {
             guard refreshInterval != oldValue else { return }
             UserDefaults.standard.set(refreshInterval.rawValue, forKey: Key.refreshInterval)
-            onChange?()
+            onChange?(.refreshInterval)
         }
     }
 
@@ -479,7 +480,7 @@ final class AppSettings {
             guard networkProxy != oldValue else { return }
             Self.storeNetworkProxy(networkProxy, in: .standard)
             NetworkSession.apply(networkProxy)
-            onChange?()
+            onChange?(.networkProxy)
         }
     }
 
@@ -506,7 +507,7 @@ final class AppSettings {
             // size when they do.
             PanelMetrics.use(panelSize)
             UserDefaults.standard.set(panelSize.rawValue, forKey: Key.panelSize)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -525,7 +526,7 @@ final class AppSettings {
             // is about to measure the panel.
             PanelMetrics.showTopPercentages(topRailShowsPercentages)
             UserDefaults.standard.set(topRailShowsPercentages, forKey: Key.topRailShowsPercentages)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -537,7 +538,7 @@ final class AppSettings {
             // is about to measure the rail.
             PanelMetrics.use(railSpacing)
             UserDefaults.standard.set(railSpacing.rawValue, forKey: Key.railSpacing)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -554,7 +555,7 @@ final class AppSettings {
             // is about to measure the rail, and it just got shorter or longer.
             PanelMetrics.showSidePercentages(sideRailShowsPercentages)
             UserDefaults.standard.set(sideRailShowsPercentages, forKey: Key.sideRailShowsPercentages)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -574,7 +575,7 @@ final class AppSettings {
             guard labelAboveRing != oldValue else { return }
             PanelMetrics.putLabelAboveRing(labelAboveRing)
             UserDefaults.standard.set(labelAboveRing, forKey: Key.labelAboveRing)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -601,7 +602,7 @@ final class AppSettings {
             guard usesRoundEnds != oldValue else { return }
             PanelMetrics.useRoundEnds(usesRoundEnds)
             UserDefaults.standard.set(usesRoundEnds, forKey: Key.usesRoundEnds)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -723,7 +724,7 @@ final class AppSettings {
     }
 
     /// Local records are read only after this pane is explicitly enabled.
-    /// No onChange: that hook refreshes the quota providers.
+    /// No AppKit or quota change: the spend pane observes this directly.
     var readsTokenSpend: Bool {
         didSet {
             guard readsTokenSpend != oldValue else { return }
@@ -777,7 +778,7 @@ final class AppSettings {
             guard showsForecast != oldValue else { return }
             PanelMetrics.showForecast(showsForecast)
             UserDefaults.standard.set(showsForecast, forKey: Key.showsForecast)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -806,7 +807,7 @@ final class AppSettings {
         didSet {
             guard usesGlass != oldValue else { return }
             UserDefaults.standard.set(usesGlass, forKey: Key.usesGlass)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -815,9 +816,8 @@ final class AppSettings {
     /// the right amount depends on what is usually behind the panel — a
     /// white page wants more, a dark editor none.
     ///
-    /// Deliberately no `onChange`: that refetches every provider, and a
-    /// slider sets this dozens of times a second. The panel is `@Observable`
-    /// and redraws on its own.
+    /// SwiftUI redraws the surface directly; its transparency does not
+    /// change the AppKit frame or any provider's reading.
     var glassTransparency: Double {
         didSet {
             let clamped = min(max(glassTransparency, 0), 1)
@@ -837,7 +837,7 @@ final class AppSettings {
         didSet {
             guard autoCollapse != oldValue else { return }
             UserDefaults.standard.set(autoCollapse, forKey: Key.autoCollapse)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -904,7 +904,7 @@ final class AppSettings {
         didSet {
             guard showsSecondRing != oldValue else { return }
             UserDefaults.standard.set(showsSecondRing, forKey: Key.showsSecondRing)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -922,7 +922,7 @@ final class AppSettings {
             // so whoever re-measures the panel sees the size it will be.
             PanelMetrics.makeRoom(for: railSlotCount)
             UserDefaults.standard.set(Array(splitAccounts), forKey: Key.splitAccounts)
-            onChange?()
+            onChange?(.appearance)
         }
     }
 
@@ -965,9 +965,26 @@ final class AppSettings {
         }
     }
 
-    /// Called after any change that the AppKit side has to react to — showing
-    /// or hiding the panel, or resizing it because the rail got shorter.
-    var onChange: (() -> Void)?
+    /// What changed, so resizing the panel cannot also spend a quota request.
+    enum Change: Equatable {
+        case appearance
+        case visibility
+        case accounts(added: Set<AccountKey>)
+        case usage(Set<AccountKey>)
+        case refreshInterval
+        case networkProxy
+    }
+
+    /// Changes requiring work beyond SwiftUI's own observation.
+    var onChange: ((Change) -> Void)?
+
+    private static func changedAccounts<Value: Equatable>(
+        from old: [String: Value], to new: [String: Value]
+    ) -> Set<AccountKey> {
+        Set(Set(old.keys).union(new.keys)
+            .filter { old[$0] != new[$0] }
+            .compactMap(AccountKey.init(id:)))
+    }
     /// Called only when the menu bar status item should be inserted or removed.
     /// Kept separate from `onChange` so a presentation preference cannot start
     /// a provider refresh.

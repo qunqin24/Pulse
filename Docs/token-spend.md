@@ -8,7 +8,7 @@ It counts the last **week** until the reader picks another span, and the pick is
 
 ## Opt-in reading and cancellation
 
-**Reading is off by default, including on upgrade.** `AppSettings.readsTokenSpend` has its own persisted key and does not call the quota providers' `onChange` hook. The pane stays reachable while off, showing only its switch and an explanation. Opening it in that state does not discover sources, read records/exports/caches, or request prices. Claude Code and Codex's account-history cards remain independent of this switch.
+**Reading is off by default, including on upgrade.** `AppSettings.readsTokenSpend` has its own persisted key and is observed directly by the spend pane without a quota settings-change event. The pane stays reachable while off, showing only its switch and an explanation. Opening it in that state does not discover sources, read records/exports/caches, or request prices. Claude Code and Codex's account-history cards remain independent of this switch.
 
 Once enabled, the first visit checks the disk caches and reads changed sources. A completed snapshot stays with the Settings window: switching to another sidebar pane and back displays those figures immediately, without source discovery, fingerprinting, cache-file loading or another price request. A successfully empty result and any read-limit notes are retained too. **Rescan** explicitly updates the figures and bypasses the complete-agent caches; transcript readers still reuse unchanged per-file entries. The page names the source currently being read and its position in the detected source list, not an estimated percentage of bytes or time.
 

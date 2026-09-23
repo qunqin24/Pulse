@@ -138,7 +138,7 @@ struct ProviderSelectionTests {
         let settings = AppSettings(enabledAccounts: [])
         let store = UsageStore(settings: settings)
         store.start()
-        store.settingsChanged()
+        store.settingsChanged(.accounts(added: []))
         store.loadAPIKeys()
         store.refresh()
         store.refresh(AccountKey(.codex))

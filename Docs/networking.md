@@ -9,7 +9,7 @@ Settings → Network and refresh offers two modes:
 - **Follow System** is the default and preserves the behaviour from before this setting existed. `URLSession` uses macOS's proxy configuration, and helper processes inherit Pulse's environment unchanged.
 - **Manual** accepts an HTTP CONNECT or SOCKS5 proxy without authentication. Host and port are one commit: Return or leaving either field attempts to save both, and an empty host or a port outside 1–65535 does not replace any saved endpoint. There is deliberately no direct/no-proxy mode and no per-provider override.
 
-`AppSettings.networkProxy` is one Codable value in `UserDefaults`. A mode or type selection is saved immediately; text remains local to `SettingsView` until the complete endpoint passes validation. Every saved change goes through `AppSettings.onChange`, so all enabled accounts are asked again rather than waiting for the next timer tick.
+`AppSettings.networkProxy` is one Codable value in `UserDefaults`. A mode or type selection is saved immediately; text remains local to `SettingsView` until the complete endpoint passes validation. Every saved proxy change goes through `AppSettings.onChange(.networkProxy)`, so all enabled accounts are asked again rather than waiting for the next timer tick.
 
 ## URLSession boundary
 

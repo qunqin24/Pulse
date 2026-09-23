@@ -38,7 +38,7 @@ Pulse’s extra-account login has its own refresh token and does not read or wri
 - Grok Bot: **not OAuth** — [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift) (Cursor’s login page + poll).
 - Cursor itself is omitted on purpose. See [cursor.md](cursor.md) and [grok-bot.md](grok-bot.md).
 
-`AccountKey` for the first account is the provider’s raw value (`claudeCode`, not `claudeCode#…`). Added accounts get a slot generated once and never reused, so removing one and adding another cannot inherit settings.
+`AccountKey` for the first account is the provider’s raw value (`claudeCode`, not `claudeCode#…`). Added accounts get a slot generated once and never reused, so removing one and adding another cannot inherit settings. A successful sign-in saves its credential before adding and enabling the slot; the membership notification schedules its first read. Reauthenticating an existing slot refreshes that slot directly.
 
 ## OAuth: Claude Code, Codex, Grok
 

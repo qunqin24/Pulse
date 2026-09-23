@@ -58,8 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Daily at most, and only from a bundle — see `AppUpdate`.
         update.checkIfDue()
 
-        settings.onChange = { [weak self] in
-            self?.settingsChanged()
+        settings.onChange = { [weak self] change in
+            self?.settingsChanged(change)
         }
 
         // Same issue, from the other side: a combination that works with no
@@ -98,7 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.show()
     }
 
-    private func settingsChanged() {
+    private func settingsChanged(_ change: AppSettings.Change) {
         restoreMenuBarEntryPointIfNeeded()
         settingsWindow?.refreshTitle()
         providerSetupWindow?.refreshTitle()
@@ -108,9 +108,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             providerSetupWindow?.close()
             startMonitoring()
         } else {
-            panelController?.settingsChanged()
-            store.settingsChanged()
-            prepareClaudeIfSelected()
+            switch change {
+            case .appearance, .visibility, .accounts:
+                panelController?.settingsChanged()
+            case .usage, .refreshInterval, .networkProxy:
+                break
+            }
+            store.settingsChanged(change)
+            if case .accounts = change { prepareClaudeIfSelected() }
         }
     }
 

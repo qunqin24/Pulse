@@ -2066,13 +2066,12 @@ struct SettingsView: View {
                 get: { settings.qoderSite },
                 set: { site in
                     guard site != settings.qoderSite else { return }
-                    settings.qoderSite = site
                     guard APIKeyStore.setKey(nil, for: .qoder) else { return }
                     apiKey = ""
                     savedKey = ""
                     sessionMessage = nil
-                    store.loadAPIKeys()
-                    store.refresh(account)
+                    // Notify only after the old site's credential is gone.
+                    settings.qoderSite = site
                 }
             )) {
                 ForEach(QoderSite.allCases, id: \.self) { site in
@@ -2119,7 +2118,6 @@ struct SettingsView: View {
             serverAddressInvalid = false
             serverAddress = ""
             settings.setServerAddress("", for: account)
-            store.refresh(account)
             return
         }
         // The shared rule, not a provider's own: what makes an address usable
@@ -2132,7 +2130,6 @@ struct SettingsView: View {
         serverAddressInvalid = false
         serverAddress = typed
         settings.setServerAddress(typed, for: account)
-        store.refresh(account)
     }
 
     private var deepSeekBudgetRow: some View {
@@ -2787,13 +2784,19 @@ struct SettingsView: View {
                 // two subscriptions are not both offered as "Codex".
                 try Task.checkCancellation()
                 if let existing, !settings.allAccounts.contains(existing) { return }
-                let added = existing ?? settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
+                let added = existing ?? AccountKey(provider, slot: UUID().uuidString)
                 guard AccountCredentialStore.set(credentials, for: added) else {
-                    if existing == nil { settings.removeAccount(added) }
                     signInError = (provider, String.localized("Couldn't save the login on this Mac."))
                     return
                 }
-                store.refresh(added)
+                if existing != nil {
+                    store.refresh(added)
+                } else {
+                    // Publishing an enabled account schedules its first read.
+                    // Its credential must already be available to that read.
+                    settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings),
+                                        slot: added.slot)
+                }
                 pane = .account(added)
             } catch let failure as OAuthLogin.Failure {
                 if !Task.isCancelled { signInError = (provider, failure.message) }
@@ -2840,7 +2843,7 @@ struct SettingsView: View {
                 ) {
                     _ = isHookInstalled ? StatusLineHook.uninstall() : StatusLineHook.install()
                     hookGeneration += 1
-                    store.refresh()
+                    store.refresh(AccountKey(.claudeCode))
                 }
             }
         }

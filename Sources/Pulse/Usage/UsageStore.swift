@@ -28,7 +28,6 @@ final class UsageStore {
     private(set) var currentInterval: TimeInterval = AdaptiveRefresh.floor
 
     private let settings: AppSettings
-    private var networkProxy: NetworkProxySettings
     /// Posts notifications about the readings that land here. Nil in previews,
     /// which have no bundle to post from and nothing to say anyway.
     private let alerts: UsageAlerts?
@@ -95,7 +94,6 @@ final class UsageStore {
     init(settings: AppSettings, alerts: UsageAlerts? = nil, activity: AgentActivityMonitor = AgentActivityMonitor()) {
         self.settings = settings
         self.activity = activity
-        networkProxy = settings.networkProxy
         self.alerts = alerts
         codex = CodexUsageService(server: appServer)
 
@@ -322,24 +320,38 @@ final class UsageStore {
         return Date().timeIntervalSince(newest) > currentInterval * 2 + 60
     }
 
-    /// Re-reads settings that affect the loop itself, then refreshes.
-    func settingsChanged() {
+    /// Presentation changes never enter the refresh queue. Data changes name
+    /// the affected accounts; the proxy is the one setting shared by all reads.
+    func settingsChanged(_ change: AppSettings.Change) {
         guard !settings.needsProviderSelection else { return }
-        let proxyChanged = networkProxy != settings.networkProxy
-        networkProxy = settings.networkProxy
-        loadAPIKeys()
-        updateActivityMonitor()
-        guard proxyChanged else {
-            refresh()
-            return
-        }
-
-        // The process inherits its environment only when it starts. Tear down
-        // one already running before the full pass is queued, so its next call
-        // is made by a child carrying the new proxy.
-        Task { [weak self, appServer] in
-            await appServer.shutDown()
-            self?.refresh()
+        switch change {
+        case .appearance:
+            break
+        case .visibility:
+            updateActivityMonitor()
+            if settings.isPanelVisible { refresh() }
+            else { scheduleNext() }
+        case .refreshInterval:
+            scheduleNext()
+        case .accounts(let added):
+            loadAPIKeys()
+            updateActivityMonitor()
+            scheduleNext()
+            for account in settings.shownAccounts where added.contains(account) {
+                refresh(account)
+            }
+        case .usage(let accounts):
+            loadAPIKeys()
+            for account in settings.shownAccounts where accounts.contains(account) {
+                refresh(account)
+            }
+        case .networkProxy:
+            // A helper inherits the proxy only when it starts. Restart it
+            // before queuing the pass that uses the new network settings.
+            Task { [weak self, appServer] in
+                await appServer.shutDown()
+                self?.refresh()
+            }
         }
     }
 
@@ -848,6 +860,9 @@ final class UsageStore {
             return
         }
 
+        // An account can be switched off while an earlier read is running.
+        // Drop it before dispatch, or its no-op refresh strands the rest.
+        queued.formIntersection(settings.shownAccounts)
         guard let account = queued.first else { return }
         queued.remove(account)
         refresh(account)

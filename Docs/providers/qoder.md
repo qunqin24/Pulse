@@ -18,7 +18,7 @@ Qoder's credits, read through the account page's own request.
 - which host the browser is asked for cookies (`BrowserCookies.session(forHost:)`: the host, its dot-form and its subdomains — never `qoder.com.cn` on behalf of `qoder.com`);
 - where the request goes.
 
-**Changing the site clears the saved session** (Settings does it), because a session kept across the switch would be sent to the host that did not issue it. The cache agrees: `qoderSessionMissing` is not papered over, and every reading carries a `UsageScope` of `.webSession`, the site's host, and the SHA-256 of the session (`requiresScopeMatch`), so one site's banked figures never stand in for the other's failure.
+**Changing the site clears the saved session before publishing the new site** (Settings does it; a failed credential removal leaves the site unchanged), because a session kept across the switch would be sent to the host that did not issue it. The cache agrees: `qoderSessionMissing` is not papered over, and every reading carries a `UsageScope` of `.webSession`, the site's host, and the SHA-256 of the session (`requiresScopeMatch`), so one site's banked figures never stand in for the other's failure.
 
 ## The route
 

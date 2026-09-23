@@ -17,7 +17,7 @@ struct MenuBarIconSettingTests {
         var menuBarChanges = 0
         var panelChanges = 0
         settings.onMenuBarIconChange = { menuBarChanges += 1 }
-        settings.onChange = { panelChanges += 1 }
+        settings.onChange = { _ in panelChanges += 1 }
 
         settings.hidesMenuBarIcon = true
         #expect(menuBarChanges == 1)
