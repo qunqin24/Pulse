@@ -26,6 +26,14 @@ The vendor is passed through the shared pricing pass for **days, slots, model am
 
 ## Model details
 
+`SpendSummaryStore` calculates summaries off the main actor from the completed in-memory snapshot. It keeps one result each for the overview, selected agent and selected model. Opening another model calculates only that model; Back reuses the matching overview or agent result. The snapshot id, span, calendar and current calendar day identify the shared inputs, with agent and model selections added only at their respective levels.
+
+Each selection owns a cancellable task. New selections cancel the previous worker, and a generation check rejects late results even if a synchronous calculation finishes after cancellation. Cancellation is checked between summary levels; an individual summary finishes its current calculation. The view also checks result keys before display, so a new heading cannot show the old selection's numbers while its task starts. A small progress indicator replaces the figures while that selection is being calculated. Leaving the pane cancels unfinished work; closing Settings, disabling reading or rescanning also clears the derived results.
+
+The pending state below is a local render of `TokenSpendView` with synthetic selection data, not a live-account capture.
+
+![Model selection while its summary is being calculated](images/spend-summary-loading.png)
+
 Every model row opens its token details, including when only one model is listed. Models beyond the initial eight remain reachable. Opening a model from the overview counts every agent that used it; opening one inside an agent keeps that agent as the scope. Back returns to the model list in that scope. The selected model is temporary navigation state; the shared span remains the reader's saved preference.
 
 The detail shows the model's token total and API cost estimate, input/output/cache split with amounts, daily and hourly token usage, contributions by agent with amounts, and a paged daily table with a sortable cost column. A model with nothing in a newly selected span stays open with an empty state so the reader can widen the span or go back. Opening a model and changing its span only summarize the ledgers already in memory; **Rescan** is the explicit reread.

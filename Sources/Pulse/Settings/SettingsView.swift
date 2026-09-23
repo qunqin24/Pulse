@@ -96,17 +96,14 @@ struct SettingsView: View {
     /// Every agent's spending, for the pane that is not about one provider.
     /// Its own state rather than something derived from `ledgers`, which is
     /// filled one account at a time as their panes are opened.
-    @State private var spend = SpendSummary()
+    @State private var spendSummaries = SpendSummaryStore()
     @State private var isScanningSpend = false
     @State private var spendRead = SpendReadState()
     @State private var spendProgress: AgentLedgers.Progress?
     @State private var spendRescan = 0
-    /// The agent the spend pane is looking at on its own, and that agent's own
-    /// figures. Kept beside the combined ones rather than derived on the fly:
-    /// both come out of the same ledgers and the same span, so they cannot
-    /// disagree about what a month is.
+    /// The selected agent scopes model details too. Figures belong to
+    /// spendSummaries, which uses one snapshot and calendar cutoff at all levels.
     @State private var spendFocus: SpendAgent?
-    @State private var focusedSpend = SpendSummary()
     private var spendLedgers: [SpendAgent: UsageLedger] { spendRead.snapshot?.ledgers ?? [:] }
     /// Present sources — installed, or captured/exported somewhere Pulse reads
     /// — that produced no records at all. Named together at the foot of the
@@ -128,7 +125,6 @@ struct SettingsView: View {
     /// you, not a preference about the app, so it lives here and is dropped
     /// when the agent changes rather than being written to `AppSettings`.
     @State private var selectedModel: String?
-    @State private var modelSpend = ModelSpendSummary()
 
     var body: some View {
         NavigationSplitView {
@@ -261,12 +257,16 @@ struct SettingsView: View {
                                 }
                             }
                             if settings.readsTokenSpend {
+                                let figures = spendSummaries.presentation(for: spendSummaryRequest)
                                 TokenSpendView(
-                                    summary: spend,
-                                    focus: $spendFocus,
-                                    focused: focusedSpend,
+                                    summary: figures.overview,
+                                    focus: Binding(get: { spendFocus }, set: {
+                                        selectedModel = nil
+                                        spendFocus = $0
+                                    }),
+                                    focused: figures.focused,
                                     modelFocus: $selectedModel,
-                                    modelSummary: modelSpend,
+                                    modelSummary: figures.model,
                                     noRecords: spendNoRecords,
                                     hasReadLimitations: spendHasReadLimitations,
                                     span: Binding(
@@ -274,6 +274,7 @@ struct SettingsView: View {
                                         set: { settings.spendSpan = $0 }
                                     ),
                                     isLoading: isScanningSpend,
+                                    isCalculating: figures.isCalculating,
                                     refresh: { spendRescan += 1 }
                                 )
                             }
@@ -289,18 +290,10 @@ struct SettingsView: View {
                 // also reconsiders its history's empty-state explanation.
                 .task(id: historyKey) { await loadHistory() }
                 // A completed read survives sidebar changes in this window.
-                // Only an initial visit or Rescan reads; changing the span
-                // re-adds up what is already in memory.
-                // **Two tasks, because they cost different things.** Reading
-                // every agent's store is seconds on a cold launch; adding the
-                // numbers up again for a different span is microseconds. Keyed
-                // together, changing the span put the spinner back on screen
-                // and made a cached read look like a rescan.
+                // Reading and summarizing have separate lifetimes. Changing
+                // the span or drill-down never rereads local stores.
                 .task(id: spendLoadKey) { await loadSpend() }
-                .onChange(of: spendKey) { _, _ in recomputeSpend() }
-                // A model opened under one agent means nothing under another,
-                // so changing the agent drops back out of the model.
-                .onChange(of: spendFocus) { _, _ in selectedModel = nil }
+                .task(id: spendSummaryRequest) { await summarizeSpend() }
                 .onChange(of: selectedModel) { old, new in
                     // Entering the detail drops the reader to the top, or they
                     // land in the middle of it when the model row was well down
@@ -1788,10 +1781,24 @@ struct SettingsView: View {
         )
     }
 
-    /// What the *figures* depend on, which is read back out of what was loaded.
-    private var spendKey: String {
-        guard case .spend = pane, settings.readsTokenSpend else { return "-" }
-        return "\(settings.spendSpan.rawValue)|\(spendFocus?.rawValue ?? "")|\(selectedModel ?? "")"
+    /// A day, rather than a fresh timestamp on every redraw, keeps the task
+    /// stable while retaining one calendar cutoff for overview and detail.
+    private var spendSummaryRequest: SpendSummaryStore.Request? {
+        guard settings.readsTokenSpend, navigation.isWindowVisible, pane == .spend,
+              let id = spendRead.snapshotID else { return nil }
+        let calendar = Calendar.current
+        let context = SpendSummaryStore.Context(snapshotID: id, span: settings.spendSpan,
+                                               day: calendar.startOfDay(for: Date()), calendar: calendar)
+        return .init(scope: .init(context: context, agent: spendFocus), model: selectedModel)
+    }
+
+    private func summarizeSpend() async {
+        guard !Task.isCancelled else { return }
+        guard let request = spendSummaryRequest else {
+            spendSummaries.cancel()
+            return
+        }
+        await spendSummaries.update(request, ledgers: spendLedgers)
     }
 
     /// Every agent's ledger, added up.
@@ -1809,12 +1816,12 @@ struct SettingsView: View {
         case .retain:
             return
         case .release:
-            clearSpendSummaries()
+            spendSummaries.reset()
             return
         case .scan(let nextID, let force):
             id = nextID
             refresh = force
-            clearSpendSummaries()
+            spendSummaries.reset()
         }
 
         isScanningSpend = true
@@ -1836,49 +1843,6 @@ struct SettingsView: View {
         }
         guard !Task.isCancelled, settings.readsTokenSpend, navigation.isWindowVisible,
               pane == .spend, spendRead.complete(result, for: id) else { return }
-        recomputeSpend()
-    }
-
-    private func clearSpendSummaries() {
-        spend = SpendSummary()
-        focusedSpend = SpendSummary()
-        modelSpend = ModelSpendSummary()
-    }
-
-    /// The same function over the same ledgers, twice: once for everything and
-    /// once for the agent being looked at. Deriving the second from the first
-    /// would mean a second way of counting a span, and two ways of counting
-    /// one thing eventually disagree.
-    ///
-    /// A model is counted from the same ledgers too, **narrowed to the agent on
-    /// screen first where there is one** — so a model opened from an agent's
-    /// list reports that agent's work in it and never the other agents' same
-    /// model. Nothing here reads a store: it is arithmetic over what was
-    /// already loaded, which is why opening a model costs no spinner.
-    ///
-    /// **One `now` and one calendar for all three.** Asked separately, a recompute
-    /// that happens to straddle midnight can put the combined total on one day
-    /// and the model on the next, so the drill-down no longer adds up to the row
-    /// it was opened from.
-    private func recomputeSpend() {
-        guard settings.readsTokenSpend else { return }
-        let span = settings.spendSpan.days
-        let now = Date()
-        let calendar = Calendar.current
-        // The agent's ledgers, or all of them when no agent is open. Counted
-        // once and shared, so the agent summary and the model summary below
-        // cannot end up filtered differently.
-        let scoped = spendFocus.map { agent in
-            spendLedgers.filter { $0.key == agent }
-        } ?? spendLedgers
-
-        spend = SpendSummary.of(spendLedgers, overLast: span, now: now, calendar: calendar)
-        focusedSpend = spendFocus == nil
-            ? SpendSummary()
-            : SpendSummary.of(scoped, overLast: span, now: now, calendar: calendar)
-        modelSpend = selectedModel.map { name in
-            ModelSpendSummary.of(scoped, named: name, overLast: span, now: now, calendar: calendar)
-        } ?? ModelSpendSummary()
     }
 
     private func loadHistory() async {

@@ -33,6 +33,7 @@ struct SpendReadStateTests {
         let finished = state.finish(first.id)
         #expect(completed)
         #expect(finished)
+        #expect(state.snapshotID == first.id)
 
         for _ in 0..<3 {
             #expect(state.prepare(request(selected: false)) == .retain)
@@ -69,6 +70,7 @@ struct SpendReadStateTests {
         #expect(away != released)
         #expect(state.prepare(released) == .release)
         #expect(state.snapshot == nil)
+        #expect(state.snapshotID == nil)
         #expect(state.prepare(request(selected: false)) == .retain)
         let reopened = try scan(state.prepare(request()))
         #expect(!reopened.refresh, "A new window/enabling may still use the disk cache")
@@ -84,8 +86,10 @@ struct SpendReadStateTests {
         let rescan = try scan(state.prepare(request(rescan: 1)))
         #expect(rescan.refresh)
         #expect(state.snapshot == nil)
+        #expect(state.snapshotID == nil)
         state.complete(snapshot(tokens: 200), for: rescan.id)
         state.finish(rescan.id)
+        #expect(state.snapshotID == rescan.id)
         #expect(state.prepare(request(selected: false, rescan: 1)) == .retain)
         #expect(state.prepare(request(rescan: 1)) == .retain)
         #expect(state.snapshot?.ledgers[.codex]?.allTime.tokens == 200)

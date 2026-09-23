@@ -20,6 +20,7 @@ struct SpendReadState {
     /// Nil means no completed read. An empty snapshot is still a completed
     /// read and must not trigger IO on every sidebar visit.
     private(set) var snapshot: AgentLedgers.Snapshot?
+    private(set) var snapshotID: UUID?
     private var readID: UUID?
     private var consumedRescan = 0
 
@@ -27,6 +28,7 @@ struct SpendReadState {
         readID = nil
         guard request.isEnabled, request.isWindowVisible else {
             snapshot = nil
+            snapshotID = nil
             return .release
         }
         guard request.isPaneSelected else { return .retain }
@@ -36,6 +38,7 @@ struct SpendReadState {
         // Keep at most one result: release old detail before a rescan allocates
         // its replacement, retaining the streaming reader's peak-memory win.
         snapshot = nil
+        snapshotID = nil
         consumedRescan = request.rescan
         let id = UUID()
         readID = id
@@ -48,6 +51,7 @@ struct SpendReadState {
     mutating func complete(_ snapshot: AgentLedgers.Snapshot, for id: UUID) -> Bool {
         guard isCurrent(id) else { return false }
         self.snapshot = snapshot
+        snapshotID = id
         return true
     }
 
