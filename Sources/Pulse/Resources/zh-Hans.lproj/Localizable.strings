@@ -837,3 +837,4 @@
 "Reset credits on the card" = "在卡片上显示额度重置券";
 "How many limit reset credits are left. Asks Codex's app server on every refresh." = "还剩几张额度重置券。每次刷新都会询问 Codex 的 app server。";
 "Not available" = "不可用";
+"codex not found" = "找不到 codex";

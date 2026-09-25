@@ -112,3 +112,26 @@ struct CodexHelperEnvironmentTests {
         #expect(environment["PATH"] == "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin")
     }
 }
+
+/// Where Pulse looks for `codex`, which a GUI app has to do by hand.
+@Suite("Codex locator")
+struct CodexLocatorTests {
+    @Test("The desktop apps' own codex is looked for, and the newest managed version before older ones")
+    func candidates() {
+        let listed = CodexAppServer.candidates(home: "/Users/me", path: "/usr/bin:/bin") { root in
+            root.hasSuffix(".nvm/versions/node") ? ["v20.1.0", "v24.11.1"] : []
+        }
+        #expect(listed.first == "/usr/bin/codex")
+        #expect(listed.contains("/Applications/Codex.app/Contents/Resources/codex"))
+        #expect(listed.contains("/Applications/ChatGPT.app/Contents/Resources/codex"))
+        #expect(listed.contains("/Users/me/Applications/ChatGPT.app/Contents/Resources/codex"))
+        let nvm = listed.filter { $0.contains(".nvm") }
+        #expect(nvm == ["/Users/me/.nvm/versions/node/v24.11.1/bin/codex", "/Users/me/.nvm/versions/node/v20.1.0/bin/codex"])
+    }
+
+    @Test("No codex is said apart from Codex reporting none")
+    @MainActor
+    func missingIsItsOwnWords() {
+        #expect(UsageDetailCard.resetCreditsText(.codexMissing) != UsageDetailCard.resetCreditsText(.unreported))
+    }
+}

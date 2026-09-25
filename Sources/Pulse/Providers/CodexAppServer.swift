@@ -209,30 +209,57 @@ actor CodexAppServer {
     /// the usual install locations have to be checked by hand rather than
     /// relying on the environment.
     private static func locateCodex() -> URL? {
-        let home = NSHomeDirectory()
-        var candidates: [String] = []
+        let fileManager = FileManager.default
+        return candidates(
+            home: NSHomeDirectory(),
+            path: ProcessInfo.processInfo.environment["PATH"],
+            versions: { (try? fileManager.contentsOfDirectory(atPath: $0))?.sorted() ?? [] }
+        )
+        .first { fileManager.isExecutableFile(atPath: $0) }
+        .map { URL(fileURLWithPath: $0) }
+    }
 
-        if let path = ProcessInfo.processInfo.environment["PATH"] {
-            candidates += path.split(separator: ":").map { "\($0)/codex" }
-        }
+    /// Every place, in order. Internal and fed its listing so a test can see
+    /// the order without a disk.
+    ///
+    /// **The desktop apps carry their own.** ChatGPT's and Codex's Mac apps
+    /// ship a signed `codex` in `Contents/Resources`, and somebody who uses
+    /// Codex only through one of them has no other: every place below that
+    /// came up empty, so the reset credits read "Not available" on two Macs
+    /// that had several (issue #67). It is a native binary, so it needs no
+    /// `node` beside it.
+    ///
+    /// Node version managers put it under a version directory, so those are
+    /// listed; the folder it is found in leads the helper's `PATH`, which is
+    /// where each of them keeps `node` (`BoundedProcess.environment`).
+    static func candidates(home: String, path: String?, versions: (String) -> [String]) -> [String] {
+        var candidates = (path ?? "").split(separator: ":").map { "\($0)/codex" }
 
         candidates += [
             "/opt/homebrew/bin/codex",
             "/usr/local/bin/codex",
             "\(home)/.local/bin/codex",
             "\(home)/.bun/bin/codex",
-            "\(home)/.volta/bin/codex"
+            "\(home)/.volta/bin/codex",
+            "\(home)/.npm-global/bin/codex",
+            "\(home)/Library/pnpm/codex",
+            "/Applications/Codex.app/Contents/Resources/codex",
+            "\(home)/Applications/Codex.app/Contents/Resources/codex",
+            "/Applications/ChatGPT.app/Contents/Resources/codex",
+            "\(home)/Applications/ChatGPT.app/Contents/Resources/codex",
         ]
 
-        // Node installs put it under a version directory, so glob those.
-        let nvm = "\(home)/.nvm/versions/node"
-        if let versions = try? FileManager.default.contentsOfDirectory(atPath: nvm) {
-            candidates += versions.map { "\(nvm)/\($0)/bin/codex" }
+        // Newest version last in each listing, so the newest wins.
+        let managers: [(root: String, bin: String)] = [
+            ("\(home)/.nvm/versions/node", "bin"),
+            ("\(home)/Library/Application Support/fnm/node-versions", "installation/bin"),
+            ("\(home)/.local/share/fnm/node-versions", "installation/bin"),
+            ("\(home)/.local/share/mise/installs/node", "bin"),
+        ]
+        for manager in managers {
+            candidates += versions(manager.root).reversed().map { "\(manager.root)/\($0)/\(manager.bin)/codex" }
         }
-
         return candidates
-            .first { FileManager.default.isExecutableFile(atPath: $0) }
-            .map { URL(fileURLWithPath: $0) }
     }
 
     // MARK: - Messaging

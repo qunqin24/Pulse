@@ -837,3 +837,4 @@
 "Reset credits on the card" = "Reset credits on the card";
 "How many limit reset credits are left. Asks Codex's app server on every refresh." = "How many limit reset credits are left. Asks Codex's app server on every refresh.";
 "Not available" = "Not available";
+"codex not found" = "codex not found";

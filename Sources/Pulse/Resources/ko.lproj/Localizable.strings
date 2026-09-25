@@ -837,3 +837,4 @@
 "Reset credits on the card" = "카드에 한도 초기화 쿠폰 표시";
 "How many limit reset credits are left. Asks Codex's app server on every refresh." = "남은 한도 초기화 쿠폰 수. 새로 고칠 때마다 Codex app server에 묻습니다.";
 "Not available" = "제공되지 않음";
+"codex not found" = "codex를 찾을 수 없음";

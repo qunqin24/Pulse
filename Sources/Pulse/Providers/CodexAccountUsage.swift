@@ -52,6 +52,10 @@ struct CodexAccountUsage: Equatable, Sendable {
 enum CodexResetCredits: Equatable, Sendable {
     case available(count: Int, nextExpiry: Date?)
     case unreported
+    /// No `codex` anywhere Pulse looks, so nothing was asked. Said apart from
+    /// `unreported` because the remedy is different, and "Not available" for
+    /// both left two Macs with several credits guessing which (issue #67).
+    case codexMissing
 }
 
 /// Reads `account/usage/read` and the reset credits from `codex app-server`.
@@ -81,9 +85,15 @@ struct CodexAccountUsageService: Sendable {
     /// asks for on every Codex refresh while its switch is on. One call, not
     /// the history's two.
     func resetCredits() async -> CodexResetCredits {
-        guard let data = try? await server.rateLimits(),
-              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else { return .unreported }
+        let data: Data
+        do {
+            data = try await server.rateLimits()
+        } catch CodexAppServer.Failure.executableNotFound {
+            return .codexMissing
+        } catch {
+            return .unreported
+        }
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return .unreported }
         return Self.resetCredits(in: root)
     }
 
@@ -123,7 +133,7 @@ struct CodexAccountUsageService: Sendable {
         // is also how it shows a reply that stated none.
         let count: Int = switch Self.resetCredits(in: limits) {
         case .available(let count, _): count
-        case .unreported: 0
+        case .unreported, .codexMissing: 0
         }
 
         // The one expiring soonest is the one worth spending first — with its

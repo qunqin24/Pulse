@@ -837,3 +837,4 @@
 "Reset credits on the card" = "カードにリセット券を表示";
 "How many limit reset credits are left. Asks Codex's app server on every refresh." = "残っている上限リセット券の枚数。更新のたびに Codex の app server に問い合わせます。";
 "Not available" = "取得できません";
+"codex not found" = "codex が見つかりません";

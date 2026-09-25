@@ -204,6 +204,8 @@ struct UsageDetailCard: View {
             count == 1 ? .localized("1 available") : .localized("\("\(count)") available")
         case .unreported:
             .localized("Not available")
+        case .codexMissing:
+            .localized("codex not found")
         }
     }
 
