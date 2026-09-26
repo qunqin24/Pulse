@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.5.2</title>
+            <pubDate>Sat, 26 Sep 2026 10:59:00 -0000</pubDate>
+            <sparkle:version>1.5.2</sparkle:version>
+            <sparkle:shortVersionString>1.5.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.5.2</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.5.2</h2><p><strong>中文</strong></p><p><strong>改进与修复</strong></p><ul><li><strong>新版 ChatGPT 桌面 App 也能读到 Codex 额度重置券了。</strong> ChatGPT 26.924 把自带的 codex 换了位置，1.5.1 找不到；现在新旧两个位置都会找。感谢 <a href="https://github.com/qunqin24/Pulse/issues/67">@sanziliu</a> 定位。</li><li><strong>卡片上显示最近一张重置券的到期时间</strong>，精确到分钟，就在券的数量下面。</li></ul><p><strong>English</strong></p><p><strong>Changed and fixed</strong></p><ul><li><strong>Codex&#x27;s limit reset credits are read with the newer ChatGPT desktop app too.</strong> ChatGPT 26.924 moved the codex it ships, and 1.5.1 didn&#x27;t find it; both places are looked in now. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/67">@sanziliu</a> for tracking it down.</li><li><strong>The card shows when the next reset credit expires</strong>, to the minute, under the count.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.5.2">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.5.2/Pulse-1.5.2.zip"
+                       length="10454594"
+                       type="application/octet-stream"
+                       sparkle:edSignature="79/6Oybk5gznxyvC9BgJ44Gu+LDPufnbCVpbmdYD+qzHPbKFhWaFNDJ5uDcVTN89Z2OW3QuguI2wT0vDy4HDCw==" />
+        </item>
+        <item>
             <title>1.5.1</title>
             <pubDate>Sat, 26 Sep 2026 10:14:55 -0000</pubDate>
             <sparkle:version>1.5.1</sparkle:version>
