@@ -352,6 +352,8 @@
 "The Ollama session expired. Sign in again and add it." = "Ollama 的登入已過期，請重新登入後再加入。";
 "Ollama's page has changed and can no longer be read." = "Ollama 的頁面改了，已經讀不出來。";
 "Reads your quota from Ollama's own settings page." = "從 Ollama 自己的設定頁面讀取額度。";
+"Show" = "顯示";
+"Hide" = "隱藏";
 "Save" = "儲存";
 "Monthly limit" = "每月額度";
 "Daily limit" = "每日額度";

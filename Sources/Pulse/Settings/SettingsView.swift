@@ -42,6 +42,9 @@ struct SettingsView: View {
     /// The key field's contents. Seeded from the store when the pane opens;
     /// the store is a file, not something SwiftUI can observe.
     @State private var apiKey = ""
+    /// Whether the key field shows what is in it. Hidden again whenever
+    /// another pane opens, so a key shown once is not left on screen.
+    @State private var revealsKey = false
     /// The budget being typed, kept as text so a half-entered number is not
     /// read as a denominator on every keystroke.
     @State private var balanceBudgetText = ""
@@ -1791,6 +1794,7 @@ struct SettingsView: View {
         }
         .onChange(of: "\(account.id)|\(settings.isEnabled(account))", initial: true) { _, _ in
             let shown = provider
+            revealsKey = false
             // The stored figure, shown in the field rather than left blank
             // beside a ring that is measuring against it.
             if hasBalanceRing(account) {
@@ -2615,14 +2619,32 @@ struct SettingsView: View {
                     subtitle: Self.keySubtitle(for: account.provider)
                 ) {
                     HStack(spacing: 8) {
-                        SecureField("", text: $apiKey)
-                            .focused($credentialFocused)
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: SettingsLayout.controlWidth)
-                            .onSubmit { saveKey(for: account) }
+                        Group {
+                            if revealsKey {
+                                TextField("", text: $apiKey)
+                            } else {
+                                SecureField("", text: $apiKey)
+                            }
+                        }
+                        .focused($credentialFocused)
+                        .textFieldStyle(.roundedBorder)
+                        // Narrower by the eye's button, so the row is as wide
+                        // as it was and Save is not squeezed.
+                        .frame(width: SettingsLayout.controlWidth - 44)
+                        .onSubmit { saveKey(for: account) }
+
+                        Button {
+                            revealsKey.toggle()
+                        } label: {
+                            Image(systemName: revealsKey ? "eye.slash" : "eye")
+                                .frame(width: 16)
+                        }
+                        .help(revealsKey ? String.localized("Hide") : String.localized("Show"))
+                        .accessibilityLabel(revealsKey ? String.localized("Hide") : String.localized("Show"))
 
                         Button(String.localized("Save")) { saveKey(for: account) }
                             .disabled(apiKey == savedKey)
+                            .fixedSize()
                     }
                 }
 

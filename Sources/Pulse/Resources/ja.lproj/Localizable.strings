@@ -352,6 +352,8 @@
 "The Ollama session expired. Sign in again and add it." = "Ollama のセッションの期限が切れました。サインインし直して追加してください。";
 "Ollama's page has changed and can no longer be read." = "Ollama のページが変わり、読み取れなくなりました。";
 "Reads your quota from Ollama's own settings page." = "Ollama 自身の設定ページから残量を読みます。";
+"Show" = "表示";
+"Hide" = "隠す";
 "Save" = "保存";
 "Monthly limit" = "月あたりの上限";
 "Daily limit" = "1 日あたりの上限";

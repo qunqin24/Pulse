@@ -17,6 +17,7 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 **改进与修复**
 
+- **密钥输入框旁加了显示按钮。** 点小眼睛可以看到输入的内容，方便核对；换到别的服务时会自动重新隐藏。
 - **只装了 ChatGPT 桌面 App 时，也能读到 Codex 额度重置券。** 此前 Pulse 不会去 App 里找自带的 codex，卡片一直显示「不可用」。找不到 codex 时，现在会直接显示「找不到 codex」。感谢 [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) 反馈。
 
 **English**
@@ -27,6 +28,7 @@ bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
 **Changed and fixed**
 
+- **The key field has a show button.** Click the eye to see what you typed and check it; it hides again when you open another provider.
 - **Codex's limit reset credits are read when only the ChatGPT desktop app is installed.** Pulse never looked for the codex the app ships, so the card said Not available. When no codex can be found at all, it now says so. Thanks to [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) for the report.
 
 ## 1.5.0
