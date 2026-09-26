@@ -39,6 +39,7 @@ When those notes disagree with `providers/README.md` or the code, the code and t
 
 ## Also in this folder
 
+- [entropy-audit.md](entropy-audit.md) — 2026-09-26 snapshot of structural debt. Historical, not a contract.
 - [plan.md](plan.md) — working notes, not a contract.
 - Screenshots, `demo.gif` and `bot-mark.gif` used by the READMEs and by [ui/rings-and-surface.md](ui/rings-and-surface.md).
 
