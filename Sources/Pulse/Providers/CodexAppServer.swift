@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// A JSON-RPC client for `codex app-server`.
 ///
@@ -210,9 +210,14 @@ actor CodexAppServer {
     /// relying on the environment.
     private static func locateCodex() -> URL? {
         let fileManager = FileManager.default
+        // Wherever the app actually is — a second drive, a folder of its own
+        // — Launch Services knows it by its bundle id. Both the ChatGPT app
+        // and the Codex app answer to this one (checked on ChatGPT 26.917).
+        let installed = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.openai.codex")
         return candidates(
             home: NSHomeDirectory(),
             path: ProcessInfo.processInfo.environment["PATH"],
+            app: installed,
             versions: { (try? fileManager.contentsOfDirectory(atPath: $0))?.sorted() ?? [] }
         )
         .first { fileManager.isExecutableFile(atPath: $0) }
@@ -226,14 +231,25 @@ actor CodexAppServer {
     /// ship a signed `codex` in `Contents/Resources`, and somebody who uses
     /// Codex only through one of them has no other: every place below that
     /// came up empty, so the reset credits read "Not available" on two Macs
-    /// that had several (issue #67). It is a native binary, so it needs no
-    /// `node` beside it.
+    /// that had several (issue #67, where the reporter found the one at
+    /// `/Applications/ChatGPT.app/Contents/Resources/codex`, codex-cli
+    /// 0.155.0-alpha). It is a native binary, so it needs no `node` beside
+    /// it. `app` is wherever Launch Services says the app is; the fixed
+    /// paths catch a copy it has not registered.
     ///
     /// Node version managers put it under a version directory, so those are
     /// listed; the folder it is found in leads the helper's `PATH`, which is
     /// where each of them keeps `node` (`BoundedProcess.environment`).
-    static func candidates(home: String, path: String?, versions: (String) -> [String]) -> [String] {
+    static func candidates(
+        home: String,
+        path: String?,
+        app: URL? = nil,
+        versions: (String) -> [String]
+    ) -> [String] {
         var candidates = (path ?? "").split(separator: ":").map { "\($0)/codex" }
+        if let app {
+            candidates.append(app.appending(path: "Contents/Resources/codex").path)
+        }
 
         candidates += [
             "/opt/homebrew/bin/codex",

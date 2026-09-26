@@ -135,3 +135,16 @@ struct CodexLocatorTests {
         #expect(UsageDetailCard.resetCreditsText(.codexMissing) != UsageDetailCard.resetCreditsText(.unreported))
     }
 }
+
+@Suite("Codex locator, app from Launch Services")
+struct CodexLocatorAppTests {
+    @Test("The app Launch Services names is asked before the fixed places")
+    func appFirst() {
+        let listed = CodexAppServer.candidates(
+            home: "/Users/me", path: nil,
+            app: URL(fileURLWithPath: "/Volumes/Apps/ChatGPT.app"),
+            versions: { _ in [] }
+        )
+        #expect(listed.first == "/Volumes/Apps/ChatGPT.app/Contents/Resources/codex")
+    }
+}
