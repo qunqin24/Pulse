@@ -7,6 +7,28 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.5.1
+
+**中文**
+
+**新功能**
+
+- **扩展可以显示余额。** 扩展除了报额度，现在也能报账户余额（金额和币种），适合 API 中转站。圆环可以像 API 服务一样选「自上次充值起 / 只看余额 / 我的预算」，也能设置低余额提醒。中转站的例子见 [Docs/extensions.md](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md)。感谢 [@Zoltan-code](https://github.com/qunqin24/Pulse/issues/40) 提议。
+
+**改进与修复**
+
+- **只装了 ChatGPT 桌面 App 时，也能读到 Codex 额度重置券。** 此前 Pulse 不会去 App 里找自带的 codex，卡片一直显示「不可用」。找不到 codex 时，现在会直接显示「找不到 codex」。感谢 [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) 反馈。
+
+**English**
+
+**New**
+
+- **Extensions can report a balance.** Besides limits, an extension can now report the money left in an account, as an amount and a currency, which suits API relays. Its ring takes the same three choices as an API account's — since top-up, balance only, my budget — and it can warn when the balance runs low. A relay example is in [Docs/extensions.md](https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md). Thanks to [@Zoltan-code](https://github.com/qunqin24/Pulse/issues/40) for asking.
+
+**Changed and fixed**
+
+- **Codex's limit reset credits are read when only the ChatGPT desktop app is installed.** Pulse never looked for the codex the app ships, so the card said Not available. When no codex can be found at all, it now says so. Thanks to [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) for the report.
+
 ## 1.5.0
 
 **中文**
