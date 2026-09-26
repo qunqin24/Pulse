@@ -199,6 +199,59 @@ struct ExtensionReportTests {
         #expect(reading(#"{"schemaVersion": 1}"#).state == .unavailable(.noLimitsReported))
     }
 
+    @Test("A balance with no limits is a reading: money, in the currency stated")
+    func balanceOnly() {
+        let usage = reading(#"{"schemaVersion": 1, "balance": {"amount": 16.33538288, "currency": "usd"}}"#)
+        #expect(usage.state == .live)
+        #expect(usage.windows.isEmpty)
+        #expect(usage.creditRemaining == .init(amount: 16.33538288, currency: "USD"))
+        #expect(usage.creditBalance != nil)
+        #expect(usage.origin == .extensionProgram)
+    }
+
+    @Test("A balance beside limits is kept, and the limits still drive the ring")
+    func balanceAndLimits() {
+        let usage = reading(#"""
+        {"schemaVersion": 1, "limits": [{"label": "Daily", "usedPercent": 30}],
+         "balance": {"amount": -2, "currency": "CNY"}}
+        """#)
+        #expect(usage.windows.map(\.name) == ["Daily"])
+        // Below zero is the service's figure, not a malformed one.
+        #expect(usage.creditRemaining == .init(amount: -2, currency: "CNY"))
+    }
+
+    @Test("A balance without an amount or a currency code is no balance", arguments: [
+        #"{"amount": 5, "currency": "dollars"}"#,
+        #"{"amount": 5, "currency": ""}"#,
+        #"{"amount": 5, "currency": "U1D"}"#,
+        #"{"amount": 5}"#,
+        #"{"currency": "USD"}"#,
+    ])
+    func unusableBalance(balance: String) {
+        #expect(reading(#"{"schemaVersion": 1, "balance": \#(balance)}"#).state == .unavailable(.noLimitsReported))
+        // And it does not take the limits beside it down with it.
+        let beside = reading(#"{"schemaVersion": 1, "balance": \#(balance), "limits": [{"label": "x", "usedPercent": 5}]}"#)
+        #expect(beside.windows.count == 1)
+        #expect(beside.creditRemaining == nil)
+    }
+
+    @Test("An amount written as text is not this schema's number")
+    func textAmount() {
+        let usage = reading(#"{"schemaVersion": 1, "balance": {"amount": "5", "currency": "USD"}}"#)
+        #expect(usage.state == .unavailable(.unreadableReply))
+    }
+
+    @MainActor
+    @Test("An extension's balance takes the ring every API account's does")
+    func balanceRing() {
+        let usage = reading(#"{"schemaVersion": 1, "balance": {"amount": 40, "currency": "USD"}}"#)
+        let ringed = BalanceRing.applying(basis: .budget, budget: 100, to: usage,
+                                          baselines: BalanceBaselines(file: nil))
+        #expect(ringed.windows.map(\.estimate) == [.yourBudget])
+        #expect(ringed.windows.first?.usedFraction == 0.6)
+        #expect(ringed.windows.first?.isExhausted == false)
+    }
+
     @Test("Named failures map to wording that names no provider", arguments: [
         ("signedOut", ProviderUsage.Unavailability.extensionSignedOut),
         ("unreachable", .unreachable),

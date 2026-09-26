@@ -685,7 +685,8 @@ final class UsageStore {
                 return readings
             }
             guard pass == self.currentPass else { return }
-            for raw in extensionReadings {
+            for reading in extensionReadings {
+                let raw = self.ringed(reading)
                 fetchedExtras.append((raw.id, await UsageCache.shared.reconciled(raw), raw))
             }
 
@@ -904,7 +905,11 @@ final class UsageStore {
     /// makes its own, from before the rule was everyone's; see `BalanceRing`.
     private func ringed(_ raw: ProviderUsage) -> ProviderUsage {
         let account = raw.account
-        guard account.provider.billing == .api, account.provider != .deepSeek else { return raw }
+        // Extensions too: one that reports a balance and no limit is a relay's
+        // prepaid credit, and `applying` leaves every other reading as it is.
+        let takesRing = account.provider == .pulseExtension
+            || (account.provider.billing == .api && account.provider != .deepSeek)
+        guard takesRing else { return raw }
         return BalanceRing.applying(
             basis: settings.balanceBasis(for: account),
             budget: settings.balanceBudget(for: account),

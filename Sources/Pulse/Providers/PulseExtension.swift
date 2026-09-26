@@ -264,14 +264,27 @@ struct ExtensionUsageService: Sendable {
 ///
 /// **Pulse still invents nothing.** A limit is drawn from a percentage the
 /// program states, or from a used amount and a limit it states; one with
-/// neither is left off rather than drawn at zero, and a report with no limit
-/// left says so.
+/// neither is left off rather than drawn at zero, and a report with neither a
+/// limit nor a balance left says so.
+///
+/// **A balance is money and nothing more.** A relay that sells prepaid credit
+/// reports what is left and no allowance, so the report carries the amount and
+/// its currency, and the ring it gets is every API account's — `BalanceRing`,
+/// with a denominator Pulse watched, one the reader typed, or none.
 enum ExtensionReport {
     private struct Report: Decodable {
         let schemaVersion: Int
         let status: String?
         let plan: String?
         let limits: [Limit]?
+        let balance: Balance?
+    }
+
+    /// Optional fields, so a balance missing one is dropped rather than
+    /// taking the limits beside it down with it.
+    private struct Balance: Decodable {
+        let amount: Double?
+        let currency: String?
     }
 
     private struct Limit: Decodable {
@@ -326,17 +339,42 @@ enum ExtensionReport {
             )
         }
 
-        guard !windows.isEmpty else { return .unavailable(account, reason: .noLimitsReported) }
+        let money = report.balance.flatMap(credit(from:))
+        guard !windows.isEmpty || money != nil else { return .unavailable(account, reason: .noLimitsReported) }
 
-        return ProviderUsage(
+        var usage = ProviderUsage(
             account: account,
             windows: windows,
             observedAt: now,
             state: .live,
             plan: report.plan.map { String($0.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)) }
                 .flatMap { $0.isEmpty ? nil : $0 },
-            creditBalance: nil
-        ).recording(.extensionProgram)
+            creditBalance: money.map(formatted)
+        )
+        usage.creditRemaining = money
+        return usage.recording(.extensionProgram)
+    }
+
+    /// The amount as stated, in a currency named by its ISO code. Below zero
+    /// is kept — some services run an account negative and keep serving it —
+    /// but a figure that is not a number, or a currency that is not a code, is
+    /// no balance at all.
+    private static func credit(from balance: Balance) -> ProviderUsage.CreditAmount? {
+        guard let amount = balance.amount, amount.isFinite,
+              let currency = balance.currency?.trimmingCharacters(in: .whitespaces).uppercased(),
+              currency.count == 3,
+              currency.unicodeScalars.allSatisfy({ ("A"..."Z").contains($0) })
+        else { return nil }
+        return ProviderUsage.CreditAmount(amount: amount, currency: currency)
+    }
+
+    private static func formatted(_ money: ProviderUsage.CreditAmount) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = money.currency
+        formatter.locale = LocalizationSource.locale
+        return formatter.string(from: NSNumber(value: money.amount))
+            ?? "\(money.amount) \(money.currency)"
     }
 
     /// The percentage as stated, or the used amount over the stated limit.

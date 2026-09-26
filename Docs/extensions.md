@@ -2,7 +2,7 @@
 
 Owns: the extension contract. That covers where an extension lives, what its manifest says, how Pulse runs it, and what it has to print. The source is [`Sources/Pulse/Providers/PulseExtension.swift`](../Sources/Pulse/Providers/PulseExtension.swift), and [`Tests/PulseTests/PulseExtensionTests.swift`](../Tests/PulseTests/PulseExtensionTests.swift) pins this page. Proposal and discussion: [issue #51](https://github.com/qunqin24/Pulse/issues/51).
 
-An extension is a program you add yourself, and it reports **one account's** usage. Pulse runs it, reads one JSON object from its standard output, and draws that object with its own ring and card. Use one when a service does not belong in Pulse itself, such as an organization's internal quota endpoint or a personal script. It saves you from keeping a fork of Pulse.
+An extension is a program you add yourself, and it reports **one account's** usage: its limits, its prepaid balance, or both. Pulse runs it, reads one JSON object from its standard output, and draws that object with its own ring and card. Use one when a service does not belong in Pulse itself, such as an API relay, an organization's internal quota endpoint or a personal script. It saves you from keeping a fork of Pulse. Relay balances: [issue #40](https://github.com/qunqin24/Pulse/issues/40).
 
 Scope, schema 1:
 
@@ -93,8 +93,20 @@ One JSON object on standard output, then exit 0:
 | `limits[].used` + `limits[].limit` | Instead of `usedPercent`, both as numbers; `limit` must be above zero. |
 | `limits[].resetsAt` | Optional ISO 8601 time, with or without fractional seconds. |
 | `limits[].windowSeconds` | Optional length of the window. With `resetsAt`, it is what the window clock draws. Leave it out when the length is not known. |
+| `balance` | Optional prepaid money left in the account: `{"amount": 16.33, "currency": "USD"}`. |
+| `balance.amount` | A JSON number, not a string. Below zero is allowed; some services keep serving an account in debt. |
+| `balance.currency` | A three-letter ISO 4217 code such as `USD` or `CNY`, in either case. |
 
-**Pulse does not invent a figure.** A limit with no `usedPercent`, or without both `used` and `limit`, is left off rather than drawn at zero. So is a negative figure, or one that is not a number. A reply with no limit left shows "No limits reported." A limit at or past 100% counts as spent.
+**Pulse does not invent a figure.** A limit with no `usedPercent`, or without both `used` and `limit`, is left off rather than drawn at zero. So is a negative figure, or one that is not a number. A balance without both an amount and a currency code is left off the same way, and the limits beside it are still drawn. A reply with neither a limit nor a balance left shows "No limits reported." A limit at or past 100% counts as spent.
+
+### A balance
+
+A balance is drawn the way every API account's is (`BalanceRing`; see [providers/deepseek.md](providers/deepseek.md)):
+
+- **With no limits**, the money is the reading. The extension's pane in Settings gets **Ring shows**, with the same three choices: since the last top-up that Pulse saw, balance only, or against a budget you type. With balance only, the rail shows the amount itself.
+- **With limits**, the limits drive the ring and the card still lists the balance.
+- **Never spent on Pulse's say-so.** A balance at or below zero does not mark the account spent. Only a limit at 100% does.
+- **Warn below.** Once an extension has reported a balance, its pane offers the low-balance notification, in the balance's own currency. See [notifications.md](notifications.md).
 
 ### When there is no reading
 
@@ -112,7 +124,9 @@ Any other status, or output that is not this object, shows "Couldn't read the re
 
 When a run fails, the last good reading stays on the ring, marked stale. This is the same cache rule as every provider; see [refresh-and-data.md](refresh-and-data.md). Notifications treat a working extension that stops like any other route going down; see [notifications.md](notifications.md).
 
-## A complete example
+## Complete examples
+
+### A quota endpoint
 
 ```sh
 #!/bin/sh
@@ -128,6 +142,28 @@ print(json.dumps({"schemaVersion": 1, "plan": r["plan"], "limits": [
   {"id": "monthly", "label": "Monthly requests",
    "used": r["used"], "limit": r["quota"], "resetsAt": r["resets_at"]}]}))'
 ```
+
+### An API relay's balance
+
+Many relays built on new-api or sub2api answer `GET /v1/usage` with the key's balance. This one reads the key from its own file and reports the balance only:
+
+```sh
+#!/bin/sh
+# ~/Library/Application Support/Pulse/Extensions/my-relay/run
+key=$(cat "$HOME/.config/my-relay/key") || { echo '{"schemaVersion":1,"status":"signedOut"}'; exit 0; }
+reply=$(curl -fsS -H "Authorization: Bearer $key" https://relay.example.com/v1/usage) \
+  || { echo '{"schemaVersion":1,"status":"unreachable"}'; exit 0; }
+echo "$reply" | /usr/bin/python3 -c '
+import json, sys
+r = json.load(sys.stdin)
+left = r.get("remaining", r.get("balance"))
+print(json.dumps({"schemaVersion": 1,
+  "balance": {"amount": float(left), "currency": r.get("unit", "USD")}}))'
+```
+
+Change the field names to match your relay's reply. If the relay counts in points instead of money, report them as a limit with `used` and `limit`, not as a balance.
+
+### Trying it
 
 To test it, run it by hand from its folder. It should print one line of JSON and exit 0. Then open **Settings → Manage extensions**, press **Look again**, and turn on **Show in panel** in the extension's own pane.
 

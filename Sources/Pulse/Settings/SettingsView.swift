@@ -1759,23 +1759,23 @@ struct SettingsView: View {
                 liveUsage(for: account)
             }
 
+            // Its own group rather than a row under Connection, which is
+            // about credentials and routes. This is a notification, and the
+            // general pane's group of them is the wrong home too: the figure
+            // is per account, because the providers that report a balance do
+            // not price in the same currency.
+            if reportsBalance(account) {
+                SettingsGroup(String.localized("Notifications")) {
+                    lowBalanceRow(for: account)
+                }
+            }
+
             // Both are built from the transcripts the CLI leaves behind, so
             // for a provider that keeps none they would be a column of zeroes
             // claiming nothing had been spent — and for an account Pulse
             // signed in to itself they would be worse than that. Those
             // transcripts belong to whichever account the CLI is signed in to,
             // which is not this one, so showing them here would report one
-            // Its own group rather than a row under Connection, which is
-            // about credentials and routes. This is a notification, and the
-            // general pane's group of them is the wrong home too: the figure
-            // is per account, because the providers that report a balance do
-            // not price in the same currency.
-            if provider.reportsSpendableBalance {
-                SettingsGroup(String.localized("Notifications")) {
-                    lowBalanceRow(for: account)
-                }
-            }
-
             // account's spending under another's name.
             if provider.providesHistory, account.isPrimary {
                 // The estimate is money, and money needs the token split only
@@ -1800,8 +1800,8 @@ struct SettingsView: View {
                 serverAddress = settings.serverAddress(for: account)
                 serverAddressInvalid = false
             }
-            if shown.reportsSpendableBalance {
-                lowBalance = settings.lowBalanceAlert(for: AccountKey(shown)).map { String($0) } ?? ""
+            if reportsBalance(account) {
+                lowBalance = settings.lowBalanceAlert(for: account).map { String($0) } ?? ""
             }
             // Copilot has no key field, but its token lives in the same store
             // and the pane needs to know whether there is one.
@@ -2165,9 +2165,18 @@ struct SettingsView: View {
     /// provider's figures; a basis picker beside them would change nothing,
     /// and a control that does nothing is worse than none. See `BalanceRing`.
     private func hasBalanceRing(_ account: AccountKey) -> Bool {
-        guard account.isPrimary, account.provider.billing == .api, account.provider.reportsSpendableBalance
-        else { return false }
+        let takesRing = account.provider == .pulseExtension || account.provider.billing == .api
+        guard takesRing, reportsBalance(account) else { return false }
         return store.usage(for: account).windows.allSatisfy { $0.estimate == .sinceTopUp || $0.estimate == .yourBudget }
+    }
+
+    /// Money in the account, spent by the call. A built-in provider's primary
+    /// account says so by being that kind of provider. An extension says so
+    /// by printing a balance, so it is asked of its reading instead: one that
+    /// reports limits only has nothing a "warn below" figure could compare.
+    private func reportsBalance(_ account: AccountKey) -> Bool {
+        if account.provider == .pulseExtension { return store.usage(for: account).creditRemaining != nil }
+        return account.isPrimary && account.provider.reportsSpendableBalance
     }
 
     /// An API account reports money and no allowance, so the ring has no

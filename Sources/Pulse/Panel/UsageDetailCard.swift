@@ -151,7 +151,11 @@ struct UsageDetailCard: View {
                 ValueRow(title: String.localized("Limit reset credits"), value: Self.resetCreditsText(resetCredits))
             }
 
-            if usage.windows.isEmpty, let balance = usage.creditBalance {
+            // An extension may report limits and money both — a relay's
+            // quota and its prepaid credit — and the ring can only draw one,
+            // so the card keeps the money in view either way.
+            if usage.windows.isEmpty || usage.account.provider == .pulseExtension,
+               let balance = usage.creditBalance {
                 ValueRow(title: String.localized("Credit balance"), value: balance)
             }
 
