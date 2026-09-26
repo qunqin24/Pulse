@@ -139,18 +139,22 @@ struct GrokParsingTests {
         #expect(GrokUsageService.window(from: try Self.config("grok-billing-no-timestamps")) == nil)
     }
 
-    /// Current behaviour; possibly wrong: a percentage past 100 clamps the
-    /// drawn fraction to a full ring, but `window(from:)` never sets
-    /// `isExhausted` — there is no field in this reply that plays the role
-    /// DeepSeek's `is_available` or Grok Bot's `usagePercent >= 100` do, so
-    /// nothing marks it. `GrokBotUsageService.window(from:)` sets
-    /// `isExhausted: percent >= 100` from the same kind of figure, so the two
-    /// Grok-branded rings disagree on whether reaching 100% is "spent".
-    @Test("A percentage over 100 clamps the fraction but does not mark exhausted")
-    func percentageOver100ClampsWithoutMarkingExhausted() throws {
+    /// Grok's own percentage at or past 100 is the pool gone, as it is for
+    /// Grok Bot. The drawn fraction still stops at a full ring.
+    @Test("A percentage at or over 100 fills the ring and marks it spent")
+    func percentageOver100IsExhausted() throws {
         let window = try #require(GrokUsageService.window(from: try Self.config("grok-billing-exhausted")))
         #expect(window.usedFraction == 1)
-        #expect(!window.isExhausted)
+        #expect(window.isExhausted)
+    }
+
+    @Test("Just under 100 is not spent, and exactly 100 is", arguments: [(99.9, false), (100.0, true)])
+    func exhaustedThreshold(percent: Double, spent: Bool) throws {
+        let json = #"{"config":{"currentPeriod":{"start":"2026-01-01T00:00:00Z","end":"2026-01-08T00:00:00Z"},"creditUsagePercent":\#(percent)}}"#
+        let billing = try JSONDecoder().decode(GrokUsageService.Billing.self, from: Data(json.utf8))
+        let config = try #require(billing.config)
+        let window = try #require(GrokUsageService.window(from: config))
+        #expect(window.isExhausted == spent)
     }
 
     // MARK: - The plan's name

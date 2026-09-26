@@ -203,7 +203,11 @@ struct GrokUsageService: Sendable {
             scope: nil,
             usedFraction: min(max(percent / 100, 0), 1),
             windowSeconds: seconds,
-            resetsAt: end
+            resetsAt: end,
+            // Grok's own figure saying the pool is gone, the rule Grok Bot and
+            // every other percentage-reporting provider follow. An omitted
+            // percentage is the zero above and never reaches it.
+            isExhausted: percent >= 100
         )
     }
 

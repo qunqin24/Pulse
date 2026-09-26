@@ -35,6 +35,8 @@ It is only read as zero **inside a period that is currently running**. A reply d
 
 This is the **opposite** of Grok Bot’s `usagePercent` rule (explicit presence there; absent means unset). See [grok-bot.md](grok-bot.md).
 
+**At or past 100% the pool is spent** (`isExhausted`), the same as Grok Bot and every provider that reports a percentage: it is Grok's own figure saying the pool is gone. Until 1.5.2 it was left unmarked, so the ring filled but no "spent" notification or card state followed; the parsing tests caught it.
+
 ## Window length
 
 Measured from the period’s own two timestamps (`currentPeriod` start and end), not from a `type` string. `reportsLength` is true. **Historical evidence, one account:** exactly 604,800 seconds. The `USAGE_PERIOD_TYPE_WEEKLY` enum is theirs to rename; the subtraction is not.
