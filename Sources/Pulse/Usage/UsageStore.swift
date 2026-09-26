@@ -4,9 +4,11 @@ import Observation
 
 /// Holds the current usage for every provider and keeps it refreshed.
 ///
-/// The two providers are fetched very differently — Codex is asked over the
-/// network, Claude Code is read from whatever its status line last handed us —
-/// so each is refreshed on its own terms rather than on one shared clock.
+/// Seventy-seven providers are fetched in as many different ways — most are
+/// asked over the network, Claude Code is read from whatever its status line
+/// last handed us, and others read a local ledger, a CLI, or a browser
+/// cookie — so each is refreshed on its own terms rather than on one shared
+/// clock.
 ///
 /// The loop itself reschedules after every pass rather than repeating on a
 /// fixed timer, because on `.automatic` the wait is worked out afresh each

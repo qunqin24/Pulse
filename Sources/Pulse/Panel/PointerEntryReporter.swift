@@ -11,10 +11,12 @@ import SwiftUI
 /// which app is frontmost.
 ///
 /// Only entering is reported, deliberately. Exit events are not trustworthy
-/// here: the panel resizes itself whenever the details card opens, and the
-/// resulting layout passes can fire exits while the pointer has not moved at
-/// all. Whether the pointer has really left is answered by
-/// `PanelPointerWatcher` instead.
+/// here: views appearing, disappearing, or animating under a stationary
+/// pointer — the details card opening, for instance — fire spurious exits,
+/// and acting on one closes the card, which puts the pointer back on a ring,
+/// which opens it again, an endless loop. Whether the pointer has really left
+/// is answered by `PanelPointerWatcher` instead, which samples its actual
+/// position rather than trusting enter/exit events.
 ///
 /// Attach it as a background so it takes the frame of whatever it is tracking:
 ///

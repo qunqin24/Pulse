@@ -426,12 +426,12 @@ struct UsageDockView: View {
         .allowsHitTesting(notchSize == nil || isExpanded)
         .accessibilityHidden(notchSize != nil && !isExpanded)
         // No drag handle lives here any more. A press only reaches a view
-        // inside `NSHostingView` if SwiftUI claims it first, and it would not
-        // claim the empty black between the rings: the berth opts out of hit
-        // testing and nothing else covers those points, so the panel could be
-        // dragged by its rings and nowhere else. Laying a shape over the handle
-        // to claim them swallowed the press instead of passing it down, and
-        // then nothing could be dragged at all.
+        // inside `NSHostingView` if SwiftUI claims it first, so the berth
+        // (`PanelSurface`) is deliberately hit-testable: it is what claims
+        // the empty black between the rings, which is what lets the panel be
+        // dragged from there and not only by its rings. Laying a shape over
+        // the handle to claim them once swallowed the press instead of
+        // passing it down, and then nothing could be dragged at all.
         //
         // The window takes its own mouse events instead — see `FloatingPanel`
         // in FloatingPanelController.swift — which happens before any of

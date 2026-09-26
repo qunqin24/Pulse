@@ -1602,7 +1602,8 @@ final class AppSettings {
     }
 
     /// Forgets an account, and everything stored against it — a later account
-    /// must never inherit a removed one's pinned window or route.
+    /// must never inherit a removed one's pinned window, route, colours, or
+    /// any other per-account setting.
     func removeAccount(_ account: AccountKey) {
         guard !account.isPrimary else { return }
 
@@ -1624,6 +1625,15 @@ final class AppSettings {
         sources[account.id] = nil
         ringTints[account.id] = nil
         sessionBrowsers[account.id] = nil
+        serverAddresses[account.id] = nil
+        lowBalanceAlerts[account.id] = nil
+        balanceBases[account.id] = nil
+        balanceBudgets[account.id] = nil
+        botMarks[account.id] = nil
+        botPersonas[account.id] = nil
+        botColours[account.id] = nil
+        botShapes[account.id] = nil
+        splitAccounts.remove(account.id)
     }
 
     func rename(_ account: AccountKey, to label: String) {

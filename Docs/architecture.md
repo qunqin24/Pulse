@@ -1,6 +1,6 @@
 # Architecture
 
-Single executable target `Pulse` at `Sources/Pulse`. No internal modules; one SwiftUI view per file. The floating monitor is **not** a SwiftUI `WindowGroup` scene.
+Single executable target `Pulse` at `Sources/Pulse`. No internal modules. The floating monitor is **not** a SwiftUI `WindowGroup` scene.
 
 Provider routes, credentials, cookies, and extra-account OAuth belong in [providers/README.md](providers/README.md). This file is the AppKit shell and the settings/state that every provider shares.
 
