@@ -1,0 +1,12 @@
+{
+  "base_resp": { "status_code": 0 },
+  "model_remains": [
+    {
+      "model_name": "abab6.5",
+      "current_interval_total_count": 100,
+      "current_interval_usage_count": 80,
+      "start_time": 1767225600000,
+      "end_time": 1767243600000
+    }
+  ]
+}

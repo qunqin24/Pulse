@@ -1,0 +1,9 @@
+{
+  "currentPeriodStart": "2026-01-01T00:00:00Z",
+  "usagePercent": 0,
+  "hasNonZeroIncludedLimit": false,
+  "includedLimitZero": true,
+  "usesPooledEnterpriseAllowance": false,
+  "upgradeRecommendation": "Upgrade to Pro+ for $500 of Grok Bot usage each week",
+  "grokPlanLabel": "Grok Bot Plan"
+}

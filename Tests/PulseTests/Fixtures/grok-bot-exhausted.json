@@ -1,0 +1,9 @@
+{
+  "currentPeriodStart": "2026-01-01T00:00:00Z",
+  "nextResetTimestampUtc": "2026-01-08T00:00:00Z",
+  "usagePercent": 100,
+  "hasNonZeroIncludedLimit": true,
+  "includedLimitZero": false,
+  "usesPooledEnterpriseAllowance": false,
+  "grokPlanLabel": "Grok Bot Plan"
+}

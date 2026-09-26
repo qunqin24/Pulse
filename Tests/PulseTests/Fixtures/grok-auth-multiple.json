@@ -1,0 +1,13 @@
+{
+  "issuer-old|client-old": {
+    "key": "expired-token",
+    "expires_at": "2020-01-01T00:00:00Z"
+  },
+  "issuer-fresh|client-fresh": {
+    "key": "fresh-token",
+    "expires_at": "2099-01-01T00:00:00Z"
+  },
+  "issuer-undated|client-undated": {
+    "key": "undated-token"
+  }
+}

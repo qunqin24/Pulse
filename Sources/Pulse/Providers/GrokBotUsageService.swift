@@ -110,7 +110,10 @@ struct GrokBotUsageService: Sendable {
     /// Every field optional: this is not public API, and a shape that changes
     /// should cost the reading rather than crash into a decoding failure that
     /// says nothing useful.
-    private struct Reply: Decodable {
+    ///
+    /// Internal rather than private so `GrokBotParsingTests` can decode
+    /// fixtures into it directly. Do not tidy it back.
+    struct Reply: Decodable {
         let currentPeriodStart: String?
         /// Absent on every account measured here — see `window(from:)`.
         let nextResetTimestampUtc: String?
@@ -156,7 +159,9 @@ struct GrokBotUsageService: Sendable {
     /// something the account does not have, the trap Copilot's unissued quotas
     /// set. So the account has to say it has an allowance before a figure of
     /// nothing is believed to mean nothing *used*.
-    private static func window(from reply: Reply) -> UsageWindow? {
+    /// Internal rather than private so `GrokBotParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func window(from reply: Reply) -> UsageWindow? {
         guard
             reply.usesPooledEnterpriseAllowance != true,
             reply.includedLimitZero != true,
@@ -181,7 +186,9 @@ struct GrokBotUsageService: Sendable {
     /// A plan that does not include Grok Bot is not a failure to report
     /// anything: it is a complete answer, and "no limits reported" would send
     /// someone looking for a fault that isn't there.
-    private static func absence(_ reply: Reply) -> ProviderUsage.Unavailability {
+    /// Internal rather than private so `GrokBotParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func absence(_ reply: Reply) -> ProviderUsage.Unavailability {
         // **A reply that said nothing is not a reply that said no.** Every
         // field here is optional so a shape change costs one row rather than
         // the card — but read carelessly that turns any rename into a

@@ -1,0 +1,38 @@
+{
+  "base_resp": { "status_code": 0, "status_msg": "success" },
+  "data": {
+    "current_subscribe_title": "Pro Plan",
+    "points_balance": "12345",
+    "model_remains": [
+      {
+        "model_name": "general",
+        "current_interval_status": 1,
+        "current_interval_total_count": "100",
+        "current_interval_remaining_percent": "96",
+        "start_time": 1767225600000,
+        "end_time": 1767243600000,
+        "current_weekly_status": 1,
+        "current_weekly_total_count": 1000,
+        "current_weekly_remaining_percent": 75,
+        "weekly_end_time": 1767830400000
+      },
+      {
+        "model_name": "creative-writer",
+        "current_interval_status": 1,
+        "current_interval_total_count": 50,
+        "current_interval_remaining_percent": 50,
+        "start_time": 1767225600000,
+        "end_time": 1769817600000
+      },
+      {
+        "model_name": "video",
+        "current_interval_status": 3,
+        "current_interval_total_count": 0,
+        "current_interval_remaining_percent": 100,
+        "current_weekly_status": 3,
+        "current_weekly_total_count": 0,
+        "current_weekly_remaining_percent": 100
+      }
+    ]
+  }
+}

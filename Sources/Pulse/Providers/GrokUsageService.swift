@@ -121,17 +121,27 @@ struct GrokUsageService: Sendable {
         guard
             let (data, response) = try? await NetworkSession.shared.data(for: request),
             (response as? HTTPURLResponse)?.statusCode == 200,
-            let settings = try? JSONDecoder().decode(Settings.self, from: data),
-            let tier = settings.subscriptionTierDisplay?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !tier.isEmpty
+            let settings = try? JSONDecoder().decode(Settings.self, from: data)
         else { return nil }
 
+        return Self.planName(from: settings)
+    }
+
+    /// The trim-and-empty-check moved out of `plan(token:)` so a test can drive
+    /// it without a network call. Internal rather than private for exactly
+    /// that reason — do not tidy it back.
+    static func planName(from settings: Settings) -> String? {
+        guard let tier = settings.subscriptionTierDisplay?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !tier.isEmpty
+        else { return nil }
         return tier
     }
 
     // MARK: - Reading the reply
 
-    private struct Billing: Decodable {
+    /// Internal rather than private so `GrokParsingTests` can decode fixtures
+    /// into it directly. Do not tidy it back.
+    struct Billing: Decodable {
         struct Period: Decodable {
             let start: String?
             let end: String?
@@ -148,7 +158,9 @@ struct GrokUsageService: Sendable {
         let config: Config?
     }
 
-    private struct Settings: Decodable {
+    /// Internal rather than private so `GrokParsingTests` can decode fixtures
+    /// into it directly. Do not tidy it back.
+    struct Settings: Decodable {
         let subscriptionTierDisplay: String?
 
         enum CodingKeys: String, CodingKey {
@@ -164,7 +176,9 @@ struct GrokUsageService: Sendable {
     /// by. `currentPeriod` is preferred over the flat `billingPeriod*` pair
     /// because it is the one that says which period is *current*; the flat
     /// pair is the fallback for a reply that omits it.
-    private static func window(from config: Billing.Config) -> UsageWindow? {
+    /// Internal rather than private so `GrokParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func window(from config: Billing.Config) -> UsageWindow? {
         guard
             let start = date(from: config.currentPeriod?.start ?? config.billingPeriodStart),
             let end = date(from: config.currentPeriod?.end ?? config.billingPeriodEnd),
@@ -197,7 +211,9 @@ struct GrokUsageService: Sendable {
     /// enum is theirs to rename, the two timestamps are arithmetic. A period
     /// that is neither of the two familiar lengths is still shown, under a
     /// heading built from its own duration.
-    private static func kind(seconds: Int) -> UsageWindow.Kind {
+    /// Internal rather than private so `GrokParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func kind(seconds: Int) -> UsageWindow.Kind {
         switch seconds {
         case 6 * 86_400...8 * 86_400: .weekly
         case 27 * 86_400...32 * 86_400: .monthly
@@ -207,7 +223,9 @@ struct GrokUsageService: Sendable {
 
     // MARK: - The stored login
 
-    private enum Login {
+    /// Internal rather than private so `GrokParsingTests` can pattern-match
+    /// on it directly. Do not tidy it back.
+    enum Login {
         case none
         case expired
         case usable(String)
@@ -220,7 +238,11 @@ struct GrokUsageService: Sendable {
     /// An entry that has aged out is kept as evidence: "signed in, and the
     /// login has gone stale" is a different instruction from "never signed
     /// in", and the difference is the whole message.
-    private func storedLogin() -> Login {
+    ///
+    /// Internal rather than private so `GrokParsingTests` can drive the
+    /// multi-entry selection directly, from a fixture standing in for
+    /// `~/.grok/auth.json`. Do not tidy it back.
+    func storedLogin() -> Login {
         guard
             let data = try? Data(contentsOf: authFile),
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]

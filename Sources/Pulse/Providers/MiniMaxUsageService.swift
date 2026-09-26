@@ -100,24 +100,11 @@ struct MiniMaxUsageService: Sendable {
 
         // The service's own verdict, which is not the HTTP status: a refused
         // key comes back as a perfectly good 200 with a non-zero status here.
-        //
-        // **Not every non-zero status is a bad key**, and saying so sends the
-        // user to check a credential that is fine. 1004 is the credential one;
-        // the rest are the service having a bad day.
-        let base = root["base_resp"] as? [String: Any]
-        let status = Self.number(base?["status_code"]) ?? 0
-        if status != 0 {
-            let said = (base?["status_msg"] as? String)?.lowercased() ?? ""
-            let credential = status == 1004
-                || ["token", "auth", "login", "cookie", "credential"].contains(where: said.contains)
-            return .failed(credential ? .apiKeyRefused : .serverError)
+        if let verdict = Self.statusVerdict(base: root["base_resp"] as? [String: Any]) {
+            return .failed(verdict)
         }
 
-        // **The payload is not always wrapped.** Some replies put `data` at the
-        // root instead, and the reference decoder takes either — most of its own
-        // captured replies are the unwrapped shape. Reading only `data` reported
-        // a perfectly good account as "no limits reported".
-        let payload = (root["data"] as? [String: Any]) ?? root
+        let payload = Self.payload(from: root)
         let windows = Self.windows(from: payload, provider: provider)
         guard !windows.isEmpty else { return .failed(.noLimitsReported) }
 
@@ -136,6 +123,29 @@ struct MiniMaxUsageService: Sendable {
     }
 
     // MARK: - Mapping
+
+    /// Moved out of `attempt(_:key:)` so a test can drive it without a
+    /// network call. **Not every non-zero status is a bad key**, and saying
+    /// so sends the user to check a credential that is fine. 1004 is the
+    /// credential one; the rest are the service having a bad day. Returns nil
+    /// when the service reports no problem at all.
+    static func statusVerdict(base: [String: Any]?) -> ProviderUsage.Unavailability? {
+        let status = Self.number(base?["status_code"]) ?? 0
+        guard status != 0 else { return nil }
+        let said = (base?["status_msg"] as? String)?.lowercased() ?? ""
+        let credential = status == 1004
+            || ["token", "auth", "login", "cookie", "credential"].contains(where: said.contains)
+        return credential ? .apiKeyRefused : .serverError
+    }
+
+    /// Moved out of `attempt(_:key:)` so a test can drive it without a network
+    /// call. **The payload is not always wrapped.** Some replies put `data` at
+    /// the root instead, and the reference decoder takes either — most of its
+    /// own captured replies are the unwrapped shape. Reading only `data`
+    /// reported a perfectly good account as "no limits reported".
+    static func payload(from root: [String: Any]) -> [String: Any] {
+        (root["data"] as? [String: Any]) ?? root
+    }
 
     /// Internal so the mapping can be driven against captured replies: the
     /// field names are undocumented and the inversion below is the whole
@@ -274,7 +284,10 @@ struct MiniMaxUsageService: Sendable {
     /// The first of several names that carries a usable string. Which one a
     /// reply uses varies by account, and reading only one leaves the card
     /// blank for everybody else.
-    private static func first(_ payload: [String: Any]?, of keys: [String]) -> String? {
+    ///
+    /// Internal rather than private so `MiniMaxParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func first(_ payload: [String: Any]?, of keys: [String]) -> String? {
         for key in keys {
             if let text = (payload?[key] as? String)?.trimmingCharacters(in: .whitespaces),
                !text.isEmpty { return text }
@@ -282,7 +295,9 @@ struct MiniMaxUsageService: Sendable {
         return nil
     }
 
-    private static func balance(_ payload: [String: Any]?, of keys: [String]) -> String? {
+    /// Internal rather than private so `MiniMaxParsingTests` can drive it
+    /// directly. Do not tidy it back.
+    static func balance(_ payload: [String: Any]?, of keys: [String]) -> String? {
         guard let points = keys.lazy.compactMap({ number(payload?[$0]) }).first(where: { $0 > 0 })
         else { return nil }
         let count = Int(points).formatted(.number.locale(LocalizationSource.locale))
