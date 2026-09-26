@@ -1,0 +1,12 @@
+{
+  "user": {
+    "membership": { "level": null }
+  },
+  "usage": null,
+  "limits": [
+    {
+      "window": { "duration": 5, "timeUnit": "TIME_UNIT_HOUR" },
+      "detail": { "limit": "100" }
+    }
+  ]
+}

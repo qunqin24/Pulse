@@ -84,7 +84,11 @@ struct OpenCodeGoUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal rather than private, and deliberately: this and `windows(from:)`
+    /// below are what a fixture test holds a reconstructed reply against.
+    /// Nothing outside the module can see them either way. Do not tidy these
+    /// back to `private` — that takes the fixture test with it.
+    struct Reply: Decodable {
         struct Window: Decodable {
             let status: String?
             /// How much is *gone*, 0...100.
@@ -103,7 +107,7 @@ struct OpenCodeGoUsageService: Sendable {
 
     /// Shortest window first, which is the order the other providers' limits
     /// arrive in and the order they matter in — the one about to bite leads.
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    static func windows(from reply: Reply) -> [UsageWindow] {
         guard let usage = reply.usage else { return [] }
 
         return [

@@ -66,7 +66,11 @@ struct KimiCodeUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal rather than private, and deliberately: this and `windows(from:)`
+    /// / `planName(_:)` below are what a fixture test holds a reconstructed
+    /// reply against. Nothing outside the module can see them either way. Do
+    /// not tidy these back to `private` — that takes the fixture test with it.
+    struct Reply: Decodable {
         struct Detail: Decodable {
             let limit: String?
             let used: String?
@@ -92,7 +96,7 @@ struct KimiCodeUsageService: Sendable {
         let limits: [Limit]?
     }
 
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    static func windows(from reply: Reply) -> [UsageWindow] {
         var found: [UsageWindow] = []
 
         // The timed windows first, named by the length the service states.
@@ -186,7 +190,7 @@ struct KimiCodeUsageService: Sendable {
     /// "LEVEL_INTERMEDIATE" → "Intermediate". An unfamiliar tier is passed
     /// through tidied rather than blanked: an unknown name still beats none,
     /// and it is the only clue left when a new tier appears.
-    private static func planName(_ level: String?) -> String? {
+    static func planName(_ level: String?) -> String? {
         guard let level, !level.isEmpty else { return nil }
 
         let bare = level.hasPrefix("LEVEL_") ? String(level.dropFirst("LEVEL_".count)) : level

@@ -1,0 +1,20 @@
+{
+  "billingCycleEnd": "2026-10-01T00:00:00.000Z",
+  "membershipType": "business",
+  "teamUsage": {
+    "pooled": {
+      "enabled": true,
+      "used": 3000,
+      "limit": 10000,
+      "remaining": 7000,
+      "autoPercentUsed": 15,
+      "apiPercentUsed": 3
+    },
+    "onDemand": {
+      "enabled": true,
+      "used": 100,
+      "limit": 500,
+      "remaining": 400
+    }
+  }
+}

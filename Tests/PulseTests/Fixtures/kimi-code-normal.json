@@ -1,0 +1,26 @@
+{
+  "user": {
+    "membership": {
+      "level": "LEVEL_INTERMEDIATE"
+    }
+  },
+  "usage": {
+    "limit": "1000",
+    "used": "250",
+    "resetTime": "2026-10-01T00:00:00.000Z"
+  },
+  "limits": [
+    {
+      "window": { "duration": 5, "timeUnit": "TIME_UNIT_HOUR" },
+      "detail": { "limit": "300", "used": "120", "resetTime": "2026-09-26T18:00:00.000Z" }
+    },
+    {
+      "window": { "duration": 30, "timeUnit": "TIME_UNIT_DAY" },
+      "detail": { "limit": "5000", "remaining": "1500", "resetTime": "2026-10-01T00:00:00.000Z" }
+    },
+    {
+      "window": { "duration": 2, "timeUnit": "TIME_UNIT_FORTNIGHT" },
+      "detail": { "limit": "10", "used": "1" }
+    }
+  ]
+}

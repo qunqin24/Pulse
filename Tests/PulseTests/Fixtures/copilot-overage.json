@@ -1,0 +1,15 @@
+{
+  "copilot_plan": "business",
+  "quota_reset_date_utc": "2026-10-01T00:00:00.000Z",
+  "quota_snapshots": {
+    "chat": {
+      "has_quota": true,
+      "unlimited": false,
+      "entitlement": 200,
+      "remaining": 0,
+      "percent_remaining": 0,
+      "overage_permitted": true,
+      "overage_count": 37
+    }
+  }
+}

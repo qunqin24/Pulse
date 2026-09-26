@@ -81,7 +81,11 @@ struct CursorUsageService: Sendable {
 
     // MARK: - Reading the reply
 
-    private struct Reply: Decodable {
+    /// Internal rather than private, and deliberately: this and the mapping
+    /// functions below are what a fixture test holds a reconstructed reply
+    /// against. Nothing outside the module can see them either way. Do not
+    /// tidy these back to `private` — that takes the fixture test with it.
+    struct Reply: Decodable {
         /// One pot of money. `used`, `limit` and `remaining` are **cents**;
         /// the lane percentages are percentages.
         struct Allowance: Decodable {
@@ -113,7 +117,7 @@ struct CursorUsageService: Sendable {
         let teamUsage: Team?
     }
 
-    private static func windows(from reply: Reply) -> [UsageWindow] {
+    static func windows(from reply: Reply) -> [UsageWindow] {
         let resets = reply.billingCycleEnd.flatMap(Self.date(from:))
         // A team account reports the same shape under another name.
         let plan = reply.individualUsage?.plan ?? reply.teamUsage?.pooled
@@ -232,7 +236,7 @@ struct CursorUsageService: Sendable {
     /// A real balance rather than an allowance, which is why it is reported
     /// here and not for Antigravity: the account says how much of the money is
     /// still there, not merely how much it started with.
-    private static func remaining(_ reply: Reply) -> String? {
+    static func remaining(_ reply: Reply) -> String? {
         guard
             let allowance = reply.individualUsage?.plan ?? reply.teamUsage?.pooled,
             let remaining = allowance.remaining
@@ -250,7 +254,7 @@ struct CursorUsageService: Sendable {
     /// "pro_plus" → "Pro+". An unfamiliar tier is tidied and passed through
     /// rather than blanked: an unknown name still beats none, and it is the
     /// only clue left when a new one appears.
-    private static func planName(_ membership: String?) -> String? {
+    static func planName(_ membership: String?) -> String? {
         guard let membership, !membership.isEmpty else { return nil }
 
         return membership
