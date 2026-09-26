@@ -4,7 +4,8 @@ extension Provider {
     /// Shown before enabling a provider, both in the chooser and in Settings.
     /// Pure copy: drawing this must never inspect the credentials it describes.
     var monitoringAccessDescription: String {
-        switch self {
+        guard let written = handWritten else { return profile?.accessDescription() ?? "" }
+        return switch written {
         case .claudeCode:
             .localized("Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage.")
         case .codex:
@@ -42,18 +43,6 @@ extension Provider {
         // nothing — rather than guess.
         case .pulseExtension:
             .localized("Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program.")
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            profile?.accessDescription() ?? ""
         }
     }
 }

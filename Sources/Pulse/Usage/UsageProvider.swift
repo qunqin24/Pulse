@@ -98,6 +98,46 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// every "each provider's first account" list are built from.
     static let builtIn = allCases.filter { $0 != .pulseExtension }
 
+    /// The providers written case by case, and the extension type: everything
+    /// `Provider` has that is not a `ProviderProfile`. Switches that need a
+    /// case-by-case answer switch over this, so a profiled provider —
+    /// answered from its profile — is named in none of them. Raw values are
+    /// identical to `Provider`'s, which is what lets `handWritten` below be a
+    /// plain `init(rawValue:)`.
+    enum HandWrittenProvider: String, CaseIterable, Sendable {
+        case claudeCode
+        case codex
+        case kiro
+        case antigravity
+        case cursor
+        case openCodeGo
+        case kimiCode
+        case ollamaCloud
+        case zai
+        case glmCoding
+        case minimax
+        case minimaxCN
+        case copilot
+        case grok
+        case grokBot
+        case volcengine
+        case commandCode
+        case deepSeek
+        case devin
+        case xiaomiMiMo
+        case sub2api
+        case newAPI
+        case v2ex
+        case qoder
+        case stepFun
+        case pulseExtension = "extension"
+    }
+
+    /// This provider's hand-written case, or nil when it is answered by a
+    /// `ProviderProfile` instead. Exactly one of `handWritten` and `profile`
+    /// is non-nil for every case — see `HandWrittenProviderCoverageTests`.
+    var handWritten: HandWrittenProvider? { HandWrittenProvider(rawValue: rawValue) }
+
     /// How an account is paid for, which is what Pulse sorts providers by.
     ///
     /// **Two kinds of account, and they want different things from Pulse.** A
@@ -129,7 +169,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
 
     /// Product names, left untranslated.
     var displayName: String {
-        switch self {
+        guard let written = handWritten else { return profile?.displayName ?? rawValue }
+        return switch written {
         case .claudeCode: "Claude Code"
         case .codex: "Codex"
         case .kiro: "Kiro"
@@ -214,25 +255,14 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // What the type is called. Each extension's own name is its
         // account's label, from its manifest; see `AppSettings.label(for:)`.
         case .pulseExtension: "Extension"
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            profile?.displayName ?? rawValue
         }
     }
 
     /// The parent brand's mark rather than the CLI-specific one — these read
     /// better at ring size and are what people recognise.
     var iconResource: String {
-        switch self {
+        guard let written = handWritten else { return profile?.iconResource ?? "extension" }
+        return switch written {
         case .claudeCode: "claude"
         case .codex: "openai"
         case .kiro: "kiro"
@@ -285,18 +315,6 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // capability; until then the ring says "a program of yours", not
         // which brand, and its name says the rest.
         case .pulseExtension: "extension"
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            profile?.iconResource ?? "extension"
         }
     }
 
@@ -307,7 +325,9 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// narrower than `supportsLocalActivity`: lifecycle-only records can drive
     /// an honest activity mark without being usable for a cost estimate.
     var keepsLocalTranscripts: Bool {
-        switch self {
+        // None of the profiled providers leaves transcripts Pulse reads.
+        guard let written = handWritten else { return false }
+        return switch written {
         case .claudeCode, .codex: true
         // Antigravity is an editor and keeps nothing. OpenCode *does* keep
         // sessions with token counts — `opencode stats` adds them up — but in
@@ -318,19 +338,6 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api,
              .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: false
-        // None of the profiled providers leaves transcripts Pulse reads.
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            false
         }
     }
 
@@ -339,24 +346,13 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// `keepsLocalTranscripts`: Kiro and ZCode leave enough lifecycle records
     /// for an activity mark, but not the token buckets the spend ledger needs.
     var supportsLocalActivity: Bool {
-        switch self {
+        guard let written = handWritten else { return false }
+        return switch written {
         case .claudeCode, .codex, .kiro, .zai, .glmCoding: true
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .minimax, .minimaxCN, .copilot, .grok, .grokBot, .volcengine,
              .commandCode, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: false
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            false
         }
     }
 
@@ -399,24 +395,13 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// and no transcripts, and would have been given a stated route it does not
     /// have instead of the picker it needs.
     var hasSourceChoice: Bool {
-        switch self {
+        guard let written = handWritten else { return false }
+        return switch written {
         case .claudeCode, .codex, .volcengine, .devin: true
         case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .commandCode, .deepSeek, .xiaomiMiMo, .sub2api, .newAPI, .v2ex, .qoder, .stepFun,
              .pulseExtension: false
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            false
         }
     }
 
@@ -432,7 +417,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     /// have and an app it has nothing to do with. A switch here means the next
     /// provider added cannot inherit somebody else's sentence in silence.
     var soleRoute: (name: String, note: String)? {
-        switch self {
+        guard let written = handWritten else { return profile?.soleRoute?() }
+        return switch written {
         case .antigravity:
             (String.localized("Antigravity's language server"),
              String.localized("Only while Antigravity is open."))
@@ -460,20 +446,6 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // Stated on its own pane, which names the program instead.
         case .pulseExtension:
             nil
-        // Only a provider reading a login its own tool saved has a route to
-        // state; its profile names it.
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-        .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-        .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-        .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-        .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-        .moonshot, .hyper, .atlasCloud, .poe, .venice,
-        .openAIPlatform, .amp, .zed, .sakana, .mistral,
-        .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-        .clawRouter, .zenMux, .v0, .devPass,
-        .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-        .replicate, .typeSafe, .vercelAIGateway:
-            profile?.soleRoute?()
         }
     }
 

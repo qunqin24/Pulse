@@ -30,7 +30,8 @@ enum BotMarkTint {
     }
 
     static func brand(for provider: Provider) -> Color? {
-        switch provider {
+        guard let written = provider.handWritten else { return profile(of: provider) }
+        return switch written {
         case .claudeCode: BotMarkPalette.rgb(0xD97757)
         case .deepSeek: BotMarkPalette.rgb(0x4D6BFE)
         case .volcengine: BotMarkPalette.rgb(0x1664FF)
@@ -60,18 +61,6 @@ enum BotMarkTint {
              .copilot, .grok, .grokBot, .commandCode, .devin, .newAPI, .v2ex,
              .pulseExtension:
             nil
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            profile(of: provider)
         }
     }
 

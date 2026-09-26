@@ -16,7 +16,10 @@ extension Provider {
             ["/Applications/\(name).app", local("Applications/\(name).app")]
         }
 
-        switch self {
+        guard let written = handWritten else {
+            return (profile?.discoveryPaths ?? []).map { $0.hasPrefix("/") ? $0 : local($0) }
+        }
+        switch written {
         case .claudeCode:
             return [local(".claude"), local("Library/Application Support/Claude")] + app("Claude")
         case .codex: return [local(".codex")]
@@ -52,18 +55,6 @@ extension Provider {
         // installed. See `ExtensionCatalog`.
         case .pulseExtension:
             return []
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            return (profile?.discoveryPaths ?? []).map { $0.hasPrefix("/") ? $0 : local($0) }
         }
     }
 }

@@ -64,7 +64,8 @@ enum OAuthLogin {
         let deviceFlow: DeviceFlow?
 
         static func of(_ provider: Provider) -> Configuration? {
-            switch provider {
+            guard let written = provider.handWritten else { return nil }
+            return switch written {
             case .claudeCode:
                 // Read out of the installed CLI rather than remembered: an
                 // OAuth flow with one parameter wrong fails in a way that
@@ -146,19 +147,6 @@ enum OAuthLogin {
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grokBot, .volcengine,
              .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api, .newAPI,
              .v2ex, .qoder, .stepFun, .pulseExtension:
-                nil
-            // Nothing profiled is signed in to by Pulse itself.
-            case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-                 .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-                 .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-                 .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-                 .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-                 .moonshot, .hyper, .atlasCloud, .poe, .venice,
-                 .openAIPlatform, .amp, .zed, .sakana, .mistral,
-                 .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-                 .clawRouter, .zenMux, .v0, .devPass,
-                 .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-                 .replicate, .typeSafe, .vercelAIGateway:
                 nil
             }
         }

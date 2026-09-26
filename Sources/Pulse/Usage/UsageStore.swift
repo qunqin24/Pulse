@@ -803,8 +803,8 @@ final class UsageStore {
                 raw = await extensionService?.fetch() ?? .unavailable(account, reason: .extensionMissing)
             } else if !account.isPrimary {
                 raw = await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot)
-            } else {
-            switch provider {
+            } else if let written = provider.handWritten {
+            switch written {
             case .codex:
                 raw = await codex.fetch(source: source)
             case .kiro:
@@ -854,23 +854,14 @@ final class UsageStore {
             // Every extension is a slot of its own, answered above.
             case .pulseExtension:
                 raw = .unavailable(account, reason: .extensionMissing)
-            case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-                 .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-                 .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-                 .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-                 .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-                 .moonshot, .hyper, .atlasCloud, .poe, .venice,
-                 .openAIPlatform, .amp, .zed, .sakana, .mistral,
-                 .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-                 .clawRouter, .zenMux, .v0, .devPass,
-                 .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-                 .replicate, .typeSafe, .vercelAIGateway:
+            }
+            } else {
+                // A profiled provider: the fetch its own file built.
                 raw = if let (profile, context) = profiled {
                     await profile.fetch(context)
                 } else {
                     .unavailable(account, reason: .loading)
                 }
-            }
             }
 
             guard pass == self.currentPass else { return }
@@ -966,27 +957,20 @@ final class UsageStore {
             AccountCredentialStore.renewed(credentials, for: account)
         }
 
-        return switch account.provider {
+        // Nothing else can be signed in to, so nothing else gets here —
+        // including every profiled provider.
+        guard let written = account.provider.handWritten else {
+            return .unavailable(account, reason: .loading)
+        }
+        return switch written {
         case .claudeCode: await claudeCode.fetch(account: account, token: credentials.accessToken)
         case .codex: await codex.fetch(account: account, credentials: credentials)
         case .grok: await grok.fetch(account: account, token: credentials.accessToken)
         case .grokBot: await grokBot.fetch(account: account, token: credentials.accessToken)
-        // Nothing else can be signed in to, so nothing else gets here.
         case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .volcengine,
              .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api, .newAPI,
-             .v2ex, .qoder, .stepFun, .pulseExtension,
-             .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
+             .v2ex, .qoder, .stepFun, .pulseExtension:
             .unavailable(account, reason: .loading)
         }
     }

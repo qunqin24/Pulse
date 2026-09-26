@@ -83,44 +83,37 @@ enum ConnectionRemedy: Equatable {
         if provider == .pulseExtension {
             return URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md")!
         }
-        let page: String = switch provider {
-        case .claudeCode: "claude-code"
-        case .codex: "codex"
-        case .kiro: "kiro"
-        case .antigravity: "antigravity"
-        case .cursor: "cursor"
-        case .openCodeGo: "opencode-go"
-        case .kimiCode: "kimi-code"
-        case .ollamaCloud: "ollama-cloud"
-        case .xiaomiMiMo: "xiaomi-coding-plan"
-        case .zai, .glmCoding: "zai"
-        case .minimax, .minimaxCN: "minimax"
-        case .copilot: "copilot"
-        case .grok: "grok"
-        case .grokBot: "grok-bot"
-        case .volcengine: "volcengine"
-        case .commandCode: "command-code"
-        case .deepSeek: "deepseek"
-        case .devin: "devin"
-        case .sub2api: "sub2api"
-        case .newAPI: "newapi"
-        case .v2ex: "v2ex"
-        case .qoder: "qoder"
-        case .stepFun: "stepfun"
-        // Answered above.
-        case .pulseExtension: "extensions"
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            provider.profile?.setupSlug ?? provider.rawValue
+        let page: String
+        if let written = provider.handWritten {
+            page = switch written {
+            case .claudeCode: "claude-code"
+            case .codex: "codex"
+            case .kiro: "kiro"
+            case .antigravity: "antigravity"
+            case .cursor: "cursor"
+            case .openCodeGo: "opencode-go"
+            case .kimiCode: "kimi-code"
+            case .ollamaCloud: "ollama-cloud"
+            case .xiaomiMiMo: "xiaomi-coding-plan"
+            case .zai, .glmCoding: "zai"
+            case .minimax, .minimaxCN: "minimax"
+            case .copilot: "copilot"
+            case .grok: "grok"
+            case .grokBot: "grok-bot"
+            case .volcengine: "volcengine"
+            case .commandCode: "command-code"
+            case .deepSeek: "deepseek"
+            case .devin: "devin"
+            case .sub2api: "sub2api"
+            case .newAPI: "newapi"
+            case .v2ex: "v2ex"
+            case .qoder: "qoder"
+            case .stepFun: "stepfun"
+            // Answered above.
+            case .pulseExtension: "extensions"
+            }
+        } else {
+            page = provider.profile?.setupSlug ?? provider.rawValue
         }
         return URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/setup/\(page).md")!
     }

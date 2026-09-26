@@ -136,7 +136,10 @@ enum AgentActivity {
         for line in lines.reversed() {
             guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
 
-            switch provider {
+            // None of the profiled providers leaves transcripts Pulse reads,
+            // so nothing ever gets this far for one of them either.
+            guard let written = provider.handWritten else { return .finished }
+            switch written {
             case .claudeCode:
                 switch record["type"] as? String {
                 case "assistant":
@@ -221,18 +224,7 @@ enum AgentActivity {
             case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo,
-             .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension,
-             .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
+             .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension:
                 // None of these leaves transcripts Pulse reads, so nothing
                 // ever gets this far.
                 return .finished
@@ -413,7 +405,9 @@ enum AgentActivity {
         for provider: Provider,
         home: URL = URL(fileURLWithPath: NSHomeDirectory())
     ) -> URL? {
-        return switch provider {
+        // No profiled provider has a root here either.
+        guard let written = provider.handWritten else { return nil }
+        return switch written {
         case .claudeCode: home.appending(path: ".claude/projects")
         case .codex: home.appending(path: ".codex/sessions")
         // Kiro CLI's v1 files live directly under `cli`; Kiro Desktop and ACP
@@ -426,18 +420,6 @@ enum AgentActivity {
              .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: nil
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            nil
         }
     }
 

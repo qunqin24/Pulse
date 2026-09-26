@@ -1367,41 +1367,33 @@ struct SettingsView: View {
             // where Grok's pane described Antigravity's language server.
             let host: String
             let keep: @Sendable (String) -> String?
-            switch account.provider {
-            case .ollamaCloud:
-                host = "ollama.com"
-                keep = { try? OllamaSessionCookie.normalize($0) }
-            case .xiaomiMiMo:
-                host = XiaomiMiMoClient.host
-                keep = { try? XiaomiMiMoCookie.normalize($0) }
-            // The chosen site's host and no other: `qoder.com.cn`'s session
-            // is not `qoder.com`'s, and is never read on its behalf.
-            case .qoder:
-                host = settings.qoderSite.host
-                keep = { try? QoderCookie.normalize($0) }
-            // Likewise StepFun: the chosen console's host only.
-            case .stepFun:
-                host = settings.stepFunSite.host
-                keep = { try? StepFunCookie.normalize($0) }
-            case .claudeCode, .codex, .kiro, .antigravity, .cursor, .openCodeGo,
-                 .kimiCode, .zai, .glmCoding, .minimax, .minimaxCN, .copilot,
-                 .grok, .grokBot, .volcengine, .commandCode, .deepSeek, .devin,
-                 .sub2api, .newAPI, .v2ex, .pulseExtension:
-                // Not session-based: `readSession` sends those to
-                // `readBrowserStorage` before it gets here.
-                return
-            // The profile names the host and the cookies worth keeping.
-            case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-                 .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-                 .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-                 .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-                 .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-                 .moonshot, .hyper, .atlasCloud, .poe, .venice,
-                 .openAIPlatform, .amp, .zed, .sakana, .mistral,
-                 .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-                 .clawRouter, .zenMux, .v0, .devPass,
-                 .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-                 .replicate, .typeSafe, .vercelAIGateway:
+            if let written = account.provider.handWritten {
+                switch written {
+                case .ollamaCloud:
+                    host = "ollama.com"
+                    keep = { try? OllamaSessionCookie.normalize($0) }
+                case .xiaomiMiMo:
+                    host = XiaomiMiMoClient.host
+                    keep = { try? XiaomiMiMoCookie.normalize($0) }
+                // The chosen site's host and no other: `qoder.com.cn`'s session
+                // is not `qoder.com`'s, and is never read on its behalf.
+                case .qoder:
+                    host = settings.qoderSite.host
+                    keep = { try? QoderCookie.normalize($0) }
+                // Likewise StepFun: the chosen console's host only.
+                case .stepFun:
+                    host = settings.stepFunSite.host
+                    keep = { try? StepFunCookie.normalize($0) }
+                case .claudeCode, .codex, .kiro, .antigravity, .cursor, .openCodeGo,
+                     .kimiCode, .zai, .glmCoding, .minimax, .minimaxCN, .copilot,
+                     .grok, .grokBot, .volcengine, .commandCode, .deepSeek, .devin,
+                     .sub2api, .newAPI, .v2ex, .pulseExtension:
+                    // Not session-based: `readSession` sends those to
+                    // `readBrowserStorage` before it gets here.
+                    return
+                }
+            } else {
+                // The profile names the host and the cookies worth keeping.
                 guard case .sessionCookie(let profileHost, let cookies) = account.provider.profile?.credential
                 else { return }
                 host = profileHost

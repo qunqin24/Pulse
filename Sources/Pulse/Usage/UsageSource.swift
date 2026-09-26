@@ -78,7 +78,15 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
 
     /// What the tooling route actually is, which differs per provider.
     func detail(for provider: Provider) -> String {
-        switch (self, provider) {
+        // Every profiled provider has one route and it needs a key, same as
+        // the merged hand-written case below — except `.automatic`, which
+        // matches first regardless of provider, exactly as it does below.
+        guard let written = provider.handWritten else {
+            return self == .automatic
+                ? .localized("Use the endpoint when possible, the other route when not.")
+                : .localized("Uses the key you entered.")
+        }
+        return switch (self, written) {
         case (.automatic, _):
             .localized("Use the endpoint when possible, the other route when not.")
         case (.endpoint, .claudeCode):
@@ -106,21 +114,7 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
             .localized("Use the endpoint when possible, the other route when not.")
         case (_, .openCodeGo), (_, .kimiCode), (_, .zai), (_, .glmCoding),
              (_, .minimax), (_, .minimaxCN), (_, .copilot), (_, .commandCode), (_, .deepSeek),
-             (_, .sub2api), (_, .newAPI), (_, .v2ex), (_, .pulseExtension),
-             (_, .clinePass), (_, .alibabaCodingPlan), (_, .alibabaTokenPlan), (_, .qwenCloud),
-             (_, .factory), (_, .gemini), (_, .kiloCode), (_, .augment),
-             (_, .jetBrainsAI), (_, .t3Chat), (_, .synthetic), (_, .elevenLabs),
-             (_, .warp), (_, .windsurf), (_, .bifrost), (_, .chutes),
-             (_, .longCat), (_, .zoomMate), (_, .notionAI), (_, .ibmBob),
-             (_, .nousPortal), (_, .raycastAI), (_, .gitKraken), (_, .xKiro),
-             (_, .abacus), (_, .moonshot), (_, .hyper), (_, .atlasCloud),
-             (_, .poe), (_, .venice), (_, .openAIPlatform), (_, .amp),
-             (_, .zed), (_, .sakana), (_, .mistral), (_, .codebuff),
-             (_, .llmProxy), (_, .liteLLM), (_, .aixy), (_, .neuralwatt),
-             (_, .clawRouter), (_, .zenMux), (_, .v0),
-             (_, .devPass), (_, .perplexity), (_, .manus), (_, .huggingFace),
-             (_, .deepInfra), (_, .xaiAPI), (_, .replicate), (_, .typeSafe),
-             (_, .vercelAIGateway):
+             (_, .sub2api), (_, .newAPI), (_, .v2ex), (_, .pulseExtension):
             // Never shown either — one route, and it needs a key.
             .localized("Uses the key you entered.")
         case (.endpoint, .devin):

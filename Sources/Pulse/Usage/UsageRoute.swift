@@ -37,7 +37,15 @@ enum UsageRoute: String, Codable, Sendable {
         // one provider, and none of them is its first.
         if account.provider == .pulseExtension { return .extensionProgram }
         if !account.isPrimary { return .endpoint }
-        switch account.provider {
+        // A browser session is read like any other signed-in page; everything
+        // else a profiled provider does is a request to the service.
+        guard let written = account.provider.handWritten else {
+            switch account.provider.profile?.credential {
+            case .sessionCookie, .browserStorage: return .webSession
+            default: return .endpoint
+            }
+        }
+        switch written {
         case .claudeCode, .codex, .volcengine, .devin: return nil
         case .antigravity: return .languageServer
         // All four read a signed-in browser session rather than a key.
@@ -48,23 +56,6 @@ enum UsageRoute: String, Codable, Sendable {
              .sub2api, .newAPI, .v2ex:
             return .endpoint
         case .pulseExtension: return .extensionProgram
-        // A browser session is read like any other signed-in page; everything
-        // else a profiled provider does is a request to the service.
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            switch account.provider.profile?.credential {
-            case .sessionCookie, .browserStorage: return .webSession
-            default: return .endpoint
-            }
         }
     }
 }

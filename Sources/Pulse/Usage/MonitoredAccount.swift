@@ -149,7 +149,8 @@ extension Provider {
     /// login — so a second account of theirs is not something Pulse can be
     /// shown, however the rest of the app is shaped.
     var supportsMultipleAccounts: Bool {
-        switch self {
+        guard let written = handWritten else { return false }
+        return switch written {
         // Grok Bot is signed in to through Cursor's own login page rather
         // than by OAuth — a second allowance is a second Cursor account. See
         // `CursorWebLogin`.
@@ -165,18 +166,6 @@ extension Provider {
         // One account per extension, and each is its own: a second one of the
         // same program is a second folder, not a sign-in.
         case .pulseExtension: false
-        case .clinePass, .alibabaCodingPlan, .alibabaTokenPlan, .qwenCloud, .factory,
-             .gemini, .kiloCode, .augment, .jetBrainsAI, .t3Chat,
-             .synthetic, .elevenLabs, .warp, .windsurf, .bifrost,
-             .chutes, .longCat, .zoomMate, .notionAI, .ibmBob,
-             .nousPortal, .raycastAI, .gitKraken, .xKiro, .abacus,
-             .moonshot, .hyper, .atlasCloud, .poe, .venice,
-             .openAIPlatform, .amp, .zed, .sakana, .mistral,
-             .codebuff, .llmProxy, .liteLLM, .aixy, .neuralwatt,
-             .clawRouter, .zenMux, .v0, .devPass,
-             .perplexity, .manus, .huggingFace, .deepInfra, .xaiAPI,
-             .replicate, .typeSafe, .vercelAIGateway:
-            false
         }
     }
 }
