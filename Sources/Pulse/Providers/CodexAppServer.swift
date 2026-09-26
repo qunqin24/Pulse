@@ -237,9 +237,21 @@ actor CodexAppServer {
     /// it. `app` is wherever Launch Services says the app is; the fixed
     /// paths catch a copy it has not registered.
     ///
+    /// **Where inside the app has moved once already.** ChatGPT 26.924 put it
+    /// at `Contents/Resources/codex-cli/bin/codex` and dropped the old place,
+    /// and the reporter was back the day 1.5.1 shipped. Both are listed,
+    /// newer first, for every app location (`bundled`).
+    ///
     /// Node version managers put it under a version directory, so those are
     /// listed; the folder it is found in leads the helper's `PATH`, which is
     /// where each of them keeps `node` (`BoundedProcess.environment`).
+    /// Where the desktop apps keep `codex`, relative to the app, newest
+    /// layout first.
+    static let bundled = [
+        "Contents/Resources/codex-cli/bin/codex",
+        "Contents/Resources/codex",
+    ]
+
     static func candidates(
         home: String,
         path: String?,
@@ -248,7 +260,7 @@ actor CodexAppServer {
     ) -> [String] {
         var candidates = (path ?? "").split(separator: ":").map { "\($0)/codex" }
         if let app {
-            candidates.append(app.appending(path: "Contents/Resources/codex").path)
+            candidates += bundled.map { app.appending(path: $0).path }
         }
 
         candidates += [
@@ -259,11 +271,11 @@ actor CodexAppServer {
             "\(home)/.volta/bin/codex",
             "\(home)/.npm-global/bin/codex",
             "\(home)/Library/pnpm/codex",
-            "/Applications/Codex.app/Contents/Resources/codex",
-            "\(home)/Applications/Codex.app/Contents/Resources/codex",
-            "/Applications/ChatGPT.app/Contents/Resources/codex",
-            "\(home)/Applications/ChatGPT.app/Contents/Resources/codex",
         ]
+        for app in ["/Applications/Codex.app", "\(home)/Applications/Codex.app",
+                    "/Applications/ChatGPT.app", "\(home)/Applications/ChatGPT.app"] {
+            candidates += bundled.map { "\(app)/\($0)" }
+        }
 
         // Newest version last in each listing, so the newest wins.
         let managers: [(root: String, bin: String)] = [

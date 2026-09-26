@@ -239,6 +239,7 @@
 "Today" = "Today";
 "All time" = "All time";
 "Limit reset credits" = "Limit reset credits";
+"Next expiry" = "Next expiry";
 "1 available" = "1 available";
 "%@ available" = "%@ available";
 "%@ tokens" = "%@ tokens";
@@ -838,6 +839,6 @@
 
 /* Codex reset credits */
 "Reset credits on the card" = "Reset credits on the card";
-"How many limit reset credits are left. Asks Codex's app server on every refresh." = "How many limit reset credits are left. Asks Codex's app server on every refresh.";
+"How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh." = "How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh.";
 "Not available" = "Not available";
 "codex not found" = "codex not found";

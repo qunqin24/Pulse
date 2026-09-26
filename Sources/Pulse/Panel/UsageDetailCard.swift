@@ -70,8 +70,9 @@ enum DetailCardLayout {
     /// not like a card that didn't fit. Providers report a variable number of
     /// limits (Codex adds one group per model with its own limits), so this
     /// budgets for more than are on screen today.
-    /// One row more than the limits for Codex's reset-credit line, which is
-    /// shorter than a limit's row and so fits inside the budget of one.
+    /// One row more than the limits for Codex's reset-credit lines: the count
+    /// and the soonest expiry are two text lines, which together are shorter
+    /// than a limit's row and so fit inside the budget of one.
     static var maximumHeight: CGFloat { height(forWindows: 6, footnote: true) }
 
     static func height(forWindows count: Int, footnote: Bool = false) -> CGFloat {
@@ -146,9 +147,13 @@ struct UsageDetailCard: View {
             // reports money and no limits *by design*, and the money is then
             // the whole reading — so it is what the card says.
             // The count Codex reported, or that it reported none — never one
-            // Pulse worked out. One line: the expiry lives in Settings.
+            // Pulse worked out. Then when the soonest of them lapses, to the
+            // minute, since that decides whether to spend one now (issue #67).
             if let resetCredits {
                 ValueRow(title: String.localized("Limit reset credits"), value: Self.resetCreditsText(resetCredits))
+                if let expiry = Self.resetCreditExpiryText(resetCredits) {
+                    ValueRow(title: String.localized("Next expiry"), value: expiry)
+                }
             }
 
             // An extension may report limits and money both — a relay's
@@ -200,6 +205,17 @@ struct UsageDetailCard: View {
         .background(PanelSurface(shape: bubble, usesGlass: usesGlass))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
+    }
+
+    /// The soonest available credit's expiry, with the year: a credit can
+    /// last past New Year, and one whose date is misread gets wasted. Nil when
+    /// there is none to spend or Codex gave no date.
+    static func resetCreditExpiryText(_ credits: CodexResetCredits) -> String? {
+        guard case .available(let count, let expiry?) = credits, count > 0 else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = LocalizationSource.locale
+        formatter.setLocalizedDateFormatFromTemplate("yMMMdjmm")
+        return formatter.string(from: expiry)
     }
 
     static func resetCreditsText(_ credits: CodexResetCredits) -> String {

@@ -1569,7 +1569,7 @@ struct SettingsView: View {
 
                     SettingsRow(
                         String.localized("Reset credits on the card"),
-                        subtitle: String.localized("How many limit reset credits are left. Asks Codex's app server on every refresh.")
+                        subtitle: String.localized("How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh.")
                     ) {
                         Toggle("", isOn: Binding(
                             get: { settings.showsCodexResetCredits },

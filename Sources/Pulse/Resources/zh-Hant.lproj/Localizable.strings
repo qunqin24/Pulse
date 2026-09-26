@@ -239,6 +239,7 @@
 "Today" = "今天";
 "All time" = "累計";
 "Limit reset credits" = "額度重設券";
+"Next expiry" = "最近到期";
 "1 available" = "可用 1 張";
 "%@ available" = "可用 %@ 張";
 "%@ tokens" = "%@ tokens";
@@ -838,6 +839,6 @@
 
 /* Codex reset credits */
 "Reset credits on the card" = "在卡片上顯示額度重設券";
-"How many limit reset credits are left. Asks Codex's app server on every refresh." = "還剩幾張額度重設券。每次更新都會詢問 Codex 的 app server。";
+"How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh." = "還剩幾張額度重設券，以及最近一張什麼時候到期。每次更新都會詢問 Codex 的 app server。";
 "Not available" = "無法取得";
 "codex not found" = "找不到 codex";

@@ -239,6 +239,7 @@
 "Today" = "오늘";
 "All time" = "전체 누적";
 "Limit reset credits" = "한도 초기화 쿠폰";
+"Next expiry" = "다음 만료";
 "1 available" = "1장 사용 가능";
 "%@ available" = "%@장 사용 가능";
 "%@ tokens" = "%@ 토큰";
@@ -838,6 +839,6 @@
 
 /* Codex reset credits */
 "Reset credits on the card" = "카드에 한도 초기화 쿠폰 표시";
-"How many limit reset credits are left. Asks Codex's app server on every refresh." = "남은 한도 초기화 쿠폰 수. 새로 고칠 때마다 Codex app server에 묻습니다.";
+"How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh." = "남은 한도 초기화 쿠폰 수와 가장 먼저 만료되는 쿠폰의 만료 시각. 새로 고칠 때마다 Codex app server에 묻습니다.";
 "Not available" = "제공되지 않음";
 "codex not found" = "codex를 찾을 수 없음";

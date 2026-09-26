@@ -239,6 +239,7 @@
 "Today" = "今日";
 "All time" = "累計";
 "Limit reset credits" = "上限リセット券";
+"Next expiry" = "次の期限";
 "1 available" = "残り 1 枚";
 "%@ available" = "残り %@ 枚";
 "%@ tokens" = "%@ トークン";
@@ -838,6 +839,6 @@
 
 /* Codex reset credits */
 "Reset credits on the card" = "カードにリセット券を表示";
-"How many limit reset credits are left. Asks Codex's app server on every refresh." = "残っている上限リセット券の枚数。更新のたびに Codex の app server に問い合わせます。";
+"How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh." = "残っている上限リセット券の枚数と、次の券の有効期限。更新のたびに Codex の app server に問い合わせます。";
 "Not available" = "取得できません";
 "codex not found" = "codex が見つかりません";

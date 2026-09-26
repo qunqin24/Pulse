@@ -145,6 +145,19 @@ struct CodexLocatorAppTests {
             app: URL(fileURLWithPath: "/Volumes/Apps/ChatGPT.app"),
             versions: { _ in [] }
         )
-        #expect(listed.first == "/Volumes/Apps/ChatGPT.app/Contents/Resources/codex")
+        #expect(Array(listed.prefix(2)) == [
+            "/Volumes/Apps/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+            "/Volumes/Apps/ChatGPT.app/Contents/Resources/codex",
+        ])
+    }
+
+    @Test("ChatGPT 26.924's layout is looked for before the one it replaced (issue #67)")
+    func newerLayoutFirst() {
+        let listed = CodexAppServer.candidates(home: "/Users/me", path: nil, versions: { _ in [] })
+        let new = listed.firstIndex(of: "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex")
+        let old = listed.firstIndex(of: "/Applications/ChatGPT.app/Contents/Resources/codex")
+        #expect(new != nil && old != nil)
+        #expect(new! < old!)
+        #expect(listed.contains("/Users/me/Applications/Codex.app/Contents/Resources/codex-cli/bin/codex"))
     }
 }
