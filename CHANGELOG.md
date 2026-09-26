@@ -7,6 +7,22 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.5.2
+
+**中文**
+
+**改进与修复**
+
+- **新版 ChatGPT 桌面 App 也能读到 Codex 额度重置券了。** ChatGPT 26.924 把自带的 codex 换了位置，1.5.1 找不到；现在新旧两个位置都会找。感谢 [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) 定位。
+- **卡片上显示最近一张重置券的到期时间**，精确到分钟，就在券的数量下面。
+
+**English**
+
+**Changed and fixed**
+
+- **Codex's limit reset credits are read with the newer ChatGPT desktop app too.** ChatGPT 26.924 moved the codex it ships, and 1.5.1 didn't find it; both places are looked in now. Thanks to [@sanziliu](https://github.com/qunqin24/Pulse/issues/67) for tracking it down.
+- **The card shows when the next reset credit expires**, to the minute, under the count.
+
 ## 1.5.1
 
 **中文**
