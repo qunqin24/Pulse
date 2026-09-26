@@ -2186,9 +2186,13 @@ struct SettingsView: View {
     /// An API account reports money and no allowance, so the ring has no
     /// denominator until one is chosen. Three modes because there are exactly
     /// three places one can come from — see `BalanceBasis`.
+    ///
+    /// **Not "Ring shows".** That is the Panel group's row, which picks the
+    /// limit the ring follows; two rows of one name on one pane read as one
+    /// setting shown twice.
     private func balanceBasisRow(for account: AccountKey) -> some View {
         SettingsRow(
-            String.localized("Ring shows"),
+            String.localized("Ring measures"),
             subtitle: Self.balanceBasisSubtitle(settings.balanceBasis(for: account))
         ) {
             Picker("", selection: Binding(
@@ -2201,7 +2205,11 @@ struct SettingsView: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+            // Its own width, not `controlWidth`: three segments need more than
+            // that, and a frame narrower than the control does not shrink it —
+            // it overflows leftwards over the subtitle. Sized to itself, the
+            // row makes room and the subtitle wraps instead.
+            .fixedSize()
         }
     }
 

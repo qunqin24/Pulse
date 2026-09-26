@@ -206,6 +206,7 @@
 "Sign in to Claude Code to see usage." = "登入 Claude Code 後才能看到用量。";
 "A backup for when the saved login expires. Your own status line keeps working." = "登入資訊過期時的備援來源。你原本的狀態列照常運作。";
 "Ring shows" = "圓環顯示";
+"Ring measures" = "圓環計算方式";
 "Ring colour" = "圓環顏色";
 "Custom" = "自訂";
 "Colour" = "顏色";

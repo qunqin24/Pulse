@@ -10,11 +10,11 @@ A DeepSeek API Platform account with credit topped up. DeepSeek isn't a subscrip
 
 1. Open [platform.deepseek.com/api_keys](https://platform.deepseek.com/api_keys), sign in, add a payment method and top up your balance if you haven't, then click **Create new API key** and copy it.
 2. In Pulse: **Settings → Accounts → DeepSeek**. Turn on **Show in panel**. Under **Connection**, paste the key into **API key** and click **Save**.
-3. Your balance shows right away. Whether Pulse also draws a ring — and what it means — depends on the **Ring shows** choice described next.
+3. Your balance shows right away. Whether Pulse also draws a ring — and what it means — depends on the **Ring measures** choice described next.
 
 ## Choosing what the ring means
 
-DeepSeek's own reply says only how much money is left; it never states an allowance to divide by. Pulse won't invent a percentage, so you choose the denominator yourself in **Settings → Accounts → DeepSeek → Connection → Ring shows**:
+DeepSeek's own reply says only how much money is left; it never states an allowance to divide by. Pulse won't invent a percentage, so you choose the denominator yourself in **Settings → Accounts → DeepSeek → Connection → Ring measures**:
 
 - **Since top-up** (default) — Pulse remembers the highest balance it has ever seen on this account and shows how much of that is gone. Nothing to type, but on a Mac that has never watched this account before, the very first reading becomes the mark, so the ring can start empty until you've actually spent something since then.
 - **Balance only** — no ring at all; the panel just shows the money left.

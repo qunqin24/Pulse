@@ -206,6 +206,7 @@
 "Sign in to Claude Code to see usage." = "使用量を見るには Claude Code にサインインしてください。";
 "A backup for when the saved login expires. Your own status line keeps working." = "保存されたログインが切れたときの予備です。元のステータスラインはそのまま動きます。";
 "Ring shows" = "リングに表示";
+"Ring measures" = "リングの計算方法";
 "Ring colour" = "リングの色";
 "Custom" = "カスタム";
 "Colour" = "色";

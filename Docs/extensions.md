@@ -103,7 +103,7 @@ One JSON object on standard output, then exit 0:
 
 A balance is drawn the way every API account's is (`BalanceRing`; see [providers/deepseek.md](providers/deepseek.md)):
 
-- **With no limits**, the money is the reading. The extension's pane in Settings gets **Ring shows**, with the same three choices: since the last top-up that Pulse saw, balance only, or against a budget you type. With balance only, the rail shows the amount itself.
+- **With no limits**, the money is the reading. The extension's pane in Settings gets **Ring measures**, with the same three choices: since the last top-up that Pulse saw, balance only, or against a budget you type. With balance only, the rail shows the amount itself.
 - **With limits**, the limits drive the ring and the card still lists the balance.
 - **Never spent on Pulse's say-so.** A balance at or below zero does not mark the account spent. Only a limit at 100% does.
 - **Warn below.** Once an extension has reported a balance, its pane offers the low-balance notification, in the balance's own currency. See [notifications.md](notifications.md).

@@ -206,6 +206,7 @@
 "Sign in to Claude Code to see usage." = "사용량을 보려면 Claude Code에 로그인하십시오.";
 "A backup for when the saved login expires. Your own status line keeps working." = "저장된 로그인이 만료되었을 때를 위한 대비책입니다. 원래 쓰던 상태 표시줄은 그대로 동작합니다.";
 "Ring shows" = "링에 표시";
+"Ring measures" = "링 계산 방식";
 "Ring colour" = "링 색상";
 "Custom" = "사용자 지정";
 "Colour" = "색상";
