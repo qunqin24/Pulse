@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.5.1</title>
+            <pubDate>Sat, 26 Sep 2026 10:14:55 -0000</pubDate>
+            <sparkle:version>1.5.1</sparkle:version>
+            <sparkle:shortVersionString>1.5.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.5.1</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.5.1</h2><p><strong>中文</strong></p><p><strong>新功能</strong></p><ul><li><strong>扩展可以显示余额。</strong> 扩展除了报额度，现在也能报账户余额（金额和币种），适合 API 中转站。圆环可以像 API 服务一样选「自上次充值起 / 只看余额 / 我的预算」，也能设置低余额提醒。中转站的例子见 <a href="https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md">Docs/extensions.md</a>。感谢 <a href="https://github.com/qunqin24/Pulse/issues/40">@Zoltan-code</a> 提议。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>密钥输入框旁加了显示按钮。</strong> 点小眼睛可以看到输入的内容，方便核对；换到别的服务时会自动重新隐藏。</li><li><strong>API 服务设置页的「圆环计算方式」不再压住说明文字。</strong> 这一行原来也叫「环上显示」，和面板组里的同名设置分不清，现在改了名。</li><li><strong>只装了 ChatGPT 桌面 App 时，也能读到 Codex 额度重置券。</strong> 此前 Pulse 不会去 App 里找自带的 codex，卡片一直显示「不可用」。找不到 codex 时，现在会直接显示「找不到 codex」。感谢 <a href="https://github.com/qunqin24/Pulse/issues/67">@sanziliu</a> 反馈。</li></ul><p><strong>English</strong></p><p><strong>New</strong></p><ul><li><strong>Extensions can report a balance.</strong> Besides limits, an extension can now report the money left in an account, as an amount and a currency, which suits API relays. Its ring takes the same three choices as an API account&#x27;s — since top-up, balance only, my budget — and it can warn when the balance runs low. A relay example is in <a href="https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md">Docs/extensions.md</a>. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/40">@Zoltan-code</a> for asking.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>The key field has a show button.</strong> Click the eye to see what you typed and check it; it hides again when you open another provider.</li><li><strong>Ring measures no longer covers its own description</strong> on an API account&#x27;s settings page. It was also called Ring shows, the same as the Panel group&#x27;s row for a different setting; it has a name of its own now.</li><li><strong>Codex&#x27;s limit reset credits are read when only the ChatGPT desktop app is installed.</strong> Pulse never looked for the codex the app ships, so the card said Not available. When no codex can be found at all, it now says so. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/67">@sanziliu</a> for the report.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.5.1">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.5.1/Pulse-1.5.1.zip"
+                       length="10451108"
+                       type="application/octet-stream"
+                       sparkle:edSignature="zbyHEfazK+gpaSRfh1+TwfGhUTluHH7aVOuW6hvOb2o1cQ6gJIqnLaPp0Npcmwj0QiGpq2RUvSlLPf+WsNfCDw==" />
+        </item>
+        <item>
             <title>1.5.0</title>
             <pubDate>Fri, 25 Sep 2026 08:55:05 -0000</pubDate>
             <sparkle:version>1.5.0</sparkle:version>
