@@ -216,8 +216,8 @@ final class PanelPlacement {
 
     var isDocked: Bool { dock.isDocked }
 
-    static func restored() -> PanelPlacement {
-        let defaults = UserDefaults.standard
+    /// `defaults` is only ever not `.standard` in a test.
+    static func restored(from defaults: UserDefaults = .standard) -> PanelPlacement {
 
         let dock: PanelDock = if defaults.object(forKey: Key.floating) as? Bool == true {
             // Absent for anyone who floated the panel before there was a
