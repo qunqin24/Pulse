@@ -635,8 +635,16 @@ private final class FloatingPanel: NSPanel {
         // lifted off the top it stays lying across, lifted off a side it stays
         // upright. Turning it on the way out would undo the free placement
         // somebody chose in settings the first time they moved the panel.
+        //
+        // Nothing docks to the bottom, but it is still an edge the rail can
+        // lie along: thrown at it — the pointer again, for the top's reason —
+        // the rail lies across and stands free there, its card opening up.
+        // Without this the only way to turn an upright rail on its side was
+        // through the top dock.
         let dock: PanelDock = if visible.maxY - pointer.y <= PanelPlacement.dockDistance {
             .edge(.top)
+        } else if pointer.y - visible.minY <= PanelPlacement.dockDistance {
+            .floating(.horizontal)
         } else if wanted.x - visible.minX <= PanelPlacement.dockDistance {
             .edge(.left)
         } else if visible.maxX - (wanted.x + rail.width) <= PanelPlacement.dockDistance {
