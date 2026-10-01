@@ -270,7 +270,8 @@
 
 /* Free placement */
 "Position" = "位置";
-"Free" = "自由";
+"Free across" = "横置き自由";
+"Free upright" = "縦置き自由";
 "Last 31 days" = "過去 31 日";
 
 /* Panel size */

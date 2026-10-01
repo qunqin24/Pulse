@@ -32,7 +32,7 @@ While Liquid Glass is on, the caption still says to drag the panel by a ring. Th
 |---|---|---|
 | Panel | **Appearance** | Size, Spacing, Round ends, Liquid Glass (+ Transparency), Ring activity animation |
 | Panel | **Rings and figures** | *Figures*: percentages at the side / on top, figure above the ring, show what's left, forecast. *Rings*: second limit, time until reset, time ring direction, turn red at, alert colour when docked |
-| Panel | **Position and behavior** | Show floating panel, hide in full screen, hide until pointed at, position, follow the active display; **Order** |
+| Panel | **Position and behavior** | Show floating panel, hide in full screen, hide until pointed at, position (Left, Top, Free across, Free upright, Right — a segmented control sized to its labels, since five segments truncate under `controlWidth`), follow the active display; **Order** |
 | Panel | Token spend | unchanged |
 | Application | **General** | Open at login, hide menu bar icon; Shortcuts; Language |
 | Application | **Notifications** | Warn at, when a limit comes back, when a reading stops arriving |

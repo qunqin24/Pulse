@@ -797,12 +797,16 @@ struct SettingsView: View {
                     )) {
                         Text(localized: "Left").tag(PanelDock.edge(.left))
                         Text(localized: "Top").tag(PanelDock.edge(.top))
-                        Text(localized: "Free").tag(PanelDock.floating)
+                        Text(localized: "Free across").tag(PanelDock.floating(.horizontal))
+                        Text(localized: "Free upright").tag(PanelDock.floating(.vertical))
                         Text(localized: "Right").tag(PanelDock.edge(.right))
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    // Five segments do not fit the usual ceiling without
+                    // truncating both free ones, so this one is as wide as
+                    // its labels.
+                    .fixedSize()
                 }
 
                 SettingsRowDivider()

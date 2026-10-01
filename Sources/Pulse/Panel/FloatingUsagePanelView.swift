@@ -495,7 +495,9 @@ struct FloatingUsagePanelView: View {
             let bottom = placement.notch.map {
                 PanelHitArea.notchSurface(rail: CGRect(origin: .zero, size: railSize), notchSize: $0.size).maxY
             } ?? railSize.height
-            return CGSize(width: 0, height: bottom + DetailCardLayout.horizontalGap)
+            // Above a free rail in the lower half: the card is bottom-aligned
+            // to the rail (`cardAlignment`), so it is lifted by the same.
+            return CGSize(width: 0, height: (bottom + DetailCardLayout.horizontalGap) * placement.edge.cardDirection)
         }
     }
 
@@ -697,7 +699,8 @@ enum PanelHitArea {
     static func rail(edge: PanelEdge, railSize: CGSize, railTop: CGFloat, railLeading: CGFloat) -> CGRect {
         let panel = FloatingPanelController.Layout.size(for: edge)
         let x: CGFloat = switch edge {
-        case .left, .top: edge == .top ? railLeading : 0
+        case .left: 0
+        case .top, .bottom: railLeading
         case .right: panel.width - railSize.width
         }
 
@@ -757,6 +760,11 @@ enum PanelHitArea {
                 .insetBy(dx: 0, dy: -slack)
         case .top:
             return CGRect(x: rail.midX - hit.width / 2, y: rail.minY, width: hit.width, height: hit.height)
+                .insetBy(dx: -slack, dy: 0)
+        // Nothing docks to the bottom, so this is never asked for; the rail's
+        // own lower edge is the only answer that stays inside it.
+        case .bottom:
+            return CGRect(x: rail.midX - hit.width / 2, y: rail.maxY - hit.height, width: hit.width, height: hit.height)
                 .insetBy(dx: -slack, dy: 0)
         }
     }

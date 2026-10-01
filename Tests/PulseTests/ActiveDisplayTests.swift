@@ -17,7 +17,7 @@ struct ActiveDisplayTests {
         dragging: Bool = false
     ) -> (PanelPlacement, () -> Int) {
         let placement = PanelPlacement(
-            dock: .floating,
+            dock: .floating(.vertical),
             horizontalRatio: 0.3,
             verticalRatio: 0.7,
             display: display
@@ -40,7 +40,7 @@ struct ActiveDisplayTests {
         #expect(calls() == 1)
         #expect(placement.horizontalRatio == 0.3)
         #expect(placement.verticalRatio == 0.7)
-        #expect(placement.dock == .floating)
+        #expect(placement.dock == .floating(.vertical))
     }
 
     /// The pointer resting on the display the panel is already on is the

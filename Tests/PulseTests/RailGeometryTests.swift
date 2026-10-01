@@ -17,7 +17,7 @@ import Testing
 /// it sufficient, at every edge and both dock states.
 @Suite("Rail geometry", .serialized)
 struct RailGeometryTests {
-    private static let edges: [PanelEdge] = [.left, .right, .top]
+    private static let edges: [PanelEdge] = [.left, .right, .top, .bottom]
     /// One, a handful, and a rail longer than any real one.
     private static let counts = [1, 2, 3, 7, 15, 16]
 
@@ -310,7 +310,7 @@ struct RailOffsetTests {
 
     @Test("Offsets put the rail where the layout meant it to be")
     func offsetsRoundTripAgainstTheGrantedFrame() {
-        let placement = PanelPlacement(dock: .floating, horizontalRatio: 0.8, verticalRatio: 0.44)
+        let placement = PanelPlacement(dock: .floating(.vertical), horizontalRatio: 0.8, verticalRatio: 0.44)
         let layout = placement.layout(in: visible, topEdge: 1134, panel: panel, rail: rail)
 
         // Granted as asked: the rail's top lands exactly where layout put it.
@@ -323,7 +323,7 @@ struct RailOffsetTests {
     /// The refusal this suite exists for, with the numbers the probe recorded.
     @Test("A frame the window was refused does not move the rail")
     func aRefusedFrameDoesNotMoveTheRail() {
-        let placement = PanelPlacement(dock: .floating, horizontalRatio: 0.8, verticalRatio: 0.44)
+        let placement = PanelPlacement(dock: .floating(.vertical), horizontalRatio: 0.8, verticalRatio: 0.44)
         let layout = placement.layout(in: visible, topEdge: 1134, panel: panel, rail: rail)
 
         // What AppKit actually grants: the top pinned under the menu bar.

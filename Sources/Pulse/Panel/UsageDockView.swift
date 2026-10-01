@@ -769,7 +769,9 @@ struct DockBerthShape: Shape {
                 CGAffineTransform(translationX: rect.width, y: 0).scaledBy(x: -1, y: 1)
             )
 
-        case .top:
+        // Nothing docks to the bottom — a free rail is drawn by `floating` —
+        // so `.bottom` is never asked for here.
+        case .top, .bottom:
             // A quarter turn anticlockwise, which carries the flare from the
             // right-hand edge to the top one. The canonical rect is this one
             // laid on its side, so the drawing is unchanged and only its

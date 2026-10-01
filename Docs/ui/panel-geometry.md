@@ -45,6 +45,8 @@ The history has three sources (`CardHistorySource`), and the section says which:
 
 - Drag anywhere; fuse to a side within `dockDistance` **during** the drag, not on mouse-up.
 - Floating positions stay at least that far from both sides.
+- **Two free placements: upright and across** (`PanelDock.floating(PanelEdge.Axis)`, Settings → Position: *Free across* / *Free upright*). Across is the top dock's shape placed by both ratios (`PanelPlacement.layoutLyingFree`): its card hangs down in the top half of the screen and stands up in the bottom half (`PanelEdge.bottom` — a card direction only, never a dock; the window's bottom is then the rail's bottom), the way an upright free rail opens left or right by half. Hanging down everywhere cut the card off against the Dock. The axis is stored in `panel.floatingAxis`; absent means upright, which is what every earlier free placement was. Notch attachment and `.statusBar` level follow the **dock** `.edge(.top)`, never `edge == .top` — a free rail in the top half has that edge too.
+- Off an edge the rail stands free **the way it already runs** (lifted off the top it stays across, off a side it stays upright); it turns only when it fuses to an edge of the other axis.
 - Any display; remembered by **UUID**, not `CGDirectDisplayID`. Missing display → main. `didChangeScreenParametersNotification` re-places (not during a drag).
 - Clamp each frame to the screen under the **pointer**, not the window’s own screen (otherwise a second monitor can never be reached).
 - Store the **rail’s** position, never the window’s. The window is much wider than the rail; which side the rail sits on flips at screen mid.
@@ -88,7 +90,7 @@ With auto-collapse on, the notch rail draws no collapsed surface at rest: no sli
 
 Docking to the top is tested against the **pointer**, not the rail (a vertical rail is almost as tall as the display). After an axis change, measure in the **landing** orientation and drop the grab offset (centre under the pointer). Do **not** infer a turn from rail size: floating drops end padding, so the same rail is shorter off the edge; treating `landingRail != rail` as a turn re-centred and snapped. Re-measure grab to the rail **centre** on that size change so rings do not move.
 
-A floating landing works out its **own** side rather than reading `placement.edge` (that property is a frame behind during a drag).
+A landing takes its **axis** from the dock being landed on, never from `placement.edge` (a frame behind during a drag), and its side — which only decides where the card opens — from the placement once `record` has stored the new ratios.
 
 ## Flare, sliver, labels, scale
 

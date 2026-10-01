@@ -195,8 +195,8 @@ final class FloatingPanelController {
         // rail's ends lose the flare's worth of padding the moment it comes off
         // an edge, and measuring the old state throws the placement off by that
         // much on the frame it changes.
-        panel.railSize = { [settings, store] edge, docked in
-            DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: edge.axis, docked: docked)
+        panel.railSize = { [settings, store] axis, docked in
+            DockLayout.size(for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }), on: axis, docked: docked)
         }
         panel.grabArea = { [settings, store, placement] in
             if placement.notch != nil && !placement.isRailExpanded { return .zero }
@@ -385,7 +385,9 @@ final class FloatingPanelController {
         else { return }
 
         let edge = placement.edge
-        placement.notch = edge == .top ? PanelScreen.notch(of: screen) : nil
+        // The dock, not the edge: a rail standing free in the top half of the
+        // screen opens its card downwards too, and has no notch to sit in.
+        placement.notch = placement.dock == .edge(.top) ? PanelScreen.notch(of: screen) : nil
         let railSize = DockLayout.size(
             for: Self.shownSlotCount(settings, usage: { store.usage(for: $0) }),
             on: edge.axis,
@@ -472,9 +474,9 @@ private final class FloatingPanel: NSPanel {
     /// the rail's, and handing the placement a 20pt sliver where it expects a
     /// 64pt rail would throw the panel across the screen on the first drag.
     var railFrame: (() -> CGRect)?
-    /// The rail's size on a given edge, which the drag needs for an edge the
-    /// panel has not reached yet.
-    var railSize: ((PanelEdge, Bool) -> CGSize)?
+    /// The rail's size on a given axis, docked or not, which the drag needs
+    /// for a dock the panel has not reached yet.
+    var railSize: ((PanelEdge.Axis, Bool) -> CGSize)?
 
     /// Where a top-docked rail's top edge belongs: the display's physical top,
     /// less whatever a notch takes out of it.
@@ -628,6 +630,11 @@ private final class FloatingPanel: NSPanel {
         // — testing that would flip it on its side the moment it was picked
         // up. Throwing the pointer at the top of the screen is the deliberate
         // gesture, and it is the same one that reaches the menu bar.
+        //
+        // Off every edge the rail stands free **the way it already runs**:
+        // lifted off the top it stays lying across, lifted off a side it stays
+        // upright. Turning it on the way out would undo the free placement
+        // somebody chose in settings the first time they moved the panel.
         let dock: PanelDock = if visible.maxY - pointer.y <= PanelPlacement.dockDistance {
             .edge(.top)
         } else if wanted.x - visible.minX <= PanelPlacement.dockDistance {
@@ -635,7 +642,7 @@ private final class FloatingPanel: NSPanel {
         } else if visible.maxX - (wanted.x + rail.width) <= PanelPlacement.dockDistance {
             .edge(.right)
         } else {
-            .floating
+            .floating(placement.edge.axis)
         }
 
         // The rail turns as it crosses onto the other axis, so everything from
@@ -643,22 +650,19 @@ private final class FloatingPanel: NSPanel {
         // one it is leaving. Measuring in the old one throws the panel across
         // the screen on the frame the axis changes.
         //
-        // Coming off the top, `placement.edge` is a frame behind — it still
-        // says `.top` until `record` below, which would size the window for
-        // the horizontal axis while the content has already redrawn as a
-        // vertical rail: 52pt of it sliced off, and the hit rect a hundred
-        // points from where the rail is. So a floating landing picks its side
-        // the same way the placement picks it, from the half it stands in.
-        let landing: PanelEdge = if let docked = dock.edge {
-            docked
-        } else if placement.edge.axis == .horizontal {
-            pointer.x < visible.midX ? .left : .right
-        } else {
-            placement.edge
+        // `placement.edge` is a frame behind until `record` below, so it is
+        // not asked which way the rail runs: sizing the window for the axis
+        // being left while the content has already redrawn on the new one
+        // slices 52pt off the rail and puts the hit rect a hundred points from
+        // where the rail is. The axis comes from the dock being landed on, and
+        // the edge — which only decides where the card opens — from the
+        // placement once it has been recorded.
+        let landingAxis: PanelEdge.Axis = switch dock {
+        case .edge(let edge): edge.axis
+        case .floating(let axis): axis
         }
-        let landingRail = railSize?(landing, dock.isDocked) ?? rail
-        let landingNotch = dock.edge == .top ? PanelScreen.notch(of: screen) : nil
-        let landingPanel = FloatingPanelController.Layout.size(for: landing, notchSize: landingNotch?.size)
+        let landingRail = railSize?(landingAxis, dock.isDocked) ?? rail
+        let landingNotch = dock == .edge(.top) ? PanelScreen.notch(of: screen) : nil
 
         // Under the pointer, in the new orientation. Carrying the old grab
         // offset across a quarter turn would put the rail somewhere the hand
@@ -670,7 +674,7 @@ private final class FloatingPanel: NSPanel {
         // dock↔float transition re-centre itself under the pointer for one
         // frame and snap back on the next. The grab is re-measured whenever
         // that does happen, or the frame after a turn would undo it.
-        let turned = landing.axis != placement.edge.axis
+        let turned = landingAxis != placement.edge.axis
 
         let origin: CGPoint
         if turned {
@@ -706,6 +710,7 @@ private final class FloatingPanel: NSPanel {
         )
 
         placement.notch = landingNotch
+        let landingPanel = FloatingPanelController.Layout.size(for: placement.edge, notchSize: landingNotch?.size)
 
         // One source of truth for the geometry: ask the placement where that
         // puts things rather than working it out a second way here.

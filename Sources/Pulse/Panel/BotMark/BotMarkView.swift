@@ -114,13 +114,13 @@ enum BotMarkGaze: Sendable {
     var mirrored: Bool { self == .left }
 
     /// The rail's own edge decides it: docked right, look left; docked left,
-    /// look right. A top rail runs horizontally and has screen on both sides,
-    /// so it looks straight ahead.
+    /// look right. A rail lying across has screen on both sides, so it looks
+    /// straight ahead.
     init(edge: PanelEdge) {
         switch edge {
         case .right: self = .left
         case .left: self = .right
-        case .top: self = .ahead
+        case .top, .bottom: self = .ahead
         }
     }
 }

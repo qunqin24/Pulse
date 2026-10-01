@@ -270,7 +270,8 @@
 
 /* Free placement */
 "Position" = "Position";
-"Free" = "Free";
+"Free across" = "Free across";
+"Free upright" = "Free upright";
 "Last 31 days" = "Last 31 days";
 
 /* Panel size */
