@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
 /// JetBrains AI: the AI Assistant quota a JetBrains IDE keeps on this Mac.

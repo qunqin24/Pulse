@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
 /// ClinePass, Cline's subscription: a five-hour, a weekly and a monthly limit,

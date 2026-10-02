@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
 /// MiMo Code's OpenCode-shaped database, `mimocode*.db` under the XDG data

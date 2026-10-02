@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
 /// Trae's usage cache: a raw JSON **array** dumped from the Trae usage API.

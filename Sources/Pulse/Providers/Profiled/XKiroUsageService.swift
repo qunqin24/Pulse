@@ -1,3 +1,4 @@
+// Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
 /// xKiro (not AWS's Kiro): a plan's spend windows, the daily free-token
