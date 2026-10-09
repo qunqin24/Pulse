@@ -417,6 +417,10 @@ enum PulseStorage {
     /// added here — the list that used to hold them missed every `agent-`
     /// file, and tens of stale ones piled up. Add a name to this list only
     /// for a file that is not numbered that way.
+    ///
+    /// **Never `archive-*`.** `TranscriptArchive` and `AgentArchive` keep
+    /// history the tools have deleted; nothing can rebuild them, so they are
+    /// not numbered, change shape by migrating, and are never listed here.
     private static let superseded = [
         "ledger-claudeCode.json",   // day buckets, before quarter-hours
         "ledger-codex.json",

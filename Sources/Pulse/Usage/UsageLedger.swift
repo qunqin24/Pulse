@@ -299,7 +299,10 @@ struct LedgerDay: Identifiable, Sendable, Equatable {
 /// *limits*, not spending, and neither publishes a per-day history — so the
 /// only place the day-by-day story exists is the transcripts on disk. That
 /// makes this local by nature: work done on another machine isn't here, and
-/// neither is anything the CLI has since pruned.
+/// neither is a transcript the CLI deleted before Pulse ever read it. One
+/// Pulse did read stays after the CLI prunes it: its counted share is kept
+/// (`TranscriptArchive`, and `AgentArchive` for the other agents), so a
+/// past day does not shrink when its files go.
 ///
 /// The money is likewise a translation, not a bill. Both tools are used on a
 /// subscription, so nothing here was charged per token; the figure is what the
@@ -953,15 +956,28 @@ actor UsageLedgerReader {
         _ provider: Provider
     ) -> (buckets: Buckets, timings: [String: [String: ReplyTiming]], files: [String: FileCache.Entry]) {
         var cache = FileCache.load(for: provider, directory: cacheDirectory)
+        // Nil when the archive is there and cannot be read: nothing is moved
+        // into it, and the files it would have kept stay in the cache instead.
+        // **Off for a reader pointed at another home without its own cache
+        // folder** — its scan must neither read this Mac's kept history into
+        // its figures nor keep its files into it; gone files are then dropped,
+        // as before there was an archive.
+        let archives = cacheDirectory != nil
+            || home.standardizedFileURL == URL(fileURLWithPath: NSHomeDirectory()).standardizedFileURL
+        var archive = archives ? TranscriptArchive.load(for: provider, directory: cacheDirectory) : TranscriptArchive()
+        var archiveChanged = false
         var buckets: Buckets = [:]
         var timings: [String: [String: ReplyTiming]] = [:]
         var fresh: [String: FileCache.Entry] = [:]
+        var names: Set<String> = []
         var changed = false
 
-        for file in Self.logFiles(for: provider, home: home) {
+        let roots = Self.roots(for: provider, home: home)
+        for file in Self.logFiles(in: roots) {
             guard !Task.isCancelled else { return ([:], [:], [:]) }
             guard let stamp = FileCache.Stamp(file) else { continue }
             let key = file.path
+            if provider == .codex { names.insert(file.lastPathComponent) }
 
             // A log file is rewritten only by being appended to, so size and
             // modification date together are enough to know nothing changed.
@@ -980,6 +996,30 @@ actor UsageLedgerReader {
             }
         }
 
+        // A transcript back where the archive kept it — at its path, or, for
+        // Codex, under its name somewhere else — is read from the file again,
+        // not kept as well. A rollout's name carries its session id, so one
+        // cannot be another conversation's; Claude Code has same-named files
+        // in different folders (`journal.jsonl`) and is matched by path only.
+        if let kept = archive?.files {
+            let back = kept.keys.filter { fresh[$0] != nil || names.contains(Self.fileName($0)) }
+            for path in back { archive?.files[path] = nil }
+            archiveChanged = !back.isEmpty
+        }
+
+        // Entries left in the old cache are files gone since the last scan.
+        // They are counted once more beside the live ones, so the dedupe below
+        // splits the replies exactly as it did while they existed, and then
+        // kept. Not kept: a Codex rollout whose name is still among the live
+        // ones, which was moved (Codex moves a session it archives) and is that
+        // file now; one already kept, by a scan that could not write the cache
+        // after it; and one outside the folders this reader reads, which is no
+        // transcript of this Mac's (a cache another home's scan wrote).
+        let gone = !archives ? [:] : cache.files.filter { path, _ in
+            !names.contains(Self.fileName(path)) && archive?.files[path] == nil
+                && Self.isInside(path, roots)
+        }
+
         // Each reply once, for the file it appeared in first — the original
         // conversation, not a resumed or forked copy of its history. Files are
         // taken oldest work first, then by name, then by path, so the choice
@@ -987,8 +1027,10 @@ actor UsageLedgerReader {
         // it can open in the quarter-hour its parent did, and its parent's
         // readings must already be counted when its copies of them come by.
         // Codex names a rollout for when it was made, so by name a fork of a
-        // fork still follows the fork it came from.
-        let ordered = fresh.map {
+        // fork still follows the fork it came from. **Kept files go before all
+        // of them**: what they counted was settled while they existed, and
+        // their claims hold it.
+        let ordered = fresh.merging(gone) { live, _ in live }.map {
             (key: $0.key, entry: $0.value, first: $0.value.firstSlot ?? "", fork: $0.value.isFork)
         }.sorted { lhs, rhs in
             if lhs.fork != rhs.fork { return !lhs.fork }
@@ -996,23 +1038,34 @@ actor UsageLedgerReader {
             let left = (lhs.key as NSString).lastPathComponent, right = (rhs.key as NSString).lastPathComponent
             return left != right ? left < right : lhs.key < rhs.key
         }
+        let kept = archive?.files ?? [:]
+        let keptClaims = Set(kept.values.flatMap { ClaimDigest.unpack($0.claims) })
+        let keptTotals = Set(kept.values.flatMap { ClaimDigest.unpack($0.totals) })
         var claimed: Set<String> = []
         var totals: Set<String> = []
         var counted: [String: FileCache.Entry] = [:]
         for (key, entry, _, fork) in ordered {
             guard !Task.isCancelled else { return ([:], [:], [:]) }
+            let keeping = archive != nil && gone[key] != nil
             var days = entry.days
             // A fork's lines carry the instant it was made, not when its work
             // ran, and its replayed readings are dropped below: its timings
             // would time nothing real.
             var fileTimings = fork ? [:] : entry.timings ?? [:]
+            var ownClaims: [UInt64] = []
+            var ownTotals = keeping ? (entry.runningTotals ?? []).map(ClaimDigest.of) : []
             // An original session's totals are claimed before any fork is
             // read: the forks come after every file that is not one.
             totals.formUnion(entry.runningTotals ?? [])
             for (id, reply) in entry.replies ?? [:] {
-                if reply.fromFork == true, let total = reply.runningTotal, totals.contains(total) { continue }
-                guard claimed.insert(id).inserted else { continue }
-                if let total = reply.runningTotal { totals.insert(total) }
+                if reply.fromFork == true, let total = reply.runningTotal,
+                   totals.contains(total) || keptTotals.contains(ClaimDigest.of(total)) { continue }
+                guard !keptClaims.contains(ClaimDigest.of(id)), claimed.insert(id).inserted else { continue }
+                if let total = reply.runningTotal {
+                    totals.insert(total)
+                    if keeping { ownTotals.append(ClaimDigest.of(total)) }
+                }
+                if keeping { ownClaims.append(ClaimDigest.of(id)) }
                 days[reply.slot, default: [:]][reply.model] = (days[reply.slot]?[reply.model] ?? TokenTally()) + reply.tally
                 if let timing = reply.timing {
                     fileTimings[reply.slot, default: [:]][reply.model] =
@@ -1023,27 +1076,62 @@ actor UsageLedgerReader {
                 stamp: entry.stamp, days: days, title: entry.title, cwd: entry.cwd,
                 isReview: entry.isReview, timings: fileTimings
             )
-            for (day, models) in days {
-                for (model, tally) in models {
-                    buckets[day, default: [:]][model] = (buckets[day]?[model] ?? TokenTally()) + tally
-                }
+            if keeping {
+                archive?.files[key] = TranscriptArchive.Kept(
+                    days: days, timings: fileTimings.isEmpty ? nil : fileTimings,
+                    title: entry.title, cwd: entry.cwd, isReview: entry.isReview,
+                    claims: ClaimDigest.pack(ownClaims), totals: ClaimDigest.pack(ownTotals),
+                    kept: Date()
+                )
+                archiveChanged = true
             }
-            for (day, models) in fileTimings {
-                for (model, timing) in models {
-                    timings[day, default: [:]][model] = (timings[day]?[model] ?? ReplyTiming()) + timing
-                }
-            }
+            Self.add(days, fileTimings, to: &buckets, &timings)
         }
 
-        // Entries left in the old cache are deleted files. Repricing unchanged
-        // transcripts does not change this raw-token cache or warrant a write.
+        // What was kept before this scan, added as it was counted.
+        for (path, file) in kept {
+            guard !Task.isCancelled else { return ([:], [:], [:]) }
+            counted[path] = FileCache.Entry(
+                stamp: FileCache.Stamp(size: 0, modified: 0), days: file.days, title: file.title, cwd: file.cwd,
+                isReview: file.isReview, timings: file.timings
+            )
+            Self.add(file.days, file.timings ?? [:], to: &buckets, &timings)
+        }
+
+        // The archive is written before the cache lets the gone files go, and
+        // if it cannot be, they stay in the cache to be kept by a later scan.
+        // Repricing unchanged transcripts does not change either file or
+        // warrant a write.
+        let keptSafely = !archives || !archiveChanged || archive?.save(for: provider, directory: cacheDirectory) == true
         if changed || !cache.files.isEmpty {
             cache.files = fresh
+            if archive == nil || !keptSafely { cache.files.merge(gone) { live, _ in live } }
             cache.save(for: provider, directory: cacheDirectory)
         }
         // The sessions are cut from the counted entries, so a resumed
         // conversation's row holds only what was done in it.
         return (buckets, timings, counted)
+    }
+
+    /// One file's counted quarter-hours and timings, added to the provider's.
+    private static func add(
+        _ days: [String: [String: TokenTally]], _ fileTimings: [String: [String: ReplyTiming]],
+        to buckets: inout Buckets, _ timings: inout [String: [String: ReplyTiming]]
+    ) {
+        for (day, models) in days {
+            for (model, tally) in models {
+                buckets[day, default: [:]][model] = (buckets[day]?[model] ?? TokenTally()) + tally
+            }
+        }
+        for (day, models) in fileTimings {
+            for (model, timing) in models {
+                timings[day, default: [:]][model] = (timings[day]?[model] ?? ReplyTiming()) + timing
+            }
+        }
+    }
+
+    private static func fileName(_ path: String) -> String {
+        (path as NSString).lastPathComponent
     }
 
     /// One row per conversation, priced the same way the days are.
@@ -1179,7 +1267,8 @@ actor UsageLedgerReader {
         return UsageProject(source: file.deletingLastPathComponent().path, name: last)
     }
 
-    private static func logFiles(for provider: Provider, home: URL) -> [URL] {
+    /// The folders a provider's transcripts are read from.
+    private static func roots(for provider: Provider, home: URL) -> [URL] {
         // None of the profiled providers leaves transcripts here either.
         guard let written = provider.handWritten else { return [] }
         // Codex moves a session it archives out of `sessions` into
@@ -1194,7 +1283,24 @@ actor UsageLedgerReader {
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: []
         }
+        return roots
+    }
 
+    /// Whether a path lies inside one of the folders, as written or as the
+    /// link it may be resolves (a `~/.claude` linked elsewhere is walked at
+    /// its target). `/var` and `/tmp` are links into `/private`, and the walker
+    /// can hand back either spelling (`resolvingSymlinksInPath` strips
+    /// `/private` rather than adding it), so both sides are compared without it.
+    private static func isInside(_ path: String, _ roots: [URL]) -> Bool {
+        func plain(_ path: String) -> String {
+            path.hasPrefix("/private/") ? String(path.dropFirst("/private".count)) : path
+        }
+        return roots.contains { root in
+            [root.path, root.resolvingSymlinksInPath().path].contains { plain(path).hasPrefix(plain($0) + "/") }
+        }
+    }
+
+    private static func logFiles(in roots: [URL]) -> [URL] {
         var files: [URL] = []
         for root in roots {
             guard let walker = FileManager.default.enumerator(
@@ -1874,6 +1980,11 @@ private struct FileCache: Codable {
         let size: Int
         let modified: Double
 
+        init(size: Int, modified: Double) {
+            self.size = size
+            self.modified = modified
+        }
+
         init?(_ file: URL) {
             guard
                 let values = try? file.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
@@ -1978,6 +2089,12 @@ private struct FileCache: Codable {
         // `isReview` (a session Codex ran to review another's action, which
         // has no words of the user's), and titles now unwrap links; a rollout
         // that has not changed is never read again.
+        //
+        // **No new number for the archive.** An entry holds what it held; a
+        // deleted transcript's counted share moves to `TranscriptArchive`, a
+        // file of its own. A new number would have thrown away this file —
+        // the one record of every transcript deleted since the last scan,
+        // which is what the archive is made from.
         //
         // **The number lives in `UsageLedgerReader.cacheVersion`**, where
         // `PulseStorage.isSuperseded` reads it: every `ledger-<n>-*` below it

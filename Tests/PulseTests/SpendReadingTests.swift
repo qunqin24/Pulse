@@ -181,8 +181,10 @@ struct SpendReadingTests {
         let file = AgentCache.file(for: .workBuddy, directory: cache)
         let saved = try #require(AgentCache.load(.workBuddy, at: file))
         // A distinctive valid cached ledger proves the second visit used the
-        // cache rather than decoding the source again.
+        // cache rather than decoding the source again. The kept history
+        // (`AgentArchive`) would add the first read back over it, so it goes.
         AgentCache.save(.empty, stamp: saved.stamp, for: .workBuddy, at: file)
+        try FileManager.default.removeItem(at: AgentArchive.file(for: .workBuddy, directory: cache))
         #expect(try await reader.scan().ledgers[.workBuddy]?.allTime.tokens == 0)
         #expect(try await reader.scan(refresh: true).ledgers[.workBuddy]?.allTime.tokens == 120)
         try write(buddyRow(input: 1_000), to: source)

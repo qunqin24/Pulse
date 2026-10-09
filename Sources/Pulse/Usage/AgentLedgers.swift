@@ -134,19 +134,46 @@ actor AgentLedgers {
         let before = Self.stamp(agent, home: home, environment: environment, prices: prices)
         try Task.checkCancellation()
         let file = cacheDirectory.map { AgentCache.file(for: agent, directory: $0) }
-        if !refresh, let before, let saved = AgentCache.load(agent, at: file), saved.stamp == before {
+        let saved = AgentCache.load(agent, at: file)
+        if !refresh, let before, let saved, saved.stamp == before {
             try Task.checkCancellation()
-            return ReadResult(ledger: saved.ledger, notes: [])
+            return ReadResult(ledger: kept(saved.ledger, stable: true, agent: agent, prices: prices), notes: [])
         }
 
         let outcome = Self.read(agent, prices: prices, home: home, environment: environment)
         try Task.checkCancellation()
         let after = Self.stamp(agent, home: home, environment: environment, prices: prices)
         try Task.checkCancellation()
-        if Self.canPersist(notes: outcome.notes, before: before, after: after), let before {
+        let stable = Self.canPersist(notes: outcome.notes, before: before, after: after)
+        if stable, let before {
             AgentCache.save(outcome.ledger, stamp: before, for: agent, at: file)
         }
-        return outcome
+        // The cache this read replaces was itself a stable read: what it held
+        // and this one does not is what the store has deleted since.
+        let ledger = kept(outcome.ledger, previous: saved?.ledger, stable: stable, agent: agent, prices: prices)
+        return ReadResult(ledger: ledger, notes: outcome.notes)
+    }
+
+    /// Where an agent's kept history lives (`AgentArchive`): the cache folder
+    /// handed in, or Pulse's own when this reads the real home. **Nowhere
+    /// otherwise** — a reader pointed at another home must not mark its
+    /// records into this Mac's history.
+    private var archiveDirectory: URL? {
+        cacheDirectory ?? (home.standardizedFileURL == URL(fileURLWithPath: NSHomeDirectory()).standardizedFileURL
+            ? PulseStorage.directory : nil)
+    }
+
+    /// A live ledger with the agent's kept history added in, after a stable
+    /// read has raised the marks (`AgentArchive`). An archive that cannot be
+    /// read leaves the ledger as read and is not written over.
+    private func kept(
+        _ live: UsageLedger, previous: UsageLedger? = nil, stable: Bool,
+        agent: SpendAgent, prices: [String: ModelPrice]
+    ) -> UsageLedger {
+        guard !Task.isCancelled, AgentArchive.keeps(agent), let directory = archiveDirectory,
+              var archive = AgentArchive.load(for: agent, directory: directory) else { return live }
+        if stable, archive.absorb(live, previous: previous) { archive.save(for: agent, directory: directory) }
+        return archive.merged(into: live, prices: prices, vendor: agent.priceVendor)
     }
 
     /// Whether a read may be written to the disk cache.

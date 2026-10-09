@@ -37,10 +37,13 @@ struct LedgerCacheWriteTests {
         let restored = await UsageLedgerReader(home: home, cacheDirectory: cache).ledger(for: .claudeCode, prices: prices)
         #expect(restored.allTime.tokens == 220)
 
+        // A deleted transcript leaves the cache and is kept in the archive,
+        // so its work is still counted.
         try FileManager.default.removeItem(at: log)
         let removed = await reader.ledger(for: .claudeCode, refresh: true, prices: prices)
-        #expect(removed.allTime.tokens == 0)
+        #expect(removed.allTime.tokens == 220)
         let object = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: saved)) as? [String: Any])
         #expect((object["files"] as? [String: Any])?.isEmpty == true)
+        #expect(TranscriptArchive.load(for: .claudeCode, directory: cache)?.files.keys.contains { $0.hasSuffix("/fixture/s.jsonl") } == true)
     }
 }
