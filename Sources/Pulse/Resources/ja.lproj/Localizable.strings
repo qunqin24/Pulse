@@ -1038,6 +1038,7 @@
 "In %@," = "%@、";
 "%@ AI tools coded with you." = "%@つの AI ツールが、あなたと一緒にコードを書きました。";
 "One AI tool coded with you." = "ひとつの AI ツールが、あなたと一緒にコードを書きました。";
+"%@ more: %@" = "ほか %1$@ つ：%2$@";
 "Worked beside you" = "一緒に働いたツール";
 "Turn the page to see what you made together" = "めくって、一緒に何をしたか見てみましょう";
 "is your busiest hour of the day." = "は、あなたの一日でいちばん忙しい時間です。";
@@ -1051,6 +1052,8 @@
 "Figures are to date, and the plan price is prorated by the days so far." = "数値は本日までのもので、プランの料金は経過日数で日割りにしています。";
 "That was" = "これが";
 "your %@." = "あなたの%@。";
+"So far, this is" = "今のところ、これが";
+"Check back when %@ is over" = "%@が終わったら、また見に来てください";
 "Tokens" = "トークン";
 "Sessions" = "セッション";
 "Most used" = "いちばん使ったモデル";
@@ -1143,6 +1146,7 @@
 "Afternoon" = "午後";
 "Evening" = "夜";
 "Busiest: %@" = "最多は %@";
+"Busiest on average: %@" = "平均で最多は %@";
 "24 hours" = "24 時間";
 "Seven days of the week" = "曜日ごと";
 "For every %@ of subscription, you used %@ of API value" = "サブスク %@ あたり、%@ 分の API 価値を使いました";

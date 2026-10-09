@@ -43,17 +43,23 @@ struct RecapInsightsTests {
 
     // MARK: - Weekdays and weekends
 
-    @Test("Tokens by weekday, Monday first, and a weekday the period never had is nil, not zero")
+    @Test("Tokens on an average day of each weekday, Monday first, and a weekday the period never had is nil, not zero")
     func weekdays() {
         // Tue 1, Wed 2, Thu 3: no Monday, Friday, Saturday or Sunday yet.
         let few = RecapInsights(Self.recap(days: Self.september([100, 40, 0])))
-        #expect(few.weekdayTokens == [nil, 100, 40, 0, nil, nil, nil])
+        #expect(few.weekdayAverages == [nil, 100, 40, 0, nil, nil, nil])
         #expect(few.busiestWeekday == 1)
 
         // Ten days: Tue Sep 1 through Thu Sep 10, two Tuesdays.
         let ten = RecapInsights(Self.recap(days: Self.september([100, 0, 0, 0, 5, 7, 1, 50, 0, 3])))
-        #expect(ten.weekdayTokens == [1, 150, 0, 3, 0, 5, 7])
+        #expect(ten.weekdayAverages == [1, 75, 0, 1, 0, 5, 7])
         #expect(ten.busiestWeekday == 1)
+
+        // A weekday that comes round more often does not win on its count:
+        // Tuesdays 1 and 8 of 60 each (120 in all) average 60, and Monday 7's
+        // 70 is busier.
+        let more = RecapInsights(Self.recap(days: Self.september([60, 0, 0, 0, 0, 0, 70, 60])))
+        #expect(more.busiestWeekday == 0)
     }
 
     @Test("The busiest weekday is the earliest of a tie, and none when nothing was used")

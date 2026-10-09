@@ -1038,6 +1038,7 @@
 "In %@," = "%@，";
 "%@ AI tools coded with you." = "有 %@ 個 AI 工具和你一起寫程式。";
 "One AI tool coded with you." = "有 1 個 AI 工具和你一起寫程式。";
+"%@ more: %@" = "另有 %1$@ 個：%2$@";
 "Worked beside you" = "陪你工作的";
 "Turn the page to see what you made together" = "往後翻，看看你們一起做了什麼";
 "is your busiest hour of the day." = "是你一天裡最忙的時刻。";
@@ -1051,6 +1052,8 @@
 "Figures are to date, and the plan price is prorated by the days so far." = "數字截至今天，訂閱價格按已過去的天數折算。";
 "That was" = "這就是";
 "your %@." = "你的 %@。";
+"So far, this is" = "到目前為止，這是";
+"Check back when %@ is over" = "%@結束後再來看看";
 "Tokens" = "Token";
 "Sessions" = "工作階段";
 "Most used" = "用得最多";
@@ -1142,7 +1145,8 @@
 "Morning" = "上午";
 "Afternoon" = "下午";
 "Evening" = "晚上";
-"Busiest: %@" = "%@ 最忙";
+"Busiest: %@" = "%@最忙";
+"Busiest on average: %@" = "平均%@最忙";
 "24 hours" = "24 小時";
 "Seven days of the week" = "一週七天";
 "For every %@ of subscription, you used %@ of API value" = "每 %@ 訂閱費，用出 %@ 的 API 價值";

@@ -58,7 +58,9 @@ struct RecapScorecardView: View {
 
     private var headline: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(localized: "That was")
+            // While the period runs it is not over yet: "That was your
+            // October" on October 9 says a month that has hardly begun is done.
+            Text(recap.isInProgress ? String.localized("So far, this is") : String.localized("That was"))
             RecapRichText(
                 text: .localized("your \(RecapEmphasis.mark(deck.periodName))."),
                 size: 84, weight: .black, emphasisWeight: .black
@@ -409,7 +411,9 @@ struct RecapScorecardView: View {
                     .minimumScaleFactor(0.7)
             }
             Spacer(minLength: 16)
-            Text(String.localized("See you in \(deck.nextName)"))
+            Text(recap.isInProgress
+                 ? String.localized("Check back when \(deck.periodName) is over")
+                 : String.localized("See you in \(deck.nextName)"))
                 .font(.recap(20))
                 .foregroundStyle(RecapColor.tertiary)
                 .multilineTextAlignment(.trailing)

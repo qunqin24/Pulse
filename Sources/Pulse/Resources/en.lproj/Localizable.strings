@@ -1038,6 +1038,7 @@
 "In %@," = "In %@,";
 "%@ AI tools coded with you." = "%@ AI tools coded with you.";
 "One AI tool coded with you." = "One AI tool coded with you.";
+"%@ more: %@" = "%1$@ more: %2$@";
 "Worked beside you" = "Worked beside you";
 "Turn the page to see what you made together" = "Turn the page to see what you made together";
 "is your busiest hour of the day." = "is your busiest hour of the day.";
@@ -1051,6 +1052,8 @@
 "Figures are to date, and the plan price is prorated by the days so far." = "Figures are to date, and the plan price is prorated by the days so far.";
 "That was" = "That was";
 "your %@." = "your %@.";
+"So far, this is" = "So far, this is";
+"Check back when %@ is over" = "Check back when %@ is over";
 "Tokens" = "Tokens";
 "Sessions" = "Sessions";
 "Most used" = "Most used";
@@ -1143,6 +1146,7 @@
 "Afternoon" = "Afternoon";
 "Evening" = "Evening";
 "Busiest: %@" = "Busiest: %@";
+"Busiest on average: %@" = "Busiest on average: %@";
 "24 hours" = "24 hours";
 "Seven days of the week" = "Seven days of the week";
 "For every %@ of subscription, you used %@ of API value" = "For every %@ of subscription, you used %@ of API value";

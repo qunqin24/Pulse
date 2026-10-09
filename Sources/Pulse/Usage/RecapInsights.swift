@@ -24,24 +24,30 @@ struct RecapInsights: Sendable {
 
     // MARK: - Weekdays and weekends
 
-    /// Tokens by day of the week, Monday first. Nil for a weekday the period
-    /// has not had a single day of (the first days of a running month), which
-    /// is unknown rather than quiet.
-    var weekdayTokens: [Int?] {
+    /// Tokens on an average day of each day of the week, Monday first: the
+    /// total over how many of that day the period had (quiet ones included,
+    /// none before the first record). Nil for a weekday the period has not had
+    /// a single day of (the first days of a running month), which is unknown
+    /// rather than quiet.
+    ///
+    /// **An average, not a total.** September 2026 had five Tuesdays and
+    /// Wednesdays and four of the rest, and the totals called Wednesday the
+    /// busiest when Monday was, day for day.
+    var weekdayAverages: [Int?] {
         var tokens = [Int](repeating: 0, count: 7)
-        var seen = [Bool](repeating: false, count: 7)
-        for day in recap.days {
+        var count = [Int](repeating: 0, count: 7)
+        for day in recap.days where !recap.isBeforeRecords(day.date) {
             let index = weekdayIndex(of: day.date)
             tokens[index] += day.tokens
-            seen[index] = true
+            count[index] += 1
         }
-        return (0..<7).map { seen[$0] ? tokens[$0] : nil }
+        return (0..<7).map { count[$0] > 0 ? tokens[$0] / count[$0] : nil }
     }
 
-    /// The heaviest day of the week (Monday = 0), the earliest of a tie; nil
-    /// when none had work.
+    /// The heaviest day of the week on average (Monday = 0), the earliest of a
+    /// tie; nil when none had work.
     var busiestWeekday: Int? {
-        let tokens = weekdayTokens
+        let tokens = weekdayAverages
         var best: Int?
         for index in 0..<7 where (tokens[index] ?? 0) > (best.flatMap { tokens[$0] } ?? 0) { best = index }
         return best

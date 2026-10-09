@@ -1038,6 +1038,7 @@
 "In %@," = "%@에는";
 "%@ AI tools coded with you." = "AI 도구 %@개와 함께 코딩했습니다.";
 "One AI tool coded with you." = "AI 도구 하나와 함께 코딩했습니다.";
+"%@ more: %@" = "그 밖에 %1$@개: %2$@";
 "Worked beside you" = "함께 일한 도구";
 "Turn the page to see what you made together" = "넘겨서 함께 한 일을 확인하십시오";
 "is your busiest hour of the day." = "이 시간이 하루 중 가장 바쁩니다.";
@@ -1051,6 +1052,8 @@
 "Figures are to date, and the plan price is prorated by the days so far." = "수치는 오늘까지의 기준이며, 요금제 가격은 지금까지 지난 일수로 나눠 계산했습니다.";
 "That was" = "이것이";
 "your %@." = "%@입니다.";
+"So far, this is" = "지금까지는 이것이";
+"Check back when %@ is over" = "%@이 끝나면 다시 확인해 보세요";
 "Tokens" = "토큰";
 "Sessions" = "세션";
 "Most used" = "가장 많이 쓴 모델";
@@ -1143,6 +1146,7 @@
 "Afternoon" = "오후";
 "Evening" = "저녁";
 "Busiest: %@" = "가장 많은 때: %@";
+"Busiest on average: %@" = "평균으로 가장 많은 요일: %@";
 "24 hours" = "24시간";
 "Seven days of the week" = "요일별";
 "For every %@ of subscription, you used %@ of API value" = "구독료 %@당 %@ 상당의 API 가치를 썼습니다";

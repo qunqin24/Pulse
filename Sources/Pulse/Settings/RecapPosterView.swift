@@ -264,7 +264,11 @@ struct RecapPosterView: View {
         RecapBox(padding: EdgeInsets(top: 24, leading: 26, bottom: 24, trailing: 26)) {
             VStack(alignment: .leading, spacing: 14) {
                 cardTitle(.localized("Month by month"), note: nil)
-                RecapMonthBars(months: recap.months, labelSize: 14, labelHeight: 22)
+                RecapMonthBars(
+                    months: recap.months,
+                    unrecorded: Set((0..<12).filter(RecapInsights(recap).isMonthUnrecorded)),
+                    labelSize: 14, labelHeight: 22
+                )
             }
         }
     }

@@ -5,9 +5,13 @@ import SwiftUI
 // twelve months side by side.
 
 /// Twelve vertical bars, January to December, the busiest in lime. For the
-/// year poster, where it stands in for the month calendar.
+/// year poster, where it stands in for the month calendar. A month with
+/// nothing to show — still to come, or before the first record — is a dashed
+/// outline, as on the months card and the scorecard, not a quiet month's sliver.
 struct RecapMonthBars: View {
     let months: [Recap.Month]
+    /// Month indices (0 for January) that are unrecorded.
+    var unrecorded: Set<Int> = []
     let labelSize: CGFloat
     let labelHeight: CGFloat
 
@@ -20,15 +24,21 @@ struct RecapMonthBars: View {
                 ForEach(months) { month in
                     VStack(spacing: 8) {
                         Spacer(minLength: 0)
-                        RoundedRectangle(cornerRadius: 6, style: .continuous)
-                            .fill(month.month == busiest ? RecapColor.lime : Color(recap: 0xE0E0DA))
-                            .overlay {
-                                if month.month == busiest {
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .strokeBorder(RecapColor.ink, lineWidth: 2)
+                        if unrecorded.contains(month.month - 1) {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(RecapColor.rule, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                .frame(height: 6)
+                        } else {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .fill(month.month == busiest ? RecapColor.lime : Color(recap: 0xE0E0DA))
+                                .overlay {
+                                    if month.month == busiest {
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .strokeBorder(RecapColor.ink, lineWidth: 2)
+                                    }
                                 }
-                            }
-                            .frame(height: max(6, barArea * CGFloat(month.tokens) / CGFloat(maximum)))
+                                .frame(height: max(6, barArea * CGFloat(month.tokens) / CGFloat(maximum)))
+                        }
                         Text(verbatim: RecapFormat.shortMonthName(month.month))
                             .font(.recap(labelSize, month.month == busiest ? .semibold : .regular))
                             .foregroundStyle(month.month == busiest ? RecapColor.ink : RecapColor.secondary)
@@ -52,7 +62,7 @@ struct RecapYearCalendarView: View {
     private var recap: Recap { deck.recap }
 
     var body: some View {
-        RecapStoryPage(page: deck.page(of: .yearCalendar)) {
+        RecapStoryPage(page: deck.page(of: .yearCalendar), footnotes: deck.provenance) {
             RecapCalendarHero(deck: deck, numberSize: 190, unitSize: 92).padding(.top, 40)
             Spacer(minLength: 20)
             RecapSectionHead(
@@ -130,7 +140,7 @@ struct RecapMonthsView: View {
         let months = recap.months
         let maximum = max(months.map(\.tokens).max() ?? 1, 1)
         let busiest = months.max { $0.tokens < $1.tokens }
-        RecapStoryPage(page: deck.page(of: .months)) {
+        RecapStoryPage(page: deck.page(of: .months), footnotes: deck.notes) {
             Text(localized: "Your busiest month")
                 .font(.recap(34))
                 .foregroundStyle(Color(recap: 0x55554F))

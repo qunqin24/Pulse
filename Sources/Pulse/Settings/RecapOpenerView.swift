@@ -10,7 +10,7 @@ struct RecapOpenerView: View {
     private var isYear: Bool { deck.isYear }
 
     var body: some View {
-        RecapStoryPage(page: deck.page(of: .opener)) {
+        RecapStoryPage(page: deck.page(of: .opener), footnotes: deck.notes) {
             big.padding(.top, 36)
             headline.padding(.top, 34)
             Spacer(minLength: 24)
@@ -232,6 +232,27 @@ struct RecapOpenerView: View {
                         .background(first ? RecapColor.lime : .clear)
                 }
                 .padding(.vertical, 20)
+            }
+            // The headline counts every tool; the rows stop at five, so the
+            // rest are named here rather than dropped without a word.
+            let rest = Array(recap.agents.dropFirst(5))
+            if !rest.isEmpty {
+                RecapHairline()
+                HStack(spacing: 20) {
+                    Text(String.localized(
+                        "\("\(rest.count)") more: \(rest.map(\.agent.displayName).formatted(.list(type: .and).locale(LocalizationSource.locale)))"
+                    ))
+                        .font(.recap(20))
+                        .foregroundStyle(Color(recap: 0x55554F))
+                        .lineLimit(2)
+                        .recapFit(0.7)
+                    Spacer(minLength: 0)
+                    Text(verbatim: RecapFormat.percent(rest.reduce(0) { $0 + $1.share }))
+                        .font(.recap(20, .regular, mono: true))
+                        .foregroundStyle(RecapColor.tertiary)
+                        .frame(width: 110, alignment: .trailing)
+                }
+                .padding(.vertical, 16)
             }
         }
     }

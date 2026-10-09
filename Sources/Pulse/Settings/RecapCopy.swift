@@ -129,6 +129,19 @@ extension RecapDeck {
     /// from, that the money is an estimate, and — only when it is so — that the
     /// period is not over, that some work had no price (money is a floor), or that
     /// a store may be missing counts.
+    /// The notes a card that shows no money needs: that the period is not
+    /// over, where the records begin, and that a store may be missing counts.
+    /// Empty when none applies.
+    var notes: [String] {
+        var lines: [String] = []
+        if recap.isInProgress { lines.append(.localized("Figures are to date.")) }
+        if let begin = recap.recordsBegin {
+            lines.append(.localized("Records on this Mac begin on \(RecapFormat.day(begin)); days before it are not counted."))
+        }
+        if recap.isPartial { lines.append(.localized("Some tools' counts may be missing, so the total is a floor.")) }
+        return lines
+    }
+
     var provenance: [String] {
         let source: String = recap.cost != nil
             ? .localized("Counted from this Mac's local records · money estimated at API prices")

@@ -78,7 +78,7 @@ struct RecapCalendarView: View {
         let maximum = recap.days.map(\.tokens).max() ?? 0
         let busiest = recap.busiestDay?.date
         let cellHeight: CGFloat = grid.rows > 5 ? 74 : 86
-        RecapStoryPage(page: deck.page(of: .calendar)) {
+        RecapStoryPage(page: deck.page(of: .calendar), footnotes: deck.provenance) {
             RecapCalendarHero(deck: deck).padding(.top, 44)
             Spacer(minLength: 24)
             VStack(spacing: 12) {

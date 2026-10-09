@@ -238,6 +238,10 @@ struct RecapStoryPage<Content: View>: View {
     let page: (number: Int, count: Int)?
     /// A small outlined mono stamp centred in the running head ("NO. 2026·10").
     var stamp: String?
+    /// Lines at the foot of the card, for where its figures come from and what
+    /// they leave out (`RecapDeck.provenance`, `notes`). A card can be saved
+    /// and shared alone, so it carries its own.
+    var footnotes: [String] = []
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -265,6 +269,18 @@ struct RecapStoryPage<Content: View>: View {
                 }
             }
             content
+            if !footnotes.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(footnotes, id: \.self) { line in
+                        Text(line)
+                            .font(.recap(15))
+                            .foregroundStyle(RecapColor.tertiary)
+                            .lineLimit(2)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.top, 16)
+            }
         }
         .foregroundStyle(RecapColor.ink)
         .padding(EdgeInsets(top: 80, leading: 80, bottom: 72, trailing: 80))

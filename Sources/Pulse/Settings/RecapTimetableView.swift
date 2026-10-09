@@ -12,7 +12,7 @@ struct RecapTimetableView: View {
         let hours = recap.hours ?? []
         let peak = recap.peakHour ?? 0
         let insights = RecapInsights(recap)
-        RecapStoryPage(page: deck.page(of: .timetable)) {
+        RecapStoryPage(page: deck.page(of: .timetable), footnotes: deck.notes) {
             HStack(alignment: .bottom) {
                 RecapFigureText(figure: RecapFormat.hour(peak), numberSize: 230, unitSize: 100, unitGap: 10, trimmed: true)
                 Spacer(minLength: 12)
@@ -194,13 +194,13 @@ struct RecapTimetableView: View {
 
     @ViewBuilder
     private func weekdays(_ insights: RecapInsights) -> some View {
-        let tokens = insights.weekdayTokens
+        let tokens = insights.weekdayAverages
         let top = tokens.compactMap { $0 }.max() ?? 0
         if top > 0, let best = insights.busiestWeekday {
             let names = RecapFormat.weekdayNames()
             VStack(spacing: 14) {
                 RecapHairline(strong: true).padding(.bottom, 8)
-                RecapSectionHead(title: .localized("Seven days of the week"), note: .localized("Busiest: \(names[best])"))
+                RecapSectionHead(title: .localized("Seven days of the week"), note: .localized("Busiest on average: \(names[best])"))
                 HStack(spacing: 14) {
                     ForEach(0..<7, id: \.self) { index in
                         weekdayColumn(name: names[index], tokens: tokens[index], top: top, isBest: index == best)
