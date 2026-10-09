@@ -1005,13 +1005,15 @@
 "Night owl" = "Night owl";
 "Early bird" = "Early bird";
 "Day shift" = "Day shift";
-"All day" = "All day";
+"No set hours" = "No set hours";
 "In %@, you and AI worked through" = "In %@, you and AI worked through";
 "Active %@ of %@ days" = "Active %@ of %@ days";
 "%@ sessions" = "%@ sessions";
 "Counted from this Mac's local records · money estimated at API prices" = "Counted from this Mac's local records · money estimated at API prices";
 "Counted from this Mac's local records" = "Counted from this Mac's local records";
 "Figures are to date." = "Figures are to date.";
+"The cache hit rate leaves out %@ of the tokens, whose counts are incomplete." = "The cache hit rate leaves out %@ of the tokens, whose counts are incomplete.";
+"%@ of the tokens came from tools that record no time of day and are not in the hours." = "%@ of the tokens came from tools that record no time of day and are not in the hours.";
 "Records on this Mac begin on %@; days before it are not counted." = "Records on this Mac begin on %@; days before it are not counted.";
 "The plan price is counted from %@, when records on this Mac begin." = "The plan price is counted from %@, when records on this Mac begin.";
 "Some work had no published price, so the money is a floor." = "Some work had no published price, so the money is a floor.";

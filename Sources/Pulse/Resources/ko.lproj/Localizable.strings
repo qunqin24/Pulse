@@ -1005,13 +1005,15 @@
 "Night owl" = "올빼미형";
 "Early bird" = "아침형";
 "Day shift" = "낮 시간형";
-"All day" = "하루 종일형";
+"No set hours" = "불규칙형";
 "In %@, you and AI worked through" = "%@, AI와 함께 처리한 양";
 "Active %@ of %@ days" = "활동일 %@ / %@일";
 "%@ sessions" = "세션 %@개";
 "Counted from this Mac's local records · money estimated at API prices" = "이 Mac의 로컬 기록 기준 · 금액은 API 요금으로 추산";
 "Counted from this Mac's local records" = "이 Mac의 로컬 기록 기준";
 "Figures are to date." = "수치는 오늘까지의 기준입니다.";
+"The cache hit rate leaves out %@ of the tokens, whose counts are incomplete." = "캐시 적중률에는 집계가 불완전한 토큰 %@를 포함하지 않았습니다.";
+"%@ of the tokens came from tools that record no time of day and are not in the hours." = "토큰의 %@는 시각을 기록하지 않는 도구에서 나와 시간대 집계에 포함하지 않았습니다.";
 "Records on this Mac begin on %@; days before it are not counted." = "이 Mac의 기록은 %@부터 시작되며, 그 이전 날짜는 포함하지 않습니다.";
 "The plan price is counted from %@, when records on this Mac begin." = "구독 요금은 이 Mac에 기록이 시작된 %@부터 계산합니다.";
 "Some work had no published price, so the money is a floor." = "일부 사용분은 공개된 가격이 없어, 금액은 실제보다 적을 수 있습니다.";

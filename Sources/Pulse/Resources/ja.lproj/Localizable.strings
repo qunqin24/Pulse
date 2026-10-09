@@ -1005,13 +1005,15 @@
 "Night owl" = "夜ふかし型";
 "Early bird" = "早起き型";
 "Day shift" = "日中型";
-"All day" = "終日型";
+"No set hours" = "時間まちまち型";
 "In %@, you and AI worked through" = "%@、あなたと AI が処理したのは";
 "Active %@ of %@ days" = "活動日 %@ / %@ 日";
 "%@ sessions" = "%@ セッション";
 "Counted from this Mac's local records · money estimated at API prices" = "この Mac のローカル記録から集計 · 金額は API 料金で概算";
 "Counted from this Mac's local records" = "この Mac のローカル記録から集計";
 "Figures are to date." = "数値は本日までのものです。";
+"The cache hit rate leaves out %@ of the tokens, whose counts are incomplete." = "キャッシュヒット率には、計数が不完全なトークン %@ を含めていません。";
+"%@ of the tokens came from tools that record no time of day and are not in the hours." = "トークンの %@ は時刻を記録しないツールのもので、時間帯の集計には含めていません。";
 "Records on this Mac begin on %@; days before it are not counted." = "この Mac の記録は %@ から始まります。それより前の日は数えていません。";
 "The plan price is counted from %@, when records on this Mac begin." = "プラン料金は、この Mac の記録が始まった %@ から計算しています。";
 "Some work had no published price, so the money is a floor." = "一部の利用分には公開価格がないため、金額は実際より少なくなっています。";

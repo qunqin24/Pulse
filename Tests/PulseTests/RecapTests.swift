@@ -98,9 +98,7 @@ struct RecapTests {
         #expect(recap.hours?.reduce(0, +) == 200)
         #expect(recap.hours?[0] == 100)
         #expect(recap.hours?[23] == 100)
-        // October 1's 00:00 continues September 30's evening, which is not
-        // this month's: within October it is a stretch that began at midnight.
-        #expect(recap.lateNights == 0)
+        #expect(recap.lateNights == 1)
     }
 
     @Test("A period running ends at the end of today, and its months are not yet drawn")
@@ -276,6 +274,21 @@ struct RecapTests {
         #expect(recap.persona == nil)
     }
 
+    @Test("A tool without a time of day is left out of the hours alone, and counted")
+    func aggregateTimingBesideTimedWork() throws {
+        var untimed = Self.ledger([Self.event(Self.at(2026, 10, 2, 23), 10)])
+        untimed.hasAggregateTiming = true
+        let timed = Self.ledger([Self.event(Self.at(2026, 10, 2, 14), 990)])
+        let recap = Self.build(.month(year: 2026, month: 10), [.zed: untimed, .claudeCode: timed])
+        let hours = try #require(recap.hours)
+        #expect(hours[14] == 990)
+        #expect(hours[23] == 0, "the untimed tool's invented hour is not drawn")
+        #expect(recap.untimedTokens == 10)
+        #expect(recap.peakHour == 14)
+        #expect(recap.persona == .dayShift)
+        #expect(RecapDeck(recap: recap, monthlyPrice: nil, hidesProjects: false).hoursNote != nil)
+    }
+
     @Test("A ledger with no quarter-hours has no hour shape to invent")
     func noSlots() {
         let day = LedgerDay(date: Self.at(2026, 10, 2, 0), tokens: 100, cost: 1, unpricedTokens: 0, models: ["claude": 100])
@@ -418,7 +431,7 @@ struct RecapTests {
         #expect(recap.peakHour == 9)
     }
 
-    @Test("A stretch of work that crosses midnight is a late night; one that starts after it is not")
+    @Test("Work running past midnight, or begun before 05:00, is a late night, once")
     func lateNights() {
         var ledger = Self.ledger([
             // A night spent across midnight: the session started the evening before.
@@ -441,16 +454,16 @@ struct RecapTests {
             ),
         ]
         let recap = Self.build(.month(year: 2026, month: 10), [.claudeCode: ledger])
-        // Only the first crossed a midnight; 04:40–04:58 began after one.
-        #expect(recap.lateNights == 1)
-        // 01:22 the next day, from the session's own last record: later than
-        // 04:58 on a day that began at 04:40, and than 05:00.
-        #expect(recap.latestMinute == 24 * 60 + 60 + 22)
+        // Both nights: 04:40–04:58 began before 05:00, so it is the night of
+        // October 3. 05:00 on the 5th is that morning's.
+        #expect(recap.lateNights == 2)
+        // 04:58, from the session's own last record rather than its quarter-hour.
+        #expect(recap.latestMinute == 24 * 60 + 4 * 60 + 58)
 
-        // Without the session's end it is the last quarter-hour's start.
+        // Without the session's end it is the quarter-hour's start.
         var bare = ledger
         bare.sessions = []
-        #expect(Self.build(.month(year: 2026, month: 10), [.claudeCode: bare]).latestMinute == 24 * 60 + 60 + 15)
+        #expect(Self.build(.month(year: 2026, month: 10), [.claudeCode: bare]).latestMinute == 24 * 60 + 4 * 60 + 45)
     }
 
     @Test("An all-nighter finishes when it stopped, and an evening that ends before midnight still has a finish")
@@ -589,16 +602,22 @@ struct RecapTests {
         #expect(alone.cacheSavings == nil)
     }
 
-    @Test("Counts that may be missing, or no kind can claim, give no hit rate")
-    func cacheHitRateWithheld() {
+    @Test("An agent whose counts may be missing is left out of the hit rate and counted, not allowed to take it away")
+    func cacheHitRateWithheld() throws {
         let events = [Event(at: Self.at(2026, 10, 2), model: "claude", tally: TokenTally(input: 100, cacheRead: 100))]
         var partial = Self.ledger(events)
         partial.hasPartialCounts = true
-        let healthy = Self.ledger(events)
+        let healthy = Self.ledger([Event(at: Self.at(2026, 10, 2), model: "gpt", tally: TokenTally(input: 100, cacheRead: 300))])
         let both = Self.build(.month(year: 2026, month: 10), [.claudeCode: partial, .codex: healthy])
-        // One agent's rate cannot stand for the whole.
-        #expect(both.cacheHitRate == nil)
+        // The rate is the healthy agent's alone, and the rest is said.
+        #expect(try abs(#require(both.cacheHitRate) - 0.75) < 0.0001)
+        #expect(both.cacheUnmeasuredTokens == 200)
         #expect(both.isPartial)
+
+        // Alone, a partial agent leaves no rate at all, and nothing to state.
+        let only = Self.build(.month(year: 2026, month: 10), [.claudeCode: partial])
+        #expect(only.cacheHitRate == nil)
+        #expect(only.cacheUnmeasuredTokens == 0)
 
         let day = LedgerDay(
             date: Self.at(2026, 10, 2, 0), tokens: 700, cost: 0, unpricedTokens: 0, models: ["m": 700],

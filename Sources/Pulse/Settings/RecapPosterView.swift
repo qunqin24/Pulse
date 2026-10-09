@@ -556,7 +556,7 @@ struct RecapPosterView: View {
     private var footer: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 2) {
-                ForEach(deck.provenance, id: \.self) { line in
+                ForEach(deck.provenance + [deck.hoursNote].compactMap { $0 }, id: \.self) { line in
                     Text(line)
                         .font(.recap(14))
                         .foregroundStyle(RecapColor.tertiary)

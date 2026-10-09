@@ -12,7 +12,7 @@ struct RecapTimetableView: View {
         let hours = recap.hours ?? []
         let peak = recap.peakHour ?? 0
         let insights = RecapInsights(recap)
-        RecapStoryPage(page: deck.page(of: .timetable), footnotes: deck.notes) {
+        RecapStoryPage(page: deck.page(of: .timetable), footnotes: deck.notes + [deck.hoursNote].compactMap { $0 }) {
             HStack(alignment: .bottom) {
                 RecapFigureText(figure: RecapFormat.hour(peak), numberSize: 230, unitSize: 100, unitGap: 10, trimmed: true)
                 Spacer(minLength: 12)

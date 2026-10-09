@@ -117,9 +117,8 @@ struct Recap: Sendable, Equatable {
     /// Year recaps: twelve entries. Month recaps: empty.
     let months: [Month]
 
-    /// Tokens by local hour, 24 entries, 0 = midnight. Nil when any store
-    /// behind the period has only session- or report-level timing, so an
-    /// hour shape would be invented (`SpendSummary.hasAggregateTiming`).
+    /// Tokens by local hour, 24 entries, 0 = midnight, from the tools that
+    /// record a time of day (`untimedTokens` is the rest). Nil when none did.
     let hours: [Int]?
     let peakHour: Int?
     /// Share of the period's tokens in 21:00–04:59.
@@ -179,6 +178,16 @@ struct Recap: Sendable, Equatable {
     /// the period before once this one is over, and none from before the
     /// first record. Nil where `previousTokens` is.
     var previousDays: Int? = nil
+
+    /// Tokens from tools that record no time of day, left out of `hours` and
+    /// everything read from it (peak, persona, busiest hours, late nights).
+    /// Zero when every tool records one.
+    var untimedTokens: Int = 0
+
+    /// Tokens from tools whose counts may be missing or do not add up, left
+    /// out of `cacheHitRate`. Zero when the rate covers every tool that
+    /// records the cache, or when there is no rate.
+    var cacheUnmeasuredTokens: Int = 0
 
     /// The calendar the recap was built with, so the cards that lay out its
     /// days (the year's twelve months) count them the way it did.

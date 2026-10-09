@@ -1005,13 +1005,15 @@
 "Night owl" = "夜間型";
 "Early bird" = "早起型";
 "Day shift" = "白天型";
-"All day" = "全天型";
+"No set hours" = "不定時型";
 "In %@, you and AI worked through" = "%@，你和 AI 一起處理了";
 "Active %@ of %@ days" = "活躍 %@ / %@ 天";
 "%@ sessions" = "%@ 個工作階段";
 "Counted from this Mac's local records · money estimated at API prices" = "資料來自這台 Mac 的本機記錄 · 金額依 API 價格估算";
 "Counted from this Mac's local records" = "資料來自這台 Mac 的本機記錄";
 "Figures are to date." = "數字截至今天。";
+"The cache hit rate leaves out %@ of the tokens, whose counts are incomplete." = "快取命中率未計入 %@ 的 token，這部分計數不完整。";
+"%@ of the tokens came from tools that record no time of day and are not in the hours." = "%@ 的 token 來自不記錄時間的工具，未計入按小時的統計。";
 "Records on this Mac begin on %@; days before it are not counted." = "這台 Mac 的記錄從%@開始，之前的日子不計入。";
 "The plan price is counted from %@, when records on this Mac begin." = "訂閱價格從這台 Mac 開始有記錄的%@起計算。";
 "Some work had no published price, so the money is a floor." = "部分用量沒有公開價格，金額只會偏低。";

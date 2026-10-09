@@ -13,7 +13,9 @@ extension Recap.Persona {
         case .nightOwl: .localized("Night owl")
         case .earlyBird: .localized("Early bird")
         case .dayShift: .localized("Day shift")
-        case .allDay: .localized("All day")
+        // Not "all day": it is only that no band holds most of the work, and
+        // August 2026 — nothing at all from 07:00 to 12:59 — was called it.
+        case .allDay: .localized("No set hours")
         }
     }
 }
@@ -142,6 +144,14 @@ extension RecapDeck {
         return lines
     }
 
+    /// Said wherever the hour shape is drawn, when some tools' work could not
+    /// be placed in it.
+    var hoursNote: String? {
+        guard recap.untimedTokens > 0, recap.hours != nil, recap.tokens > 0 else { return nil }
+        let share = RecapFormat.percent(Double(recap.untimedTokens) / Double(recap.tokens))
+        return .localized("\(share) of the tokens came from tools that record no time of day and are not in the hours.")
+    }
+
     var provenance: [String] {
         let source: String = recap.cost != nil
             ? .localized("Counted from this Mac's local records · money estimated at API prices")
@@ -153,6 +163,10 @@ extension RecapDeck {
         }
         if costIsFloor { lines.append(.localized("Some work had no published price, so the money is a floor.")) }
         if recap.isPartial { lines.append(.localized("Some tools' counts may be missing, so the total is a floor.")) }
+        if recap.cacheUnmeasuredTokens > 0, recap.tokens > 0 {
+            let share = RecapFormat.percent(Double(recap.cacheUnmeasuredTokens) / Double(recap.tokens))
+            lines.append(.localized("The cache hit rate leaves out \(share) of the tokens, whose counts are incomplete."))
+        }
         return lines
     }
 }
