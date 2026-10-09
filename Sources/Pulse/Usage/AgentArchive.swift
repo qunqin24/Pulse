@@ -188,9 +188,11 @@ struct AgentArchive: Codable, Equatable {
             }
             let quiet = { (day: String) -> Bool in
                 guard let date = Self.date(ofDay: day, calendar: .current) else { return false }
-                return [-1, 0, 1].allSatisfy { offset in
-                    Calendar.current.date(byAdding: .day, value: offset, to: date).map { !seen.contains(Self.dayKey(for: $0)) } ?? true
+                for offset in [-1, 0, 1] {
+                    guard let near = Calendar.current.date(byAdding: .day, value: offset, to: date) else { continue }
+                    if seen.contains(Self.dayKey(for: near)) { return false }
                 }
+                return true
             }
             var rest: [String: [String: TokenTally]] = [:]
             for (day, models) in next.dayRest {

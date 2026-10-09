@@ -149,8 +149,18 @@ enum ClaimDigest {
     static func unpack(_ packed: String?) -> [UInt64] {
         guard let packed, let data = Data(base64Encoded: packed) else { return [] }
         let bytes = [UInt8](data)
-        return stride(from: 0, to: bytes.count - bytes.count % 8, by: 8).map { offset in
-            (0..<8).reduce(UInt64(0)) { $0 | UInt64(bytes[offset + $1]) << (8 * UInt64($1)) }
+        var digests: [UInt64] = []
+        digests.reserveCapacity(bytes.count / 8)
+        var offset = 0
+        while offset + 8 <= bytes.count {
+            var digest: UInt64 = 0
+            for index in 0..<8 {
+                let byte = UInt64(bytes[offset + index])
+                digest |= byte << UInt64(8 * index)
+            }
+            digests.append(digest)
+            offset += 8
         }
+        return digests
     }
 }
