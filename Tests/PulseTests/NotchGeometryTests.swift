@@ -39,7 +39,14 @@ struct NotchGeometryTests {
             let localRail = CGRect(x: offsets.leading, y: offsets.top, width: rail.width, height: rail.height)
             let surface = PanelHitArea.notchSurface(rail: localRail, notchSize: notch.size)
             #expect(surface.minY == 0)
-            #expect(surface.contains(localRail))
+            // Shorter than the docked rail by the room its own flares would
+            // take (the notch's fillets are drawn outside the body), but every
+            // ring is still on it.
+            let firstRing = localRail.minX + DockLayout.firstRingAlong(on: .horizontal)
+            let lastRing = firstRing + CGFloat(count - 1) * DockLayout.ringStep(on: .horizontal)
+            #expect(surface.minX <= firstRing - DockLayout.ringDiameter / 2)
+            #expect(surface.maxX >= lastRing + DockLayout.ringDiameter / 2)
+            #expect(surface.minY <= localRail.minY)
             // The rail ends the surface: the housing sits above the rings,
             // and nothing is added under them to answer it.
             #expect(surface.maxY == localRail.maxY)
