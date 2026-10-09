@@ -100,8 +100,8 @@ struct Recap: Sendable, Equatable {
     let cost: Double?
     /// Tokens of the period with no published price behind them
     /// (`SpendSummary.unpricedTokens`). Above zero, `cost` is the priced part
-    /// only — a floor — and the cards say so; at 1% or more of `tokens` the
-    /// payback card is left out (`RecapDeck.payback`).
+    /// only — a floor — and the cards say so, the payback card included
+    /// (`RecapDeck.payback`).
     let unpricedTokens: Int
     /// The same span of the previous period, for "up 38% on August". Nil when
     /// nothing was recorded then.

@@ -46,8 +46,8 @@ struct RecapPayback: Equatable, Sendable {
 ///
 /// **A card whose data is missing is left out, never drawn empty or with a
 /// zero.** No agents, no opener; no hour shape (`Recap.hours` is nil where a
-/// store only has session-level timing), no timetable; no cost, no price or too
-/// much unpriced work (`maximumUnpricedShare`), no payback. An empty recap gets no deck at all. The page counter ("01 / 05")
+/// store only has session-level timing), no timetable; no cost or no price, no
+/// payback. An empty recap gets no deck at all. The page counter ("01 / 05")
 /// counts the numbered cards the deck really has.
 struct RecapDeck: Sendable {
     let recap: Recap
@@ -113,23 +113,23 @@ struct RecapDeck: Sendable {
         return cards
     }
 
-    /// A payback card needs a priced period, a price, and **a period that is
-    /// priced nearly whole**: with 1% or more of its tokens unpriced the money
-    /// is a floor too loose to divide a price into, so the card is left out
-    /// rather than state a multiple that may be far off. (Below that the figures
-    /// carry the floor note.) A price of nothing is not a subscription, and a
-    /// period priced at nothing has no payback to state.
+    /// A payback card needs a priced period and a price. A price of nothing is
+    /// not a subscription, and a period priced at nothing has no payback to
+    /// state.
+    ///
+    /// **Unpriced work does not take the card away.** It once did, from 1% of
+    /// the tokens — and a heavy month with a model nobody publishes a price
+    /// for (swe-2-high was 1.2% of five billion tokens) lost the card every
+    /// month, with nothing on screen saying why. The money is then a floor, so
+    /// the multiple is too: the card carries the floor note (`costIsFloor`),
+    /// and a floor never overstates what the plan returned.
     static func payback(recap: Recap, monthlyPrice: Double?) -> RecapPayback? {
         guard let cost = recap.cost, cost > 0, let price = monthlyPrice, price > 0,
-              recap.tokens > 0,
-              Double(recap.unpricedTokens) / Double(recap.tokens) < maximumUnpricedShare else { return nil }
+              recap.tokens > 0 else { return nil }
         let months = paidMonths(recap)
         guard months > 0 else { return nil }
         return RecapPayback(used: cost, monthlyPrice: price, months: months, isToDate: recap.isInProgress)
     }
-
-    /// The share of tokens without a price at which the payback card is dropped.
-    static let maximumUnpricedShare = 0.01
 
     /// Months of subscription the period spans: one for a month, twelve for a
     /// year. **A period still running is prorated by days** — the days so far

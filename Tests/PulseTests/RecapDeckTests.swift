@@ -74,15 +74,13 @@ struct RecapDeckTests {
         #expect(abs(payback.multiple - 6.71) < 0.001)
     }
 
-    @Test("Payback is left out when 1% or more of the tokens had no price, and floor-noted below that")
+    @Test("Unpriced work keeps the payback card, with the floor noted")
     func unpricedPayback() throws {
         let tenth = Self.deck(RecapSamples.month(unpricedShare: 0.1))
-        #expect(tenth.payback == nil)
-        #expect(!tenth.cards.contains(.payback))
+        #expect(tenth.payback != nil)
+        #expect(tenth.cards.contains(.payback))
         #expect(tenth.costIsFloor)
-
-        let one = Self.deck(RecapSamples.month(unpricedShare: 0.01))
-        #expect(one.payback == nil, "1% is not below 1%")
+        #expect(tenth.provenance.contains(String.localized("Some work had no published price, so the money is a floor.")))
 
         let sliver = Self.deck(RecapSamples.month(unpricedShare: 0.004))
         #expect(sliver.payback != nil)
