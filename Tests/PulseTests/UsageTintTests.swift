@@ -8,6 +8,11 @@ import Testing
 /// moving it moves *only* that step: green and spent do not follow it around,
 /// and every offered figure stays above the caution step it bounds.
 @Suite("Usage tint")
+// On the main actor: resolving a colour backed by an `NSColor` provider makes
+// SwiftUI sync onto the main thread, and two tests doing that at once from the
+// cooperative pool deadlocked the whole run (sampled on 2026-10-09: both
+// threads in `Update.syncMain`, the main thread idle in its run loop).
+@MainActor
 struct UsageTintTests {
     private static func colour(_ used: Double, warningAt: WarningThreshold, spent: Bool = false) -> Color {
         UsageTint.color(for: used, isExhausted: spent, warningAt: warningAt.fraction)

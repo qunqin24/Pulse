@@ -1,6 +1,6 @@
 # Testing
 
-Owns: what `swift test` covers, what it deliberately does not, and the two conventions the suite depends on. Toolchain and build flags: [build-from-source.md](build-from-source.md).
+Owns: what `swift test` covers, what it deliberately does not, and the conventions the suite depends on. Toolchain and build flags: [build-from-source.md](build-from-source.md).
 
 ```bash
 swift test
@@ -170,11 +170,15 @@ PULSE_BOT_PREVIEW=/path/to/existing/folder/bot-personalities.png swift test --fi
 
 A local `swift test` passing is not proof that CI's will compile. The `macos-26` runner's toolchain is older than a current Xcode, and it is stricter in places: it would not convert a `CGFloat` into a `Double` tuple element on assignment, which a local Swift 6.4 accepts, and that one line in `BotMarkContinuityTests` failed the 1.4.0 release at its test step (measured then). Write `CGFloat` ↔ `Double` conversions out in tests, as the app code already does.
 
-## Two conventions
+## Conventions
 
 **The executable target is tested directly** (`@testable import Pulse`), not through a library split. Pulse is one app, not a framework with an app on top; carving two hundred-odd files into two targets to make them reachable would be a refactor in service of the test runner. SwiftPM has allowed this since Swift 5.5.
 
 **A symbol may be `internal` instead of `private` so a test can hold it**, and when it is, the comment says so and says not to tidy it back. `AntigravityUsageService.Reply` and `windows(from:)` are the first two. Nothing outside the module can see them either way; the difference is only whether the fixture test compiles.
+
+**A suite that reads or writes `PanelMetrics` is nested in `PanelGlobalsSuite`** (`extension PanelGlobalsSuite { @Suite struct … }`), which is `.serialized`. `PanelMetrics` is process-wide, and Swift Testing runs top-level suites in parallel, so `.serialized` on one suite alone did not stop another from flipping round ends or figures while it measured: `FreeAcrossTests` failed now and then on a frame worked out from another suite's settings. `RailGeometryTests`, `NotchGeometryTests`, `FreeAcrossTests`, `BottomDockTests` and `RailMoneyTests` live there.
+
+**Resolving a SwiftUI `Color` in a test happens on the main actor.** A colour backed by an `NSColor` provider (the usage colours, `Color.pulse*`) makes SwiftUI sync onto the main thread when it resolves; two tests doing that at once from the cooperative pool deadlocked the whole run — sampled 2026-10-09, both threads in `Update.syncMain`, the main thread idle. `UsageTintTests` is `@MainActor` for this.
 
 ## Fixtures
 
