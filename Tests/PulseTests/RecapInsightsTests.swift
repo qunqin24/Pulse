@@ -214,7 +214,7 @@ struct RecapInsightsTests {
         #expect(RecapInsights(Self.recap(days: days, cost: 10)).costPerActiveDay == 5)
     }
 
-    @Test("The dearest day is named only when every working day has a price")
+    @Test("The dearest day is the dearest priced day; a day with no price does not take the tile away")
     func costliestDay() throws {
         let priced = Self.september([10, 0, 30, 20], cost: { Double($0) })
         let insights = RecapInsights(Self.recap(days: priced, cost: 60))
@@ -222,7 +222,7 @@ struct RecapInsightsTests {
 
         var unpriced = priced
         unpriced[1] = Recap.Day(date: Self.date(9, 2), tokens: 99, cost: nil)
-        #expect(RecapInsights(Self.recap(days: unpriced, cost: 60)).costliestDay == nil)
+        #expect(try #require(RecapInsights(Self.recap(days: unpriced, cost: 60)).costliestDay).date == Self.date(9, 3))
         #expect(RecapInsights(Self.recap(days: Self.september([10, 20]), cost: nil)).costliestDay == nil)
     }
 
@@ -232,18 +232,18 @@ struct RecapInsightsTests {
         #expect(try #require(RecapInsights(Self.recap(days: days, cost: 20)).costliestDay).date == Self.date(9, 1))
     }
 
-    @Test("Daily money is a series only if every working day has a price, a quiet one is a real zero")
+    @Test("Daily money: a quiet day is a real zero, a day with no price is a gap")
     func dailyBars() {
         let priced = Self.september([10, 0, 30], cost: { Double($0) })
         #expect(RecapInsights(Self.recap(days: priced, cost: 40)).costBars == [10, 0, 30])
 
         var partial = priced
         partial[2] = Recap.Day(date: Self.date(9, 3), tokens: 30, cost: nil)
-        #expect(RecapInsights(Self.recap(days: partial, cost: 10)).costBars == nil)
+        #expect(RecapInsights(Self.recap(days: partial, cost: 10)).costBars == [10, 0, nil])
         #expect(RecapInsights(Self.recap(days: Self.september([10, 20]), cost: nil)).costBars == nil)
     }
 
-    @Test("A year's money is by month, and one unpriced month takes it away")
+    @Test("A year's money is by month, and an unpriced month is a gap")
     func monthlyBars() {
         let months = (1...12).map { Recap.Month(month: $0, tokens: $0 == 4 ? 0 : 100, cost: $0 == 4 ? nil : Double($0), activeDays: 1) }
         let year = Self.recap(days: Self.september([1]), period: .year(2026), months: months, cost: 70)
@@ -255,7 +255,8 @@ struct RecapInsightsTests {
 
         var broken = months
         broken[8] = Recap.Month(month: 9, tokens: 100, cost: nil, activeDays: 1)
-        #expect(RecapInsights(Self.recap(days: Self.september([1]), period: .year(2026), months: broken, cost: 70)).costBars == nil)
+        #expect(RecapInsights(Self.recap(days: Self.september([1]), period: .year(2026), months: broken, cost: 70)).costBars
+                == [1, 2, 3, 0, 5, 6, 7, 8, nil, 10, 11, 12])
     }
 
     // MARK: - Who worked when

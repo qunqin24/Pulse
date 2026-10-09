@@ -124,10 +124,11 @@ struct Recap: Sendable, Equatable {
     let peakHour: Int?
     /// Share of the period's tokens in 21:00–04:59.
     let lateShare: Double?
-    /// The latest a session ran past midnight, as minutes after midnight
-    /// (0..<300, i.e. before 05:00). Nil when no session did.
+    /// The latest any stretch of work ended, as minutes after the midnight of
+    /// the day it began — past 1440 when it ran into the next morning
+    /// (`Recap.workdays`). Nil with no timed work.
     let latestMinute: Int?
-    /// Nights on which a session ran past midnight.
+    /// Stretches of work that ran over a midnight.
     let lateNights: Int
     let persona: Persona?
 
@@ -172,6 +173,12 @@ struct Recap: Sendable, Equatable {
     /// plan price prorated from January 1. `observedDays` is the count those
     /// use, and a month entirely before it is drawn as unrecorded.
     var recordsBegin: Date? = nil
+
+    /// The days `previousTokens` was counted over: as many as this period has
+    /// had while it runs (fewer where the period before is shorter), all of
+    /// the period before once this one is over, and none from before the
+    /// first record. Nil where `previousTokens` is.
+    var previousDays: Int? = nil
 
     /// The calendar the recap was built with, so the cards that lay out its
     /// days (the year's twelve months) count them the way it did.

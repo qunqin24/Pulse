@@ -64,6 +64,43 @@ extension Recap {
     /// Work before this local hour, after midnight, belongs to the night before.
     static let nightEndsAtHour = 5
 
+    /// The quiet that ends a stretch of work.
+    static let workBreak: TimeInterval = 3 * 3600
+    /// A stretch longer than this is a process left running, not a workday.
+    static let longestWorkday: TimeInterval = 20 * 3600
+
+    /// One stretch of work: when it ended, as minutes after the midnight of
+    /// the day it began (so past 1440 the next morning), and whether it ran
+    /// over a midnight.
+    struct Workday: Equatable, Sendable {
+        let endMinute: Int
+        let crossesMidnight: Bool
+    }
+
+    static func workdays(_ instants: [Date], calendar: Calendar) -> [Workday] {
+        let sorted = instants.sorted()
+        guard var first = sorted.first else { return [] }
+        var last = first
+        var result: [Workday] = []
+        func close() {
+            guard last.timeIntervalSince(first) <= longestWorkday else { return }
+            let midnight = calendar.startOfDay(for: first)
+            result.append(Workday(
+                endMinute: Int(last.timeIntervalSince(midnight) / 60),
+                crossesMidnight: !calendar.isDate(first, inSameDayAs: last)
+            ))
+        }
+        for instant in sorted.dropFirst() {
+            if instant.timeIntervalSince(last) > workBreak {
+                close()
+                first = instant
+            }
+            last = instant
+        }
+        close()
+        return result
+    }
+
     /// A calendar month's or year's recap from the Token spend ledgers — the
     /// same input `SpendSummary.of` takes.
     ///
@@ -85,13 +122,19 @@ extension Recap {
     /// - `hours`: nil when any contributing store has only session- or
     ///   report-level timing, and when no quarter-hour work was recorded. The
     ///   shares behind `lateShare` and `persona` are of the quarter-hour tokens.
-    /// - Late nights (`lateNights`, `latestMinute`): any work with a recorded
-    ///   quarter-hour from 00:00 to 04:59 local counts toward the night it
-    ///   belongs to (the evening before), so a session running past midnight
-    ///   does, and so does one that began at 01:00. The minute is the quarter
-    ///   hour's start, or a session's own last record where that is later and
-    ///   in the same window. Work with only day-level timing has no minute and
-    ///   cannot be counted: where `hours` is nil, `lateNights` is a floor.
+    /// - Late nights (`lateNights`, `latestMinute`) are read from **stretches
+    ///   of work** (`workdays`): every agent's quarter-hours and sessions' last
+    ///   records, split wherever nothing happened for `workBreak`. A stretch
+    ///   ends at its last instant, measured from the midnight of the day it
+    ///   began, so an all-nighter that stops at 07:00 finishes at 31:00 — later
+    ///   than anything that stopped the same evening — and `latestMinute` is the
+    ///   latest of them (shown on a clock, so 07:00). A stretch that crosses
+    ///   midnight is a late night; one that only *starts* after it (04:30) is an
+    ///   early start, not a night. A stretch longer than `longestWorkday` is not
+    ///   a person's day and is left out. It once took only 00:00–04:59: the
+    ///   all-nighter read 04:45, and someone who always stopped at 23:50 got no
+    ///   figure at all. Work with only day-level timing has no instants: where
+    ///   `hours` is nil, both are floors.
     /// - `cacheHitRate`: the rule of `UsageLedger.cacheHitRate`, over every
     ///   contributing agent — nil when any of them has counts that may be
     ///   missing or tokens no kind can claim; agents whose store records no
@@ -130,20 +173,31 @@ extension Recap {
         let elapsedDays = summary.days.count
         // Only a first record inside the span moves anything: one before the
         // start leaves the whole period observed.
-        let recordsBegin = RecapPeriods.earliest(in: ledgers, calendar: calendar)
-            .map { calendar.startOfDay(for: $0) }
-            .flatMap { $0 > start && $0 < end ? $0 : nil }
+        let firstRecord = RecapPeriods.earliest(in: ledgers, calendar: calendar).map { calendar.startOfDay(for: $0) }
+        let recordsBegin = firstRecord.flatMap { $0 > start && $0 < end ? $0 : nil }
         let inSpan: (Date) -> Bool = { $0 >= start && $0 < end }
 
         // MARK: The previous period, as long as this one has run.
 
+        // A running period against the same number of days of the one before
+        // (capped at its end: March 29 has no February 29); a finished one
+        // against the whole of it. Either way the days are kept, and the
+        // change is worked out per day (`RecapCopy.change`), so 31 days are
+        // never weighed against 28 nor September against August 1–30. Days
+        // before this Mac's first record are not part of the span.
         var previousTokens: Int?
+        var previousDays: Int?
         if elapsedDays > 0, let previous = period.previous.bounds(calendar: calendar) {
             let same = calendar.date(byAdding: .day, value: elapsedDays, to: previous.start) ?? previous.end
-            let before = SpendSummary.of(
-                ledgers, from: previous.start, until: min(previous.end, same), now: now, calendar: calendar
-            )
-            previousTokens = before.tokens > 0 ? before.tokens : nil
+            let until = isInProgress ? min(previous.end, same) : previous.end
+            let from = max(previous.start, firstRecord ?? previous.start)
+            if from < until {
+                let before = SpendSummary.of(ledgers, from: from, until: until, now: now, calendar: calendar)
+                if before.tokens > 0 {
+                    previousTokens = before.tokens
+                    previousDays = calendar.dateComponents([.day], from: from, to: until).day
+                }
+            }
         }
 
         // MARK: Days and months
@@ -194,8 +248,7 @@ extension Recap {
 
         let contributing = summary.agents.map(\.agent)
         var lookup = ModelPriceLookup(prices)
-        var nights: Set<Date> = []
-        var latestMinute: Int?
+        var instants: [Date] = []
         var cacheTally = TokenTally()
         var cacheUnvouched = false
         var savings = 0.0
@@ -205,17 +258,11 @@ extension Recap {
         for agent in contributing {
             guard let ledger = ledgers[agent] else { continue }
 
-            // A quarter-hour's start, and where a session's own last record
-            // falls later in that window, are the instants of work after midnight.
-            var instants = ledger.slots.filter { $0.tokens > 0 && inSpan($0.start) }.map(\.start)
+            // A quarter-hour's start, and a session's own last record, are the
+            // instants of work the stretches below are read from.
+            instants += ledger.slots.filter { $0.tokens > 0 && inSpan($0.start) }.map(\.start)
             for session in ledger.sessions where !session.slots.isEmpty && inSpan(session.end) {
                 instants.append(session.end)
-            }
-            for instant in instants {
-                let parts = calendar.dateComponents([.hour, .minute], from: instant)
-                guard let hour = parts.hour, let minute = parts.minute, hour < Self.nightEndsAtHour else { continue }
-                nights.insert(calendar.startOfDay(for: instant))
-                latestMinute = max(latestMinute ?? 0, hour * 60 + minute)
             }
 
             let span = ledger.days.filter { inSpan($0.date) }
@@ -259,6 +306,10 @@ extension Recap {
             )
         }
 
+        let workdays = Self.workdays(instants, calendar: calendar)
+        let latestMinute = workdays.map(\.endMinute).max()
+        let lateNights = workdays.count { $0.crossesMidnight }
+
         let streaks = Self.streaks(of: days, isInProgress: isInProgress)
 
         return Recap(
@@ -279,7 +330,7 @@ extension Recap {
             peakHour: peakHour,
             lateShare: lateShare,
             latestMinute: latestMinute,
-            lateNights: nights.count,
+            lateNights: lateNights,
             persona: hours.flatMap(Persona.of(hours:)),
             models: summary.models.map { model in
                 ModelShare(name: model.name, tokens: model.tokens, share: share(model.tokens), cost: modelMoney[model.name])
@@ -296,6 +347,7 @@ extension Recap {
             currency: "USD",
             isPartial: summary.hasPartialCounts,
             recordsBegin: recordsBegin,
+            previousDays: previousDays,
             calendar: calendar
         )
     }

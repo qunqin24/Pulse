@@ -493,27 +493,34 @@ private struct RecapMeter: View {
 /// The cost line: a stroke through one point per day (or month), a ring on each
 /// when there are few of them, and the last point filled.
 private struct RecapMiniLine: View {
-    let values: [Double]
+    /// Nil breaks the line: work with no price, which is not a zero.
+    let values: [Double?]
 
     var body: some View {
         Canvas { context, size in
-            guard values.count > 1, let maximum = values.max(), maximum > 0 else { return }
+            guard values.count > 1, let maximum = values.compactMap({ $0 }).max(), maximum > 0 else { return }
             let inset: CGFloat = 5
-            let points = values.enumerated().map { index, value in
-                CGPoint(x: inset + CGFloat(index) / CGFloat(values.count - 1) * (size.width - inset * 2),
-                        y: size.height - 4 - CGFloat(value / maximum) * (size.height - 10))
+            let points: [CGPoint?] = values.enumerated().map { index, value in
+                value.map {
+                    CGPoint(x: inset + CGFloat(index) / CGFloat(values.count - 1) * (size.width - inset * 2),
+                            y: size.height - 4 - CGFloat($0 / maximum) * (size.height - 10))
+                }
             }
-            var line = Path()
-            line.move(to: points[0])
-            points.dropFirst().forEach { line.addLine(to: $0) }
-            context.stroke(line, with: .color(RecapColor.ink),
-                           style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-            // A ring on every point while they are few enough to count.
-            let rings = points.count <= 12 ? Array(points.indices) : [points.count - 1]
+            for run in RecapLineRuns.of(values) where run.count > 1 {
+                var line = Path()
+                line.move(to: points[run[0]]!)
+                run.dropFirst().forEach { line.addLine(to: points[$0]!) }
+                context.stroke(line, with: .color(RecapColor.ink),
+                               style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+            }
+            // A ring on every point while they are few enough to count, and
+            // always on the last one that has a figure.
+            let drawn = points.indices.filter { points[$0] != nil }
+            let rings = values.count <= 12 ? drawn : Array(drawn.suffix(1))
             for index in rings {
-                let center = points[index]
+                guard let center = points[index] else { continue }
                 let dot = Path(ellipseIn: CGRect(x: center.x - 4.5, y: center.y - 4.5, width: 9, height: 9))
-                let isLast = index == points.count - 1
+                let isLast = index == drawn.last
                 context.fill(dot, with: .color(isLast ? RecapColor.ink : RecapColor.paper))
                 context.stroke(dot, with: .color(RecapColor.ink), lineWidth: 2)
             }

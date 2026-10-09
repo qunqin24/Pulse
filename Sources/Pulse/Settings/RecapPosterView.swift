@@ -412,7 +412,7 @@ struct RecapPosterView: View {
                 Spacer(minLength: 0)
                 if let saved = deck.cacheSavings {
                     RecapRichText(
-                        text: .localized("Repeated context is read from the cache, saving about \(RecapEmphasis.mark(RecapFormat.money(saved, currency: recap.currency)))"),
+                        text: .localized("Reading repeated context from the cache took about \(RecapEmphasis.mark(RecapFormat.money(saved, currency: recap.currency))) off the API price"),
                         size: 15, color: RecapColor.paper.opacity(0.72), emphasisWeight: .bold, highlights: false
                     )
                     .environment(\.colorScheme, .dark)

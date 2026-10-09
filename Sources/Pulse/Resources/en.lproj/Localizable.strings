@@ -1031,7 +1031,7 @@
 "By token share" = "By token share";
 "Other" = "Other";
 "%@ agents" = "%@ agents";
-"Repeated context is read from the cache, saving about %@" = "Repeated context is read from the cache, saving about %@";
+"Reading repeated context from the cache took about %@ off the API price" = "Reading repeated context from the cache took about %@ off the API price";
 "days" = "days";
 "Still going · longest %@" = "Still going · longest %@";
 "Top projects" = "Top projects";
@@ -1046,7 +1046,7 @@
 "You paid" = "You paid";
 "You used" = "You used";
 "Where the money went" = "Where the money went";
-"The cache saved you" = "The cache saved you";
+"The cache took off the API price" = "The cache took off the API price";
 "Estimated at each model's published API price. The plan price is the one you typed in Pulse." = "Estimated at each model's published API price. The plan price is the one you typed in Pulse.";
 "Figures are to date, and the plan price is prorated by the days so far." = "Figures are to date, and the plan price is prorated by the days so far.";
 "That was" = "That was";
@@ -1058,6 +1058,7 @@
 "See you in %@" = "See you in %@";
 "Your busiest month" = "Your busiest month";
 "vs same period in %@" = "vs same period in %@";
+"per day vs %@" = "per day vs %@";
 "Tokens · to %@" = "Tokens · to %@";
 "Estimated at API prices · daily" = "Estimated at API prices · daily";
 "Estimated at API prices · monthly" = "Estimated at API prices · monthly";
@@ -1145,14 +1146,14 @@
 "24 hours" = "24 hours";
 "Seven days of the week" = "Seven days of the week";
 "For every %@ of subscription, you used %@ of API value" = "For every %@ of subscription, you used %@ of API value";
-"%@× what you actually spent" = "%@× what you actually spent";
+"%@× the estimate" = "%@× the estimate";
 "Most expensive day" = "Most expensive day";
 "Per million tokens" = "Per million tokens";
 "Cache hit %@" = "Cache hit %@";
 "The cache" = "The cache";
 "Repeated context is read straight from the cache" = "Repeated context is read straight from the cache";
 "Without the cache" = "Without the cache";
-"Actually spent" = "Actually spent";
+"With the cache" = "With the cache";
 "Spent by day" = "Spent by day";
 "Spent by month" = "Spent by month";
 "Unclassified" = "Unclassified";

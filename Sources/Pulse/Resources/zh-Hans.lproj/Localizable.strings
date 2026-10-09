@@ -1031,7 +1031,7 @@
 "By token share" = "按 token 占比";
 "Other" = "其他";
 "%@ agents" = "%@ 个工具";
-"Repeated context is read from the cache, saving about %@" = "重复的上下文直接读缓存，约省下 %@";
+"Reading repeated context from the cache took about %@ off the API price" = "重复的上下文从缓存读取，按 API 价格约少算 %@";
 "days" = "天";
 "Still going · longest %@" = "还在继续 · 最长一次 %@";
 "Top projects" = "用得最多的项目";
@@ -1046,7 +1046,7 @@
 "You paid" = "你付的";
 "You used" = "你用的";
 "Where the money went" = "钱花在了哪里";
-"The cache saved you" = "缓存命中帮你省下";
+"The cache took off the API price" = "缓存让 API 价格少了";
 "Estimated at each model's published API price. The plan price is the one you typed in Pulse." = "按各模型官方 API 价格估算；订阅价格由你在 Pulse 里填写。";
 "Figures are to date, and the plan price is prorated by the days so far." = "数字截至今天，订阅价格按已过去的天数折算。";
 "That was" = "这就是";
@@ -1058,6 +1058,7 @@
 "See you in %@" = "%@见";
 "Your busiest month" = "你用得最多的月份";
 "vs same period in %@" = "比%@同期";
+"per day vs %@" = "日均比%@";
 "Tokens · to %@" = "Token · 截至 %@";
 "Estimated at API prices · daily" = "按 API 价格估算 · 每天";
 "Estimated at API prices · monthly" = "按 API 价格估算 · 每月";
@@ -1132,8 +1133,8 @@
 "Earliest start" = "最早开工";
 "The earliest hour after 5 AM with any work" = "凌晨 5 点以后最早有记录的时刻";
 "Finishes latest" = "最晚收工";
-"One night ran past midnight" = "有 1 个晚上干到了凌晨";
-"%@ nights ran past midnight" = "有 %@ 个晚上干到了凌晨";
+"One night ran past midnight" = "有 1 个晚上工作过了午夜";
+"%@ nights ran past midnight" = "有 %@ 个晚上工作过了午夜";
 "%@ to %@" = "%1$@ 到 %2$@";
 "of your usage fell in these hours" = "的用量发生在这段时间";
 "Four parts of the day" = "一天四段";
@@ -1145,14 +1146,14 @@
 "24 hours" = "24 小时";
 "Seven days of the week" = "一周七天";
 "For every %@ of subscription, you used %@ of API value" = "每 %@ 订阅费，用出 %@ 的 API 价值";
-"%@× what you actually spent" = "是实际花费的 %@ 倍";
+"%@× the estimate" = "是估算金额的 %@ 倍";
 "Most expensive day" = "最贵的一天";
 "Per million tokens" = "每百万 token";
 "Cache hit %@" = "缓存命中 %@";
 "The cache" = "缓存";
 "Repeated context is read straight from the cache" = "重复的上下文直接读缓存";
-"Without the cache" = "不走缓存要花";
-"Actually spent" = "实际花了";
+"Without the cache" = "不用缓存";
+"With the cache" = "用了缓存";
 "Spent by day" = "每天花了多少";
 "Spent by month" = "每月花了多少";
 "Unclassified" = "未分类";

@@ -182,8 +182,8 @@ struct RecapPaybackView: View {
                     // "0.3× what you spent" says little; the line is for a saving
                     // that is more than the spend.
                     tile(
-                        tone: .ink, label: .localized("The cache saved you"), value: money(saved),
-                        note: saved >= cost ? String.localized("\(RecapFormat.multiple(saved / cost))× what you actually spent") : nil
+                        tone: .ink, label: .localized("The cache took off the API price"), value: money(saved),
+                        note: saved >= cost ? String.localized("\(RecapFormat.multiple(saved / cost))× the estimate") : nil
                     )
                 }
                 if let day, let cost = day.cost {
@@ -238,7 +238,7 @@ struct RecapPaybackView: View {
                     .padding(.bottom, 2)
                 compareRow(label: .localized("Without the cache"), value: money(without), fraction: 1,
                            track: Color(recap: 0xE2E2DB), fill: Color(recap: 0xE2E2DB), bold: false)
-                compareRow(label: .localized("Actually spent"), value: money(cost), fraction: cost / without,
+                compareRow(label: .localized("With the cache"), value: money(cost), fraction: cost / without,
                            track: RecapColor.heatZero, fill: RecapColor.ink, bold: true)
             }
         }
@@ -329,7 +329,8 @@ struct RecapPaybackView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: max(4, CGFloat(bar / top) * 90))
                         } else {
-                            // A month still to come: an outline, not a zero.
+                            // No figure — a month to come or before the first
+                            // record, or work with no price: an outline, not a zero.
                             RoundedRectangle(cornerRadius: 3, style: .continuous)
                                 .strokeBorder(RecapColor.rule, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
                                 .frame(maxWidth: .infinity)

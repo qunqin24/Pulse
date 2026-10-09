@@ -70,14 +70,22 @@ extension RecapDeck {
     func sessionsText(_ count: Int) -> String { RecapWords.sessions(count) }
 
     /// "↑ 38%" and "vs same period in August", for a period with something
-    /// before it to compare to. `Recap.previousTokens` is counted over the same
-    /// number of days of the period before, so every card says "same period".
-    /// Nil without it: a percentage of nothing is not a number.
+    /// before it to compare to. **Per day**: `Recap.previousTokens` covers
+    /// `previousDays`, which need not be as many as this period's — a month
+    /// after February, September against all of August — so the totals are
+    /// compared as daily averages. A running period is set against the same
+    /// stretch of the one before ("same period"); a finished one against the
+    /// whole of it, and says it is per day. Nil without a previous figure.
     var change: (arrow: String, percent: String, versus: String)? {
-        guard let previous = recap.previousTokens, previous > 0 else { return nil }
-        let delta = Int(((Double(recap.tokens) / Double(previous) - 1) * 100).rounded())
+        guard let previous = recap.previousTokens, previous > 0, recap.elapsedDays > 0 else { return nil }
+        let days = Double(max(recap.previousDays ?? recap.elapsedDays, 1))
+        let ratio = (Double(recap.tokens) / Double(recap.elapsedDays)) / (Double(previous) / days)
+        let delta = Int(((ratio - 1) * 100).rounded())
         let arrow = delta > 0 ? "↑" : (delta < 0 ? "↓" : "→")
-        return (arrow, "\(abs(delta))%", .localized("vs same period in \(previousName)"))
+        let versus: String = recap.isInProgress
+            ? .localized("vs same period in \(previousName)")
+            : .localized("per day vs \(previousName)")
+        return (arrow, "\(abs(delta))%", versus)
     }
 
     /// The tokens a day, over the days of the period Pulse could see.
@@ -85,26 +93,26 @@ extension RecapDeck {
         recap.observedDays > 0 ? recap.tokens / recap.observedDays : nil
     }
 
-    /// Cost per day, or per month for a year, to draw under the poster's total.
-    /// Empty where fewer than two points carry a price, and **where any point
-    /// with work has none**: a line through a zero for a day that was merely
-    /// unpriced would be a figure Pulse made up. A quiet point (no tokens) is a
-    /// real zero, and a month (or day) still to come is not drawn at all.
-    var costSeries: [Double] {
+    /// Cost per day, or per month for a year, to draw under the poster's total
+    /// and on the scorecard. A day (or month) with work and **no price at all
+    /// is nil**, drawn as a break in the line rather than a zero; a quiet one
+    /// is a real zero. Months still to come or before the first record are not
+    /// points at all. Empty with fewer than two priced points.
+    ///
+    /// It used to be empty whenever any worked day had no price, and one
+    /// Kimi-only day — 0.05% of July — took the line off every card.
+    var costSeries: [Double?] {
         let series: [(tokens: Int, cost: Double?)]
         if isYear {
-            // A year still running has no months to come: those are not zeros.
-            let starts = recap.monthStarts
-            let last = recap.days.last?.date
+            let insights = RecapInsights(recap)
             series = recap.months.enumerated().compactMap { index, month in
-                if recap.isInProgress, let last, index < starts.count, starts[index] > last { return nil }
-                return (month.tokens, month.cost)
+                insights.isMonthUnrecorded(index) ? nil : (month.tokens, month.cost)
             }
         } else {
             series = recap.days.map { ($0.tokens, $0.cost) }
         }
-        guard !series.contains(where: { $0.tokens > 0 && $0.cost == nil }) else { return [] }
-        return series.filter { $0.cost != nil }.count > 1 ? series.map { $0.cost ?? 0 } : []
+        let points: [Double?] = series.map { $0.tokens > 0 ? $0.cost : 0 }
+        return points.compactMap { $0 }.count > 1 && points.contains(where: { ($0 ?? 0) > 0 }) ? points : []
     }
 
     /// The streak a card shows, of the period's own days: the one still going

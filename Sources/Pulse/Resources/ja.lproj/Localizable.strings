@@ -1031,7 +1031,7 @@
 "By token share" = "トークンの割合順";
 "Other" = "その他";
 "%@ agents" = "%@ 個のエージェント";
-"Repeated context is read from the cache, saving about %@" = "繰り返しの文脈はキャッシュから読むので、約 %@ の節約";
+"Reading repeated context from the cache took about %@ off the API price" = "繰り返しの文脈をキャッシュから読んだことで、API 価格は約 %@ 低くなりました";
 "days" = "日";
 "Still going · longest %@" = "継続中 · 最長 %@";
 "Top projects" = "よく使ったプロジェクト";
@@ -1046,7 +1046,7 @@
 "You paid" = "支払い";
 "You used" = "利用額";
 "Where the money went" = "金額の内訳";
-"The cache saved you" = "キャッシュで節約できた額";
+"The cache took off the API price" = "キャッシュで下がった API 価格";
 "Estimated at each model's published API price. The plan price is the one you typed in Pulse." = "各モデルが公開している API 料金で概算しています。プランの料金は Pulse に入力された値です。";
 "Figures are to date, and the plan price is prorated by the days so far." = "数値は本日までのもので、プランの料金は経過日数で日割りにしています。";
 "That was" = "これが";
@@ -1058,6 +1058,7 @@
 "See you in %@" = "また %@ に";
 "Your busiest month" = "いちばん多かった月";
 "vs same period in %@" = "%@同期比";
+"per day vs %@" = "1 日平均・%@比";
 "Tokens · to %@" = "トークン · %@まで";
 "Estimated at API prices · daily" = "API 料金で概算 · 日別";
 "Estimated at API prices · monthly" = "API 料金で概算 · 月別";
@@ -1145,14 +1146,14 @@
 "24 hours" = "24 時間";
 "Seven days of the week" = "曜日ごと";
 "For every %@ of subscription, you used %@ of API value" = "サブスク %@ あたり、%@ 分の API 価値を使いました";
-"%@× what you actually spent" = "実際の支出の %@ 倍";
+"%@× the estimate" = "見積額の %@ 倍";
 "Most expensive day" = "最も高かった日";
 "Per million tokens" = "100 万トークンあたり";
 "Cache hit %@" = "キャッシュヒット %@";
 "The cache" = "キャッシュ";
 "Repeated context is read straight from the cache" = "繰り返しの文脈はキャッシュから直接読み込み";
-"Without the cache" = "キャッシュなしなら";
-"Actually spent" = "実際の支出";
+"Without the cache" = "キャッシュなし";
+"With the cache" = "キャッシュあり";
 "Spent by day" = "1 日ごとの支出";
 "Spent by month" = "月ごとの支出";
 "Unclassified" = "未分類";

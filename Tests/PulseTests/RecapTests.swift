@@ -98,7 +98,9 @@ struct RecapTests {
         #expect(recap.hours?.reduce(0, +) == 200)
         #expect(recap.hours?[0] == 100)
         #expect(recap.hours?[23] == 100)
-        #expect(recap.lateNights == 1)
+        // October 1's 00:00 continues September 30's evening, which is not
+        // this month's: within October it is a stretch that began at midnight.
+        #expect(recap.lateNights == 0)
     }
 
     @Test("A period running ends at the end of today, and its months are not yet drawn")
@@ -416,7 +418,7 @@ struct RecapTests {
         #expect(recap.peakHour == 9)
     }
 
-    @Test("Work past midnight, up to 05:00, counts toward its night, once")
+    @Test("A stretch of work that crosses midnight is a late night; one that starts after it is not")
     func lateNights() {
         var ledger = Self.ledger([
             // A night spent across midnight: the session started the evening before.
@@ -439,21 +441,41 @@ struct RecapTests {
             ),
         ]
         let recap = Self.build(.month(year: 2026, month: 10), [.claudeCode: ledger])
-        #expect(recap.lateNights == 2)
-        // 04:58, from the session's own last record rather than its quarter-hour.
-        #expect(recap.latestMinute == 4 * 60 + 58)
+        // Only the first crossed a midnight; 04:40–04:58 began after one.
+        #expect(recap.lateNights == 1)
+        // 01:22 the next day, from the session's own last record: later than
+        // 04:58 on a day that began at 04:40, and than 05:00.
+        #expect(recap.latestMinute == 24 * 60 + 60 + 22)
 
-        // Without the session's end it is the quarter-hour's start.
+        // Without the session's end it is the last quarter-hour's start.
         var bare = ledger
         bare.sessions = []
-        #expect(Self.build(.month(year: 2026, month: 10), [.claudeCode: bare]).latestMinute == 4 * 60 + 45)
+        #expect(Self.build(.month(year: 2026, month: 10), [.claudeCode: bare]).latestMinute == 24 * 60 + 60 + 15)
     }
 
-    @Test("No work after midnight is no late night, not a zero minute")
+    @Test("An all-nighter finishes when it stopped, and an evening that ends before midnight still has a finish")
+    func latestFinishIsNotCapped() {
+        let allNight = Self.october([
+            Self.event(Self.at(2026, 10, 2, 22), 100),
+            Self.event(Self.at(2026, 10, 3, 1), 100),
+            Self.event(Self.at(2026, 10, 3, 4), 100),
+            Self.event(Self.at(2026, 10, 3, 6, 45), 100),
+        ])
+        #expect(allNight.latestMinute == 24 * 60 + 6 * 60 + 45)
+        #expect(allNight.lateNights == 1)
+
+        let early = Self.october([Self.event(Self.at(2026, 10, 2, 9), 100), Self.event(Self.at(2026, 10, 2, 23, 30), 100)])
+        // Two stretches (a gap over three hours); the later ends at 23:30.
+        #expect(early.latestMinute == 23 * 60 + 30)
+        #expect(early.lateNights == 0)
+    }
+
+    @Test("No work over midnight is no late night, and the evening still has its finish")
     func noLateNight() {
         let recap = Self.october([Self.event(Self.at(2026, 10, 2, 22), 100), Self.event(Self.at(2026, 10, 3, 5, 0), 100)])
+        // Seven quiet hours between them: two stretches, neither over midnight.
         #expect(recap.lateNights == 0)
-        #expect(recap.latestMinute == nil)
+        #expect(recap.latestMinute == 22 * 60)
     }
 
     // MARK: - Persona
@@ -740,9 +762,9 @@ struct RecapTests {
         #expect(allUnpriced.cost == nil)
     }
 
-    @Test("One unpriced day takes the poster's cost line away rather than drawing a zero for it")
-    func unpricedDayWithholdsTheCostLine() {
-        func series(_ mysteryDay: Int?) -> [Double] {
+    @Test("An unpriced day breaks the cost line rather than drawing a zero, and takes nothing else away")
+    func unpricedDayBreaksTheCostLine() {
+        func series(_ mysteryDay: Int?) -> [Double?] {
             var events = [Self.event(Self.at(2026, 10, 1), 1_000_000), Self.event(Self.at(2026, 10, 3), 1_000_000)]
             if let mysteryDay {
                 events.append(Event(at: Self.at(2026, 10, mysteryDay), model: "mystery", tally: TokenTally(input: 500)))
@@ -752,8 +774,9 @@ struct RecapTests {
         }
         // October 2nd is quiet: a real zero between priced days.
         #expect(series(nil) == [3, 0, 3, 0, 0])
-        // On the 4th there was work with no price: no line.
-        #expect(series(4).isEmpty)
+        // On the 4th there was work with no price: a gap, not a zero, and the
+        // rest of the line stays.
+        #expect(series(4) == [3, 0, 3, nil, 0])
     }
 
     @Test("A system calendar of another era builds the span the period names, and the year's months follow it")

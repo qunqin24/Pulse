@@ -1031,7 +1031,7 @@
 "By token share" = "토큰 비중순";
 "Other" = "기타";
 "%@ agents" = "도구 %@개";
-"Repeated context is read from the cache, saving about %@" = "반복되는 맥락은 캐시에서 읽어, 약 %@ 절약";
+"Reading repeated context from the cache took about %@ off the API price" = "반복되는 맥락을 캐시에서 읽어 API 가격이 약 %@ 낮아졌습니다";
 "days" = "일";
 "Still going · longest %@" = "진행 중 · 최장 %@";
 "Top projects" = "가장 많이 쓴 프로젝트";
@@ -1046,7 +1046,7 @@
 "You paid" = "낸 돈";
 "You used" = "쓴 돈";
 "Where the money went" = "금액은 어디에";
-"The cache saved you" = "캐시로 아낀 금액";
+"The cache took off the API price" = "캐시로 낮아진 API 가격";
 "Estimated at each model's published API price. The plan price is the one you typed in Pulse." = "각 모델이 공개한 API 요금으로 추산했습니다. 요금제 가격은 Pulse에 입력한 값입니다.";
 "Figures are to date, and the plan price is prorated by the days so far." = "수치는 오늘까지의 기준이며, 요금제 가격은 지금까지 지난 일수로 나눠 계산했습니다.";
 "That was" = "이것이";
@@ -1058,6 +1058,7 @@
 "See you in %@" = "%@에 또 만나겠습니다";
 "Your busiest month" = "가장 많이 쓴 달";
 "vs same period in %@" = "%@ 같은 기간 대비";
+"per day vs %@" = "%@ 대비 하루 평균";
 "Tokens · to %@" = "토큰 · %@ 기준";
 "Estimated at API prices · daily" = "API 요금 기준 추산 · 일별";
 "Estimated at API prices · monthly" = "API 요금 기준 추산 · 월별";
@@ -1145,14 +1146,14 @@
 "24 hours" = "24시간";
 "Seven days of the week" = "요일별";
 "For every %@ of subscription, you used %@ of API value" = "구독료 %@당 %@ 상당의 API 가치를 썼습니다";
-"%@× what you actually spent" = "실제 지출의 %@배";
+"%@× the estimate" = "추정 금액의 %@배";
 "Most expensive day" = "가장 비싼 날";
 "Per million tokens" = "100만 토큰당";
 "Cache hit %@" = "캐시 적중 %@";
 "The cache" = "캐시";
 "Repeated context is read straight from the cache" = "반복되는 맥락은 캐시에서 바로 읽음";
-"Without the cache" = "캐시가 없었다면";
-"Actually spent" = "실제 지출";
+"Without the cache" = "캐시 없이";
+"With the cache" = "캐시 사용";
 "Spent by day" = "일별 지출";
 "Spent by month" = "월별 지출";
 "Unclassified" = "미분류";
