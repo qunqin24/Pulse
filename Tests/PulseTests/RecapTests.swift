@@ -371,6 +371,45 @@ struct RecapTests {
         #expect(Recap.busiestHours(in: [1, 2, 3]) == nil)
     }
 
+    @Test("A year whose records begin in May counts from May, not January")
+    func recordsBeginInsideTheYear() throws {
+        let recap = Self.build(
+            .year(2026),
+            [.claudeCode: Self.ledger([
+                Self.event(Self.at(2026, 5, 14), 100),
+                Self.event(Self.at(2026, 9, 2), 300),
+            ])],
+            now: Self.at(2026, 10, 9)
+        )
+        let begin = try #require(recap.recordsBegin)
+        #expect(begin == Self.calendar.startOfDay(for: Self.at(2026, 5, 14)))
+        // January 1 to October 9 has been 282 days; May 14 to October 9, 149.
+        #expect(recap.elapsedDays == 282)
+        #expect(recap.observedDays == 149)
+        #expect(recap.isBeforeRecords(Self.at(2026, 5, 13)))
+        #expect(!recap.isBeforeRecords(Self.at(2026, 5, 14, 0)))
+
+        let insights = RecapInsights(recap)
+        #expect((0..<4).allSatisfy(insights.isMonthBeforeRecords))
+        #expect(!insights.isMonthBeforeRecords(4), "May holds the first record")
+        #expect(insights.isMonthUnrecorded(11), "December is still to come")
+        let split = try #require(insights.workSplit)
+        #expect(split.weekdayDays + split.weekendDays == 149)
+
+        // The plan price runs from the first record too.
+        #expect(abs(RecapDeck.paidMonths(recap) - 12.0 * 149.0 / 365.0) < 1e-9)
+    }
+
+    @Test("Records reaching back before the period leave it whole")
+    func recordsBeforeThePeriod() {
+        let recap = Self.october([
+            Self.event(Self.at(2026, 9, 20), 100),
+            Self.event(Self.at(2026, 10, 2), 100),
+        ])
+        #expect(recap.recordsBegin == nil)
+        #expect(recap.observedDays == recap.elapsedDays)
+    }
+
     @Test("A tie for the peak is the earlier hour, every time")
     func peakTie() {
         let recap = Self.october([Self.event(Self.at(2026, 10, 2, 16), 100), Self.event(Self.at(2026, 10, 2, 9), 100)])

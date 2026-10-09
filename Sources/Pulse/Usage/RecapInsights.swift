@@ -68,7 +68,9 @@ struct RecapInsights: Sendable {
         guard recap.days.contains(where: { $0.tokens > 0 }) else { return nil }
         var weekday = (tokens: 0, days: 0, active: 0)
         var weekend = (tokens: 0, days: 0, active: 0)
-        for day in recap.days {
+        // Days before the first record were not seen, so they are not days
+        // the period "had" of either kind.
+        for day in recap.days where !recap.isBeforeRecords(day.date) {
             let isWeekend = Self.isWeekend(weekdayIndex: weekdayIndex(of: day.date))
             if isWeekend {
                 weekend = (weekend.tokens + day.tokens, weekend.days + 1, weekend.active + (day.tokens > 0 ? 1 : 0))
@@ -269,7 +271,7 @@ struct RecapInsights: Sendable {
             let worked = recap.months.filter { $0.tokens > 0 }
             guard recap.months.count == 12, !worked.isEmpty, worked.allSatisfy({ $0.cost != nil }) else { return nil }
             return recap.months.enumerated().map { index, month in
-                if isMonthToCome(index) { return nil }
+                if isMonthUnrecorded(index) { return nil }
                 return month.tokens > 0 ? (month.cost ?? 0) : 0
             }
         }
@@ -281,6 +283,21 @@ struct RecapInsights: Sendable {
         guard recap.isInProgress, case .year = recap.period, let last = recap.days.last?.date else { return false }
         let starts = recap.monthStarts
         return index < starts.count && starts[index] > last
+    }
+
+    /// Whether month `index` of a year ended before this Mac's first record:
+    /// nothing was seen in it, so it is not a quiet month either.
+    func isMonthBeforeRecords(_ index: Int) -> Bool {
+        guard case .year = recap.period, let begin = recap.recordsBegin else { return false }
+        let starts = recap.monthStarts
+        guard index < starts.count,
+              let next = recap.calendar.date(byAdding: .month, value: 1, to: starts[index]) else { return false }
+        return next <= begin
+    }
+
+    /// A month with nothing to show: still to come, or before the records.
+    func isMonthUnrecorded(_ index: Int) -> Bool {
+        isMonthToCome(index) || isMonthBeforeRecords(index)
     }
 
     // MARK: - Who worked when
@@ -313,7 +330,7 @@ struct RecapInsights: Sendable {
     func monthMarks(of agent: Recap.AgentShare) -> [Mark] {
         let used = Set(agent.activeDates.map { calendar.component(.month, from: $0) })
         return recap.months.enumerated().map { index, month in
-            if isMonthToCome(index) { return .toCome }
+            if isMonthUnrecorded(index) { return .toCome }
             if used.contains(month.month) { return .used }
             return month.tokens > 0 ? .other : .quiet
         }

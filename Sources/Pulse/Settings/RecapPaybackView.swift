@@ -374,6 +374,9 @@ struct RecapPaybackView: View {
             if deck.payback?.isToDate == true {
                 Text(localized: "Figures are to date, and the plan price is prorated by the days so far.")
             }
+            if let begin = deck.recap.recordsBegin {
+                Text(String.localized("The plan price is counted from \(RecapFormat.day(begin)), when records on this Mac begin."))
+            }
             if deck.costIsFloor {
                 Text(localized: "Some work had no published price, so the money is a floor.")
             }

@@ -82,7 +82,7 @@ struct RecapCalendarView: View {
             RecapCalendarHero(deck: deck).padding(.top, 44)
             Spacer(minLength: 24)
             VStack(spacing: 12) {
-                RecapSectionHead(title: RecapFormat.monthYear(recap.start), note: .localized("Darker days used more · grey is the weekend"))
+                RecapSectionHead(title: RecapFormat.monthYear(recap.start), note: .localized("Darker days used more · dashed days had none"))
                 VStack(spacing: 8) {
                     HStack(spacing: 8) {
                         ForEach(Array(RecapFormat.weekdayHeadings().enumerated()), id: \.offset) { _, heading in
@@ -116,14 +116,17 @@ struct RecapCalendarView: View {
         if let day {
             let number = recap.calendar.component(.day, from: day.date)
             let quiet = day.tokens == 0
-            let weekend = RecapInsights.isWeekend(weekdayIndex: column)
             // Only the one day `Recap.busiestDay` names, not every tie.
             let busiest = !quiet && day.date == busiestDate
             let foreground = busiest ? RecapColor.lime : (quiet ? RecapColor.faint : RecapColor.ink)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(busiest ? RecapColor.ink : (quiet ? (weekend ? RecapColor.heatZero : Color.clear) : RecapHeat.color(tokens: day.tokens, maximum: maximum)))
-                if quiet, !weekend {
+                    .fill(busiest ? RecapColor.ink : (quiet ? Color.clear : RecapHeat.color(tokens: day.tokens, maximum: maximum)))
+                // Every day without work alike, weekend or not: a grey weekend
+                // beside a dashed weekday read as two different things, and
+                // the legend could name only one of them. The column headings
+                // already say which days are the weekend.
+                if quiet {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .strokeBorder(Color(recap: 0xD6D6CF), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
                 }
@@ -216,8 +219,8 @@ struct RecapCalendarTiles: View {
         // A month's own days are the ring's segments; a year's are too many to
         // draw, so its ring is a fixed 36 in proportion.
         let isYear = deck.isYear
-        let segments = isYear ? 36 : max(recap.elapsedDays, 1)
-        let share = Double(recap.activeDays) / Double(max(recap.elapsedDays, 1))
+        let segments = isYear ? 36 : max(recap.observedDays, 1)
+        let share = Double(recap.activeDays) / Double(max(recap.observedDays, 1))
         let filled = isYear ? (recap.activeDays > 0 ? max(Int((share * 36).rounded()), 1) : 0) : recap.activeDays
         return RecapTile {
             HStack(spacing: 14) {
@@ -231,7 +234,7 @@ struct RecapCalendarTiles: View {
                     HStack(alignment: .lastTextBaseline, spacing: 4) {
                         Text(tight: "\(recap.activeDays)", tracking: -48 * 0.03)
                             .font(.recap(48, .bold))
-                        Text(verbatim: "/ \(recap.elapsedDays)")
+                        Text(verbatim: "/ \(recap.observedDays)")
                             .font(.recap(22))
                             .foregroundStyle(RecapColor.tertiary)
                     }

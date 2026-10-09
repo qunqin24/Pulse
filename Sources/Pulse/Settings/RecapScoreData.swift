@@ -82,9 +82,13 @@ extension RecapDeck {
             let busiest = maximum > 0 ? months.firstIndex { $0.tokens == maximum } : nil
             let starts = recap.monthStarts
             bars = months.enumerated().map { index, month in
-                // A month that begins after today has not happened; a past
-                // month with nothing is quiet.
+                // A month that begins after today has not happened, and one
+                // that ended before the first record was not seen: neither is
+                // quiet. A past month with nothing is.
                 if recap.isInProgress, let last = lastDay, index < starts.count, starts[index] > last {
+                    return RecapScoreBar(slot: .future, fraction: 0, isBusiest: false)
+                }
+                if RecapInsights(recap).isMonthBeforeRecords(index) {
                     return RecapScoreBar(slot: .future, fraction: 0, isBusiest: false)
                 }
                 guard month.tokens > 0, maximum > 0 else { return RecapScoreBar(slot: .quiet, fraction: 0, isBusiest: false) }

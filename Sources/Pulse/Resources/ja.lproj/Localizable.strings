@@ -1012,6 +1012,8 @@
 "Counted from this Mac's local records · money estimated at API prices" = "この Mac のローカル記録から集計 · 金額は API 料金で概算";
 "Counted from this Mac's local records" = "この Mac のローカル記録から集計";
 "Figures are to date." = "数値は本日までのものです。";
+"Records on this Mac begin on %@; days before it are not counted." = "この Mac の記録は %@ から始まります。それより前の日は数えていません。";
+"The plan price is counted from %@, when records on this Mac begin." = "プラン料金は、この Mac の記録が始まった %@ から計算しています。";
 "Some work had no published price, so the money is a floor." = "一部の利用分には公開価格がないため、金額は実際より少なくなっています。";
 "Some tools' counts may be missing, so the total is a floor." = "一部のツールの記録が欠けている可能性があり、実際の量はこれ以上です。";
 "Project %@" = "プロジェクト %@";
@@ -1034,8 +1036,8 @@
 "Still going · longest %@" = "継続中 · 最長 %@";
 "Top projects" = "よく使ったプロジェクト";
 "In %@," = "%@、";
-"%@ AI tools coded with you." = "%@つの AI が、あなたと一緒にコードを書きました。";
-"One AI tool coded with you." = "ひとつの AI が、あなたと一緒にコードを書きました。";
+"%@ AI tools coded with you." = "%@つの AI ツールが、あなたと一緒にコードを書きました。";
+"One AI tool coded with you." = "ひとつの AI ツールが、あなたと一緒にコードを書きました。";
 "Worked beside you" = "一緒に働いたツール";
 "Turn the page to see what you made together" = "めくって、一緒に何をしたか見てみましょう";
 "is your busiest hour of the day." = "は、あなたの一日でいちばん忙しい時間です。";
@@ -1118,7 +1120,7 @@
 "Used %@ · top tool" = "%@使用 · メインのツール";
 "Which days · days used · token share" = "使った日 · 日数 · トークンの割合";
 "Which months · days used · token share" = "使った月 · 日数 · トークンの割合";
-"Darker days used more · grey is the weekend" = "濃い日ほどたくさん使った · グレーは週末";
+"Darker days used more · dashed days had none" = "濃い日ほどたくさん使った · 点線は使わなかった日";
 "By week" = "週ごと";
 "Busiest week: %@" = "最も多かった週：%@";
 "Weekdays and weekends" = "平日と週末";
@@ -1127,8 +1129,8 @@
 "Weekends %@" = "週末 %@";
 "%@ weekdays, used on %@ of them" = "平日 %@ 日のうち %@ 日使用";
 "%@ weekend days, used on %@ of them" = "週末 %@ 日のうち %@ 日使用";
-"Usually starts" = "始まる時間";
-"The earliest hour of the day with any work" = "1 日で最も早く記録のある時間";
+"Earliest start" = "いちばん早い開始";
+"The earliest hour after 5 AM with any work" = "朝 5 時以降で最も早く記録のある時間";
 "Finishes latest" = "最も遅い終了";
 "One night ran past midnight" = "1 晩が日付をまたぎました";
 "%@ nights ran past midnight" = "%@ 晩が日付をまたぎました";

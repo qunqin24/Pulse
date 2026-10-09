@@ -53,9 +53,9 @@ struct RecapTimetableView: View {
         VStack(spacing: 0) {
             if let first = insights.firstHour {
                 stat(
-                    label: .localized("Usually starts"),
+                    label: .localized("Earliest start"),
                     value: RecapFormat.hourLabel(first),
-                    note: .localized("The earliest hour of the day with any work")
+                    note: .localized("The earliest hour after 5 AM with any work")
                 )
             }
             if let latest = recap.latestMinute {

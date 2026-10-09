@@ -128,6 +128,11 @@ extension Recap {
 
         let summary = SpendSummary.of(ledgers, from: start, until: end, now: now, calendar: calendar)
         let elapsedDays = summary.days.count
+        // Only a first record inside the span moves anything: one before the
+        // start leaves the whole period observed.
+        let recordsBegin = RecapPeriods.earliest(in: ledgers, calendar: calendar)
+            .map { calendar.startOfDay(for: $0) }
+            .flatMap { $0 > start && $0 < end ? $0 : nil }
         let inSpan: (Date) -> Bool = { $0 >= start && $0 < end }
 
         // MARK: The previous period, as long as this one has run.
@@ -290,6 +295,7 @@ extension Recap {
             busiestDay: busiest,
             currency: "USD",
             isPartial: summary.hasPartialCounts,
+            recordsBegin: recordsBegin,
             calendar: calendar
         )
     }

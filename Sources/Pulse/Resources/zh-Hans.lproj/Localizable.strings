@@ -1012,6 +1012,8 @@
 "Counted from this Mac's local records · money estimated at API prices" = "数据来自这台 Mac 的本机记录 · 金额按 API 价格估算";
 "Counted from this Mac's local records" = "数据来自这台 Mac 的本机记录";
 "Figures are to date." = "数字截至今天。";
+"Records on this Mac begin on %@; days before it are not counted." = "这台 Mac 的记录从%@开始，之前的日子不计入。";
+"The plan price is counted from %@, when records on this Mac begin." = "订阅价格从这台 Mac 开始有记录的%@起计算。";
 "Some work had no published price, so the money is a floor." = "部分用量没有公开价格，金额只会偏低。";
 "Some tools' counts may be missing, so the total is a floor." = "部分工具的记录可能不全，实际用量只会更多。";
 "Project %@" = "项目 %@";
@@ -1034,8 +1036,8 @@
 "Still going · longest %@" = "还在继续 · 最长一次 %@";
 "Top projects" = "用得最多的项目";
 "In %@," = "%@，";
-"%@ AI tools coded with you." = "有 %@ 个 AI 和你一起写代码。";
-"One AI tool coded with you." = "有 1 个 AI 和你一起写代码。";
+"%@ AI tools coded with you." = "有 %@ 个 AI 工具和你一起写代码。";
+"One AI tool coded with you." = "有 1 个 AI 工具和你一起写代码。";
 "Worked beside you" = "陪你干活的";
 "Turn the page to see what you made together" = "往后翻，看看你们一起做了什么";
 "is your busiest hour of the day." = "是你一天里最忙的时刻。";
@@ -1053,15 +1055,15 @@
 "Sessions" = "会话";
 "Most used" = "用得最多";
 "Your type" = "你的类型";
-"See you in %@" = "%@ 见";
+"See you in %@" = "%@见";
 "Your busiest month" = "你用得最多的月份";
-"vs same period in %@" = "比 %@ 同期";
+"vs same period in %@" = "比%@同期";
 "Tokens · to %@" = "Token · 截至 %@";
 "Estimated at API prices · daily" = "按 API 价格估算 · 每天";
 "Estimated at API prices · monthly" = "按 API 价格估算 · 每月";
 "%@ per active day" = "活跃日平均 %@";
 "Tools" = "工具";
-"Every day of %@" = "%@ 的每一天";
+"Every day of %@" = "%@的每一天";
 "Busiest %@ · %@" = "最多 %@ · %@";
 
 // Recap window, entry points and notification
@@ -1118,7 +1120,7 @@
 "Used %@ · top tool" = "已用 %@ · 主力工具";
 "Which days · days used · token share" = "哪几天 · 用了几天 · token 占比";
 "Which months · days used · token share" = "哪几个月 · 用了几天 · token 占比";
-"Darker days used more · grey is the weekend" = "颜色越深用得越多 · 灰色是周末";
+"Darker days used more · dashed days had none" = "颜色越深用得越多 · 虚线框是没有用量的日子";
 "By week" = "按周";
 "Busiest week: %@" = "最忙的一周：%@";
 "Weekdays and weekends" = "工作日与周末";
@@ -1127,8 +1129,8 @@
 "Weekends %@" = "周末 %@";
 "%@ weekdays, used on %@ of them" = "工作日 %@ 天里用了 %@ 天";
 "%@ weekend days, used on %@ of them" = "周末 %@ 天里用了 %@ 天";
-"Usually starts" = "通常开工";
-"The earliest hour of the day with any work" = "一天里最早有记录的时刻";
+"Earliest start" = "最早开工";
+"The earliest hour after 5 AM with any work" = "凌晨 5 点以后最早有记录的时刻";
 "Finishes latest" = "最晚收工";
 "One night ran past midnight" = "有 1 个晚上干到了凌晨";
 "%@ nights ran past midnight" = "有 %@ 个晚上干到了凌晨";

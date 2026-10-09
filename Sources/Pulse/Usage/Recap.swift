@@ -162,11 +162,35 @@ struct Recap: Sendable, Equatable {
     /// Whether some store behind it may be missing counts: the total is a floor.
     let isPartial: Bool
 
+    /// The first day this Mac has any record for, when that falls inside the
+    /// period after its first day; nil when the records reach back to the
+    /// start or before it.
+    ///
+    /// **Before it Pulse saw nothing, which is not a quiet day.** A year whose
+    /// records began in May drew January to April as zeros and counted them in
+    /// every denominator — "active 88 of 282 days", the workday split, the
+    /// plan price prorated from January 1. `observedDays` is the count those
+    /// use, and a month entirely before it is drawn as unrecorded.
+    var recordsBegin: Date? = nil
+
     /// The calendar the recap was built with, so the cards that lay out its
     /// days (the year's twelve months) count them the way it did.
     var calendar: Calendar = Recap.calendar
 
     var isEmpty: Bool { tokens == 0 }
+
+    /// The period's days Pulse could have seen work on: from `recordsBegin`
+    /// (or the start) up to today or the end. `elapsedDays` without a later
+    /// first record; the "same period" comparison keeps `elapsedDays`.
+    var observedDays: Int {
+        guard let recordsBegin else { return elapsedDays }
+        return days.count { $0.date >= recordsBegin }
+    }
+
+    /// Whether a day falls before the first record this Mac holds.
+    func isBeforeRecords(_ date: Date) -> Bool {
+        recordsBegin.map { date < $0 } ?? false
+    }
 
     /// The calendar every recap is built, offered and drawn in: Gregorian,
     /// weeks from Monday, the system's time zone. **Not `Calendar.current`** —

@@ -55,7 +55,12 @@ struct RecapYearCalendarView: View {
         RecapStoryPage(page: deck.page(of: .yearCalendar)) {
             RecapCalendarHero(deck: deck, numberSize: 190, unitSize: 92).padding(.top, 40)
             Spacer(minLength: 20)
-            RecapSectionHead(title: RecapFormat.yearName(recap.period.year), note: .localized("Darker days used more"))
+            RecapSectionHead(
+                title: RecapFormat.yearName(recap.period.year),
+                note: recap.recordsBegin == nil
+                    ? .localized("Darker days used more")
+                    : .localized("Darker days used more · dashed days had none")
+            )
             months.padding(.top, 20)
             Spacer(minLength: 20)
             RecapCalendarTiles(deck: deck)
@@ -90,9 +95,17 @@ struct RecapYearCalendarView: View {
                         ForEach(0..<7, id: \.self) { column in
                             let index = row * 7 + column
                             if index < grid.cells.count, let day = grid.cells[index] {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(RecapHeat.color(tokens: day.tokens, maximum: maximum))
-                                    .frame(width: cell, height: cell)
+                                if recap.isBeforeRecords(day.date) {
+                                    // Not seen, so not a quiet grey day: the
+                                    // dashed outline the month calendar uses.
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .strokeBorder(RecapColor.rule, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                                        .frame(width: cell, height: cell)
+                                } else {
+                                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                        .fill(RecapHeat.color(tokens: day.tokens, maximum: maximum))
+                                        .frame(width: cell, height: cell)
+                                }
                             } else {
                                 Color.clear.frame(width: cell, height: cell)
                             }
@@ -136,7 +149,7 @@ struct RecapMonthsView: View {
                 let insights = RecapInsights(recap)
                 ForEach(Array(months.enumerated()), id: \.element.id) { index, month in
                     row(month, maximum: maximum, isBusiest: month.month == busiest?.month,
-                        toCome: insights.isMonthToCome(index))
+                        toCome: insights.isMonthUnrecorded(index))
                 }
             }
             .padding(.top, 14)

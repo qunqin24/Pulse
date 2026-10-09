@@ -136,13 +136,19 @@ struct RecapDeck: Sendable {
     /// over the days in the month (or the year) — not by whole months started,
     /// which would charge a year in March for three full months, or a month's
     /// fifth day for all of it.
+    ///
+    /// **Nor from before the first record.** The price is counted from
+    /// `Recap.recordsBegin` when the records start inside the period, and the
+    /// card says so: Pulse cannot know the plan was paid for months it saw no
+    /// work in, and charging January for a year whose records begin in May
+    /// shrank the multiple by a third.
     static func paidMonths(_ recap: Recap) -> Double {
         let whole: Double = recap.period.isYear ? 12 : 1
-        guard recap.isInProgress,
+        guard recap.isInProgress || recap.recordsBegin != nil,
               let full = recap.period.bounds(calendar: recap.calendar),
               let total = recap.calendar.dateComponents([.day], from: full.start, to: full.end).day,
               total > 0 else { return whole }
-        return whole * Double(min(recap.elapsedDays, total)) / Double(total)
+        return whole * Double(min(recap.observedDays, total)) / Double(total)
     }
 
     /// Whether some of the money is a floor because part of the work had no

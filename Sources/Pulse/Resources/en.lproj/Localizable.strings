@@ -1012,6 +1012,8 @@
 "Counted from this Mac's local records · money estimated at API prices" = "Counted from this Mac's local records · money estimated at API prices";
 "Counted from this Mac's local records" = "Counted from this Mac's local records";
 "Figures are to date." = "Figures are to date.";
+"Records on this Mac begin on %@; days before it are not counted." = "Records on this Mac begin on %@; days before it are not counted.";
+"The plan price is counted from %@, when records on this Mac begin." = "The plan price is counted from %@, when records on this Mac begin.";
 "Some work had no published price, so the money is a floor." = "Some work had no published price, so the money is a floor.";
 "Some tools' counts may be missing, so the total is a floor." = "Some tools' counts may be missing, so the total is a floor.";
 "Project %@" = "Project %@";
@@ -1118,7 +1120,7 @@
 "Used %@ · top tool" = "Used %@ · top tool";
 "Which days · days used · token share" = "Which days · days used · token share";
 "Which months · days used · token share" = "Which months · days used · token share";
-"Darker days used more · grey is the weekend" = "Darker days used more · grey is the weekend";
+"Darker days used more · dashed days had none" = "Darker days used more · dashed days had none";
 "By week" = "By week";
 "Busiest week: %@" = "Busiest week: %@";
 "Weekdays and weekends" = "Weekdays and weekends";
@@ -1127,8 +1129,8 @@
 "Weekends %@" = "Weekends %@";
 "%@ weekdays, used on %@ of them" = "%@ weekdays, used on %@ of them";
 "%@ weekend days, used on %@ of them" = "%@ weekend days, used on %@ of them";
-"Usually starts" = "Usually starts";
-"The earliest hour of the day with any work" = "The earliest hour of the day with any work";
+"Earliest start" = "Earliest start";
+"The earliest hour after 5 AM with any work" = "The earliest hour after 5 AM with any work";
 "Finishes latest" = "Finishes latest";
 "One night ran past midnight" = "One night ran past midnight";
 "%@ nights ran past midnight" = "%@ nights ran past midnight";

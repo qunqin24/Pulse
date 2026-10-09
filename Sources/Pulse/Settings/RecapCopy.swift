@@ -61,9 +61,9 @@ extension RecapDeck {
     var activeDaysLine: String {
         let active = RecapEmphasis.mark("\(recap.activeDays)")
         // "of 1 days" on a running month's first day: the singular is its own key.
-        return recap.elapsedDays == 1
+        return recap.observedDays == 1
             ? .localized("Active \(active) of 1 day")
-            : .localized("Active \(active) of \("\(recap.elapsedDays)") days")
+            : .localized("Active \(active) of \("\(recap.observedDays)") days")
     }
 
     /// "412 sessions".
@@ -80,9 +80,9 @@ extension RecapDeck {
         return (arrow, "\(abs(delta))%", .localized("vs same period in \(previousName)"))
     }
 
-    /// The tokens a day, over the days the period has had.
+    /// The tokens a day, over the days of the period Pulse could see.
     var tokensPerDay: Int? {
-        recap.elapsedDays > 0 ? recap.tokens / recap.elapsedDays : nil
+        recap.observedDays > 0 ? recap.tokens / recap.observedDays : nil
     }
 
     /// Cost per day, or per month for a year, to draw under the poster's total.
@@ -127,6 +127,9 @@ extension RecapDeck {
             : .localized("Counted from this Mac's local records")
         var lines = [source]
         if recap.isInProgress { lines.append(.localized("Figures are to date.")) }
+        if let begin = recap.recordsBegin {
+            lines.append(.localized("Records on this Mac begin on \(RecapFormat.day(begin)); days before it are not counted."))
+        }
         if costIsFloor { lines.append(.localized("Some work had no published price, so the money is a floor.")) }
         if recap.isPartial { lines.append(.localized("Some tools' counts may be missing, so the total is a floor.")) }
         return lines

@@ -1012,6 +1012,8 @@
 "Counted from this Mac's local records · money estimated at API prices" = "이 Mac의 로컬 기록 기준 · 금액은 API 요금으로 추산";
 "Counted from this Mac's local records" = "이 Mac의 로컬 기록 기준";
 "Figures are to date." = "수치는 오늘까지의 기준입니다.";
+"Records on this Mac begin on %@; days before it are not counted." = "이 Mac의 기록은 %@부터 시작되며, 그 이전 날짜는 포함하지 않습니다.";
+"The plan price is counted from %@, when records on this Mac begin." = "구독 요금은 이 Mac에 기록이 시작된 %@부터 계산합니다.";
 "Some work had no published price, so the money is a floor." = "일부 사용분은 공개된 가격이 없어, 금액은 실제보다 적을 수 있습니다.";
 "Some tools' counts may be missing, so the total is a floor." = "일부 도구의 기록이 빠졌을 수 있어, 실제 사용량은 이보다 많을 수 있습니다.";
 "Project %@" = "프로젝트 %@";
@@ -1118,7 +1120,7 @@
 "Used %@ · top tool" = "%@ 사용 · 주력 도구";
 "Which days · days used · token share" = "사용한 날 · 일수 · 토큰 비중";
 "Which months · days used · token share" = "사용한 달 · 일수 · 토큰 비중";
-"Darker days used more · grey is the weekend" = "진할수록 많이 쓴 날 · 회색은 주말";
+"Darker days used more · dashed days had none" = "진할수록 많이 쓴 날 · 점선은 쓰지 않은 날";
 "By week" = "주별";
 "Busiest week: %@" = "가장 많이 쓴 주: %@";
 "Weekdays and weekends" = "평일과 주말";
@@ -1127,8 +1129,8 @@
 "Weekends %@" = "주말 %@";
 "%@ weekdays, used on %@ of them" = "평일 %@일 중 %@일 사용";
 "%@ weekend days, used on %@ of them" = "주말 %@일 중 %@일 사용";
-"Usually starts" = "보통 시작";
-"The earliest hour of the day with any work" = "하루 중 가장 이른 기록 시각";
+"Earliest start" = "가장 이른 시작";
+"The earliest hour after 5 AM with any work" = "오전 5시 이후 가장 이른 기록 시각";
 "Finishes latest" = "가장 늦은 마무리";
 "One night ran past midnight" = "자정을 넘긴 밤이 1번";
 "%@ nights ran past midnight" = "자정을 넘긴 밤이 %@번";
