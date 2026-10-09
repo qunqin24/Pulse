@@ -1024,7 +1024,7 @@
 "Month by month" = "每個月";
 "Rhythm of the day" = "一天的節奏";
 "Peak %@" = "尖峰 %@";
-"%@ of it came between 9 PM and 5 AM." = "%@ 的用量發生在晚上 9 點到凌晨 5 點之間。";
+"%@ of it came between %@ and %@." = "%1$@ 的用量集中在 %2$@ 到 %3$@ 之間。";
 "Model ranking" = "模型排行";
 "By token share" = "依 token 佔比";
 "Other" = "其他";
@@ -1132,7 +1132,7 @@
 "Finishes latest" = "最晚收工";
 "One night ran past midnight" = "有 1 個晚上工作到了凌晨";
 "%@ nights ran past midnight" = "有 %@ 個晚上工作到了凌晨";
-"9 PM to 5 AM" = "晚上 9 點到凌晨 5 點";
+"%@ to %@" = "%1$@ 到 %2$@";
 "of your usage fell in these hours" = "的用量發生在這段時間";
 "Four parts of the day" = "一天四段";
 "Small hours" = "凌晨";

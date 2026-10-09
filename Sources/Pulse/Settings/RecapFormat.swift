@@ -139,10 +139,6 @@ enum RecapFormat {
         return date.formatted(style)
     }
 
-    /// Whether an hour of the day counts as late: 21:00 to 04:59, the same
-    /// band `Recap.lateShare` measures.
-    static func isLate(_ hour: Int) -> Bool { hour >= 21 || hour < 5 }
-
     // MARK: - Dates
 
     // MARK: - Calendar

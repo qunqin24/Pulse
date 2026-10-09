@@ -122,10 +122,12 @@ struct RecapDonut: View {
 
 // MARK: - Clock
 
-/// 24 bars around a ring, one per hour, midnight at the top. The late hours
-/// are lime; the rest are a muted grey that gets lighter with less work.
+/// 24 bars around a ring, one per hour, midnight at the top. The busiest
+/// four hours (`Recap.busiestHours`) are lime; the rest are a muted grey that
+/// gets lighter with less work.
 struct RecapClock: View {
     let hours: [Int]
+    let highlight: Recap.HourWindow?
     let inner: CGFloat
     let longest: CGFloat
     let barWidth: CGFloat
@@ -149,7 +151,7 @@ struct RecapClock: View {
                 layer.rotate(by: .degrees(Double(hour) * 15))
                 let bar = Path(roundedRect: CGRect(x: -barWidth / 2, y: -(inner + length), width: barWidth, height: length),
                                cornerRadius: barWidth / 2)
-                if RecapFormat.isLate(hour) {
+                if highlight?.contains(hour) == true {
                     layer.fill(bar, with: .color(RecapColor.lime))
                 } else {
                     layer.fill(bar, with: .color(RecapColor.darkRest.opacity(0.38 + 0.62 * fraction)))

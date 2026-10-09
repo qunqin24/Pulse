@@ -1024,7 +1024,7 @@
 "Month by month" = "Month by month";
 "Rhythm of the day" = "Rhythm of the day";
 "Peak %@" = "Peak %@";
-"%@ of it came between 9 PM and 5 AM." = "%@ of it came between 9 PM and 5 AM.";
+"%@ of it came between %@ and %@." = "%1$@ of it came between %2$@ and %3$@.";
 "Model ranking" = "Model ranking";
 "By token share" = "By token share";
 "Other" = "Other";
@@ -1132,7 +1132,7 @@
 "Finishes latest" = "Finishes latest";
 "One night ran past midnight" = "One night ran past midnight";
 "%@ nights ran past midnight" = "%@ nights ran past midnight";
-"9 PM to 5 AM" = "9 PM to 5 AM";
+"%@ to %@" = "%1$@ to %2$@";
 "of your usage fell in these hours" = "of your usage fell in these hours";
 "Four parts of the day" = "Four parts of the day";
 "Small hours" = "Small hours";

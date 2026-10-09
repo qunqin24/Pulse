@@ -1024,7 +1024,7 @@
 "Month by month" = "月ごと";
 "Rhythm of the day" = "一日のリズム";
 "Peak %@" = "ピーク %@";
-"%@ of it came between 9 PM and 5 AM." = "全体の %@ は、夜 9 時から朝 5 時の間でした。";
+"%@ of it came between %@ and %@." = "全体の %1$@ が %2$@〜%3$@ に集中していました。";
 "Model ranking" = "モデルランキング";
 "By token share" = "トークンの割合順";
 "Other" = "その他";
@@ -1132,7 +1132,7 @@
 "Finishes latest" = "最も遅い終了";
 "One night ran past midnight" = "1 晩が日付をまたぎました";
 "%@ nights ran past midnight" = "%@ 晩が日付をまたぎました";
-"9 PM to 5 AM" = "午後 9 時〜午前 5 時";
+"%@ to %@" = "%1$@〜%2$@";
 "of your usage fell in these hours" = "使用量のうち、この時間帯の割合";
 "Four parts of the day" = "1 日の 4 つの時間帯";
 "Small hours" = "深夜";

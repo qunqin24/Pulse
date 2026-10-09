@@ -331,6 +331,46 @@ struct RecapTests {
         #expect(try abs(#require(recap.lateShare) - 0.5) < 0.0001)
     }
 
+    @Test("The busiest four hours are read off the work, not a fixed band")
+    func busiestHoursFollowTheWork() throws {
+        // The same 22:00 / 03:00 / 14:00 day as above. Any four hours that
+        // take in 14:00 hold 500 of 1,000, more than the 400 around 22:00;
+        // the earliest of those starts is 11:00.
+        let recap = Self.october([
+            Self.event(Self.at(2026, 10, 2, 22, 30), 300),
+            Self.event(Self.at(2026, 10, 2, 22, 45), 100),
+            Self.event(Self.at(2026, 10, 3, 3), 100),
+            Self.event(Self.at(2026, 10, 3, 14), 500),
+        ])
+        let window = try #require(recap.busiestHours)
+        #expect(window.start == 11)
+        #expect(window.end == 15)
+        #expect(abs(window.share - 0.5) < 0.0001)
+
+        var daytime = Array(repeating: 0, count: 24)
+        daytime[10] = 30; daytime[11] = 40; daytime[12] = 20; daytime[13] = 10; daytime[23] = 25
+        let day = try #require(Recap.busiestHours(in: daytime))
+        #expect(day.start == 10 && day.end == 14)
+        #expect(abs(day.share - 100.0 / 125.0) < 0.0001)
+        #expect(day.contains(10) && day.contains(13) && !day.contains(14) && !day.contains(9))
+    }
+
+    @Test("A window across midnight wraps, and a tie is the earliest start")
+    func busiestHoursWrapAndTie() throws {
+        var night = Array(repeating: 0, count: 24)
+        night[22] = 10; night[23] = 10; night[0] = 10; night[1] = 10; night[12] = 5
+        let window = try #require(Recap.busiestHours(in: night))
+        #expect(window.start == 22 && window.end == 2)
+        #expect(window.contains(23) && window.contains(1) && !window.contains(2) && !window.contains(21))
+
+        var even = Array(repeating: 0, count: 24)
+        even[3] = 1; even[15] = 1
+        #expect(Recap.busiestHours(in: even)?.start == 0)
+
+        #expect(Recap.busiestHours(in: Array(repeating: 0, count: 24)) == nil)
+        #expect(Recap.busiestHours(in: [1, 2, 3]) == nil)
+    }
+
     @Test("A tie for the peak is the earlier hour, every time")
     func peakTie() {
         let recap = Self.october([Self.event(Self.at(2026, 10, 2, 16), 100), Self.event(Self.at(2026, 10, 2, 9), 100)])

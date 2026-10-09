@@ -65,10 +65,10 @@ struct RecapTimetableView: View {
                     note: recap.lateNights > 0 ? RecapWords.nightsPastMidnight(recap.lateNights) : nil
                 )
             }
-            if let late = recap.lateShare {
+            if let window = recap.busiestHours {
                 stat(
-                    label: .localized("9 PM to 5 AM"),
-                    value: RecapFormat.percent(late),
+                    label: .localized("\(RecapFormat.hourLabel(window.start)) to \(RecapFormat.hourLabel(window.end))"),
+                    value: RecapFormat.percent(window.share),
                     note: .localized("of your usage fell in these hours")
                 )
             }

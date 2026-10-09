@@ -215,3 +215,48 @@ struct Recap: Sendable, Equatable {
         return (current, longest)
     }
 }
+
+extension Recap {
+    /// The four hours in a row, wrapping past midnight, that held the most of
+    /// the period's tokens — where this person's day actually bunched.
+    ///
+    /// It replaced a fixed 21:00–04:59 band on the rhythm card, which read as
+    /// a claim about when *you* worked ("8% … between 9 PM and 5 AM") while
+    /// saying the same hours for everyone. `lateShare` still measures that
+    /// band for `--recap`.
+    struct HourWindow: Equatable, Sendable {
+        static let length = 4
+
+        /// The first hour, 0..<24.
+        let start: Int
+        /// Of the period's hour tokens, 0...1.
+        let share: Double
+
+        /// The hour the window stops at, exclusive: 10 for one starting at 6.
+        var end: Int { (start + Self.length) % 24 }
+
+        func contains(_ hour: Int) -> Bool {
+            ((hour - start) % 24 + 24) % 24 < Self.length
+        }
+    }
+
+    var busiestHours: HourWindow? { hours.flatMap(Self.busiestHours(in:)) }
+
+    /// The earliest start among equals, so a tie reads the same twice — the
+    /// rule `peakHour` follows. Nil without 24 hours or without any work.
+    static func busiestHours(in hours: [Int]) -> HourWindow? {
+        guard hours.count == 24 else { return nil }
+        let total = hours.reduce(0, +)
+        guard total > 0 else { return nil }
+        var best = 0
+        var bestTokens = -1
+        for start in 0..<24 {
+            let tokens = (0..<HourWindow.length).reduce(0) { $0 + hours[(start + $1) % 24] }
+            if tokens > bestTokens {
+                best = start
+                bestTokens = tokens
+            }
+        }
+        return HourWindow(start: best, share: Double(bestTokens) / Double(total))
+    }
+}

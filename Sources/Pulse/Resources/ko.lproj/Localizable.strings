@@ -1024,7 +1024,7 @@
 "Month by month" = "달마다";
 "Rhythm of the day" = "하루의 리듬";
 "Peak %@" = "피크 %@";
-"%@ of it came between 9 PM and 5 AM." = "%@는 밤 9시부터 새벽 5시 사이에 쓴 양입니다.";
+"%@ of it came between %@ and %@." = "사용량의 %1$@가 %2$@~%3$@에 몰려 있었습니다.";
 "Model ranking" = "모델 순위";
 "By token share" = "토큰 비중순";
 "Other" = "기타";
@@ -1132,7 +1132,7 @@
 "Finishes latest" = "가장 늦은 마무리";
 "One night ran past midnight" = "자정을 넘긴 밤이 1번";
 "%@ nights ran past midnight" = "자정을 넘긴 밤이 %@번";
-"9 PM to 5 AM" = "오후 9시~오전 5시";
+"%@ to %@" = "%1$@~%2$@";
 "of your usage fell in these hours" = "사용량 중 이 시간대의 비중";
 "Four parts of the day" = "하루의 네 구간";
 "Small hours" = "새벽";

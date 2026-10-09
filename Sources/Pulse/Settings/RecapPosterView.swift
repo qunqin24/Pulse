@@ -287,15 +287,17 @@ struct RecapPosterView: View {
                     }
                 }
                 ZStack {
-                    RecapClock(hours: recap.hours ?? [], inner: 54, longest: 62, barWidth: 7, labelSize: 11)
+                    RecapClock(hours: recap.hours ?? [], highlight: recap.busiestHours, inner: 54, longest: 62, barWidth: 7, labelSize: 11)
                         .frame(width: 236, height: 236)
                     if let persona = recap.persona {
                         RecapPersonaGlyph(persona: persona, side: 30)
                     }
                 }
                 .frame(maxHeight: .infinity)
-                if let late = recap.lateShare {
-                    Text(String.localized("\(RecapFormat.percent(late)) of it came between 9 PM and 5 AM."))
+                if let window = recap.busiestHours {
+                    Text(String.localized(
+                        "\(RecapFormat.percent(window.share)) of it came between \(RecapFormat.hourLabel(window.start)) and \(RecapFormat.hourLabel(window.end))."
+                    ))
                         .font(.recap(16))
                         .foregroundStyle(RecapColor.paper.opacity(0.72))
                         .multilineTextAlignment(.center)

@@ -84,12 +84,6 @@ struct RecapFormatTests {
         #expect(RecapFormat.clockTime(minutes: 134, locale: Locale(identifier: "en_US")).hasPrefix("2:14"))
     }
 
-    @Test("Late is 21:00 to 04:59, the band the recap measures")
-    func lateBand() {
-        let late = (0..<24).filter(RecapFormat.isLate)
-        #expect(late == [0, 1, 2, 3, 4, 21, 22, 23])
-    }
-
     @Test("Weekday headings start on Monday and come from the locale")
     func weekdays() {
         #expect(RecapFormat.weekdayHeadings(locale: Locale(identifier: "zh_Hans")) == ["一", "二", "三", "四", "五", "六", "日"])
