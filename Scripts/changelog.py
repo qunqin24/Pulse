@@ -58,7 +58,7 @@ def previous(version: str) -> str | None:
 
 
 # The furniture around each language's section of the release page. Only the
-# two the changelog itself is written in — the interface ships five languages,
+# two the changelog itself is written in — the interface ships six languages,
 # but the entry is authored in these, and a page cannot carry a section nobody
 # wrote.
 #

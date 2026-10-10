@@ -1,0 +1,1167 @@
+/* Menu bar */
+"Settings…" = "Настройки…";
+"Quit Pulse" = "Завершить Pulse";
+
+/* Settings window */
+"Pulse Settings" = "Настройки Pulse";
+"Panel" = "Панель";
+"Application" = "Приложение";
+"General" = "Основные";
+"Appearance" = "Оформление";
+"Rings and figures" = "Кольца и значения";
+"Position and behavior" = "Положение и поведение";
+"Network and refresh" = "Сеть и обновление";
+"Figures" = "Значения";
+"Rings" = "Кольца";
+"Providers" = "Сервисы";
+"About" = "О программе";
+
+/* Connection diagnostics and developer integrations */
+"Sign in again…" = "Войти снова…";
+"Edit credential" = "Изменить учётные данные";
+"Connect status line" = "Подключить строку состояния";
+"Open %@" = "Открыть %@";
+"Copy login command" = "Скопировать команду входа";
+"Retry" = "Повторить";
+"Setup help" = "Справка по настройке";
+"Connection diagnostics" = "Диагностика подключения";
+"Latest check" = "Последняя проверка";
+"No completed check since launch." = "С момента запуска ни одна проверка не завершилась.";
+"Checked at" = "Время проверки";
+"Last successful reading" = "Последнее успешное получение данных";
+"Displayed figures" = "Источник показанных данных";
+"Showing a saved reading; its original source is retained." = "Показаны сохранённые данные с указанием исходного источника.";
+"Source not recorded" = "Источник не сохранён";
+"Route checks" = "Проверка способов";
+"Next step" = "Следующий шаг";
+"Share diagnostics" = "Поделиться диагностикой";
+"Only source, status and timestamps; no account details or secrets." = "Только источник, статус и время, без данных аккаунта и ключей.";
+"Copied" = "Скопировано";
+"Copy diagnostics" = "Скопировать диагностику";
+"Not recorded" = "Не записано";
+"Read cached usage" = "Расход из кэша";
+"Reads saved figures without fetching or opening credentials." = "Выводит сохранённые значения, не обращаясь к сервисам и учётным данным.";
+"Copy command" = "Скопировать команду";
+"Developer kit" = "Набор для разработчиков";
+"Raycast extension, tmux and shell status, and a sketchybar plugin." = "Расширение для Raycast, строка состояния для tmux и оболочки, плагин для sketchybar.";
+"Export integration files…" = "Экспортировать файлы интеграции…";
+"Installation guide" = "Руководство по установке";
+"Open an account" = "Открыть аккаунт";
+"Account link" = "Ссылка на аккаунт";
+"Opens this account's settings in the installed Pulse app." = "Открывает настройки этого аккаунта в установленном Pulse.";
+"Copy link" = "Скопировать ссылку";
+"Open from terminal" = "Открыть из терминала";
+"Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "Чтобы кэш обновлялся, Pulse должен оставаться запущенным. У данных всегда указан их возраст; старые данные не заменяют свежую проверку.";
+"Integration files weren't found. Open the installation guide." = "Файлы интеграции не найдены. Откройте руководство по установке.";
+"Export" = "Экспортировать";
+"Pulse Integrations already exists here. Choose another folder." = "Здесь уже есть папка «Pulse Integrations». Выберите другую папку.";
+"Integration files exported." = "Файлы интеграции экспортированы.";
+"Couldn't export integration files. Choose a writable folder." = "Не удалось экспортировать файлы интеграции. Выберите папку, доступную для записи.";
+"Connected. Use Claude Code to send a new reading." = "Подключено. Новые данные поступят, когда вы воспользуетесь Claude Code.";
+"Couldn't connect the status line. Open setup help." = "Не удалось подключить строку состояния. Откройте справку по настройке.";
+"Copied — run %@ in your terminal, then retry." = "Скопировано — выполните %@ в терминале и повторите попытку.";
+"Couldn't find %@. Open setup help." = "Не удалось найти %@. Откройте справку по настройке.";
+"Couldn't open %@. Open setup help." = "Не удалось открыть %@. Откройте справку по настройке.";
+"Developer integrations" = "Интеграции для разработчиков";
+"Skipped: the desktop account does not match." = "Пропущено: аккаунт в настольном приложении не совпадает.";
+"Reading received" = "Данные получены";
+"Older reading received" = "Получены устаревшие данные";
+"Desktop app session" = "Сеанс приложения для Mac";
+"Codex app server" = "Codex app server";
+"Local language server" = "Локальный языковой сервер";
+"Signed-in web page" = "Веб-страница с выполненным входом";
+"The app's saved plan" = "Тариф, сохранённый приложением";
+
+"Floating panel" = "Плавающая панель";
+"Show floating panel" = "Показывать плавающую панель";
+"The usage rail at the edge of the screen." = "Лента расхода у края экрана.";
+"Hide in full screen" = "Скрывать в полноэкранном режиме";
+"Keep the floating panel out of full-screen apps." = "Не показывать плавающую панель поверх полноэкранных приложений.";
+"Follow the active display" = "Переходить на активный дисплей";
+"With more than one display, the rail moves to the one the pointer is on." = "Если дисплеев несколько, лента переходит на тот, где находится указатель.";
+"Left" = "Слева";
+"Top" = "Сверху";
+"Percentages across" = "Проценты в горизонтальной панели";
+"Turn red at" = "Порог красного";
+"Where a ring stops being amber. A spent limit is red whatever this says." = "С какого значения кольцо из жёлтого становится красным. Исчерпанный лимит всегда красный.";
+"Alert colour when docked" = "Цвет предупреждения у края";
+"Off keeps the collapsed rail neutral even when a limit needs attention." = "Если выключено, свёрнутая лента остаётся нейтральной, даже когда лимит требует внимания.";
+"Ring activity animation" = "Анимация активности на кольце";
+"The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "Вращающийся индикатор, когда работает CLI или загружаются данные. Если выключено, кольцо остаётся неподвижным.";
+"Percentages at the side" = "Проценты в боковой панели";
+"The figure under each ring, docked left or right." = "Значение под каждым кольцом, когда панель закреплена слева или справа.";
+"Time until reset" = "Время до сброса";
+"A second arc outside each ring, showing progress through the current window." = "Вторая дуга снаружи каждого кольца показывает, какая часть текущего периода прошла.";
+"Time ring direction" = "Направление кольца времени";
+"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "Внешняя дуга заполняется по мере прошедшего времени или убывает вместе с оставшимся.";
+"Elapsed" = "Прошло";
+"Remaining" = "Осталось";
+"Animated mark" = "Робот";
+"Bot personality" = "Характер робота";
+"Bot shape" = "Форма робота";
+"Bot colour" = "Цвет робота";
+"Its brand colour, or one dealt to stand apart from its neighbours." = "Фирменный цвет сервиса или автоматически подобранный, чтобы отличаться от соседних.";
+"A colour of your own for this bot." = "Выбранный вами цвет для этого робота.";
+"Which body this bot wears. Round unless you change it." = "Форма тела робота. По умолчанию — круг.";
+"Blob" = "Круг";
+"Pebble" = "Камешек";
+"Bean" = "Фасолина";
+"Egg" = "Яйцо";
+"Squircle" = "Скруглённый квадрат";
+"Tablet" = "Плитка";
+"Capsule" = "Капсула";
+"Cylinder" = "Цилиндр";
+"Hexagon" = "Шестиугольник";
+"Gem" = "Самоцвет";
+"Crystal" = "Кристалл";
+"Wedge" = "Клин";
+"Shield" = "Щит";
+"Dome" = "Купол";
+"Arch" = "Арка";
+"Cloud" = "Облако";
+"Teardrop" = "Капля";
+"Leaf" = "Листок";
+"The character it plays: which motions it uses and how fast. Automatic keeps it different from the rings beside it." = "Какие движения использует робот и как быстро. В режиме «Автоматически» он не повторяет роботов на соседних кольцах.";
+"The character you picked for this bot, wherever this ring sits." = "Выбранный характер сохраняется, где бы ни находилось кольцо.";
+"Calm" = "Спокойный";
+"Eager" = "Бодрый";
+"Steady" = "Собранный";
+"Curious" = "Любопытный";
+"Sleepy" = "Сонный";
+"Playful" = "Игривый";
+"Stoic" = "Невозмутимый";
+"Proud" = "Гордый";
+"Draw a bot that reacts to this account instead of the provider's logo." = "Показывать вместо логотипа сервиса робота, который реагирует на состояние аккаунта.";
+"Figure above the ring" = "Значение над кольцом";
+"Show what's left" = "Показывать остаток";
+"Forecast" = "Прогноз";
+"Whether each limit lasts its window, on the card." = "Показывает на карточке, хватит ли каждого лимита до сброса.";
+"Counts down instead of up, figure and ring together." = "Значение и кольцо показывают остаток, а не израсходованное.";
+"Swaps the two, wherever the panel is." = "Меняет местами значение и кольцо при любом положении панели.";
+"When the panel lies across: docked to the top or bottom, or free." = "Когда панель расположена горизонтально: у верхнего или нижнего края либо свободно.";
+"Bottom" = "Снизу";
+"Figures beside the rings" = "Значения рядом с кольцами";
+"Only when the panel lies free across. A thinner, longer panel." = "Только при свободном горизонтальном положении. Панель станет тоньше и длиннее.";
+"Drag it anywhere; near an edge it snaps on." = "Перетащите панель куда угодно; у края экрана она примагнитится.";
+"Right" = "Справа";
+
+"Show in panel" = "Показывать на панели";
+"Current usage" = "Текущий расход";
+"Account" = "Аккаунт";
+
+"Version" = "Версия";
+"Usage data" = "Данные о расходе";
+"Source code" = "Исходный код";
+"The animated marks are a port of github.com/iduu/grokbot-animation, itself a study of the bot on x.ai." = "Анимация роботов перенесена из проекта github.com/iduu/grokbot-animation, который воссоздаёт бота с x.ai.";
+"Credits" = "Благодарности";
+"Provider marks from github.com/lobehub/lobe-icons." = "Логотипы сервисов — из github.com/lobehub/lobe-icons.";
+
+"Language" = "Язык";
+"Interface language" = "Язык интерфейса";
+"Takes effect right away." = "Применяется сразу.";
+"System" = "Как в системе";
+
+/* Floating panel */
+"%@ Usage" = "Расход %@";
+
+
+
+/* Accessibility */
+"Pulse floating usage panel" = "Плавающая панель расхода Pulse";
+"Provider usage selector" = "Выбор сервиса";
+"%@ usage" = "Расход %@";
+"%@ usage details" = "Подробности расхода %@";
+"%@ used, %@" = "%2$@: использовано %1$@";
+"%@ left, %@" = "%2$@: осталось %1$@";
+"%@ used. %@" = "Использовано %@. %@";
+"%@ left. %@" = "Осталось %@. %@";
+
+/* Usage data */
+"5-hour limit" = "Лимит на 5 часов";
+"Weekly limit" = "Недельный лимит";
+"Spend limit" = "Лимит расходов";
+"%@-day limit" = "Лимит на %@ дн.";
+"%@-hour limit" = "Лимит на %@ ч";
+"%@ days" = "%@ дн.";
+"%@ hours" = "%@ ч";
+"Sign in to Codex to see usage." = "Войдите в Codex, чтобы видеть расход.";
+"No limits reported." = "Сервис не сообщил о лимитах.";
+"Connect Claude Code in Settings to see usage." = "Подключите Claude Code в настройках, чтобы видеть расход.";
+"Waiting for the next Claude Code response." = "Ожидание следующего ответа Claude Code.";
+"Loading…" = "Загрузка…";
+"No reading" = "Нет данных";
+"Refreshing…" = "Обновление…";
+"Refresh usage" = "Обновить данные";
+"Activate to refresh usage." = "Активируйте, чтобы обновить данные.";
+"Connection" = "Подключение";
+"Claude Code status line" = "Строка состояния Claude Code";
+"Connect" = "Подключить";
+"Disconnect" = "Отключить";
+"Plan" = "Тариф";
+"Credit balance" = "Баланс кредитов";
+"Resets %@" = "Сброс %@";
+"As of %@" = "Данные получены %@";
+"Reading may be out of date" = "Данные могут быть устаревшими";
+"%@ Used" = "Использовано %@";
+"%@ Left" = "Осталось %@";
+"Codex isn't installed." = "Codex не установлен.";
+"Couldn't start the Codex helper." = "Не удалось запустить вспомогательный процесс Codex.";
+"Sign in to Claude Code to see usage." = "Войдите в Claude Code, чтобы видеть расход.";
+"A backup for when the saved login expires. Your own status line keeps working." = "Запасной способ на случай, если сохранённый вход перестанет действовать. Ваша строка состояния продолжит работать.";
+"Ring shows" = "Кольцо показывает";
+"Ring measures" = "Расчёт кольца";
+"Ring colour" = "Цвет кольца";
+"Custom" = "Свой";
+"Colour" = "Цвет";
+"Coloured by how much is left." = "Цвет зависит от остатка.";
+"A colour of your own, whatever the usage." = "Выбранный вами цвет независимо от расхода.";
+"Which limit the rail's ring tracks." = "Какой лимит отслеживает кольцо на ленте.";
+"Highest usage" = "Наибольший расход";
+"Automatic" = "Автоматически";
+"Usage endpoint" = "API лимитов";
+"Provider tooling" = "Инструменты сервиса";
+"Use the endpoint when possible, the other route when not." = "По возможности API, иначе — другой способ.";
+"Reads your account's limits with the login Claude Code saved." = "Читает лимиты аккаунта по данным входа, сохранённым Claude Code.";
+"Reads your account's limits with the login Codex saved." = "Читает лимиты аккаунта по данным входа, сохранённым Codex.";
+"Reads your account's limits with the login Grok saved." = "Читает лимиты аккаунта по данным входа, сохранённым Grok.";
+"Uses whatever Claude Code last reported to its status line." = "Использует последние данные, которые Claude Code передал в строку состояния.";
+"Asks the Codex app server, which signs in on its own." = "Запрашивает Codex app server, который выполняет вход самостоятельно.";
+"Read usage from" = "Получать данные через";
+"Check every" = "Интервал проверки";
+"How often to fetch new figures." = "Как часто запрашивать новые данные.";
+"%@ seconds" = "%@ с";
+"%@ minutes" = "%@ мин";
+"The service didn't respond." = "Сервис не ответил.";
+"Couldn't read the reply." = "Не удалось прочитать ответ.";
+"Checking too often — easing off." = "Слишком частые проверки — интервал увеличен.";
+"The service returned an error." = "Сервис вернул ошибку.";
+"1 minute" = "1 минута";
+
+/* Usage history */
+"Usage history" = "История расхода";
+"Today" = "Сегодня";
+"All time" = "За всё время";
+"Limit reset credits" = "Кредиты на сброс лимита";
+"Next expiry" = "Ближайший истекает";
+"1 available" = "Доступен 1";
+"%@ available" = "Доступно: %@";
+"%@ tokens" = "Токенов: %@";
+"Tokens per day" = "Токены по дням";
+"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "Подсчитано по журналам %@ на этом Mac и оценено по ценам API, опубликованным на models.dev. Ваш тариф — подписка, поэтому это стоимость той же работы через API, а не сумма, которую с вас списали.";
+"No published price for %@, so those tokens are counted but not costed." = "Для %@ нет опубликованной цены: эти токены учтены, но их стоимость не оценена.";
+"Reading logs" = "Чтение журналов";
+"No history yet" = "Истории пока нет";
+"Nothing has been logged on this Mac yet, so there is no history to add up." = "На этом Mac ещё нет записей в журналах, поэтому подсчитывать нечего.";
+"Account total" = "Всего по аккаунту";
+
+/* Budget estimate */
+"Busiest day" = "Самый активный день";
+"Next expires in %@" = "Ближайший истекает через %@";
+"Top model" = "Основная модель";
+"Estimated value" = "Оценочная стоимость";
+"%@ used so far" = "Уже использовано %@";
+"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. When the percentage rises while this Mac spends nothing, the account is being used elsewhere — another computer, or the website — and that window isn't estimated until it resets. If both are in use at once, the figure reads low. Windows with too little use to extrapolate from are left out." = "Это оценка, а не данные сервиса: расход этого Mac с начала каждого периода, делённый на процент использования, который сообщает сервис. Если процент растёт, а этот Mac ничего не тратит, аккаунт используется где-то ещё — на другом компьютере или на сайте, — и до сброса этот период не оценивается. Если аккаунт используется и здесь, и в другом месте одновременно, оценка занижена. Периоды, в которых расхода слишком мало для экстраполяции, не учитываются.";
+"Also used somewhere this Mac's logs can't see" = "Расход есть и вне этого Mac";
+"Not estimated" = "Не оценивается";
+
+/* Adaptive refresh */
+"2 to 30 minutes as needed. Now: %@ minutes." = "От 2 до 30 мин по необходимости. Сейчас: %@ мин.";
+
+/* Auto-collapse */
+"Hide until pointed at" = "Скрывать до наведения указателя";
+"Against a screen edge, the rail shrinks to a sliver until you point at it." = "У края экрана лента сужается до тонкой полоски, пока вы не наведёте на неё указатель.";
+"Show usage panel" = "Показать панель расхода";
+
+/* Free placement */
+"Position" = "Положение";
+"Free across" = "Свободно (гориз.)";
+"Free upright" = "Свободно (верт.)";
+"Last 31 days" = "За 31 день";
+
+/* Panel size */
+"Size" = "Размер";
+"Spacing" = "Интервал";
+"Round ends" = "Скруглённые концы";
+"The rail's ends and the card's tail follow the ring's own curve." = "Концы ленты и хвостик карточки повторяют изгиб кольца.";
+"How much air there is between the rings." = "Расстояние между кольцами.";
+"Tight" = "Узкий";
+"Loose" = "Широкий";
+"Size of the rail on screen." = "Размер ленты на экране.";
+"Small" = "Маленький";
+"Standard" = "Стандартный";
+"Large" = "Большой";
+
+/* Launch at login */
+"Open at login" = "Открывать при входе";
+"Start Pulse automatically when you log in." = "Автоматически запускать Pulse при входе в систему.";
+"Waiting for approval in System Settings › General › Login Items." = "Ожидается разрешение: Системные настройки › Основные › Объекты входа.";
+
+"Show Dock icon while Settings or a recap is open" = "Показывать значок в Dock, когда открыты настройки или итоги";
+"So these windows can be found again with the Dock or ⌘-Tab; the icon goes when they close." = "Чтобы к этим окнам можно было вернуться через Dock или ⌘-Tab. После их закрытия значок исчезает.";
+
+/* Menu bar icon */
+"Hide menu bar icon" = "Скрывать значок в строке меню";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "Убирает Pulse из строки меню; настройки можно открыть через меню панели или сочетанием клавиш.";
+
+/* Liquid Glass */
+"Liquid Glass" = "Liquid Glass";
+"Clear glass that shows what is behind the panel, instead of a solid surface." = "Прозрачное стекло вместо сплошного фона: сквозь панель видно, что за ней.";
+"Panel colour" = "Цвет панели";
+"Light suits a bright screen. Not available with Liquid Glass." = "Светлый цвет удобен на ярком экране. Недоступно с Liquid Glass.";
+"Black" = "Чёрный";
+"Light" = "Светлый";
+"Transparency" = "Прозрачность";
+"Clearer to the right. Darker reads better over bright pages." = "Чем правее, тем прозрачнее. Тёмная панель лучше читается на светлых страницах.";
+"Open Antigravity to see its usage." = "Откройте Antigravity, чтобы видеть расход.";
+"Asks the language server Antigravity runs while it is open." = "Запрашивает языковой сервер, который работает, пока открыт Antigravity.";
+"Only while Antigravity is open." = "Только пока открыт Antigravity.";
+"Antigravity's language server" = "Языковой сервер Antigravity";
+
+/* Cursor */
+"Sign in to Cursor to see usage." = "Войдите в Cursor, чтобы видеть расход.";
+"Cursor's saved login was refused. Open Cursor to renew it." = "Сохранённый вход Cursor отклонён. Откройте Cursor, чтобы продлить его.";
+"Sign in to Grok to see usage." = "Войдите в Grok, чтобы видеть расход.";
+"Grok's saved login expired. Use Grok to renew it." = "Срок сохранённого входа Grok истёк. Воспользуйтесь Grok, чтобы продлить его.";
+"This Cursor plan doesn't include Grok Bot." = "Ваш тариф Cursor не включает Grok Bot.";
+"Reads your account's limits with the login Cursor saved." = "Читает лимиты аккаунта, используя данные входа из Cursor.";
+"Cursor's own login" = "Вход через Cursor";
+"Grok's own login" = "Вход через Grok";
+"Uses the login Grok's CLI already saved." = "Использует данные входа, уже сохранённые в Grok CLI.";
+"Devin's own app" = "Приложение Devin";
+"Reads what Devin saved the last time it started." = "Читает данные, которые Devin сохранил при последнем запуске.";
+"Asks Devin for your quota, with the token you entered." = "Запрашивает квоту у Devin с помощью введённого токена.";
+"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "Bearer-токен с app.devin.ai, затем пробел и организация. Необязательно — Pulse может прочитать данные, сохранённые приложением Devin. Хранится в зашифрованном виде на этом Mac.";
+"Grok Bot is billed to your Cursor account." = "Grok Bot оплачивается с вашего аккаунта Cursor.";
+"Uses the login Cursor already saved." = "Использует данные входа, уже сохранённые в Cursor.";
+"Refresh" = "Обновить";
+"Pulse %@ is available" = "Доступна версия Pulse %@";
+"Check now" = "Проверить";
+"Checking…" = "Проверка…";
+"Built from source — no update check." = "Собрано из исходного кода — обновления не проверяются.";
+"%@ installed · %@ available" = "Установлена %@ · доступна %@";
+"%@ · up to date" = "%@ · последняя версия";
+"Update to %@" = "Обновить до %@";
+"Check automatically" = "Проверять автоматически";
+"Every two hours. Updates are offered, never installed on their own." = "Раз в два часа. Обновления только предлагаются и не устанавливаются сами.";
+"Couldn't reach the update feed." = "Не удалось подключиться к серверу обновлений.";
+"Uses the key you entered." = "Использует введённый ключ.";
+"API key" = "Ключ API";
+"Session cookie" = "Cookie сеанса";
+"Read from browser" = "Считать из браузера";
+"Only %@." = "Только %@.";
+"Only %@. It will ask for the keychain." = "Только %@. Будет запрошен доступ к связке ключей.";
+"Starts with %@." = "Сначала проверяется %@.";
+"Starts with %@. It will ask for the keychain." = "Сначала проверяется %@. Будет запрошен доступ к связке ключей.";
+"Finds it in the browser you signed in with." = "Поиск в том браузере, где выполнен вход.";
+"Read" = "Считать";
+"No browser cookie store was found." = "Хранилище cookie браузера не найдено.";
+"No Chromium browser was found." = "Браузер на базе Chromium не найден.";
+"No Devin session found. Sign in at app.devin.ai first." = "Сеанс Devin не найден. Сначала войдите на app.devin.ai.";
+"Token and organization" = "Токен и организация";
+"Read from %@." = "Считано из %@.";
+"No Ollama session found. Sign in at ollama.com first." = "Сеанс Ollama не найден. Сначала войдите на ollama.com.";
+"Copied from your browser. Stored encrypted on this Mac." = "Скопировано из браузера. Хранится в зашифрованном виде на этом Mac.";
+"Add an Ollama session in Settings." = "Добавьте сеанс Ollama в настройках.";
+"The Ollama session expired. Sign in again and add it." = "Сеанс Ollama истёк. Войдите снова и добавьте его.";
+"Ollama's page has changed and can no longer be read." = "Страница Ollama изменилась, и прочитать её больше не удаётся.";
+"Reads your quota from Ollama's own settings page." = "Читает квоту со страницы настроек Ollama.";
+"Show" = "Показать";
+"Hide" = "Скрыть";
+"Save" = "Сохранить";
+"Monthly limit" = "Месячный лимит";
+"Daily limit" = "Дневной лимит";
+"Message allowance" = "Лимит сообщений";
+"estimated" = "по оценке";
+"Last read" = "Последнее обновление";
+"Not yet" = "Пока нет";
+"That key was refused. Check it in Settings." = "Ключ отклонён. Проверьте его в настройках.";
+"Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Срок сохранённого входа Claude Code истёк. Воспользуйтесь Claude Code или подключите строку состояния.";
+"Keep reading Claude Code's usage after its login expires?" = "Следить за расходом Claude Code, даже когда истечёт срок входа?";
+"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code сохраняет вход, который действует несколько часов, и продлить его может только сам Claude Code. Кроме того, Claude Code передаёт данные о лимитах команде, зарегистрированной для строки состояния. Если этой командой станет Pulse, данные будут поступать независимо от того, действует ли вход.\n\nБудет изменён файл ~/.claude/settings.json и строка состояния внизу сеансов Claude Code. Ваша текущая строка состояния продолжит работать, а подключение можно отменить в настройках.";
+"Not now" = "Не сейчас";
+"Order" = "Порядок";
+"Add an API key in Settings." = "Добавьте ключ API в настройках.";
+"Devin isn't installed." = "Devin не установлен.";
+"Open Devin and sign in, so it can record your plan." = "Откройте Devin и войдите, чтобы он сохранил данные о тарифе.";
+"Add your Devin organization after the token, separated by a space." = "Укажите организацию Devin после токена через пробел.";
+"Stored encrypted on this Mac." = "Хранится в зашифрованном виде на этом Mac.";
+"From z.ai. Stored encrypted on this Mac." = "Можно получить на z.ai. Хранится в зашифрованном виде на этом Mac.";
+"%@ points" = "Баллов: %@";
+"From bigmodel.cn. Stored encrypted on this Mac." = "Можно получить на bigmodel.cn. Хранится в зашифрованном виде на этом Mac.";
+"From platform.minimax.io. Stored encrypted on this Mac." = "Можно получить на platform.minimax.io. Хранится в зашифрованном виде на этом Mac.";
+"From platform.minimaxi.com. Stored encrypted on this Mac." = "Можно получить на platform.minimaxi.com. Хранится в зашифрованном виде на этом Mac.";
+"From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac." = "Можно получить на commandcode.ai. Необязательно — Pulse может использовать данные входа из Command Code. Хранится в зашифрованном виде на этом Mac.";
+"Couldn't connect the status line" = "Не удалось подключить строку состояния";
+"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "Не удалось прочитать ~/.claude/settings.json. Pulse не перезаписывает файлы, которые не может разобрать. Проверьте файл, затем подключите строку состояния в настройках.";
+"Move %@ up" = "Переместить %@ вверх";
+"Move %@ down" = "Переместить %@ вниз";
+"Not shown" = "Не отображается";
+
+/* Accounts */
+"Accounts" = "Аккаунты";
+"Add another account" = "Добавить ещё аккаунт";
+"Opens the provider's own sign-in page." = "Откроется страница входа сервиса.";
+"Sign in…" = "Войти…";
+"Sign out" = "Выйти";
+"GitHub account" = "Аккаунт GitHub";
+"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Откроется страница GitHub. Pulse запросит только чтение профиля.";
+"Signed in. Pulse holds a read-only token for this Mac." = "Вход выполнен. Pulse хранит на этом Mac токен только для чтения.";
+"The browser didn't come back." = "Браузер не вернул ответ.";
+"Cancel" = "Отменить";
+"Code" = "Код";
+"Copied — paste it on the page that opened." = "Скопирован — вставьте его на открывшейся странице.";
+"Copied. Sign in there first if asked, then paste it." = "Скопирован. Если потребуется, сначала войдите на странице, затем вставьте код.";
+"Already on the page. Sign in there first if asked, then approve it." = "Уже подставлен на странице. Если потребуется, сначала войдите, затем подтвердите.";
+"Copy" = "Скопировать";
+"Open page" = "Открыть страницу";
+"Sign-in" = "Вход";
+"Name" = "Название";
+"Remove account" = "Удалить аккаунт";
+"Forgets its login and takes it off the rail." = "Удаляет данные входа и убирает аккаунт с ленты.";
+"Remove" = "Удалить";
+"Couldn't save the login on this Mac." = "Не удалось сохранить данные входа на этом Mac.";
+"Sign in to this account again in Settings." = "Снова войдите в этот аккаунт в настройках.";
+"Sign in from Settings to see usage." = "Войдите в настройках, чтобы видеть расход.";
+"This provider can't be signed in to from Pulse." = "В этот сервис нельзя войти из Pulse.";
+"Finish or close the sign-in already running, then try again." = "Завершите или закройте уже начатый вход и повторите попытку.";
+"Sign-in was cancelled." = "Вход отменён.";
+"The browser didn't come back. If it showed an error, try again." = "Браузер не вернул ответ. Если на странице была ошибка, повторите попытку.";
+"This page can be closed." = "Эту страницу можно закрыть.";
+"Sign-in failed. You can close this page." = "Не удалось войти. Эту страницу можно закрыть.";
+"Signed in. You can close this page and go back to Pulse." = "Вход выполнен. Закройте эту страницу и вернитесь в Pulse.";
+"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "Данные берутся напрямую из аккаунтов в сервисах. Pulse показывает цифры, которые сообщают сами сервисы; если значение приходится вычислять, это отмечено рядом с ним.";
+"Panel design inspired by Vinz's work shared on X." = "Дизайн панели вдохновлён работой Vinz, опубликованной в X.";
+"Open" = "Открыть";
+"under 15 minutes" = "в ближайшие 15 минут";
+"about an hour" = "примерно через час";
+"about %@ minutes" = "примерно через %@ мин";
+"about %@ hours" = "примерно через %@ ч";
+"Runs out in %@" = "Закончится %@";
+"Expected to last the window" = "Должно хватить до сброса";
+"Won't last the window" = "Не хватит до сброса";
+
+/* The Claude desktop app as a usage route */
+"Desktop app" = "Приложение для Mac";
+"Uses the session the Claude desktop app is signed in with." = "Использует сеанс, в котором выполнен вход в приложении Claude для Mac.";
+"Sign in to the Claude desktop app to see usage." = "Войдите в приложение Claude для Mac, чтобы видеть расход.";
+"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse нужен доступ к связке ключей, чтобы прочитать сеанс приложения Claude для Mac. Нажмите «Обновить», чтобы запрос появился снова.";
+"The Claude desktop app's session was refused. Open it and sign in again." = "Сеанс приложения Claude для Mac отклонён. Откройте приложение и войдите снова.";
+
+/* Notifications */
+"Notifications" = "Уведомления";
+"Off" = "Выкл.";
+"Warn at" = "Порог предупреждения";
+"Notify when a limit passes this, and again when it is spent." = "Уведомлять, когда расход лимита превысит порог, и ещё раз, когда лимит будет исчерпан.";
+"Turned off for Pulse in System Settings › Notifications." = "Уведомления Pulse выключены: Системные настройки › Уведомления.";
+"Notifications need the bundled app." = "Уведомления доступны только в собранном приложении.";
+"When a limit comes back" = "Когда лимит восстановится";
+"Only for one you were warned about." = "Только для лимитов, о которых было предупреждение.";
+"When a reading stops arriving" = "Когда данные перестают поступать";
+"After several failed checks in a row, once per outage." = "После нескольких неудачных проверок подряд, один раз за сбой.";
+"Can't be read" = "Данные недоступны";
+"The last few checks didn't get through, so the panel is showing older figures." = "Последние проверки не прошли, поэтому на панели показаны устаревшие данные.";
+"%@ used." = "Использовано %@.";
+"%@ left." = "Осталось %@.";
+"This limit is spent." = "Лимит исчерпан.";
+"This limit has reset." = "Лимит сброшен.";
+
+/* Settings sidebar search */
+"Search" = "Поиск";
+"No matches" = "Нет совпадений";
+
+/* Resetting the rail order */
+"Reset order" = "Сбросить порядок";
+"Back to the order Pulse ships with." = "Вернуть порядок по умолчанию.";
+"Reset" = "Сбросить";
+
+/* Volcengine / Volcengine Ark */
+"Install arkcli and run `arkcli auth login`, or add access keys in Settings." = "Установите arkcli и запустите `arkcli auth login` или добавьте ключи доступа в настройках.";
+"arkcli isn't signed in. Run `arkcli auth login`." = "Вход в arkcli не выполнен. Запустите `arkcli auth login`.";
+"Signs Volcengine's usage API with the access keys you entered." = "Обращается к API лимитов Volcengine, подписывая запросы введёнными ключами доступа.";
+"Asks arkcli, using the login it already saved." = "Использует arkcli и уже сохранённые в нём данные входа.";
+"Access keys" = "Ключи доступа";
+"AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "AccessKeyID:SecretAccessKey из Volcengine. Необязательно — arkcli они не нужны. Хранятся в зашифрованном виде на этом Mac.";
+"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity открыт, но не отвечает. Обычно помогает перезапуск.";
+
+/* The second usage ring */
+"Second limit inside the ring" = "Второй лимит внутри кольца";
+"A thinner ring for the next-fullest limit, where a provider has one." = "Тонкое внутреннее кольцо для второго по расходу лимита, если у сервиса он есть.";
+"That key works. The account has no Coding Plan running on it." = "Ключ действителен, но у аккаунта нет активного Coding Plan.";
+
+/* Usage history read from a provider's own statistics */
+"Reported by %@ for the whole account, so it covers every machine you use it on. It counts tokens only — the figures behind it cannot be turned into a cost." = "%@ сообщает данные по всему аккаунту — с учётом всех компьютеров, где он используется. Учитываются только токены: пересчитать эти цифры в стоимость нельзя.";
+"This account hasn't used anything yet, so there is nothing to chart." = "У этого аккаунта пока нет расхода, поэтому график пуст.";
+"Asking %@" = "Запрос к %@";
+"Last 7 days" = "Последние 7 дней";
+
+/* Splitting one account's rail ring into one per model group */
+"A ring for each model group" = "Отдельное кольцо для каждой группы моделей";
+"Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "У Gemini и сторонних моделей отдельные лимиты. Одно кольцо показывает только тот, что расходуется активнее.";
+"%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "Нет ответа от %@, поэтому графика пока нет. Повторите попытку чуть позже.";
+"Add a key above and Pulse can read this account's history." = "Добавьте ключ выше, и Pulse сможет прочитать историю этого аккаунта.";
+"This account is switched off, so Pulse hasn't asked for its history." = "Этот аккаунт выключен, поэтому Pulse не запрашивал его историю.";
+"Since top-up" = "С пополнения";
+"Balance only" = "Только баланс";
+"My budget" = "Мой бюджет";
+"since top-up" = "с пополнения";
+"of your budget" = "от вашего бюджета";
+"Full tank" = "Полный баланс";
+"What you call a full balance. The ring measures against it." = "Сумма, которую вы считаете полным балансом. Кольцо показывает долю от неё.";
+"How much of the balance Pulse last saw you top up to is gone." = "Сколько израсходовано с последнего пополнения, замеченного Pulse.";
+"How much of the figure you set is gone." = "Сколько израсходовано от заданной вами суммы.";
+"From platform.deepseek.com. Stored encrypted on this Mac." = "Можно получить на platform.deepseek.com. Хранится в зашифрованном виде на этом Mac.";
+"Balance" = "Баланс";
+"Warn below" = "Порог баланса";
+"Notify once when the balance falls under this. Blank for never." = "Уведомить один раз, когда баланс опустится ниже этой суммы. Пустое поле — без уведомлений.";
+
+// Token spend: every agent's history added up.
+"Token spend" = "Расход токенов";
+"Read local usage records" = "Читать локальные записи о расходе";
+"When enabled, scans local records and exports." = "Если включено, просматриваются локальные записи и экспортированные файлы.";
+"Reading %@…" = "Чтение записей %@…";
+"Span" = "Период";
+"Counting" = "Учитывать";
+"Read from local records and exports, priced at models.dev's published rates." = "Данные из локальных записей и экспортированных файлов по опубликованным ценам models.dev.";
+"Rescan" = "Пересканировать";
+"Total" = "Всего";
+"Reading…" = "Чтение…";
+"Nothing yet" = "Пока ничего";
+"Going through local records and exports." = "Просмотр локальных записей и экспортированных файлов.";
+"No local records or exports have been found yet." = "Локальные записи и экспортированные файлы пока не найдены.";
+"Active days" = "Активные дни";
+"%@ of %@" = "%@ из %@";
+"Busiest" = "Пиковый день";
+"Agents" = "Агенты";
+"By agent" = "По агентам";
+"By model" = "По моделям";
+"Usage records, estimated at models.dev API rates—not an actual bill." = "Оценка по записям о расходе и ценам API на models.dev — не реальный счёт.";
+"API estimate" = "Оценка по ценам API";
+"Partial estimate" = "Неполная оценка";
+"Estimate unavailable" = "Оценка недоступна";
+"%@ tokens unpriced" = "Токенов без цены: %@";
+"Excludes unpriced tokens." = "Токены без цены не учтены.";
+"< %@" = "< %@";
+"Last %@ days" = "Последние %@ дн.";
+"All agents" = "Все агенты";
+"Nothing in this span" = "За этот период ничего нет";
+"Try a longer span, or rescan." = "Выберите более длинный период или пересканируйте.";
+"This agent" = "Этот агент";
+"Current streak" = "Текущая серия";
+"Longest streak" = "Самая длинная серия";
+"Peak hour" = "Час пик";
+"Most tokens" = "Больше всего токенов";
+"By kind" = "По типу";
+"Output" = "Вывод";
+"Input" = "Ввод";
+"Recorded input, with reported cache hits counted separately." = "Входные токены по записям агентов; указанные попадания в кэш учтены отдельно.";
+"Recorded input, with reported cache hits counted separately. Includes %@ recorded cache writes." = "Входные токены по записям агентов; указанные попадания в кэш учтены отдельно. В том числе записано в кэш: %@.";
+"Recorded cache hits. Unreported cache use is not estimated." = "Попадания в кэш по записям агентов. Неуказанное использование кэша не оценивается.";
+"These records carry no cache figures." = "В этих записях нет данных о кэше.";
+"Not reported" = "Нет данных";
+"Cached" = "Из кэша";
+"Model output as recorded by each agent." = "Выходные токены модели по записям каждого агента.";
+"By hour" = "По часам";
+"By month" = "По месяцам";
+"Pattern" = "Ритм использования";
+"Active hours" = "Активные часы";
+"Tokens per hour" = "Токенов в час";
+"%@ o'clock" = "%@:00";
+"Busiest hour" = "Пиковый час";
+"Day by day" = "По дням";
+"Date" = "Дата";
+"Cost" = "Стоимость";
+"%@ per page" = "По %@ на странице";
+"%@–%@ of %@" = "%@–%@ из %@";
+"By project" = "По проектам";
+"%@ sessions · last used %@" = "Сессий: %@ · последняя %@";
+"By session" = "По сессиям";
+"%@ models without public pricing: tokens only." = "Моделей без публичных цен: %@ — учитываются только токены.";
+"All models" = "Все модели";
+"Show all models" = "Показать все модели";
+"Show fewer" = "Показать меньше";
+"Show this model's details" = "Показать подробности модели";
+"Token breakdown unavailable." = "Разбивка токенов по типам недоступна.";
+"Hourly detail unavailable." = "Почасовые данные недоступны.";
+"Some records use session report dates." = "Часть записей датирована по отчётам сессий.";
+"Counts may be incomplete." = "Данные могут быть неполными.";
+"Some compressed records could not be read." = "Часть сжатых записей не удалось прочитать.";
+"No usage data read" = "Данные о расходе не получены";
+"Previous page" = "Предыдущая страница";
+"Next page" = "Следующая страница";
+"Rows per page" = "Строк на странице";
+"Shortcuts" = "Сочетания клавиш";
+"Open settings" = "Открыть настройки";
+"Reaches this window with the menu bar icon out of sight." = "Открывает это окно, даже когда значок в строке меню не виден.";
+"Show or hide the panel" = "Показать или скрыть панель";
+"Draws the usage rail, or takes it away." = "Показывает или убирает ленту с расходом.";
+"Another app is already using this combination." = "Это сочетание уже использует другое приложение.";
+"Record a shortcut" = "Записать сочетание клавиш";
+"Clear this shortcut" = "Удалить это сочетание";
+"Not set" = "Не задано";
+"Press keys…" = "Нажмите клавиши…";
+"Add ⌘, ⌥ or ⌃" = "Добавьте ⌘, ⌥ или ⌃";
+
+/* Xiaomi Coding Plan */
+"No Xiaomi session found. Sign in at platform.xiaomimimo.com first." = "Сеанс Xiaomi не найден. Сначала войдите на platform.xiaomimimo.com.";
+"Sign in to Xiaomi's platform in a browser to see usage." = "Войдите на платформу Xiaomi в браузере, чтобы видеть расход.";
+"Xiaomi's saved session expired. Sign in again in your browser." = "Сохранённый сеанс Xiaomi истёк. Войдите снова в браузере.";
+"No Coding Plan on this Xiaomi account." = "У этого аккаунта Xiaomi нет Coding Plan.";
+"Reads the console with your signed-in browser session." = "Получает данные из консоли через ваш сеанс в браузере.";
+
+/* Network proxy */
+"Network" = "Сеть";
+"Proxy" = "Прокси";
+"Use macOS settings or a proxy only for Pulse." = "Использовать настройки macOS или отдельный прокси для Pulse.";
+"Follow System" = "Как в системе";
+"Manual" = "Вручную";
+"Type" = "Тип";
+"HTTP" = "HTTP";
+"SOCKS5" = "SOCKS5";
+"Host" = "Хост";
+"The proxy server's name or address." = "Имя или адрес прокси-сервера.";
+"Enter a host." = "Укажите хост.";
+"Port" = "Порт";
+"A number from 1 to 65535." = "Число от 1 до 65535.";
+"Enter a whole number from 1 to 65535." = "Введите целое число от 1 до 65535.";
+
+/* Provider selection */
+"Choose services to monitor" = "Выберите сервисы для отслеживания";
+"Choose services to start monitoring…" = "Выбрать сервисы для отслеживания…";
+"New services detected" = "Найдены новые сервисы";
+"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "Выберите хотя бы один сервис. Pulse прочитает данные входа и проверит расход только после того, как вы нажмёте «Готово». Позже это можно изменить в настройках.";
+"This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place." = "Эта версия поддерживает ещё несколько сервисов, найденных на вашем Mac. Отметьте те, что хотите добавить, — прежний выбор сохранится.";
+"Detected on this Mac" = "Найден на этом Mac";
+"Select detected services" = "Выбрать найденные";
+"Done" = "Готово";
+"Enable a service in its settings to start monitoring." = "Включите сервис в его настройках, чтобы начать отслеживание.";
+"Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "Читает сохранённый вход Claude Code из связки ключей или файла учётных данных. Может запросить доступ к связке ключей, в том числе к хранилищу cookie Claude Desktop.";
+"Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Читает ~/.codex/auth.json и может запускать codex app-server с сохранённым входом. Pulse не запрашивает доступ к связке ключей.";
+"Reads the running editor's local language server and connection token. No Keychain prompt." = "Подключается к локальному языковому серверу запущенного редактора с помощью его токена. Доступ к связке ключей не запрашивается.";
+"Reads the login saved in Cursor's local database. No Keychain prompt." = "Читает данные входа из локальной базы данных Cursor. Доступ к связке ключей не запрашивается.";
+"Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Читает данные входа из ~/.grok/auth.json. Доступ к связке ключей не запрашивается.";
+"Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает auth.json OpenCode. Доступ к связке ключей не запрашивается.";
+"Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает сохранённые файлы ключей GLM. Доступ к связке ключей не запрашивается.";
+"Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает ~/.commandcode/auth.json. Доступ к связке ключей не запрашивается.";
+"Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "Без запросов читает данные веб-входа Devin из браузеров на основе Chromium на этом Mac; также может читать тариф, сохранённый настольным приложением.";
+"Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "Запускает arkcli с сохранённым в нём входом или использует ключи доступа, введённые в настройках. Pulse не запрашивает доступ к связке ключей.";
+"Kiro CLI ACP" = "Kiro CLI ACP";
+"Uses Kiro CLI's signed-in session without reading its credentials." = "Использует вход, уже выполненный в Kiro CLI, не читая его учётных данных.";
+"Kiro CLI isn't installed." = "Kiro CLI не установлен.";
+"Update Kiro CLI to read subscription usage." = "Обновите Kiro CLI, чтобы видеть расход по подписке.";
+"Sign in to Kiro CLI to see usage." = "Войдите в Kiro CLI, чтобы видеть расход.";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "Вызывает встроенный в Kiro CLI запрос расхода через ACP, используя сохранённый вход. Pulse не читает и не хранит учётные данные Kiro.";
+"Asks Kiro CLI over ACP, using the login it already saved." = "Запрашивает данные у Kiro CLI через ACP, используя уже сохранённый в нём вход.";
+"Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "Использует сеанс браузера, импортированный в настройках. При импорте может появиться запрос доступа к связке ключей браузера.";
+"Uses the GitHub login you connect in Settings. No Keychain prompt." = "Использует аккаунт GitHub, подключённый в настройках. Доступ к связке ключей не запрашивается.";
+"Uses only the API key you enter in Settings. No Keychain prompt." = "Использует только API-ключ, введённый в настройках. Доступ к связке ключей не запрашивается.";
+"Top-up pack" = "Пакет пополнения";
+"Server address" = "Адрес сервера";
+"Edit address" = "Изменить адрес";
+"Add the server address in Settings." = "Укажите адрес сервера в настройках.";
+"That address can't be used. It needs https://, unless the server is on your own network." = "Этот адрес не подходит. Нужен https://, если только сервер не находится в вашей сети.";
+"Sends the key you enter only to the server address you enter. No Keychain prompt." = "Отправляет введённый ключ только на указанный вами адрес сервера. Доступ к связке ключей не запрашивается.";
+"A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "API-ключ группы с вашего сервера sub2api. Отправляется только на адрес выше. Хранится в зашифрованном виде на этом Mac.";
+"A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "Personal Access Token с сайта v2ex.com. Хранится в зашифрованном виде на этом Mac.";
+"Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "Адрес вашего сервера, например https://gateway.example.com. Pulse запрашивает у него только расход и больше ничего не отправляет.";
+"The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "Тот же ключ, который ваш ИИ-клиент использует для этого шлюза. Отправляется только на адрес выше. Хранится в зашифрованном виде на этом Mac.";
+"Credit allowance" = "Кредиты по тарифу";
+"Team credits" = "Кредиты команды";
+"%@: %@ credits expire" = "%@: сгорают кредиты (%@)";
+"Sign in to Qoder in a browser to see usage." = "Войдите в Qoder в браузере, чтобы видеть расход.";
+"Qoder's saved session expired. Sign in again in your browser." = "Сохранённый сеанс Qoder истёк. Войдите снова в браузере.";
+"This Qoder account has no credits." = "У этого аккаунта Qoder нет кредитов.";
+"Reads your credits with your signed-in browser session." = "Узнаёт баланс кредитов через ваш сеанс в браузере.";
+"No Qoder session found. Sign in at %@ first." = "Сеанс Qoder не найден. Сначала войдите на %@.";
+"Site" = "Сайт";
+"Where you signed in. Changing it clears the saved session." = "Сайт, на котором выполнен вход. При смене сохранённый сеанс удаляется.";
+"Sign in to StepFun's platform in a browser to see usage." = "Войдите на платформу StepFun в браузере, чтобы видеть расход.";
+"StepFun's saved session expired. Sign in again in your browser." = "Сохранённый сеанс StepFun истёк. Войдите снова в браузере.";
+"No Step Plan on this StepFun account." = "У этого аккаунта StepFun нет Step Plan.";
+"Reads your Step Plan with your signed-in browser session." = "Получает данные Step Plan через ваш сеанс в браузере.";
+"No StepFun session found. Sign in at %@ first." = "Сеанс StepFun не найден. Сначала войдите на %@.";
+
+/* Extensions */
+"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "Расширение — это программа, которую вы добавляете сами; она сообщает расход одного аккаунта. Pulse показывает её вывод в виде кольца, запускает её только после включения и не передаёт ей никаких учётных данных.";
+"Another extension already uses the id %@." = "ID «%@» уже занят другим расширением.";
+"Couldn't be used" = "Не удалось использовать";
+"Each extension is a folder of its own, holding pulse-extension.json and its program." = "Каждое расширение — отдельная папка с файлом pulse-extension.json и программой.";
+"Extension" = "Расширение";
+"Extension program" = "Программа расширения";
+"Extensions" = "Расширения";
+"Extensions folder" = "Папка расширений";
+"Folder" = "Папка";
+"Found" = "Найденные";
+"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "Указан в pulse-extension.json. Под этим ID Pulse хранит настройки расширения.";
+"How to write an extension" = "Как написать расширение";
+"Id" = "ID";
+"Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID может состоять только из строчных латинских букв, цифр, точек, дефисов и подчёркиваний — не длиннее 64 символов.";
+"Its name is empty." = "Имя не указано.";
+"Its program has to be inside its own folder." = "Программа должна находиться в папке расширения.";
+"Its program isn't there, or isn't executable." = "Программа не найдена или не является исполняемой.";
+"Look again" = "Проверить снова";
+"Manage extensions" = "Управление расширениями";
+"No pulse-extension.json in this folder." = "В этой папке нет pulse-extension.json.";
+"None yet" = "Пока нет";
+"Program" = "Программа";
+"Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Pulse просматривает эту папку при запуске. Добавив или изменив расширение, нажмите «Проверить снова».";
+"Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program." = "Запускает программу из папки расширений по расписанию обновления. Pulse не передаёт ей учётных данных; что читать и куда подключаться, решает сама программа.";
+"Show in Finder" = "Показать в Finder";
+"Shown in the panel" = "Отображается на панели";
+"Stopped if it hasn't answered by then." = "Если за это время ответа нет, программа останавливается.";
+"The extension didn't answer in time." = "Расширение не ответило вовремя.";
+"The extension says its login has expired." = "Расширение сообщает, что срок действия входа истёк.";
+"The extension stopped with an error." = "Расширение завершилось с ошибкой.";
+"This extension's program can't be run. Check its folder." = "Не удаётся запустить программу этого расширения. Проверьте его папку.";
+"Time limit" = "Время ожидания";
+"Written for extension schema %@, which this version of Pulse doesn't read." = "Расширение написано для схемы %@, которую эта версия Pulse не поддерживает.";
+"pulse-extension.json isn't valid JSON, or is missing a field." = "Файл pulse-extension.json содержит некорректный JSON или в нём не хватает поля.";
+
+/* Profiled providers: shared wording */
+"No session found. Sign in at %@ first." = "Сеанс не найден. Сначала войдите на %@.";
+"Nothing saved on this Mac yet. Open the service's app once, then retry." = "На этом Mac пока ничего не сохранено. Откройте приложение сервиса хотя бы раз и повторите попытку.";
+"Read a browser session in Settings." = "Считайте сеанс браузера в настройках.";
+"Sign in with this service's own app or command-line tool first." = "Сначала войдите через приложение или утилиту командной строки этого сервиса.";
+"The browser session expired. Sign in on the website, then read it again in Settings." = "Сеанс браузера истёк. Войдите на сайте, затем снова считайте сеанс в настройках.";
+"The saved login has expired. Sign in again with the service's own app or tool." = "Срок действия сохранённого входа истёк. Войдите снова через приложение или утилиту сервиса.";
+"This account has no plan with usage limits." = "У этого аккаунта нет тарифа с лимитами.";
+
+/* ClinePass */
+"From app.cline.bot. Stored encrypted on this Mac." = "Можно получить на app.cline.bot. Хранится в зашифрованном виде на этом Mac.";
+
+/* Amp */
+"From ampcode.com/settings. Stored encrypted on this Mac." = "Можно получить на ampcode.com/settings. Хранится в зашифрованном виде на этом Mac.";
+/* Gemini */
+"Reads the login saved in ~/.gemini/oauth_creds.json. No Keychain prompt." = "Читает данные входа из ~/.gemini/oauth_creds.json. Доступ к связке ключей не запрашивается.";
+"Gemini CLI's own login" = "Вход через Gemini CLI";
+"Uses the login Gemini CLI already saved. Using Gemini CLI renews it." = "Использует вход, уже сохранённый Gemini CLI. Он продлевается, когда вы работаете с Gemini CLI.";
+
+/* Kilo Code */
+"Uses a key entered in Settings, or reads ~/.local/share/kilo/auth.json. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает ~/.local/share/kilo/auth.json. Доступ к связке ключей не запрашивается.";
+"From app.kilo.ai. Optional — Pulse can use the login the Kilo CLI saved. Stored encrypted on this Mac." = "Можно получить на app.kilo.ai. Необязательно — Pulse может использовать вход, сохранённый Kilo CLI. Хранится в зашифрованном виде на этом Mac.";
+
+/* Mistral */
+/* Factory */
+"From app.factory.ai. Stored encrypted on this Mac." = "Можно получить на app.factory.ai. Хранится в зашифрованном виде на этом Mac.";
+
+/* Windsurf */
+
+/* Profiled providers: browser storage */
+"Reads windsurf.com's sign-in from a Chromium browser when you press Read. No Keychain prompt." = "По нажатию «Считать» читает данные входа windsurf.com из браузера на основе Chromium. Доступ к связке ключей не запрашивается.";
+"Browser session" = "Сеанс браузера";
+/* OpenAI API */
+"From platform.openai.com. Stored encrypted on this Mac." = "Можно получить на platform.openai.com. Хранится в зашифрованном виде на этом Mac.";
+
+/* JetBrains AI */
+"As current as the IDE last left it." = "Данные актуальны на момент последнего сохранения в IDE.";
+"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "Читает квоту AI Assistant, которую JetBrains IDE сохраняет на этом Mac. Ничего никуда не отправляется.";
+"The quota your JetBrains IDE saved" = "Квота, сохранённая JetBrains IDE";
+
+/* Warp */
+"From Warp's settings, under API Keys. Stored encrypted on this Mac." = "Можно получить в настройках Warp, в разделе API Keys. Хранится в зашифрованном виде на этом Mac.";
+
+/* IBM Bob */
+"From bob.ibm.com. Stored encrypted on this Mac." = "Можно получить на bob.ibm.com. Хранится в зашифрованном виде на этом Mac.";
+/* Synthetic */
+"From synthetic.new. Stored encrypted on this Mac." = "Можно получить на synthetic.new. Хранится в зашифрованном виде на этом Mac.";
+
+/* ElevenLabs */
+"From elevenlabs.io, with the user_read permission. Stored encrypted on this Mac." = "Можно получить на elevenlabs.io; нужно разрешение user_read. Хранится в зашифрованном виде на этом Mac.";
+
+/* Chutes */
+"From chutes.ai. Stored encrypted on this Mac." = "Можно получить на chutes.ai. Хранится в зашифрованном виде на этом Mac.";
+
+/* GitKraken AI */
+"Uses only the access token you enter in Settings. No Keychain prompt." = "Использует только токен доступа, введённый в настройках. Доступ к связке ключей не запрашивается.";
+"The Bearer token from gitkraken.dev's usage request, copied from the browser's developer tools. Stored encrypted on this Mac." = "Bearer-токен из запроса расхода на gitkraken.dev, скопированный в инструментах разработчика браузера. Хранится в зашифрованном виде на этом Mac.";
+
+/* xKiro */
+"From xkiro.com. Stored encrypted on this Mac." = "Можно получить на xkiro.com. Хранится в зашифрованном виде на этом Mac.";
+
+/* Hyper */
+"From hyper.charm.land. Stored encrypted on this Mac." = "Можно получить на hyper.charm.land. Хранится в зашифрованном виде на этом Mac.";
+
+/* Atlas Cloud */
+"From atlascloud.ai, with permission to read the balance. Stored encrypted on this Mac." = "Можно получить на atlascloud.ai; нужно право на чтение баланса. Хранится в зашифрованном виде на этом Mac.";
+
+/* Poe */
+"From poe.com/api/keys. Stored encrypted on this Mac." = "Можно получить на poe.com/api/keys. Хранится в зашифрованном виде на этом Mac.";
+/* Aixy */
+"From aixy-gateway.com. Stored encrypted on this Mac." = "Можно получить на aixy-gateway.com. Хранится в зашифрованном виде на этом Mac.";
+
+/* Neuralwatt */
+"From portal.neuralwatt.com. Stored encrypted on this Mac." = "Можно получить на portal.neuralwatt.com. Хранится в зашифрованном виде на этом Mac.";
+
+/* ClawRouter */
+"From clawrouter.openclaw.ai. Stored encrypted on this Mac." = "Можно получить на clawrouter.openclaw.ai. Хранится в зашифрованном виде на этом Mac.";
+
+/* ZenMux */
+"A Management API key from zenmux.ai. An ordinary API key won't work. Stored encrypted on this Mac." = "Ключ Management API с zenmux.ai. Обычный API-ключ не подойдёт. Хранится в зашифрованном виде на этом Mac.";
+
+/* v0 */
+"From v0.app. Stored encrypted on this Mac." = "Можно получить на v0.app. Хранится в зашифрованном виде на этом Mac.";
+
+/* DevPass */
+"An API key from llmgateway.io. Stored encrypted on this Mac." = "API-ключ с llmgateway.io. Хранится в зашифрованном виде на этом Mac.";
+
+/* DeepInfra */
+"From deepinfra.com. Stored encrypted on this Mac." = "Можно получить на deepinfra.com. Хранится в зашифрованном виде на этом Mac.";
+
+/* Vercel AI Gateway */
+"An AI Gateway API key from vercel.com. Stored encrypted on this Mac." = "API-ключ AI Gateway с vercel.com. Хранится в зашифрованном виде на этом Mac.";
+/* Alibaba Coding Plan */
+"From the Coding Plan page in Model Studio. Stored encrypted on this Mac." = "Можно получить на странице Coding Plan в Model Studio. Хранится в зашифрованном виде на этом Mac.";
+
+/* Alibaba Token Plan */
+"Bailian CLI" = "Bailian CLI";
+"Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "Запускает Bailian CLI (bl) с сохранённым в нём входом. Pulse не читает и не хранит его учётные данные.";
+"Uses the login the Bailian CLI already saved." = "Использует вход, уже сохранённый Bailian CLI.";
+/* Nous Portal */
+"Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "Читает данные входа в Nous Portal, которые Hermes Agent сохранил в ~/.hermes. Доступ к связке ключей не запрашивается.";
+"Hermes Agent's login" = "Вход через Hermes Agent";
+"Uses the login Hermes Agent already saved. Pulse never renews it." = "Использует вход, уже сохранённый Hermes Agent. Pulse никогда его не продлевает.";
+
+/* Hugging Face */
+"Uses a token entered in Settings, or reads the one hf auth login saved in ~/.cache/huggingface. No Keychain prompt." = "Использует токен, введённый в настройках, или читает токен, который hf auth login сохранил в ~/.cache/huggingface. Доступ к связке ключей не запрашивается.";
+"From huggingface.co/settings/tokens. Stored encrypted on this Mac." = "Можно получить на huggingface.co/settings/tokens. Хранится в зашифрованном виде на этом Mac.";
+
+/* Moonshot */
+"From the Kimi Open Platform console, international or China. Stored encrypted on this Mac." = "Можно получить в консоли Kimi Open Platform — международной или китайской. Хранится в зашифрованном виде на этом Mac.";
+
+/* Codebuff */
+"Uses a key entered in Settings, or reads the login the codebuff CLI saved in ~/.config/manicode. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает данные входа, которые codebuff CLI сохранил в ~/.config/manicode. Доступ к связке ключей не запрашивается.";
+"From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac." = "Можно получить на codebuff.com. Необязательно — Pulse может использовать вход, сохранённый codebuff CLI. Хранится в зашифрованном виде на этом Mac.";
+
+/* Venice */
+"From venice.ai's API settings. Stored encrypted on this Mac." = "Можно получить в настройках API на venice.ai. Хранится в зашифрованном виде на этом Mac.";
+
+/* TypeSafe */
+"Uses the Cookie header you paste in Settings. No Keychain prompt." = "Использует заголовок Cookie, вставленный в настройках. Доступ к связке ключей не запрашивается.";
+"The Cookie header of a request to console.typesafe.ai/settings/billing. Stored encrypted on this Mac." = "Заголовок Cookie из запроса к console.typesafe.ai/settings/billing. Хранится в зашифрованном виде на этом Mac.";
+
+/* xAI API */
+"TeamID:ManagementKey, from console.x.ai. An inference key won't work. Stored encrypted on this Mac." = "TeamID:ManagementKey с console.x.ai. Ключ для инференса не подойдёт. Хранится в зашифрованном виде на этом Mac.";
+
+/* Billing groups */
+"Subscriptions" = "Подписки";
+"API and pay-as-you-go" = "API и оплата по факту";
+"Enabled" = "Включённые";
+"The money left, with no ring. There is no allowance to measure against." = "Только остаток средств, без кольца: сравнивать его не с чем.";
+
+/* Codex reset credits */
+"Reset credits on the card" = "Кредиты на сброс лимита в карточке";
+"How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh." = "Сколько осталось кредитов на сброс лимита и когда сгорает ближайший. Запрашивается у app server Codex при каждом обновлении.";
+"Not available" = "Недоступно";
+"codex not found" = "codex не найден";
+"Show usage in the menu bar" = "Показывать расход в строке меню";
+"A ring's mark and figure beside the icon, red past the warning line." = "Логотип сервиса и число из кольца рядом со значком; за порогом предупреждения — красным.";
+"Usage" = "Использование";
+"Menu bar shows" = "В строке меню";
+"An account switched off falls back to the fullest ring." = "Если выбранный аккаунт выключен, показывается самое заполненное кольцо.";
+"Fullest ring" = "Самое заполненное кольцо";
+"Menu bar style" = "Вид в строке меню";
+"Figure" = "Число";
+"Ring" = "Кольцо";
+"Open %@ usage page" = "Открыть страницу расхода %@";
+"Overview" = "Обзор";
+"Updated just now" = "Обновлено только что";
+"Updated %@" = "Обновлено %@";
+"Estimated from token counts at API prices — not your subscription bill." = "Оценка по числу токенов и ценам API, а не счёт за подписку.";
+"Reading local records…" = "Чтение локальных записей…";
+"Usage credits" = "Кредиты";
+"%@ remaining" = "Осталось %@";
+"Split" = "Раздельно";
+"Short: day" = "День";
+"Short: week" = "Нед";
+"Short: month" = "Мес";
+"Start windows automatically" = "Автоматический старт периодов";
+"Start a new window after each reset" = "Начинать новый период после каждого сброса";
+"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда лимит на 5 часов сбрасывается, Pulse отправляет «hi» модели Haiku через Claude Code, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
+"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда сбрасывается лимит на 5 часов или недельный лимит, Pulse отправляет «hi» самой дешёвой модели через Codex, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
+"Only between" = "Только в часы";
+"A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "Если сброс приходится на другое время, новый период запускается, когда наступят эти часы. Общая настройка для Claude Code и Codex.";
+"Last started" = "Последний запуск";
+"Use at your own risk" = "Используйте на свой риск";
+"I understand the risk, turn it on" = "Я понимаю риск, включить";
+"This is not a feature of Anthropic or OpenAI. Starting usage windows automatically may be treated as getting around usage limits, and could get your account restricted or suspended. Pulse only sends one short message through the tool you are already signed in to, and is not responsible for anything that happens to your account as a result. Turn it on only if you accept that." = "Это не функция Anthropic или OpenAI. Автоматический запуск периодов может быть расценён как обход лимитов и привести к ограничению или блокировке аккаунта. Pulse лишь отправляет одно короткое сообщение через инструмент, в котором вы уже выполнили вход, и не несёт ответственности за последствия для вашего аккаунта. Включайте функцию, только если вы с этим согласны.";
+"Not started yet" = "Ещё не запускался";
+"%@ · the command-line tool was not found" = "%@ · инструмент командной строки не найден";
+"%@ · it did not go through; check the tool is signed in" = "%@ · отправить не удалось; проверьте, выполнен ли вход в инструменте";
+"%@ · it did not answer in time" = "%@ · нет ответа за отведённое время";
+
+"Detailed card" = "Подробная карточка";
+"On this Mac" = "На этом Mac";
+"7 days" = "7 дней";
+"31 days" = "31 день";
+"Costs are estimates at API prices." = "Суммы — оценка по ценам API.";
+"Whole account" = "Весь аккаунт";
+"Couldn't read the history." = "Не удалось прочитать историю.";
+"From %@, for the whole account." = "Данные %@ по всему аккаунту.";
+"Adds the plan and when the figures were read." = "Добавляет тариф и время получения данных.";
+"Adds the plan, when the figures were read and the account's usage over the last month." = "Добавляет тариф, время получения данных и расход аккаунта за последний месяц.";
+"Adds the plan, when the figures were read and, with Token spend on, this Mac's recent activity." = "Добавляет тариф, время получения данных и — если включён «Расход токенов» — недавнюю активность на этом Mac.";
+"Estimated value %@ · %@ used" = "Оценочная стоимость %@ · использовано %@";
+"Cache hit rate" = "Попадания в кэш";
+"Models" = "Модели";
+"Share" = "Доля";
+"Cache hit" = "Из кэша";
+"Tokens/s" = "Токенов/с";
+"First token" = "Первый токен";
+"Share and cache hit cover the last 31 days." = "Доля и попадания в кэш — за последние 31 день.";
+"Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "Доля и попадания в кэш — за последние 31 день; токены в секунду — только за последние 24 часа, от отправки запроса до конца ответа.";
+"Too few replies in the last 24 hours to time." = "За последние 24 часа слишком мало ответов, чтобы измерить скорость.";
+"First token is Codex's own measure of how long a turn waited for it." = "«Первый токен» — сколько каждый запрос ждал первого токена, по замерам самого Codex.";
+"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code не записывает, когда пришёл первый токен, поэтому время ожидания не показано.";
+"%@ s" = "%@ с";
+"Prompt cache (%@)" = "Кэш промптов (%@)";
+"%@ left" = "осталось %@";
+"Expired" = "истёк";
+"Prompt cache · %@ chats" = "Кэш промптов · чатов: %@";
+"Soonest in %@" = "ближайший — через %@";
+"Prompt cache" = "Кэш промптов";
+"No conversation is holding a cache" = "Нет чатов с активным кэшем";
+"Untitled conversation" = "Чат без названия";
+"Codex review" = "Код-ревью Codex";
+"%@ cache" = "кэш на %@";
+"Last used %@" = "последний запрос: %@";
+"The latest one's cache lapsed at %@." = "Кэш последнего чата истёк в %@.";
+"Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "Берётся из записей самого Claude Code: в каждом ответе указано, кэширован он на час или на пять минут, и кэш живёт столько же с момента последнего запроса, который его использовал. Это время верно, если предшествующая часть диалога не менялась: смена модели, изменение набора инструментов или сжатие контекста создают новый кэш. У субагентов свои кэши, здесь они не показаны.";
+"At least %@ left" = "осталось не менее %@";
+"May have lapsed" = "возможно, истёк";
+"Read from Codex's own records: the model each request used, and when it was sent. On GPT-5.6 and later, OpenAI keeps a cache available for at least 30 minutes after it was last used, and may keep it longer — so this is the time it is guaranteed, not when it ends. Earlier models have no stated lifetime and are not listed. Under heavy traffic a request can still miss within this time." = "Берётся из записей самого Codex: какая модель использовалась в каждом запросе и когда он был отправлен. Для GPT-5.6 и новее OpenAI хранит кэш не менее 30 минут после последнего использования и может хранить дольше, поэтому здесь показано гарантированное время, а не момент окончания. Для более ранних моделей срок хранения не объявлен, и они не показаны. При высокой нагрузке запрос может не попасть в кэш даже в это время.";
+"No conversation is within its guaranteed cache time" = "Нет чатов в пределах гарантированного срока кэша";
+"Kept at least %@" = "хранится не менее %@";
+"The latest one's guaranteed time ended at %@." = "Гарантированный срок последнего чата истёк в %@.";
+"Usage panel in the menu" = "Панель расхода в меню";
+"Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "Меню в строке меню открывается с обзора всех аккаунтов, а у каждого аккаунта есть вкладка с лимитами, тарифом и расходами.";
+"OpenCode console" = "Консоль OpenCode";
+"Account request log" = "Журнал запросов аккаунта";
+"Kept. The detailed card reads every request on the account with it." = "Сеанс сохранён. С ним подробная карточка видит все запросы аккаунта.";
+"No OpenCode console session found. Sign in at opencode.ai first." = "Сеанс консоли OpenCode не найден. Сначала войдите на opencode.ai.";
+"Costs as %@ charged them, for the whole account." = "Суммы — фактические списания %@ по всему аккаунту.";
+"The console session has expired. Read it again in Settings." = "Сеанс консоли истёк. Считайте его снова в настройках.";
+"The request log OpenCode's console keeps for 30 days — every machine and every app on the account, and what each request cost — and the plan's limits, when no key is set or the key is turned away. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "Журнал запросов, который консоль OpenCode хранит 30 дней: все устройства и приложения аккаунта и стоимость каждого запроса. Если ключ не задан или отклонён, отсюда же берутся лимиты тарифа. Pulse хранит только cookie входа в консоль, в зашифрованном виде на этом Mac.";
+"Turn on Detailed card above to see the request log on the card." = "Включите параметр «Подробная карточка» выше, чтобы видеть журнал запросов на карточке.";
+"Read from %@ · workspace %@." = "Считано из %@ · рабочее пространство «%@».";
+"The console turned this session away. Sign in again at opencode.ai, then read it again." = "Консоль отклонила этот сеанс. Войдите снова на opencode.ai и считайте сеанс ещё раз.";
+"Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "Считано из %@, но консоль не ответила. Pulse попробует снова при следующем обновлении.";
+"Reading the account's records…" = "Чтение записей аккаунта…";
+"From %@'s request log for the whole account — every machine and every app that uses it — with what each request was charged. The log keeps 30 days." = "Из журнала запросов %@ по всему аккаунту — со всех устройств и всех приложений, которые его используют, — с фактической стоимостью каждого запроса. Журнал хранит данные за 30 дней.";
+
+"From %@'s console for the whole account — every key and every machine — with what was charged, day by day. Pulse reads the last 30 days." = "Из консоли %@ по всему аккаунту — все ключи и все устройства — с фактическими списаниями по дням. Pulse читает последние 30 дней.";
+"DeepSeek console" = "Консоль DeepSeek";
+"Account usage" = "Расход аккаунта";
+"Kept. The usage history below and the detailed card read the whole account with it." = "Вход сохранён. С ним история расхода ниже и подробная карточка охватывают весь аккаунт.";
+"The usage DeepSeek's console keeps for the account — every key and every machine, day by day, and what was charged — and the balance, when no key is set or the key is turned away. Pulse keeps only the console's sign-in, encrypted on this Mac." = "Расход, который консоль DeepSeek хранит для аккаунта: все ключи и все устройства по дням и фактические списания. Если ключ не задан или отклонён, отсюда же берётся баланс. Pulse хранит только данные входа в консоль, в зашифрованном виде на этом Mac.";
+"Reads Chrome, Edge, Brave, Arc and other Chromium browsers." = "Читает Chrome, Edge, Brave, Arc и другие браузеры на основе Chromium.";
+"No Chromium browser was found. Sign in at platform.deepseek.com in Chrome, Edge, Brave or Arc." = "Браузер на основе Chromium не найден. Войдите на platform.deepseek.com в Chrome, Edge, Brave или Arc.";
+"No DeepSeek console sign-in found. Sign in at platform.deepseek.com first." = "Вход в консоль DeepSeek не найден. Сначала войдите на platform.deepseek.com.";
+"The console turned this sign-in away. Sign in again at platform.deepseek.com, then read it again." = "Консоль отклонила этот вход. Войдите снова на platform.deepseek.com и считайте данные ещё раз.";
+
+"Last 30 days" = "Последние 30 дней";
+"Last 90 days" = "Последние 90 дней";
+"All sessions" = "Все сессии";
+"Signs of a weaker model" = "Признаки ослабления модели";
+"Period" = "Период";
+"No Codex replies with reasoning in this period" = "За этот период нет ответов Codex с рассуждениями";
+"%@ of %@ long replies had their reasoning cut off" = "Длинных ответов с оборванными рассуждениями: %@ из %@";
+"Too few to tell" = "Слишком мало данных";
+"Possibly weakened" = "Возможно, ослаблена";
+"Normal" = "В норме";
+"None found" = "Не обнаружено";
+"%@ more" = "Ещё %@";
+"Checked %@ sessions." = "Проверено сессий: %@.";
+"Read from this Mac's Codex records; nothing is sent." = "Данные из записей Codex на этом Mac; ничего не отправляется.";
+"Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance." = "Оборванные рассуждения: рассуждения модели остановились ровно на 516, 1034, 1552… токенах, как будто их обрезали. Случайно на этих значениях останавливаются лишь около 0,2% ответов.";
+"Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything." = "Тихо пониженные настройки: запрос выполнен на более слабой модели, с меньшим уровнем рассуждений или меньшим контекстом, чем вы выбрали, хотя вы ничего не меняли.";
+"These are signs, not proof: Codex doesn't record which model the server actually used." = "Это признаки, а не доказательства: Codex не записывает, какую модель на самом деле использовал сервер.";
+"Reasoning cut off" = "Оборванные рассуждения";
+"%@ replies in all" = "Всего ответов: %@";
+"Settings quietly lowered" = "Тихо пониженные настройки";
+"Model: %@ swapped for %@" = "Модель: %@ заменена на %@";
+"Reasoning: %@ lowered to %@" = "Рассуждения: снижены с %@ до %@";
+"Context: %@ cut to %@" = "Контекст: урезан с %@ до %@";
+"Checked %@ sessions: the model, reasoning and context you chose were never changed." = "Проверено сессий: %@. Выбранные вами модель, уровень рассуждений и контекст ни разу не менялись.";
+"%@ other sessions can't be checked: older than Codex 0.144, or run by Codex itself." = "Не проверено сессий: %@ — они созданы до Codex 0.144 или запущены самим Codex.";
+"Service status" = "Статус сервиса";
+"Operational" = "Работает нормально";
+"Degraded performance" = "Снижена производительность";
+"Partial outage" = "Частичный сбой";
+"Full outage" = "Полный сбой";
+"Under maintenance" = "Технические работы";
+"Unrecognised status" = "Неизвестный статус";
+"Couldn't read the status page." = "Не удалось прочитать страницу статуса.";
+"Status page" = "Страница статуса";
+"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "По данным страницы статуса %@. Обновляется при открытии этой страницы и каждые пять минут, пока она открыта.";
+"90 days ago" = "90 дней назад";
+"%@ uptime" = "Доступность %@";
+"No data" = "Нет данных";
+"When a service is down" = "При сбое сервиса";
+"Codex, Claude Code and DeepSeek, from their own status pages — only the ones you have switched on." = "Codex, Claude Code и DeepSeek — по их страницам статуса; только включённые вами сервисы.";
+"%@ reports %@." = "%@ сообщает: %@.";
+"Back to normal: %@." = "Снова в норме: %@.";
+"%@ (%@)" = "%@ (%@)";
+
+// Recap cards
+"Night owl" = "Сова";
+"Early bird" = "Жаворонок";
+"Day shift" = "Дневная смена";
+"No set hours" = "Свободный график";
+"In %@, you and AI worked through" = "За %@ вы с ИИ обработали";
+"Active %@ of %@ days" = "Активных дней: %@ из %@";
+"%@ sessions" = "Сессий: %@";
+"Counted from this Mac's local records · money estimated at API prices" = "По локальным записям этого Mac · суммы оценены по ценам API";
+"Counted from this Mac's local records" = "По локальным записям этого Mac";
+"Figures are to date." = "Данные на сегодняшний день.";
+"The cache hit rate leaves out %@ of the tokens, whose counts are incomplete." = "Доля попаданий в кэш не учитывает %@ токенов с неполными данными.";
+"%@ of the tokens came from tools that record no time of day and are not in the hours." = "%@ токенов приходится на инструменты, которые не записывают время суток, — они не учтены в распределении по часам.";
+"Records on this Mac begin on %@; days before it are not counted." = "Записи на этом Mac начинаются с %@; более ранние дни не учтены.";
+"The plan price is counted from %@, when records on this Mac begin." = "Цена тарифа считается с %@ — с начала записей на этом Mac.";
+"Some work had no published price, so the money is a floor." = "У части работы нет опубликованной цены, поэтому сумма — нижняя оценка.";
+"Some tools' counts may be missing, so the total is a floor." = "Данные некоторых инструментов могут быть неполными, поэтому итог — нижняя оценка.";
+"Project %@" = "Проект %@";
+"%@ a day on average" = "В среднем %@ в день";
+"Estimated at API prices" = "Оценка по ценам API";
+"Subscription payback" = "Окупаемость подписки";
+"Paid %@ · used %@" = "Оплачено %@ · использовано %@";
+"Every day" = "По дням";
+"Darker days used more" = "Чем темнее день, тем больше расход";
+"Month by month" = "По месяцам";
+"Rhythm of the day" = "Ритм дня";
+"Peak %@" = "Пик в %@";
+"%@ of it came between %@ and %@." = "%1$@ расхода пришлось на время с %2$@ до %3$@.";
+"Model ranking" = "Рейтинг моделей";
+"By token share" = "По доле токенов";
+"Other" = "Другие";
+"%@ agents" = "%@ инстр.";
+"Reading repeated context from the cache took about %@ off the API price" = "Повторный контекст из кэша сэкономил около %@ по ценам API";
+"days" = "дн.";
+"Still going · longest %@" = "Продолжается · рекорд %@";
+"Top projects" = "Основные проекты";
+"In %@," = "За %@";
+"%@ AI tools coded with you." = "вы писали код с %@ ИИ-инструментами.";
+"One AI tool coded with you." = "вы писали код с одним ИИ-инструментом.";
+"%@ more: %@" = "Ещё %1$@: %2$@";
+"Worked beside you" = "Работали вместе с вами";
+"Turn the page to see what you made together" = "Листайте дальше, чтобы увидеть, что вы сделали вместе";
+"is your busiest hour of the day." = "Ваш самый активный час дня.";
+"On a plan of %@ a month, you used" = "При тарифе %@ в месяц вы использовали на сумму";
+"Payback" = "Окупаемость";
+"You paid" = "Оплачено";
+"You used" = "Использовано";
+"Where the money went" = "Куда ушли деньги";
+"The cache took off the API price" = "Кэш сэкономил по ценам API";
+"Estimated at each model's published API price. The plan price is the one you typed in Pulse." = "Оценка по опубликованным ценам API для каждой модели. Цена тарифа — та, что вы указали в Pulse.";
+"Figures are to date, and the plan price is prorated by the days so far." = "Данные на сегодняшний день; цена тарифа пересчитана пропорционально прошедшим дням.";
+"That was" = "Таким был";
+"your %@." = "ваш %@.";
+"So far, this is" = "Таким пока выглядит";
+"Check back when %@ is over" = "Загляните снова, когда закончится %@";
+"Tokens" = "Токены";
+"Sessions" = "Сессии";
+"Most used" = "Чаще всего";
+"Your type" = "Ваш тип";
+"See you in %@" = "До встречи в итогах за %@";
+"Your busiest month" = "Самый активный месяц";
+"vs same period in %@" = "к тем же дням за %@";
+"per day vs %@" = "к среднему в день за %@";
+"Tokens · to %@" = "Токены · на %@";
+"Estimated at API prices · daily" = "Оценка по ценам API · по дням";
+"Estimated at API prices · monthly" = "Оценка по ценам API · по месяцам";
+"%@ per active day" = "%@ на активный день";
+"Tools" = "Инструменты";
+"Every day of %@" = "По дням за %@";
+"Busiest %@ · %@" = "Пик: %@ · %@";
+
+// Recap window, entry points and notification
+"Monthly Recap" = "Итоги месяца";
+"Yearly Recap" = "Итоги года";
+"Monthly and Yearly Recap" = "Итоги месяца и года";
+"View %@ recap" = "Итоги за %@";
+"View %@ yearly recap" = "Итоги за %@ год";
+"Shareable cards for a month or a year, from this Mac's records." = "Карточки за месяц или год по записям этого Mac — ими можно поделиться.";
+"When a recap is ready" = "Когда итоги готовы";
+"Last month's recap, at the start of the month. Needs Token spend reading." = "Итоги прошлого месяца — в начале месяца. Нужно включить «Читать локальные записи о расходе».";
+"Your %@ recap is ready" = "Итоги за %@ готовы";
+"The recap needs Token spend" = "Для итогов нужен «Расход токенов»";
+"It is built from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "Итоги строятся по записям о расходе на этом Mac, а Pulse читает их, только когда включено «Читать локальные записи о расходе».";
+"Open Token spend" = "Открыть «Расход токенов»";
+"The records could not be read." = "Не удалось прочитать записи.";
+"No records for %@" = "Нет записей за %@";
+"Nothing in this Mac's usage records falls in this period." = "В записях о расходе на этом Mac нет ничего за этот период.";
+"The first read of a long history can take a minute or two." = "Первое чтение длинной истории может занять минуту-две.";
+"Month" = "Месяц";
+"Year" = "Год";
+"Monthly price" = "Цена в месяц";
+"Only used for the payback card. Leave it empty to leave that card out." = "Нужна только для карточки окупаемости. Оставьте поле пустым, чтобы эта карточка не создавалась.";
+"Privacy" = "Конфиденциальность";
+"Hide project names" = "Скрыть названия проектов";
+"Save image" = "Сохранить изображение";
+"Save all" = "Сохранить все";
+"Copy image" = "Скопировать изображение";
+"Share image" = "Поделиться изображением";
+"Couldn't make the image." = "Не удалось создать изображение.";
+"Saved" = "Сохранено";
+"Save here" = "Сохранить сюда";
+"Token activity" = "Активность по токенам";
+"Daily" = "По дням";
+"Weekly" = "По неделям";
+"Cumulative" = "Накопительно";
+"%@ tokens in the last 12 months" = "Токенов за последние 12 месяцев: %@";
+"%@ over the last 12 months, %@ active days" = "За последние 12 месяцев: %@, активных дней: %@";
+"Less" = "Меньше";
+"More" = "Больше";
+"Total through %@" = "Итого на %@";
+
+// Recap cards, redesigned: opener, calendar, timetable and payback
+"In all" = "Всего";
+"tool" = "инструмент";
+"tools" = "инстр.";
+"%@ active days" = "Активных дней: %@";
+"1 active day" = "1 активный день";
+"1 day" = "1 день";
+"day" = "день";
+"1 session" = "1 сессия";
+"1 agent" = "1 инструмент";
+"Active %@ of 1 day" = "Активных дней: %@ из 1";
+"Used %@ · top tool" = "В работе %@ · основной инструмент";
+"Which days · days used · token share" = "Какие дни · сколько дней · доля токенов";
+"Which months · days used · token share" = "Какие месяцы · сколько дней · доля токенов";
+"Darker days used more · dashed days had none" = "Чем темнее день, тем больше расход · пунктир — дни без работы";
+"By week" = "По неделям";
+"Busiest week: %@" = "Самая активная неделя: %@";
+"Weekdays and weekends" = "Будни и выходные";
+"Average per active day: %@" = "В среднем за активный день: %@";
+"Weekdays %@" = "Будни %@";
+"Weekends %@" = "Выходные %@";
+"%@ weekdays, used on %@ of them" = "Будних дней: %@, активных: %@";
+"%@ weekend days, used on %@ of them" = "Выходных дней: %@, активных: %@";
+"Earliest start" = "Самое раннее начало";
+"The earliest hour after 5 AM with any work" = "Самый ранний рабочий час после 5 утра";
+"Finishes latest" = "Самое позднее окончание";
+"One night ran past midnight" = "Однажды работа затянулась за полночь";
+"%@ nights ran past midnight" = "Ночей с работой за полночь: %@";
+"%@ to %@" = "%1$@–%2$@";
+"of your usage fell in these hours" = "расхода пришлось на эти часы";
+"Four parts of the day" = "Время суток";
+"Small hours" = "Ночь";
+"Morning" = "Утро";
+"Afternoon" = "День";
+"Evening" = "Вечер";
+"Busiest: %@" = "Активнее всего: %@";
+"Busiest on average: %@" = "В среднем активнее всего: %@";
+"24 hours" = "24 часа";
+"Seven days of the week" = "Дни недели";
+"For every %@ of subscription, you used %@ of API value" = "Каждый %@ подписки — это %@ по ценам API";
+"%@× the estimate" = "%@× от оценки";
+"Most expensive day" = "Самый дорогой день";
+"Per million tokens" = "За миллион токенов";
+"Cache hit %@" = "Из кэша: %@";
+"The cache" = "Кэш";
+"Repeated context is read straight from the cache" = "Повторный контекст читается прямо из кэша";
+"Without the cache" = "Без кэша";
+"With the cache" = "С кэшем";
+"Spent by day" = "Расходы по дням";
+"Spent by month" = "Расходы по месяцам";
+"Unclassified" = "Без категории";
+"These records do not report this token category separately." = "В этих записях эта категория токенов отдельно не указывается.";
+"Reported tokens without a usable category breakdown." = "Токены, для которых нет пригодной разбивки по категориям.";

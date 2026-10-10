@@ -2,7 +2,7 @@
 import Foundation
 
 /// Wording the cards share. Every sentence is a key in the strings files, in
-/// all five languages; none is assembled from English fragments.
+/// every language; none is assembled from English fragments.
 ///
 /// Where a figure sits inside a sentence it is handed in marked
 /// (`RecapEmphasis.mark`), so each translation puts it where its language

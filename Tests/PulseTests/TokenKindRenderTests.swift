@@ -17,7 +17,7 @@ struct TokenKindRenderTests {
 
         let languages: [(String, AppLanguage)] = [
             ("en", .english), ("zh-Hans", .chineseSimplified), ("zh-Hant", .chineseTraditional),
-            ("ja", .japanese), ("ko", .korean),
+            ("ja", .japanese), ("ko", .korean), ("ru", .russian),
         ]
         let examples: [(String, TokenTally, Int)] = [
             ("complete", TokenTally(input: 100, cacheWrite: 200, cacheRead: 400, output: 50), 0),

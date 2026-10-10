@@ -76,14 +76,14 @@
 - **动画标记（可选）**：把供应商图标换成一个会随该账号状态反应的小机器人——正在干活、正在取数、额度用满还是闲着。默认关闭，按账号开启；八种人格、十八种形状，颜色也可以自己指定。
 - **浮动栏菜单与快捷键**：右键浮动栏——或收起后的细线，按住 Control 点击同样有效——可打开含「设置」与「退出」的菜单。在 **设置 › 通用 › 快捷键** 中，可自行将全局快捷键分配给**打开设置**与**显示或隐藏面板**；两者默认都不绑定。
 - **菜单栏用量（可选）**：在菜单栏图标旁显示用得最多的那个圆环——或你指定的账号——可选数字、迷你圆环，或并排显示 5 小时与每周额度（`5h/9%  周/15%`），超过警示线时变红。打开「菜单里显示用量面板」后，点开图标会显示一个用量面板：概览列出所有账号，每个账号一个标签页，含各项额度与重置时间、额度余额、花费估算（开启 Token 消耗时）和服务方官方用量页链接。只想用菜单栏的话，可在同一菜单里关掉悬浮面板。
-- **五种界面语言**：英文、简体中文、繁体中文、日语与韩语；大数缩写分别使用 K/M/B、万/亿、萬/億、万/億与 만/억。
+- **六种界面语言**：英文、简体中文、繁体中文、日语、韩语与俄语；大数缩写分别使用 K/M/B（英文与俄语）、万/亿、萬/億、万/億与 만/억。
 
 ### 多账号管理与本地消费账本
 - **多账号并行**：支持同一服务绑定多个订阅（Claude Code、Codex、Grok、Grok Bot），并排查看并自定义标签。
 - **Token 消耗（设置内查看）**：默认关闭，在页面顶部开启后才读取本机记录，关闭即可停止扫描。支持本地日志、数据库与导出文件，目录涵盖 **54 个客户端来源**，包括 Gemini CLI、Cline、Roo Code、OpenClaw 和 GitHub Copilot。Cursor、Trae 等导出来源需要先导出或捕获记录。这些来源与浮动栏上的 77 个配额服务商不同，各自支持的格式和真实客户端验证情况见[来源说明](Docs/token-spend-sources.md)。
 - **明确的用量估算**：默认查看最近 7 天，并记住所选区间。费用按公开 API 价格折算，不是订阅账单；未知价格保留为不可用，计数不完整或时间粒度较粗会明确标注，没有 token 计数的来源会如实标注为不可用。
 - **模型详情与图表**：点开单个模型可查看输入/输出/缓存读写用量与估算费用、有记录支撑的每日与每小时图表、各 Agent 的贡献，以及可排序、分页的明细表。指向图表即可读取对应日期或小时的 Token 数量。缺失的每日或每小时明细会标注为不可用。
-- **月报与年报**：任选一个月或一年，用和 Token 消耗同一份本机记录生成一组适合分享的卡片：Token 总量和估算金额、与上个月相比的变化、每一天的日历、你最常干活的时段、背后的模型、工具和项目、连续使用天数；填上每月订阅花多少钱，还能看到订阅回本了几倍。每张卡都能存成图片、复制或分享，五种语言都支持；项目名可以一键隐藏。从 Token 消耗页面打开；也可以开启每月 1 号的提醒，告诉你上个月的月报好了。
+- **月报与年报**：任选一个月或一年，用和 Token 消耗同一份本机记录生成一组适合分享的卡片：Token 总量和估算金额、与上个月相比的变化、每一天的日历、你最常干活的时段、背后的模型、工具和项目、连续使用天数；填上每月订阅花多少钱，还能看到订阅回本了几倍。每张卡都能存成图片、复制或分享，六种语言都支持；项目名可以一键隐藏。从 Token 消耗页面打开；也可以开启每月 1 号的提醒，告诉你上个月的月报好了。
 - **七十七个服务商**：Claude Code、Codex、Kiro、Antigravity、Cursor、GitHub Copilot、Grok、Grok Bot、OpenCode Go、Kimi Code、Ollama Cloud、z.ai、Zhipu、MiniMax（国际与国内）、火山引擎、Command Code、DeepSeek、Devin、小米 Coding Plan、sub2api、New API、V2EX、Qoder，以及阶跃星辰（StepFun）；另有 Abacus AI、Aixy、Alibaba Coding Plan、Alibaba Token Plan、Amp、Atlas Cloud、Augment Code、Bifrost、Chutes、ClawRouter、ClinePass、Codebuff、DeepInfra、DevPass、ElevenLabs、Factory、Gemini、GitKraken AI、Hugging Face、Hyper、IBM Bob、JetBrains AI、Kilo Code、LiteLLM、LLM API Key Proxy、LongCat、Manus、Mistral、Moonshot、Neuralwatt、Notion AI、Nous Portal、OpenAI API、Perplexity、Poe、Qwen Cloud、Raycast AI、Replicate、Sakana AI、Synthetic、T3 Chat、TypeSafe、v0、Venice、Vercel AI Gateway、Warp、Windsurf、xAI API、xKiro、Zed、ZenMux、ZoomMate。
 - **可脚本化**：`Pulse --json` 输出最近一次读数——套餐、每条限额、重置时间，以及数字有多旧——可接 tmux、sketchybar、Raycast 或 shell 提示符。它只读缓存，所以高频轮询几乎不花代价。
 - **开发者集成**：在设置中导出 Raycast 扩展及可直接配置的 tmux、sketchybar、终端脚本；通过账户链接直达对应设置页。[安装指南](Docs/integrations.md)。

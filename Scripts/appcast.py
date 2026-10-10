@@ -16,8 +16,8 @@ Chinese and English; each item carries one `<description xml:lang="…">` per
 language and Sparkle shows the one the system's preferred languages pick
 (`NSBundle preferredLocalizationsFromArray:`). Chinese goes out as both
 `zh-Hans` and `zh-Hant` — no Traditional section is written, and macOS would
-otherwise give a Traditional reader the English. Japanese and Korean readers get
-English. Pulse can also be set to a language other than the system's, which
+otherwise give a Traditional reader the English. Japanese, Korean and Russian readers
+get English. Pulse can also be set to a language other than the system's, which
 Sparkle cannot see, so the script writes one feed per language as well
 (`appcast-zh.xml`, `appcast-en.xml`: the same items with only that language's
 notes), and the app reads the one for the language it is set to

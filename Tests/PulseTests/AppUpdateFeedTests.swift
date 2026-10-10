@@ -18,6 +18,7 @@ struct AppUpdateFeedTests {
             == "https://raw.githubusercontent.com/qunqin24/Pulse/main/appcast-en.xml")
         #expect(AppUpdate.feedURL(for: .japanese, host: .mirror) == "https://update.qunqin.org/appcast-en.xml")
         #expect(AppUpdate.feedURL(for: .korean, host: .mirror) == "https://update.qunqin.org/appcast-en.xml")
+        #expect(AppUpdate.feedURL(for: .russian, host: .mirror) == "https://update.qunqin.org/appcast-en.xml")
     }
 
     @Test func gitHubWhenItAnswersTheMirrorWhenNot() {
