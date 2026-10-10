@@ -11,6 +11,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case chineseTraditional
     case japanese
     case korean
+    case russian
 
     var id: String { rawValue }
 
@@ -27,6 +28,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .chineseTraditional: Locale(identifier: "zh_Hant")
         case .japanese: Locale(identifier: "ja_JP")
         case .korean: Locale(identifier: "ko_KR")
+        case .russian: Locale(identifier: "ru_RU")
         }
     }
 
@@ -41,6 +43,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .chineseTraditional: "zh-hant"
         case .japanese: "ja"
         case .korean: "ko"
+        case .russian: "ru"
         }
     }
 
@@ -54,6 +57,7 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .chineseTraditional: "繁體中文"
         case .japanese: "日本語"
         case .korean: "한국어"
+        case .russian: "Русский"
         }
     }
 }

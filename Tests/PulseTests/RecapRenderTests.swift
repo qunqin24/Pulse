@@ -7,7 +7,7 @@ import Testing
 ///
 /// Nothing here checks a pixel. A card either fits its language or it does not,
 /// and the only judge of that is reading it, so this renders every card of
-/// both decks in all five languages from the sample recaps and lays each
+/// both decks in every language from the sample recaps and lays each
 /// language out on one contact sheet.
 ///
 ///     PULSE_RECAP_PREVIEW=/tmp/recap swift test --filter RecapRenderTests
@@ -19,7 +19,7 @@ import Testing
 struct RecapRenderTests {
     private static let languages: [(folder: String, language: AppLanguage)] = [
         ("en", .english), ("zh-Hans", .chineseSimplified), ("zh-Hant", .chineseTraditional),
-        ("ja", .japanese), ("ko", .korean),
+        ("ja", .japanese), ("ko", .korean), ("ru", .russian),
     ]
 
     @Test(.enabled(if: ProcessInfo.processInfo.environment["PULSE_RECAP_PREVIEW"] != nil))
@@ -46,10 +46,10 @@ struct RecapRenderTests {
             try write(try #require(Self.sheet(rows)), to: directory.appendingPathComponent("sheet.png"))
         }
 
-        // A recap with fields missing: English in `edge`, and the three that run
+        // A recap with fields missing: English in `edge`, and the languages that run
         // longest or wrap differently in `edge-<language>`.
         for (folder, language) in [("edge", AppLanguage.english), ("edge-zh-Hans", .chineseSimplified),
-                                   ("edge-ja", .japanese), ("edge-ko", .korean)] {
+                                   ("edge-ja", .japanese), ("edge-ko", .korean), ("edge-ru", .russian)] {
             LocalizationSource.use(language)
             let edge = destination.appendingPathComponent(folder)
             try FileManager.default.createDirectory(at: edge, withIntermediateDirectories: true)

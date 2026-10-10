@@ -17,7 +17,7 @@ Historical matrix and disagreement numbers: [decisions/panel-frame.md](decisions
 
 ## Localization
 
-Five languages: English, Simplified Chinese, Traditional Chinese, Japanese and Korean. Strings in `Sources/Pulse/Resources/{en,zh-Hans,zh-Hant,ja,ko}.lproj`. `Package.swift` sets `defaultLocalization: "en"`.
+Six languages: English, Simplified Chinese, Traditional Chinese, Japanese, Korean and Russian. Strings in `Sources/Pulse/Resources/{en,zh-Hans,zh-Hant,ja,ko,ru}.lproj`. `Package.swift` sets `defaultLocalization: "en"`.
 
 - Language follows the system unless Settings pins one. Takes effect **without relaunch**: `LocalizationSource` swaps the `.lproj` sub-bundle. Lookups are a function call, so SwiftUI has nothing to observe — views that show copy carry `.id(settings.language)`.
 - `UsageWindow.Kind` and `ProviderUsage.Unavailability` are **cases, not stored strings**, so a reading taken in one language is not frozen when the user switches.
@@ -28,6 +28,7 @@ Five languages: English, Simplified Chinese, Traditional Chinese, Japanese and K
 - **No conditional inside `Text(localized:)`.** The key scanner reads the bare tail after `localized:` and can match an unrelated key. Build the string in a property first.
 - Dates, times, and money use `LocalizationSource.locale`, not `Locale.autoupdatingCurrent`.
 - Large numbers: `TokenCount.short` uses 万 / 亿 where `LocalizationSource.myriadUnits` returns units. Those unit characters live in code, not the strings file.
+- No plural rules: a `.strings` value is one form for every count, and Russian needs three. Russian copy keeps a number out of agreement — an abbreviated unit (`%@ дн.`, `%@ мин`) or a label before the figure (`Токенов: %@`) — rather than picking one form that is wrong for most counts.
 - Chinese full stop `。` is full-width and already has trailing space; do not add another (`glassSubtitle`).
 - SwiftPM has lowercased `zh-Hans.lproj` to `zh-hans.lproj` in the built bundle (the current toolchain does not, and CI accepts either). Where it does, `Bundle.preferredLocalizations` is case-insensitive but `path(forResource: "zh-Hans", ofType: "lproj")` returns nil, so `LocalizationSource` matches the folder name case-insensitively.
 

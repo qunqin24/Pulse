@@ -103,7 +103,7 @@ jobs:
           # bare `plutil -extract` rewrites the file it was asked to read.
           # Every language, not just the first one added: a .lproj that ships
           # without being declared here is a translation nobody ever sees.
-          for language in en zh-Hans zh-Hant ja ko; do
+          for language in en zh-Hans zh-Hant ja ko ru; do
             plutil -extract CFBundleLocalizations json -o - "$APP/Contents/Info.plist" | grep -q "\"$language\""
             # Case-insensitively: SwiftPM has lowercased these folder names in
             # the past and does not on the current toolchain, and which way it

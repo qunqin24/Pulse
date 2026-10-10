@@ -78,8 +78,8 @@ Before merging a docs-or-behaviour change:
 ## Answering an issue
 
 **Reply in the language it was reported in, and keep it to what was asked.**
-The interface, the READMEs and the issue templates are in five languages
-because they are read by everybody; a reply is read by one person, and
+The interface (six languages), the READMEs and the issue templates (five)
+are translated because they are read by everybody; a reply is read by one person, and
 translating it for them is noise. Nothing in this repo asks for bilingual
 comments — that was inferred once from the rest of the project and it was wrong.
 
