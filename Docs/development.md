@@ -49,7 +49,7 @@ Why implicit `Text` fails, and the scanner’s blind spots: [decisions/localizat
 
 ## Writing users can read
 
-**Everything a user can see is held to one standard**, in every language, on every surface: interface copy in the five `.strings` files, notification text, the Sparkle update window, the CHANGELOG entry (which becomes both the GitHub release page and the update dialog), the READMEs, the `Docs/setup/` pages and every issue reply. If somebody decides whether to install, click or trust something based on the words, the words are user-visible.
+**Everything a user can see is held to one standard**, in every language, on every surface: interface copy in the six `.strings` files, notification text, the Sparkle update window, the CHANGELOG entry (which becomes both the GitHub release page and the update dialog), the READMEs, the `Docs/setup/` pages and every issue reply. If somebody decides whether to install, click or trust something based on the words, the words are user-visible.
 
 The standard — no script checks any of this, it is a read-through job, done on the rows a user actually sees:
 
@@ -67,7 +67,7 @@ The standard — no script checks any of this, it is a read-through job, done on
 
 The package resource bundle must land in `Contents/Resources` in a real app (`Bundle.module` looks through `Bundle.main.resourceURL`). Leave it out and the app runs, silently in English, with no marks. [releasing.md](releasing.md).
 
-Shipping the `.lproj` folders is **not enough on its own**. CFBundle resolves a nested bundle's language against the **main** bundle's declared localizations, so with no `CFBundleLocalizations` in `Pulse.app/Contents/Info.plist`, `Bundle.module.preferredLocalizations` comes back `["en"]` on a Mac set to `zh-Hans-CN` and every lookup returns the English key — strings all present, all unused. `Scripts/bundle.sh` declares all five; CI asserts each one survives in the plist *and* as an `.lproj` inside the resource bundle. Adding a language means adding it in **four** places: a new `.lproj`, an `AppLanguage` case, `CFBundleLocalizations` in `bundle.sh`, and the CI loop.
+Shipping the `.lproj` folders is **not enough on its own**. CFBundle resolves a nested bundle's language against the **main** bundle's declared localizations, so with no `CFBundleLocalizations` in `Pulse.app/Contents/Info.plist`, `Bundle.module.preferredLocalizations` comes back `["en"]` on a Mac set to `zh-Hans-CN` and every lookup returns the English key — strings all present, all unused. `Scripts/bundle.sh` declares all six; CI asserts each one survives in the plist *and* as an `.lproj` inside the resource bundle. Adding a language means adding it in **four** places: a new `.lproj`, an `AppLanguage` case, `CFBundleLocalizations` in `bundle.sh`, and the CI loop.
 
 **Numbers are part of the translation.** `LocalizationSource.myriadUnits` decides whether a token count is grouped by thousands or by 10⁴/10⁸, and in whose characters — 亿 for simplified Chinese, 億 for traditional Chinese and Japanese, 억 for Korean. It returns the characters rather than a `Bool` precisely so those cannot be shared by accident; the characters live in code, not in the `.strings` files, because they belong to the numeral system rather than to the copy. `MyriadUnitsTests` pins it, including that `zh_TW` / `zh_HK` / `zh_MO` are read as traditional when the locale names a region but no script.
 

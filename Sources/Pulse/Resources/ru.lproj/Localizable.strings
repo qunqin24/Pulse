@@ -528,7 +528,7 @@
 "Nothing yet" = "Пока ничего";
 "Going through local records and exports." = "Просмотр локальных записей и экспортированных файлов.";
 "No local records or exports have been found yet." = "Локальные записи и экспортированные файлы пока не найдены.";
-"Active days" = "Активные дни";
+"Active days" = "Дни с записями";
 "%@ of %@" = "%@ из %@";
 "Busiest" = "Пиковый день";
 "Agents" = "Агенты";
@@ -563,7 +563,7 @@
 "By hour" = "По часам";
 "By month" = "По месяцам";
 "Pattern" = "Ритм использования";
-"Active hours" = "Активные часы";
+"Active hours" = "Часы с записями";
 "Tokens per hour" = "Токенов в час";
 "%@ o'clock" = "%@:00";
 "Busiest hour" = "Пиковый час";
@@ -664,9 +664,13 @@
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "Personal Access Token с сайта v2ex.com. Хранится в зашифрованном виде на этом Mac.";
 "Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "Адрес вашего сервера, например https://gateway.example.com. Pulse запрашивает у него только расход и больше ничего не отправляет.";
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "Тот же ключ, который ваш ИИ-клиент использует для этого шлюза. Отправляется только на адрес выше. Хранится в зашифрованном виде на этом Mac.";
-"Credit allowance" = "Кредиты по тарифу";
+"Credit allowance" = "Лимит кредитов";
 "Team credits" = "Кредиты команды";
-"%@: %@ credits expire" = "%@: сгорают кредиты (%@)";
+"Plan credits" = "Кредиты тарифа";
+"Dedicated credits" = "Целевые кредиты";
+"Show each part of the credits" = "Показывать кредиты по частям";
+"Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone." = "Кредиты тарифа, пакет пополнения и целевые кредиты расходуются отдельно. Общий остаток может выглядеть большим, хотя одна из частей почти исчерпана.";
+"%@: %@ credits expire" = "Из них %2$@ сгорят к %1$@";
 "Sign in to Qoder in a browser to see usage." = "Войдите в Qoder в браузере, чтобы видеть расход.";
 "Qoder's saved session expired. Sign in again in your browser." = "Сохранённый сеанс Qoder истёк. Войдите снова в браузере.";
 "This Qoder account has no credits." = "У этого аккаунта Qoder нет кредитов.";
