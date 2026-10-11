@@ -12,6 +12,7 @@ extension AppSettings.Key {
     static let deepSeekBudget = "settings.deepSeekBudget"
     static let deepSeekCurrency = "settings.deepSeekCurrency"
     static let qoderSite = "settings.qoderSite"
+    static let qoderShowsParts = "settings.qoderShowsParts"
     static let stepFunSite = "settings.stepFunSite"
     static let serverAddresses = "settings.serverAddresses"
     static let showsCodexResetCredits = "settings.showsCodexResetCredits"
@@ -54,6 +55,12 @@ extension AppSettings {
     func qoderSiteChanged(from old: QoderSite) {
         guard qoderSite != old else { return }
         defaults.set(qoderSite.rawValue, forKey: Key.qoderSite)
+        onChange?()
+    }
+
+    func qoderShowsPartsChanged(from old: Bool) {
+        guard qoderShowsParts != old else { return }
+        defaults.set(qoderShowsParts, forKey: Key.qoderShowsParts)
         onChange?()
     }
 
@@ -197,6 +204,7 @@ extension AppSettings {
     /// The settings `init` has no parameter for.
     func restoreProviders(from defaults: UserDefaults) {
         showsCodexResetCredits = defaults.bool(forKey: Key.showsCodexResetCredits)
+        qoderShowsParts = defaults.bool(forKey: Key.qoderShowsParts)
         balanceBases = defaults.dictionary(forKey: Key.balanceBases) as? [String: String] ?? [:]
         balanceBudgets = (defaults.dictionary(forKey: Key.balanceBudgets) as? [String: Double] ?? [:])
             .filter { $0.value.isFinite && $0.value > 0 }

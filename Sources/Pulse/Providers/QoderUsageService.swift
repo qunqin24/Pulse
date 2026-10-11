@@ -164,6 +164,21 @@ struct QoderSnapshot: Equatable, Sendable {
     }
 
     var packs: [Pack] = []
+
+    /// One of the three things `totalQuota` adds up — the plan's own credits,
+    /// a resource pack bought on top, and the credits tied to one model
+    /// family — with the dated entries of its own detail list.
+    struct Part: Equatable, Sendable {
+        let pool: Pool
+        var packs: [Pack] = []
+    }
+
+    /// Nil when the reply leaves a part out or states it in a shape this
+    /// cannot read: a part is drawn only on request, and never costs the
+    /// total its reading.
+    var plan: Part?
+    var resourcePack: Part?
+    var dedicated: Part?
 }
 
 /// A read-only adapter for the account page's route. Kept apart from the app
@@ -236,13 +251,26 @@ struct QoderClient: Sendable {
         } else {
             shared = nil
         }
-        let packs = (reply.totalQuota?.quotaDetail ?? []).compactMap { detail -> QoderSnapshot.Pack? in
+        return QoderSnapshot(personal: personal, shared: shared, resetsAt: reply.nextResetAt,
+                             packs: Self.packs(reply.totalQuota),
+                             plan: Self.part(reply.planQuota),
+                             resourcePack: Self.part(reply.resourcePackageQuota),
+                             dedicated: Self.part(reply.dedicatedResourcePackageQuota))
+    }
+
+    /// The entries of a detail list with credits left and an end date stated.
+    private static func packs(_ container: Reply.Container?) -> [QoderSnapshot.Pack] {
+        (container?.quotaDetail ?? []).compactMap { detail -> QoderSnapshot.Pack? in
             guard detail.isActive != false, let remaining = detail.remainingValue,
                   remaining.isFinite, remaining > 0, let expiresAt = detail.expiresAt
             else { return nil }
             return .init(remaining: remaining, expiresAt: expiresAt)
         }
-        return QoderSnapshot(personal: personal, shared: shared, resetsAt: reply.nextResetAt, packs: packs)
+    }
+
+    private static func part(_ container: Reply.Container?) -> QoderSnapshot.Part? {
+        guard let pool = container?.quotaSummary.flatMap(Self.pool) else { return nil }
+        return .init(pool: pool, packs: packs(container))
     }
 
     /// A summary Qoder stated in full, or nil. Negative figures are not a
@@ -261,6 +289,9 @@ struct QoderClient: Sendable {
         let totalQuota: Container?
         let sharedQuota: Container?
         let nextResetAt: Date?
+        let planQuota: Container?
+        let resourcePackageQuota: Container?
+        let dedicatedResourcePackageQuota: Container?
 
         struct Container: Decodable {
             let quotaSummary: Summary?
@@ -308,6 +339,13 @@ struct QoderClient: Sendable {
             totalQuota = try container.either(Container.self, "totalQuota", "total_quota")
             sharedQuota = try container.either(Container.self, "sharedQuota", "shared_quota")
             nextResetAt = container.date("nextResetAt") ?? container.date("next_reset_at")
+            // The parts are read on request and must never cost the total:
+            // one this cannot read is no part, not an unreadable reply.
+            planQuota = (try? container.either(Container.self, "planQuota", "plan_quota")) ?? nil
+            resourcePackageQuota = (try? container.either(
+                Container.self, "resourcePackageQuota", "resource_package_quota")) ?? nil
+            dedicatedResourcePackageQuota = (try? container.either(
+                Container.self, "dedicatedResourcePackageQuota", "dedicated_resource_package_quota")) ?? nil
         }
     }
 
@@ -347,6 +385,8 @@ private extension KeyedDecodingContainer where Key == QoderClient.AnyKey {
 struct QoderUsageService: Sendable {
     let cookie: String?
     let site: QoderSite
+    /// `AppSettings.qoderShowsParts`: draw the three parts after the total.
+    var showsParts = false
     var client = QoderClient()
 
     func fetch() async -> ProviderUsage {
@@ -374,7 +414,7 @@ struct QoderUsageService: Sendable {
         do {
             let snapshot = try await client.fetch(cookie: cookie, site: site)
             let now = Date()
-            let windows = Self.windows(from: snapshot, at: now)
+            let windows = Self.windows(from: snapshot, at: now, showsParts: showsParts)
             // A complete answer: the account has no allowance to display.
             guard !windows.isEmpty else { return .unavailable(.qoder, reason: .qoderNoCredits) }
             return .init(account: AccountKey(.qoder),
@@ -415,13 +455,35 @@ struct QoderUsageService: Sendable {
     /// as reset, the cache drops it as expired, and a complete reading
     /// becomes "no limits reported". The credits are real; the date is not,
     /// so the ring is drawn without one.
-    static func windows(from snapshot: QoderSnapshot, at now: Date) -> [UsageWindow] {
+    ///
+    /// **The parts, when asked for, follow the total and never replace it.**
+    /// They are the same credits counted again, so they are drawn only where
+    /// they say something the total does not: two or more with an allowance.
+    /// One alone is the total under another name. Each takes the end dates of
+    /// its own detail list; only the plan's is a reset (`nextResetAt`), since
+    /// the plan is the part that refreshes and a pack only lapses.
+    static func windows(from snapshot: QoderSnapshot, at now: Date,
+                        showsParts: Bool = false) -> [UsageWindow] {
         var windows: [UsageWindow] = []
         let resetsAt = snapshot.resetsAt.flatMap { $0 > now ? $0 : nil }
         if var window = window(snapshot.personal, id: "qoder.credits", kind: .credits,
                                resetsAt: resetsAt) {
             window.nextExpiry = nextExpiry(of: snapshot.packs, at: now)
             windows.append(window)
+        }
+        if showsParts, !windows.isEmpty {
+            let parts: [(QoderSnapshot.Part?, String, UsageWindow.Kind, Date?)] = [
+                (snapshot.plan, "qoder.plan", .planCredits, resetsAt),
+                (snapshot.resourcePack, "qoder.pack", .topUp, nil),
+                (snapshot.dedicated, "qoder.dedicated", .dedicatedCredits, nil),
+            ]
+            let drawn = parts.compactMap { part, id, kind, resetsAt -> UsageWindow? in
+                guard let part, var window = window(part.pool, id: id, kind: kind, resetsAt: resetsAt)
+                else { return nil }
+                window.nextExpiry = nextExpiry(of: part.packs, at: now)
+                return window
+            }
+            if drawn.count > 1 { windows += drawn }
         }
         // The reset Qoder states is the account's. Whether a team's pool turns
         // over on the same day is not something the reply says, so it is not

@@ -469,7 +469,7 @@ struct UsageDetailCard: View {
         return String.localized("Resets \(formatter.string(from: resets))")
     }
 
-    /// "10月18日 86 积分到期". The date alone unless it is today — a pack
+    /// "其中 86 积分 10月18日 到期". The date alone unless it is today — a pack
     /// ends at whatever minute it was granted, and that minute is noise a
     /// week out.
     private static func expiryText(_ expiry: UsageWindow.Expiry) -> String {

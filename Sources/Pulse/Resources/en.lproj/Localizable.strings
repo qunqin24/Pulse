@@ -666,6 +666,10 @@
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac.";
 "Credit allowance" = "Credit allowance";
 "Team credits" = "Team credits";
+"Plan credits" = "Plan credits";
+"Dedicated credits" = "Dedicated credits";
+"Show each part of the credits" = "Show each part of the credits";
+"Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone." = "Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone.";
 "%@: %@ credits expire" = "%@: %@ credits expire";
 "Sign in to Qoder in a browser to see usage." = "Sign in to Qoder in a browser to see usage.";
 "Qoder's saved session expired. Sign in again in your browser." = "Qoder's saved session expired. Sign in again in your browser.";

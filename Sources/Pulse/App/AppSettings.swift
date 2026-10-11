@@ -645,6 +645,19 @@ final class AppSettings {
         didSet { qoderSiteChanged(from: oldValue) }
     }
 
+    /// Whether Qoder's credits are drawn part by part as well as in total.
+    ///
+    /// `total_quota` adds up the plan's credits, a resource pack bought on
+    /// top and the credits tied to one model family, and each of those is
+    /// spent and lapses on its own: a total at 57% can hold a pack at 95%.
+    /// Off by default, so an account with one part reads as it always has; on,
+    /// each part with an allowance gets its own row after the total, and the
+    /// ring's automatic choice follows whichever is fullest. Changes what the
+    /// service returns, so it goes through `onChange`.
+    var qoderShowsParts = false {
+        didSet { qoderShowsPartsChanged(from: oldValue) }
+    }
+
     /// Which StepFun site the saved session belongs to: `platform.stepfun.com`
     /// or `platform.stepfun.ai`, two sign-ins on two hosts. The same rules as
     /// `qoderSite`: it decides where cookies are read from and where the

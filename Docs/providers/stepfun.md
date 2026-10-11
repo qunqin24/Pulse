@@ -56,7 +56,7 @@ Since 2026-06-18 StepFun sells a **Token Plan**: Credits (1M Credit = ¥1) issue
 
 - **One ring**, `stepfun.credits`, `kind: .credits` ("Credit allowance"): every bucket — the month's pool and any packs — summed, because they are spent from one balance. Fraction is `(total − residual) / total`; spent when nothing is left in any bucket.
 - `resetsAt` is the soonest `next_reset_at` still ahead — a quarterly or yearly plan's next monthly issue. **A monthly plan states none**, and none is claimed: its pool simply ends.
-- That end is `nextExpiry`: the soonest `expire_at` with credits left, packs ending the same day added together (`UsageWindow.Expiry.soonest`, shared with Qoder). On the account measured it was the subscription's own end, 2026-10-05. The card shows it when it comes before any reset — "10月5日 16亿 积分到期"; amounts from ten thousand up are abbreviated as token counts are (`TokenCount.short`).
+- That end is `nextExpiry`: the soonest `expire_at` with credits left, packs ending the same day added together (`UsageWindow.Expiry.soonest`, shared with Qoder). On the account measured it was the subscription's own end, 2026-10-05. The card shows it when it comes before any reset — "其中 16亿 积分 10月5日 到期"; amounts from ten thousand up are abbreviated as token counts are (`TokenCount.short`).
 - Bucket sizes arrive as decimal strings, rates as numbers; timestamps are seconds as strings, `"0"` for none.
 - Without buckets, the stated `subscription_credit_left_rate` (else `topup_credit_left_rate`) is the fraction — **never both added**, since their sizes are not given. Nothing at all is `stepFunNoPlan`.
 - `windowSeconds` is thirty days as a sort key; `reportsLength` false.

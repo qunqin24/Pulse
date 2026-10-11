@@ -150,7 +150,8 @@ final class LiveUsageServices: UsageServiceFactory {
             let service = V2EXUsageService(enteredKey: key)
             return { await service.fetch() }
         case .qoder:
-            let service = QoderUsageService(cookie: key, site: settings.qoderSite)
+            let service = QoderUsageService(cookie: key, site: settings.qoderSite,
+                                            showsParts: settings.qoderShowsParts)
             return { await service.fetch() }
         case .stepFun:
             let service = StepFunUsageService(cookie: key, site: settings.stepFunSite)

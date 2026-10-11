@@ -34,8 +34,8 @@ extension UsageWindow {
     /// is the plan *plus* any pack bought on top, so buying one raises the
     /// limit and drops the fraction forty points with nothing reset — the
     /// top-up case again, inside a figure that does also reset. A fall is
-    /// therefore not evidence for `.credits` or `.sharedCredits`; only a reset
-    /// time that moved forward is.
+    /// therefore not evidence for `.credits`, `.sharedCredits` or the parts of
+    /// Qoder's total; only a reset time that moved forward is.
     func hasTurnedOver(since fraction: Double, resetsAt previous: Date?) -> Bool {
         guard kind != .balance, kind != .topUp else { return false }
         // A minute of slack: a reset time is often rounded, and a second of
@@ -43,7 +43,10 @@ extension UsageWindow {
         let movedOn = resetsAt.map { new in
             previous.map { new.timeIntervalSince($0) > 60 } ?? false
         } ?? false
-        if kind == .credits || kind == .sharedCredits { return movedOn }
+        switch kind {
+        case .credits, .sharedCredits, .planCredits, .dedicatedCredits: return movedOn
+        default: break
+        }
         return movedOn || fraction - usedFraction >= 0.4
     }
 }
@@ -97,6 +100,15 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         /// reported beside the member's own. Its own kind so the two rows are
         /// told apart on the card, and so they are never summed into one.
         case sharedCredits
+        /// Two of the three parts Qoder's `total_quota` adds up, drawn on
+        /// their own when the reader asks for them: the plan's own credits,
+        /// and the credits tied to one model family. The third, a resource
+        /// pack bought on top, is a `.topUp`. Each is spent and lapses on its
+        /// own, so the sum can read as plenty while one of them is nearly
+        /// gone. Not `.credits`, which is the total they would share a name
+        /// with on the card.
+        case planCredits
+        case dedicatedCredits
         case other(seconds: Int)
     }
 
@@ -342,6 +354,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         // and translates as 致谢 — one key cannot be both.
         case .credits: .localized("Credit allowance")
         case .sharedCredits: .localized("Team credits")
+        case .planCredits: .localized("Plan credits")
+        case .dedicatedCredits: .localized("Dedicated credits")
         // Days only when it is a whole number of them: rounded, 36 hours read
         // as a two-day limit. Never below an hour, which is the finest unit
         // anything here states.

@@ -1,0 +1,39 @@
+{
+  "user_id": "redacted",
+  "quota_key": "big_model_credits",
+  "status": "active",
+  "plan_quota": {
+    "quota_summary": { "used_value": 157, "limit_value": 6000, "remaining_value": 5843, "usage_percentage": 3, "unit": "credits" },
+    "quota_detail": [
+      { "id": "d0", "limit_value": 6000, "used_value": 157, "remaining_value": 5843, "unit": "credits",
+        "is_active": true, "usage_percentage": 3, "expires_at": 0, "source": "PLAN", "status": "ACTIVE" }
+    ]
+  },
+  "resource_package_quota": {
+    "quota_summary": { "used_value": 1900, "limit_value": 2000, "remaining_value": 100, "usage_percentage": 95, "unit": "credits" },
+    "quota_detail": [
+      { "id": "d1", "limit_value": 2000, "used_value": 1900, "remaining_value": 100, "unit": "credits",
+        "is_active": true, "usage_percentage": 95, "expires_at": 0, "source": "RESOURCE_PACKAGE", "status": "ACTIVE" }
+    ]
+  },
+  "dedicated_resource_package_quota": {
+    "quota_summary": { "used_value": 4011, "limit_value": 6000, "remaining_value": 1989, "usage_percentage": 67, "unit": "credits" },
+    "quota_detail": [
+      { "id": "d2", "limit_value": 6000, "used_value": 4011, "remaining_value": 1989, "unit": "credits",
+        "is_active": true, "usage_percentage": 67, "expires_at": 1794063600000, "source": "DEDICATED_RESOURCE_PACKAGE", "status": "ACTIVE" }
+    ]
+  },
+  "total_quota": {
+    "quota_summary": { "used_value": 6068, "limit_value": 14000, "remaining_value": 7932, "usage_percentage": 43, "unit": "credits" },
+    "quota_detail": [
+      { "id": "d0", "limit_value": 6000, "used_value": 157, "remaining_value": 5843, "unit": "credits",
+        "is_active": true, "usage_percentage": 3, "expires_at": 0, "source": "PLAN", "status": "ACTIVE" },
+      { "id": "d1", "limit_value": 2000, "used_value": 1900, "remaining_value": 100, "unit": "credits",
+        "is_active": true, "usage_percentage": 95, "expires_at": 0, "source": "RESOURCE_PACKAGE", "status": "ACTIVE" },
+      { "id": "d2", "limit_value": 6000, "used_value": 4011, "remaining_value": 1989, "unit": "credits",
+        "is_active": true, "usage_percentage": 67, "expires_at": 1794063600000, "source": "DEDICATED_RESOURCE_PACKAGE", "status": "ACTIVE" }
+    ]
+  },
+  "lastResetAt": 1791594000000,
+  "nextResetAt": 1794186000000
+}

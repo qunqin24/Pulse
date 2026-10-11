@@ -208,6 +208,8 @@ enum UsageReport {
             case .topUp: "topUp"
             case .credits: "credits"
             case .sharedCredits: "sharedCredits"
+            case .planCredits: "planCredits"
+            case .dedicatedCredits: "dedicatedCredits"
             case .other(let seconds): "other:\(seconds)"
             }
         }

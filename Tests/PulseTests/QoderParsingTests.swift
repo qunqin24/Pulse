@@ -237,6 +237,82 @@ struct QoderParsingTests {
         #expect(next.hasTurnedOver(since: 0.9, resetsAt: before))
     }
 
+    // MARK: - The parts
+
+    /// The figures from issue #76, which the fixture's shape follows: a total
+    /// at 43% used holding a resource pack at 95%. The details' `source` names
+    /// and the pack's undated entry are written to the trial reply's shape,
+    /// not captured from this account.
+    private static let partsRead = Date(timeIntervalSince1970: 1_791_590_400) // 2026-10-10T00:00Z
+
+    @Test("The parts are read beside the total")
+    func partsAreRead() throws {
+        let snapshot = try QoderClient.parse(Self.fixture("qoder-credits-parts"))
+        #expect(snapshot.personal == .init(used: 6_068, limit: 14_000, remaining: 7_932))
+        #expect(snapshot.plan?.pool == .init(used: 157, limit: 6_000, remaining: 5_843))
+        #expect(snapshot.resourcePack?.pool == .init(used: 1_900, limit: 2_000, remaining: 100))
+        #expect(snapshot.dedicated?.pool == .init(used: 4_011, limit: 6_000, remaining: 1_989))
+    }
+
+    /// Off, the card is what it always was. On, the parts follow the total,
+    /// and the ring's automatic choice — the fullest — is the pack at 95%
+    /// rather than the total at 43%.
+    @Test("The parts are drawn only when asked, after the total")
+    func partsFollowTheTotal() throws {
+        let snapshot = try QoderClient.parse(Self.fixture("qoder-credits-parts"))
+        #expect(QoderUsageService.windows(from: snapshot, at: Self.partsRead).map(\.id) == ["qoder.credits"])
+
+        let windows = QoderUsageService.windows(from: snapshot, at: Self.partsRead, showsParts: true)
+        #expect(windows.map(\.id) == ["qoder.credits", "qoder.plan", "qoder.pack", "qoder.dedicated"])
+        #expect(windows.map(\.kind) == [.credits, .planCredits, .topUp, .dedicatedCredits])
+        #expect(windows[2].usedFraction == 0.95)
+
+        let usage = ProviderUsage(account: AccountKey(.qoder), windows: windows, observedAt: Self.partsRead,
+                                  state: .live, plan: nil, creditBalance: nil)
+        #expect(usage.headlineWindow()?.id == "qoder.pack")
+    }
+
+    /// Only the plan refreshes; the packs lapse. Each part's expiry is its
+    /// own, so the 1,989 lapsing on 7 November sits on the dedicated row.
+    @Test("Only the plan has a reset, and each part its own expiry")
+    func partsKeepTheirOwnDates() throws {
+        let snapshot = try QoderClient.parse(Self.fixture("qoder-credits-parts"))
+        let windows = QoderUsageService.windows(from: snapshot, at: Self.partsRead, showsParts: true)
+        let reset = Date(timeIntervalSince1970: 1_794_186_000)
+        let lapse = Date(timeIntervalSince1970: 1_794_063_600)
+        #expect(windows.map(\.resetsAt) == [reset, reset, nil, nil])
+        #expect(windows[0].nextExpiry == .init(amount: 1_989, at: lapse))
+        #expect(windows[1].nextExpiry == nil)
+        #expect(windows[2].nextExpiry == nil)
+        #expect(windows[3].nextExpiry == .init(amount: 1_989, at: lapse))
+        // A pack bought on top of a part is not a reset either.
+        #expect(!windows[1].hasTurnedOver(since: 0.9, resetsAt: reset))
+        #expect(!windows[3].hasTurnedOver(since: 0.9, resetsAt: nil))
+    }
+
+    /// The trial reply has one part with an allowance; drawn, it would be the
+    /// total again under another name.
+    @Test("One part alone is not drawn twice")
+    func onePartIsTheTotal() throws {
+        let snapshot = try QoderClient.parse(Self.fixture("qoder-credits-trial-stale-reset"))
+        let read = Date(timeIntervalSince1970: 1_790_179_680)
+        #expect(QoderUsageService.windows(from: snapshot, at: read, showsParts: true).map(\.id) == ["qoder.credits"])
+    }
+
+    /// A part this cannot read is left out; the total it belongs to is not.
+    @Test("An unreadable part never costs the total")
+    func unreadablePartIsDropped() throws {
+        let reply = Data("""
+        { "total_quota": { "quota_summary": { "used_value": 10, "limit_value": 100, "remaining_value": 90 } },
+          "plan_quota": { "quota_summary": { "used_value": "many", "limit_value": 50 } },
+          "resource_package_quota": "nonsense" }
+        """.utf8)
+        let snapshot = try QoderClient.parse(reply)
+        #expect(snapshot.personal == .init(used: 10, limit: 100, remaining: 90))
+        #expect(snapshot.plan == nil)
+        #expect(snapshot.resourcePack == nil)
+    }
+
     // MARK: - Sites
 
     @Test("Each site asks its own host, and only its own")

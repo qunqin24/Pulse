@@ -666,7 +666,11 @@
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "この ゲートウェイ に AI クライアントが使っているのと同じキーです。上のアドレスにだけ送られます。この Mac に暗号化して保存されます。";
 "Credit allowance" = "クレジット枠";
 "Team credits" = "チーム共有クレジット";
-"%@: %@ credits expire" = "%@に %@ クレジット失効";
+"Plan credits" = "プランのクレジット";
+"Dedicated credits" = "専用クレジット";
+"Show each part of the credits" = "クレジットを内訳ごとに表示";
+"Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone." = "プランのクレジット、追加パック、専用クレジットは別々に消費されます。合計に余裕があるように見えても、そのうち一つが残りわずかなことがあります。";
+"%@: %@ credits expire" = "うち %2$@ クレジットが %1$@に失効";
 "Sign in to Qoder in a browser to see usage." = "ブラウザで Qoder にサインインすると使用量が表示されます。";
 "Qoder's saved session expired. Sign in again in your browser." = "Qoder の保存済みセッションが期限切れです。ブラウザでサインインし直してください。";
 "This Qoder account has no credits." = "この Qoder アカウントにクレジットはありません。";

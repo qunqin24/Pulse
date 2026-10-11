@@ -666,7 +666,11 @@
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "你的 AI 用戶端連接此閘道所用的金鑰。僅傳送到上方的位址。加密儲存在本機。";
 "Credit allowance" = "點數額度";
 "Team credits" = "團隊共享點數";
-"%@: %@ credits expire" = "%@ %@ 點數到期";
+"Plan credits" = "方案點數";
+"Dedicated credits" = "專屬點數";
+"Show each part of the credits" = "分項顯示點數";
+"Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone." = "方案點數、加購包與專屬點數各自扣減。合計看起來尚有餘裕時，其中一項可能已所剩無幾。";
+"%@: %@ credits expire" = "其中 %2$@ 點數 %1$@ 到期";
 "Sign in to Qoder in a browser to see usage." = "在瀏覽器登入 Qoder 後才能看到用量。";
 "Qoder's saved session expired. Sign in again in your browser." = "Qoder 的登入資訊已過期，請在瀏覽器重新登入。";
 "This Qoder account has no credits." = "這個 Qoder 帳號上沒有點數。";

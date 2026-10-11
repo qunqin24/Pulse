@@ -59,6 +59,24 @@ struct AccountPanelGroup: View {
                 }
             }
 
+            // Qoder's three parts, each spent and lapsing on its own. Off
+            // by default: they count the same credits as the total again.
+            if account == AccountKey(.qoder) {
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Show each part of the credits"),
+                    subtitle: String.localized("Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.qoderShowsParts },
+                        set: { settings.qoderShowsParts = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
             SettingsRowDivider()
 
             // The history half only where it can appear, and said the way

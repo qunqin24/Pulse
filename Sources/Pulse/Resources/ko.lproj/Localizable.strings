@@ -666,7 +666,11 @@
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "AI 클라이언트가 이 게이트웨이에 사용하는 것과 같은 키입니다. 위에 입력한 주소로만 전송됩니다. 이 Mac에 암호화되어 저장됩니다.";
 "Credit allowance" = "크레딧 한도";
 "Team credits" = "팀 공유 크레딧";
-"%@: %@ credits expire" = "%@ %@ 크레딧 만료";
+"Plan credits" = "요금제 크레딧";
+"Dedicated credits" = "전용 크레딧";
+"Show each part of the credits" = "크레딧을 항목별로 표시";
+"Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone." = "요금제 크레딧, 충전 팩, 전용 크레딧은 각각 따로 차감됩니다. 합계에는 여유가 있어 보여도 그중 하나는 거의 바닥났을 수 있습니다.";
+"%@: %@ credits expire" = "그중 %2$@ 크레딧이 %1$@ 만료";
 "Sign in to Qoder in a browser to see usage." = "브라우저에서 Qoder에 로그인하면 사용량이 표시됩니다.";
 "Qoder's saved session expired. Sign in again in your browser." = "Qoder의 저장된 세션이 만료되었습니다. 브라우저에서 다시 로그인하십시오.";
 "This Qoder account has no credits." = "이 Qoder 계정에는 크레딧이 없습니다.";
