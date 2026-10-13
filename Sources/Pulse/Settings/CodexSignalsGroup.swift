@@ -2,8 +2,9 @@
 import SwiftUI
 
 /// Signs in this Mac's Codex sessions that a model gave less than it was
-/// asked for: reasoning cut off at the 518·n − 2 lattice, and settings that
-/// changed under a session without the user changing them (`CodexSignals`).
+/// asked for: how often reasoning stopped on the 518·n − 2 lattice, and
+/// settings that changed under a session without the user changing them
+/// (`CodexSignals`).
 ///
 /// **Signs, and said to be.** Nothing here can see which model the server ran
 /// — Codex never writes that down — so the copy says "signs", the footnote
@@ -56,7 +57,7 @@ struct CodexSignalsGroup: View {
                 truncation(signals)
                 changes(signals)
             } else {
-                SettingsGroup(String.localized("Reasoning cut off")) {
+                SettingsGroup(String.localized("Reasoning stopped at fixed points")) {
                     SettingsRow(String.localized("Reading local records…")) {
                         ProgressView().controlSize(.small)
                     }
@@ -67,7 +68,7 @@ struct CodexSignalsGroup: View {
             // question a reader has about the groups above.
             VStack(alignment: .leading, spacing: 4) {
                 Text(localized: "Read from this Mac's Codex records; nothing is sent.")
-                Text(localized: "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance.")
+                Text(localized: "Reasoning stopped at fixed points: the reasoning ended at exactly 516, 1,034, 1,552… tokens. The cause has not been published, and each model has its own usual share, so the share alone does not show that a model was weakened.")
                 Text(localized: "Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything.")
                 Text(localized: "These are signs, not proof: Codex doesn't record which model the server actually used.")
             }
@@ -85,11 +86,11 @@ struct CodexSignalsGroup: View {
         }
     }
 
-    // MARK: - Reasoning cut off
+    // MARK: - Reasoning stopped at fixed points
 
     @ViewBuilder
     private func truncation(_ signals: CodexSignals) -> some View {
-        SettingsGroup(String.localized("Reasoning cut off")) {
+        SettingsGroup(String.localized("Reasoning stopped at fixed points")) {
             if signals.truncation.isEmpty {
                 SettingsRow(String.localized("No Codex replies with reasoning in this period")) { EmptyView() }
             } else {
@@ -103,14 +104,16 @@ struct CodexSignalsGroup: View {
         }
     }
 
-    /// "126 of 279 long replies had their reasoning cut off · 2,827 replies in all".
+    /// "126 of 279 long replies stopped at a fixed point · 2,827 replies in all".
     private static func detail(_ model: CodexSignals.Truncation) -> String {
         let replies = String.localized("\(count(model.responses)) replies in all")
         guard model.reachedLattice > 0 else { return replies }
-        let stopped = String.localized("\(count(model.onLattice)) of \(count(model.reachedLattice)) long replies had their reasoning cut off")
+        let stopped = String.localized("\(count(model.onLattice)) of \(count(model.reachedLattice)) long replies stopped at a fixed point")
         return "\(stopped) · \(replies)"
     }
 
+    /// The share as a figure and nothing more: what a stop on the lattice
+    /// means is not known, so no share is called normal or weakened.
     @ViewBuilder
     private func verdict(_ model: CodexSignals.Truncation) -> some View {
         if !model.isMeasurable {
@@ -118,15 +121,9 @@ struct CodexSignalsGroup: View {
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
         } else {
-            VStack(alignment: .trailing, spacing: 1) {
-                Text(verbatim: Self.percent(model.share ?? 0))
-                    .font(.system(size: 13, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(model.isSuspicious ? Color.orange : Color.primary)
-                Text(model.isSuspicious ? String.localized("Possibly weakened") : String.localized("Normal"))
-                    .font(.system(size: 11))
-                    .foregroundStyle(model.isSuspicious ? Color.orange : Color.secondary)
-            }
+            Text(verbatim: Self.percent(model.share ?? 0))
+                .font(.system(size: 13, weight: .semibold))
+                .monospacedDigit()
         }
     }
 

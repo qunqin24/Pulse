@@ -11,14 +11,17 @@ import Foundation
 /// probe or sitting in the traffic, and Pulse does neither: it reads.
 /// What *is* written leaves two kinds of trace, and this reads both.
 ///
-/// **Reasoning cut short.** Every response's `token_count` event carries
-/// `last_token_usage.reasoning_output_tokens`. Reasoning that stops on its own
-/// lands on any count; reasoning that is cut lands on 516, 1034, 1552… —
-/// `518·n − 2`, a lattice found in openai/codex#30364 over 390k responses and
-/// reproduced on this Mac (gpt-5.5: 41.6% of responses that reached 516
-/// stopped exactly on it; the codex models, none). By chance about one in
-/// 518 would. The step and the offset are empirical; nobody has published a
-/// cause. Counted per model, as a share of the responses that got that far.
+/// **Reasoning stopped at fixed points.** Every response's `token_count` event
+/// carries `last_token_usage.reasoning_output_tokens`. Far more of them stop on
+/// 516, 1034, 1552… — `518·n − 2`, a lattice found in openai/codex#30364 over
+/// 390k responses and reproduced on this Mac — than the one in 518 chance
+/// would put there. The step and the offset are empirical and nobody has
+/// published a cause, so whether a stop there is a cut is not known. Each
+/// model's share holds steady week to week and differs widely between models
+/// (gpt-6-astra about 72%, gpt-5.6-sol about 9%, at every reasoning effort and
+/// hour of day), so a share above chance is that model's usual behaviour, not
+/// a sign that it was weakened. Counted per model, as a share of the
+/// responses that got that far, and shown as a figure — never a verdict.
 ///
 /// **Settings changed under the session.** From Codex 0.144 every change the
 /// user makes is written as `thread_settings_applied`, and takes effect at the
@@ -56,11 +59,6 @@ struct CodexSignals: Sendable, Equatable {
 
         /// Enough responses reached the lattice to say anything about it.
         var isMeasurable: Bool { reachedLattice >= CodexSignals.fewestReached }
-
-        /// Many times what chance would put there, and not a stray hit or two.
-        var isSuspicious: Bool {
-            isMeasurable && onLattice >= CodexSignals.fewestHits && (share ?? 0) >= CodexSignals.suspiciousShare
-        }
     }
 
     /// A turn that ran on less than the settings in force when it started.
@@ -88,9 +86,6 @@ struct CodexSignals: Sendable, Equatable {
     var judgedSessions = 0
 
     static let fewestReached = 20
-    static let fewestHits = 5
-    /// Twenty-five times chance (1 in 518).
-    static let suspiciousShare = 0.05
     /// The first Codex that writes the user's own changes down.
     static let firstJudgedVersion = (0, 144, 0)
 
@@ -161,9 +156,7 @@ actor CodexSignalReader {
             signals.changes += facts.changes.filter { change in since.map { change.date >= $0 } ?? true }
         }
 
-        signals.truncation = byModel.values.sorted {
-            ($0.isSuspicious ? 1 : 0, $0.responses) > ($1.isSuspicious ? 1 : 0, $1.responses)
-        }
+        signals.truncation = byModel.values.sorted { $0.responses > $1.responses }
         signals.changes.sort { $0.date > $1.date }
         return signals
     }

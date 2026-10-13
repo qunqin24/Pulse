@@ -146,7 +146,7 @@ struct CodexSignalsTests {
         #expect(facts.changes.isEmpty)
     }
 
-    @Test("Per model, the share of long replies on the lattice; a few is too few, many is a sign")
+    @Test("Per model, the share of long replies on the lattice, as a figure; a few is too few")
     func truncation() async throws {
         let root = URL.temporaryDirectory.appending(path: "PulseCodexSigns-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: root) }
@@ -176,11 +176,12 @@ struct CodexSignalsTests {
         #expect(five.responses == 35)
         #expect(five.reachedLattice == 30)
         #expect(five.onLattice == 12)
-        #expect(five.isSuspicious)
+        #expect(five.share == 0.4)
+        #expect(five.isMeasurable)
         let codex = try #require(signals.truncation.first { $0.model == "gpt-5.3-codex" })
         #expect(!codex.isMeasurable)
-        #expect(!codex.isSuspicious)
-        #expect(signals.truncation.first?.model == "gpt-5.5")
+        // Most replies first; no share ranks a model above another.
+        #expect(signals.truncation.map(\.model) == ["gpt-5.5", "gpt-5.3-codex"])
         #expect(signals.sessions == 1)
     }
 
