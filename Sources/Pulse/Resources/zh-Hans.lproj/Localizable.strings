@@ -990,15 +990,14 @@
 "Checked %@ sessions." = "检查了 %@ 个会话。";
 "Read from this Mac's Codex records; nothing is sent." = "只读取这台 Mac 上的 Codex 记录，不会发送任何请求。";
 "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance." = "推理被打断：模型的推理恰好停在 516、1,034、1,552… 个 Token 处，如同被强制截断。如果只是巧合，只有约 0.2% 的回复会停在这些位置。";
-"Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything." = "设置被静默调低：某一轮实际使用的模型比你选择的更弱，或推理强度更低、上下文更小，而你并未更改过任何设置。";
+"Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything." = "设置被静默调低：某一轮实际使用的模型比你选择的更弱，或推理强度更低，而你并未更改过任何设置。";
 "These are signs, not proof: Codex doesn't record which model the server actually used." = "以上只是迹象，不是定论：Codex 不会记录服务器实际用了哪个模型。";
 "Reasoning cut off" = "推理被打断";
 "%@ replies in all" = "共 %@ 条回复";
 "Settings quietly lowered" = "设置被静默调低";
 "Model: %@ swapped for %@" = "模型：%@ 被换成 %@";
 "Reasoning: %@ lowered to %@" = "推理强度：%@ 被降到 %@";
-"Context: %@ cut to %@" = "上下文：%@ 被缩到 %@";
-"Checked %@ sessions: the model, reasoning and context you chose were never changed." = "检查了 %@ 个会话，你选的模型、推理强度和上下文都没被换过。";
+"Checked %@ sessions: the model and reasoning you chose were never changed." = "检查了 %@ 个会话，你选的模型和推理强度都没被换过。";
 "%@ other sessions can't be checked: older than Codex 0.144, or run by Codex itself." = "另有 %@ 个会话无法判断：来自 Codex 0.144 之前，或是 Codex 自己开的子任务。";
 "Service status" = "服务状态";
 "Operational" = "正常";

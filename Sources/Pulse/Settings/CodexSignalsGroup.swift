@@ -68,7 +68,7 @@ struct CodexSignalsGroup: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(localized: "Read from this Mac's Codex records; nothing is sent.")
                 Text(localized: "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance.")
-                Text(localized: "Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything.")
+                Text(localized: "Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything.")
                 Text(localized: "These are signs, not proof: Codex doesn't record which model the server actually used.")
             }
             .font(.system(size: 11))
@@ -159,8 +159,6 @@ struct CodexSignalsGroup: View {
             String.localized("Model: \(asked) swapped for \(ran)")
         case .effort(let asked, let ran):
             String.localized("Reasoning: \(asked) lowered to \(ran)")
-        case .contextWindow(let was, let now):
-            String.localized("Context: \(TokenCount.short(was)) cut to \(TokenCount.short(now))")
         }
     }
 
@@ -170,7 +168,7 @@ struct CodexSignalsGroup: View {
     /// helpers run on models it picks.
     private static func checked(_ signals: CodexSignals, clean: Bool) -> String {
         let judged = clean
-            ? String.localized("Checked \(count(signals.judgedSessions)) sessions: the model, reasoning and context you chose were never changed.")
+            ? String.localized("Checked \(count(signals.judgedSessions)) sessions: the model and reasoning you chose were never changed.")
             : String.localized("Checked \(count(signals.judgedSessions)) sessions.")
         let older = signals.sessions - signals.judgedSessions
         guard older > 0 else { return judged }

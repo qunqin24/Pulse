@@ -990,15 +990,14 @@
 "Checked %@ sessions." = "세션 %@개를 확인했습니다.";
 "Read from this Mac's Codex records; nothing is sent." = "이 Mac의 Codex 기록만 읽으며, 아무 요청도 보내지 않습니다.";
 "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance." = "추론 끊김: 모델의 추론이 516, 1,034, 1,552… 토큰에서 딱 멈춰, 강제로 끊긴 것처럼 보이는 경우입니다. 우연히 여기서 멈추는 응답은 약 0.2%뿐입니다.";
-"Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything." = "몰래 낮아진 설정: 어떤 턴이 내가 고른 것보다 못한 모델, 낮은 추론 수준 또는 짧은 컨텍스트로 실행된 경우입니다. 설정을 바꾸지 않았는데도 발생합니다.";
+"Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything." = "몰래 낮아진 설정: 어떤 턴이 내가 고른 것보다 못한 모델 또는 낮은 추론 수준으로 실행된 경우입니다. 설정을 바꾸지 않았는데도 발생합니다.";
 "These are signs, not proof: Codex doesn't record which model the server actually used." = "징후일 뿐 확증은 아닙니다. 서버가 실제로 어떤 모델을 썼는지는 Codex가 기록하지 않습니다.";
 "Reasoning cut off" = "추론 끊김";
 "%@ replies in all" = "전체 응답 %@개";
 "Settings quietly lowered" = "몰래 낮아진 설정";
 "Model: %@ swapped for %@" = "모델: %@이(가) %@(으)로 바뀜";
 "Reasoning: %@ lowered to %@" = "추론 수준: %@에서 %@(으)로 낮아짐";
-"Context: %@ cut to %@" = "컨텍스트: %@에서 %@(으)로 줄어듦";
-"Checked %@ sessions: the model, reasoning and context you chose were never changed." = "세션 %@개를 확인했습니다. 고른 모델, 추론 수준, 컨텍스트가 바뀐 적이 없습니다.";
+"Checked %@ sessions: the model and reasoning you chose were never changed." = "세션 %@개를 확인했습니다. 고른 모델과 추론 수준이 바뀐 적이 없습니다.";
 "%@ other sessions can't be checked: older than Codex 0.144, or run by Codex itself." = "그 밖의 세션 %@개는 판단할 수 없습니다: Codex 0.144 이전이거나 Codex가 직접 실행한 세션입니다.";
 "Service status" = "서비스 상태";
 "Operational" = "정상";

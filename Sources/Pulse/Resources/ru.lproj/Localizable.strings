@@ -990,15 +990,14 @@
 "Checked %@ sessions." = "Проверено сессий: %@.";
 "Read from this Mac's Codex records; nothing is sent." = "Данные из записей Codex на этом Mac; ничего не отправляется.";
 "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance." = "Оборванные рассуждения: рассуждения модели остановились ровно на 516, 1034, 1552… токенах, как будто их обрезали. Случайно на этих значениях останавливаются лишь около 0,2% ответов.";
-"Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything." = "Тихо пониженные настройки: запрос выполнен на более слабой модели, с меньшим уровнем рассуждений или меньшим контекстом, чем вы выбрали, хотя вы ничего не меняли.";
+"Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything." = "Тихо пониженные настройки: запрос выполнен на более слабой модели или с меньшим уровнем рассуждений, чем вы выбрали, хотя вы ничего не меняли.";
 "These are signs, not proof: Codex doesn't record which model the server actually used." = "Это признаки, а не доказательства: Codex не записывает, какую модель на самом деле использовал сервер.";
 "Reasoning cut off" = "Оборванные рассуждения";
 "%@ replies in all" = "Всего ответов: %@";
 "Settings quietly lowered" = "Тихо пониженные настройки";
 "Model: %@ swapped for %@" = "Модель: %@ заменена на %@";
 "Reasoning: %@ lowered to %@" = "Рассуждения: снижены с %@ до %@";
-"Context: %@ cut to %@" = "Контекст: урезан с %@ до %@";
-"Checked %@ sessions: the model, reasoning and context you chose were never changed." = "Проверено сессий: %@. Выбранные вами модель, уровень рассуждений и контекст ни разу не менялись.";
+"Checked %@ sessions: the model and reasoning you chose were never changed." = "Проверено сессий: %@. Выбранные вами модель и уровень рассуждений ни разу не менялись.";
 "%@ other sessions can't be checked: older than Codex 0.144, or run by Codex itself." = "Не проверено сессий: %@ — они созданы до Codex 0.144 или запущены самим Codex.";
 "Service status" = "Статус сервиса";
 "Operational" = "Работает нормально";

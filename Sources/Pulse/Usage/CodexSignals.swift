@@ -22,9 +22,13 @@ import Foundation
 ///
 /// **Settings changed under the session.** From Codex 0.144 every change the
 /// user makes is written as `thread_settings_applied`, and takes effect at the
-/// next `task_started`. A turn whose `turn_context` runs a different model, a
-/// lower reasoning effort, or a smaller context window than the settings in
-/// force when it started was changed by something other than the user.
+/// next `task_started`. A turn whose `turn_context` runs a different model or
+/// a lower reasoning effort than the settings in force when it started was
+/// changed by something other than the user. The context window is not read:
+/// `token_count`'s `model_context_window` is Codex's own sum — the configured
+/// window (`model_context_window` in `config.toml`, else the model's default)
+/// times the model's effective percentage — so a smaller one is a config edit,
+/// never what the server ran.
 /// Sessions written before 0.144 record no such event — a `/model` there is
 /// indistinguishable from a silent switch — so they are not judged at all;
 /// nor is a newer one with none applied, nor Codex's own helpers (sessions
@@ -64,7 +68,6 @@ struct CodexSignals: Sendable, Equatable {
         enum Kind: Sendable, Equatable {
             case model(asked: String, ran: String)
             case effort(asked: String, ran: String)
-            case contextWindow(was: Int, now: Int)
         }
 
         let kind: Kind
@@ -205,7 +208,9 @@ actor CodexSignalReader {
     private static let wanted = ["\"session_meta\"", "\"turn_context\"", "\"thread_settings_applied\"",
                                  "\"task_started\"", "\"token_count\""].map { Data($0.utf8) }
 
-    private static let efforts = ["none", "minimal", "low", "medium", "high", "xhigh"]
+    /// Lowest to highest, as Codex ranks them (`supported_reasoning_levels` in
+    /// `~/.codex/models_cache.json`). A level missing here is never compared.
+    private static let efforts = ["none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
 
     static func parse(_ lines: LogLines, session: String) -> FileFacts {
         var facts = FileFacts()
@@ -219,7 +224,6 @@ actor CodexSignalReader {
         var atStart: (model: String?, effort: String?) = (nil, nil)
         var previous: (model: String?, effort: String?) = (nil, nil)
         var subTurns: Set<String> = []
-        var window: (size: Int, model: String?)?
         var appliedAny = false
         var isOwnSession = false
         /// A fork starts by copying the session it came from, every copied
@@ -241,7 +245,6 @@ actor CodexSignalReader {
             case "session_meta":
                 // A resumed session writes its header again; only the first
                 // says what the session is.
-                window = nil
                 guard version == nil else { return }
                 version = (payload["cli_version"] as? String).flatMap(Self.version)
                 facts.isJudged = version.map { $0 >= CodexSignals.firstJudgedVersion } ?? false
@@ -285,12 +288,6 @@ actor CodexSignalReader {
                                settings["reasoning_effort"] as? String ?? applied.effort)
                 case "token_count":
                     guard let info = payload["info"] as? [String: Any] else { return }
-                    if facts.isJudged, let size = int(info["model_context_window"]), size > 0 {
-                        if let window, size < window.size, window.model == model, let date {
-                            facts.changes.append(.init(kind: .contextWindow(was: window.size, now: size), date: date, session: session))
-                        }
-                        window = (size, model)
-                    }
                     // The same count is written more than once; a repeat of
                     // the running totals is not another response.
                     let totals = (info["total_token_usage"] as? [String: Any]).map { usage in

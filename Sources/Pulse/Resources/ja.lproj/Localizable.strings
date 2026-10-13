@@ -990,15 +990,14 @@
 "Checked %@ sessions." = "%@ 件のセッションを確認しました。";
 "Read from this Mac's Codex records; nothing is sent." = "この Mac の Codex の記録だけを読み取り、リクエストは一切送りません。";
 "Reasoning cut off: the model's reasoning stopped at exactly 516, 1,034, 1,552… tokens, as if cut off. Only about 0.2% of replies would stop there by chance." = "推論の打ち切り：モデルの推論が 516、1,034、1,552… トークンでぴたりと止まり、強制的に切られたように見えるものです。偶然ここで止まる応答は約 0.2% しかありません。";
-"Settings quietly lowered: a turn ran on a worse model, lower reasoning or a smaller context than you chose, without you changing anything." = "知らないうちの設定ダウン：あなたが選んだものより劣るモデル、低い推論レベル、短いコンテキストで実行されたターンです。あなたは設定を変えていません。";
+"Settings quietly lowered: a turn ran on a worse model or lower reasoning than you chose, without you changing anything." = "知らないうちの設定ダウン：あなたが選んだものより劣るモデル、または低い推論レベルで実行されたターンです。あなたは設定を変えていません。";
 "These are signs, not proof: Codex doesn't record which model the server actually used." = "これは兆候であって確証ではありません。サーバーが実際にどのモデルを使ったかは Codex に記録されません。";
 "Reasoning cut off" = "推論の打ち切り";
 "%@ replies in all" = "全 %@ 件の応答";
 "Settings quietly lowered" = "知らないうちの設定ダウン";
 "Model: %@ swapped for %@" = "モデル：%@ が %@ に置き換えられた";
 "Reasoning: %@ lowered to %@" = "推論レベル：%@ が %@ に下げられた";
-"Context: %@ cut to %@" = "コンテキスト：%@ が %@ に縮められた";
-"Checked %@ sessions: the model, reasoning and context you chose were never changed." = "%@ 件のセッションを確認しました。選んだモデル・推論レベル・コンテキストは一度も変えられていません。";
+"Checked %@ sessions: the model and reasoning you chose were never changed." = "%@ 件のセッションを確認しました。選んだモデルと推論レベルは一度も変えられていません。";
 "%@ other sessions can't be checked: older than Codex 0.144, or run by Codex itself." = "ほか %@ 件のセッションは判断できません：Codex 0.144 より前のもの、または Codex 自身が動かしたものです。";
 "Service status" = "サービスの状態";
 "Operational" = "正常";
