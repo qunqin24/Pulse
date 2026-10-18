@@ -125,7 +125,7 @@
 "Cloud" = "Облако";
 "Teardrop" = "Капля";
 "Leaf" = "Листок";
-"The character it plays: which motions it uses and how fast. Automatic keeps it different from the rings beside it." = "Какие движения использует робот и как быстро. В режиме «Автоматически» он не повторяет роботов на соседних кольцах.";
+"The character it plays: which motions it uses and how fast. Automatic keeps it different from the rings beside it." = "Какие движения использует робот и как быстро. В режиме «Авто» он не повторяет роботов на соседних кольцах.";
 "The character you picked for this bot, wherever this ring sits." = "Выбранный характер сохраняется, где бы ни находилось кольцо.";
 "Calm" = "Спокойный";
 "Eager" = "Бодрый";
@@ -221,7 +221,7 @@
 "A colour of your own, whatever the usage." = "Выбранный вами цвет независимо от расхода.";
 "Which limit the rail's ring tracks." = "Какой лимит отслеживает кольцо на ленте.";
 "Highest usage" = "Наибольший расход";
-"Automatic" = "Автоматически";
+"Automatic" = "Авто";
 "Usage endpoint" = "API лимитов";
 "Provider tooling" = "Инструменты сервиса";
 "Use the endpoint when possible, the other route when not." = "По возможности API, иначе — другой способ.";
@@ -280,8 +280,8 @@
 
 /* Free placement */
 "Position" = "Положение";
-"Free across" = "Свободно (гориз.)";
-"Free upright" = "Свободно (верт.)";
+"Free across" = "Свободно ↔";
+"Free upright" = "Свободно ↕";
 "Last 31 days" = "За 31 день";
 
 /* Panel size */
@@ -297,8 +297,8 @@
 "Tight" = "Узкий";
 "Loose" = "Широкий";
 "Size of the rail on screen." = "Размер ленты на экране.";
-"Small" = "Маленький";
-"Standard" = "Стандартный";
+"Small" = "Малый";
+"Standard" = "Средний";
 "Large" = "Большой";
 
 /* Launch at login */
@@ -1134,9 +1134,9 @@
 "Saved" = "Сохранено";
 "Save here" = "Сохранить сюда";
 "Token activity" = "Активность по токенам";
-"Daily" = "По дням";
-"Weekly" = "По неделям";
-"Cumulative" = "Накопительно";
+"Daily" = "Дни";
+"Weekly" = "Недели";
+"Cumulative" = "Итого";
 "%@ tokens in the last 12 months" = "Токенов за последние 12 месяцев: %@";
 "%@ over the last 12 months, %@ active days" = "За последние 12 месяцев: %@, активных дней: %@";
 "Less" = "Меньше";
