@@ -1,6 +1,6 @@
 # Set up Cursor in Pulse
 
-Pulse shows Cursor's two usage pools — "Cursor Models" (Composer and Cursor's own models) and "Other Models" (everything else) — plus, if your plan has them, an extra-spend limit and a credit balance. On a plan with a weekly usage limit, such as Premium, Pulse shows that weekly limit in place of the two pools.
+Pulse shows Cursor's two usage pools — "Cursor Models" (Composer and Cursor's own models) and "Other Models" (everything else) — plus, if your plan has them, an extra-spend limit and a credit balance. On a plan with a weekly usage limit, such as Premium, Pulse shows that weekly limit in place of the two pools. Enterprise accounts that report one shared allowance instead show its dollar amount, such as `$0.80 / $800.00` used.
 
 ## What you need
 

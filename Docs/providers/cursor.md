@@ -39,6 +39,8 @@ Spending past the first eats into the second. The first cut of this shipped a si
 
 **`plan.used` / `plan.limit` is a different denominator and must not sit beside them** — plan cash value ($20 on Pro) against pools worth hundreds, so a third bar reads as a contradiction. It is used for the extra-spend limit, as the fallback when an account reports no pools at all, and as `creditBalance` (`plan.remaining` is a real balance, not an allowance — which is why this provider reports one and Antigravity does not). A team account’s `pooled` / `onDemand` stand in for the individual pair.
 
+**Enterprise accounts may report neither pair.** Their shared allowance arrives as `individualUsage.overall`, with `used`, `limit` and `remaining` in **cents**. When no model pools are reported, it becomes the same monthly money fallback and the balance; its amounts are converted to dollars for the card, which writes the currency symbol and two decimal places. Evidence: an Enterprise account on 2026-10-23 reported `used: 80`, `limit: 80000`, `remaining: 79920` (fixture `cursor-enterprise-overall.json`), which is `$0.80 / $800.00` used and `$799.20` left.
+
 Billing-cycle length is 28 to 31 days, stored as a flat 30 with `reportsLength: false`.
 
 ## Weekly plans

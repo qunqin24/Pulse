@@ -229,6 +229,10 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         /// other two, so a row counted as "left" then shows no amount.
         let remaining: Double?
         let limit: Double
+        /// The currency these amounts are written in, where the provider
+        /// states money rather than a count of its own credits. Nil for the
+        /// credit amounts that existed before this field.
+        var currency: String? = nil
     }
 
     var amounts: Amounts?

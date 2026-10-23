@@ -275,7 +275,8 @@ struct UsageDetailCard: View {
                     // rather than being told in advance which they are.
                     burn: showsForecast ? BurnRate.reading(for: window) : nil,
                     value: valueText(window),
-                    amount: showsAmounts ? Self.amountText(window, remaining: showsRemaining) : nil
+                    amount: showsAmounts || window.amounts?.currency != nil
+                        ? Self.amountText(window, remaining: showsRemaining) : nil
                 )
                 .transition(Self.rowTransition)
             }
@@ -547,6 +548,9 @@ struct UsageDetailCard: View {
         guard let amounts = window.amounts, amounts.limit > 0,
               let figure = remaining ? amounts.remaining : amounts.used
         else { return nil }
+        if let currency = amounts.currency {
+            return "\(Money.reported(max(figure, 0), code: currency)) / \(Money.reported(amounts.limit, code: currency))"
+        }
         return "\(creditAmount(max(figure, 0))) / \(creditAmount(amounts.limit))"
     }
 
