@@ -2,7 +2,7 @@
 
 本仓库给 AI 的入口。人的工作流程、证据规则和文档地图见 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [Docs/README.md](Docs/README.md)。改代码时，在同一个提交里修改**负责该主题的文档**；不要往本文件里加内容。
 
-Pulse 是一个 macOS 菜单栏用量监视器。面板由 SwiftUI 绘制；尺寸、位置和输入由一个透明、不激活的 AppKit `NSPanel` 负责。七十六个服务商，没有 Pulse 后端，也没有 Pulse 账号。各服务商的读取通道、鉴权、cookie 和额外登录见 [Docs/providers/README.md](Docs/providers/README.md)。
+Pulse 是一个 macOS 菜单栏用量监视器。面板由 SwiftUI 绘制；尺寸、位置和输入由一个透明、不激活的 AppKit `NSPanel` 负责。七十七个服务商，没有 Pulse 后端，也没有 Pulse 账号。各服务商的读取通道、鉴权、cookie 和额外登录见 [Docs/providers/README.md](Docs/providers/README.md)。
 
 源码分在 `Sources/Pulse` 下的六个目录：**App**（生命周期、设置存储、更新）、**Panel**（窗口、窗口位置，以及其中绘制的一切）、**Settings**（设置窗口）、**Usage**（存储、缓存、账本、预测、提醒）、**Providers**（每个产品一个服务，以及它们的辅助代码）、**Auth**（密钥、登录、cookie）。Swift 没有目录命名空间，SwiftPM 会递归读取，所以文件所在的目录只表明它属于哪一部分，别无他意；这个归属不再成立时就移动文件。
 
@@ -67,4 +67,4 @@ swift build
 
 ## 当前事实（关键时请在代码里核实）
 
-七十六个内置服务商（`Provider.builtIn`）：二十四个逐个手写，五十二个是 `Providers/Profiled/` 下的 `ProviderProfile`（见 [Docs/providers/README.md](Docs/providers/README.md#adding-a-provider)）；另有 `.pulseExtension`，用户添加的每个扩展都作为它的一个账号（见 [Docs/extensions.md](Docs/extensions.md)）。支持额外账号的：Claude Code、Codex、Grok、Grok Bot（`supportsMultipleAccounts`）。自适应刷新是**单次**定时器，间隔 **2–30 分钟**（`AdaptiveRefresh.floor` 120 秒 / `ceiling` 1800 秒），不是每 60 秒循环。液态玻璃下的拖动：可命中测试的 `PanelSurface`、窗口的 `sendEvent`，以及玻璃下方的 `PanelGlass.claim`，让窗口拥有自己的像素——已用真实输入验证（#68）。
+七十七个内置服务商（`Provider.builtIn`）：二十四个逐个手写，五十三个是 `Providers/Profiled/` 下的 `ProviderProfile`（见 [Docs/providers/README.md](Docs/providers/README.md#adding-a-provider)）；另有 `.pulseExtension`，用户添加的每个扩展都作为它的一个账号（见 [Docs/extensions.md](Docs/extensions.md)）。支持额外账号的：Claude Code、Codex、Grok、Grok Bot（`supportsMultipleAccounts`）。自适应刷新是**单次**定时器，间隔 **2–30 分钟**（`AdaptiveRefresh.floor` 120 秒 / `ceiling` 1800 秒），不是每 60 秒循环。液态玻璃下的拖动：可命中测试的 `PanelSurface`、窗口的 `sendEvent`，以及玻璃下方的 `PanelGlass.claim`，让窗口拥有自己的像素——已用真实输入验证（#68）。

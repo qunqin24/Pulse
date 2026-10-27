@@ -1,0 +1,17 @@
+[tools]
+node = "24.22.1"
+python = "3.14.2"
+
+[env]
+# Swift and its macro plugins must come from the same full Xcode installation.
+DEVELOPER_DIR = "/Applications/Xcode.app/Contents/Developer"
+_.path = ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin"]
+
+[tasks.build]
+run = "swift build"
+
+[tasks.test]
+run = "swift test"
+
+[tasks.localization]
+run = "bash Scripts/check-localization.sh"

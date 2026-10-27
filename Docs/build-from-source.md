@@ -12,6 +12,12 @@ swift build                  # type-check, including #Preview
 ./Scripts/check-localization.sh
 ```
 
+## mise development environment
+
+The project mise configuration pins Node and Python and selects the full Xcode toolchain through `DEVELOPER_DIR` and PATH. Run `mise trust`, then `mise run build`, `mise run test`, or `mise run localization`. For packaging, use `mise exec -- ./Scripts/bundle.sh`.
+
+Swift, its preview macro plugins and the platform SDK come together from Xcode rather than a separately installed Swift runtime. This integration was checked with Xcode 27.1 / Apple Swift 6.4 / macOS SDK 27.0. Xcode remains a platform SDK installation; the project configuration selects it, and `mise exec -- swift --version` verifies the selected compiler. Change `DEVELOPER_DIR` and the toolchain path together if Xcode is installed elsewhere.
+
 ## Xcode, not Command Line Tools
 
 `xcode-select` must point at **Xcode**. The `#Preview` macro is expanded by a plugin that ships with Xcode. Without it every build fails with `PreviewsMacros plugin not found`.

@@ -1,3 +1,6 @@
+"Runs dim usage --json with the CLI's saved login. Pulse does not read or store its credentials." = "Runs dim usage --json with the CLI's saved login. Pulse does not read or store its credentials.";
+"Uses the login saved by dim auth login." = "Uses the login saved by dim auth login.";
+
 /* Menu bar */
 "Settings…" = "Settings…";
 "Quit Pulse" = "Quit Pulse";

@@ -63,6 +63,9 @@ struct ProviderProfile: Sendable {
     var spendingIsWatchedLocally = true
     /// Whether a banked reading may stand in only for the same account.
     var requiresScopeMatch = false
+    /// A full-remainder expiry without grouped lots is the whole window's
+    /// invalidation time, not merely the earliest expiry in a pooled balance.
+    var expiresWholeBuckets = false
     /// The brand's colour for the animated mark, where the brand has one.
     var brandColor: UInt32? = nil
     /// `Docs/setup/<slug>.md`, which the in-app Setup help link opens.

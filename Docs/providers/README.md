@@ -1,8 +1,8 @@
 # Providers
 
-Pulse tracks **seventy-six** built-in quota providers: twenty-four written case by case and fifty-two described by a `ProviderProfile` ([Adding a provider](#adding-a-provider), [Profiled providers](#profiled-providers)). There is no Pulse backend or account; each provider is read by whatever route its product offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that exists only while an editor is open.
+Pulse tracks **seventy-seven** built-in quota providers: twenty-four written case by case and fifty-three described by a `ProviderProfile` ([Adding a provider](#adding-a-provider), [Profiled providers](#profiled-providers)). There is no Pulse backend or account; each provider is read by whatever route its product offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that exists only while an editor is open.
 
-This directory owns routes, credentials, cookies, extra logins and their failure lessons. Service code is authoritative; historical measurements are labelled; nothing here claims a runtime test of a live account. Not here: extensions (one more case, `.pulseExtension`, left out of `Provider.builtIn` — [`../extensions.md`](../extensions.md)); token spend readers ([`../token-spend.md`](../token-spend.md), [`../token-spend-sources.md`](../token-spend-sources.md)) — do not add one to this directory; Ollama's setup and page parser ([`../ollama-cloud.md`](../ollama-cloud.md)).
+This directory owns routes, credentials, cookies, extra logins and their failure lessons. Service code is authoritative; historical measurements are labelled; live-account checks are claimed only where the provider page explicitly records them. Not here: extensions (one more case, `.pulseExtension`, left out of `Provider.builtIn` — [`../extensions.md`](../extensions.md)); token spend readers ([`../token-spend.md`](../token-spend.md), [`../token-spend-sources.md`](../token-spend-sources.md)) — do not add one to this directory; Ollama's setup and page parser ([`../ollama-cloud.md`](../ollama-cloud.md)).
 
 Shared types: [`UsageProvider.swift`](../../Sources/Pulse/Usage/UsageProvider.swift), [`MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift), [`ProviderUsage.swift`](../../Sources/Pulse/Usage/ProviderUsage.swift), [`UsageSource.swift`](../../Sources/Pulse/Usage/UsageSource.swift). Sign-in machinery: [authentication.md](authentication.md).
 
@@ -53,10 +53,11 @@ Accounts the stored rail does not mention are appended **in name order** (`AppSe
 
 ## Profiled providers
 
-Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page here (reply shape, what it leaves out and why) and a user setup page under the same slug in [`../setup/`](../setup/). **Every shape is second-hand**, read from CodexBar's providers and tests (MIT), not from a live account; each page says so, and a captured reply replaces the fixture when someone with an account can produce one.
+Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page here (reply shape, what it leaves out and why) and a user setup page under the same slug in [`../setup/`](../setup/). Except for DimAgent, these shapes are **second-hand**, read from CodexBar's providers and tests (MIT), not from a live account; each page says so. DimAgent's shape was observed from its own CLI; its tests use anonymized replacement figures.
 
 | `Provider` | Ring name (notes page) | Credential | Money balance |
 |---|---|---|---|
+| `.dimAgent` | [DimAgent](dimagent.md) | the Dim CLI's own login (`dim usage --json`) | |
 | `.clinePass` | [ClinePass](clinepass.md) | pasted key | |
 | `.alibabaCodingPlan` | [Alibaba Coding Plan](alibaba-coding-plan.md) | pasted key | |
 | `.alibabaTokenPlan` | [Alibaba Token Plan](alibaba-token-plan.md) | the tool's own login on this Mac | |
@@ -271,6 +272,7 @@ A provider with a status page Pulse can read gets a **Service status** group in 
 - **Failures** come from `ProfileHTTP`, so 401/403, 429 and 5xx mean the same for every provider. Use the provider-neutral reasons `sessionMissing`, `sessionExpired`, `localLoginMissing`, `localLoginExpired`, `localAppMissing` and `noPlan`, alongside the key, network and reply reasons.
 - **Usage page.** If the provider has a page where a person views their own usage or billing, add one line to the table in `Providers/UsagePages.swift`; the menu bar's account tab links to it. A page only — not an API endpoint or a `Referer` — and none rather than a guess.
 - **Lengths** a reply states go through `UsageWindow.length(_:unitSeconds:)`, never a bare multiplication: a count near `Int.max` decodes fine and an unchecked `*` traps, ending the app (Kimi, Z.ai, LiteLLM and JetBrains did; `DurationOverflowTests`). An unstated length — a month, a weekly limit with only a reset — is `reportsLength: false`.
+- **Whole-bucket expiry**: opt into `expiresWholeBuckets` only when a full-remainder `nextExpiry` with no grouped `lots` gives the whole window's invalidation time. The shared cache then drops it at that time. Leave it off for pooled balances whose expiry describes only the earliest batch; see [cache rules](../refresh-and-data.md#cache).
 - **Figures**: stated by the service, or a used amount over a limit the service states. Money left is `creditBalance` + `creditRemaining`. Spend with no limit and no balance has no place on screen yet, so it is left out.
 
 **Hand-written providers** — the twenty-four written before profiles, plus `.pulseExtension` — are `Provider.HandWrittenProvider` and answer every switch themselves. A new one needs:

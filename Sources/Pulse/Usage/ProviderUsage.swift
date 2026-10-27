@@ -957,7 +957,14 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     func current(at now: Date) -> ProviderUsage? {
         if let observedAt, now.timeIntervalSince(observedAt) > UsageCache.maximumAge { return nil }
 
-        let kept = windows.filter { ($0.resetsAt ?? .distantFuture) > now }
+        let kept = windows.filter { window in
+            guard (window.resetsAt ?? .distantFuture) > now else { return false }
+            if account.provider.profile?.expiresWholeBuckets == true, let expiry = window.nextExpiry,
+               expiry.coversRemainder == true, expiry.lots == nil {
+                return expiry.at > now
+            }
+            return true
+        }
         guard !kept.isEmpty || creditBalance != nil else { return nil }
         guard kept.count != windows.count else { return self }
 

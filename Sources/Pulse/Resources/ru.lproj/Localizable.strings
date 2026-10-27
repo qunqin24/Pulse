@@ -1,3 +1,6 @@
+"Runs dim usage --json with the CLI's saved login. Pulse does not read or store its credentials." = "Запускает dim usage --json с сохранённым входом CLI. Pulse не читает и не сохраняет учётные данные.";
+"Uses the login saved by dim auth login." = "Использует вход, сохранённый командой dim auth login.";
+
 /* Menu bar */
 "Settings…" = "Настройки…";
 "Quit Pulse" = "Завершить Pulse";

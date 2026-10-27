@@ -30,7 +30,7 @@
   <img src="Docs/images/panel.webp" height="400" alt="指標移到圓環上，會打開一張卡片，列出每項額度與重置時間">
 </p>
 
-- **76 個服務，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每個都有自己的圓環。
+- **77 個服務，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每個都有自己的圓環。
 - **沒有 Pulse 帳號，也沒有 Pulse 伺服器**——直接使用你已有的登入，不回傳任何東西。
 - **只顯示真實數字**——每個用量百分比都是服務商自己回報的。少數估算會明確標示；服務商沒有提供數字時，Pulse 會直接說明，不去猜測。
 - **原生、安靜**——以 Swift 與 SwiftUI 撰寫，macOS 26 上是 Liquid Glass。可以停靠在左側、右側、頂端，或底部 Dock 旁邊，閒置時收成一條細線，也可以只待在選單列裡。
@@ -109,7 +109,7 @@
 
 ## 支援的服務商與資料通道
 
-76 個服務，每個都依產品本身的方式讀取——它自己的用量介面、編輯器的登入狀態、本機 Language Server，或你貼上的金鑰；每個百分比都是服務商自己回報的。[完整清單與各自的讀取方式](Docs/supported-services.md)（英文）。
+77 個服務，每個都依產品本身的方式讀取——它自己的用量介面、編輯器的登入狀態、本機 Language Server，或你貼上的金鑰；每個百分比都是服務商自己回報的。[完整清單與各自的讀取方式](Docs/supported-services.md)（英文）。
 
 ---
 

@@ -34,6 +34,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     // Providers described by a `ProviderProfile`, each in its own file under
     // `Providers/Profiled/`. Every switch below hands them to that profile.
     case clinePass
+    case dimAgent
     case alibabaCodingPlan
     case alibabaTokenPlan
     case qwenCloud

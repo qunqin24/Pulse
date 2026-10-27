@@ -8,6 +8,7 @@ extension Provider {
     var profile: ProviderProfile? {
         switch self {
         case .clinePass: .clinePass
+        case .dimAgent: .dimAgent
         case .alibabaCodingPlan: .alibabaCodingPlan
         case .alibabaTokenPlan: .alibabaTokenPlan
         case .qwenCloud: .qwenCloud

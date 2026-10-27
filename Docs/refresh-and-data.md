@@ -70,7 +70,7 @@ The store also takes a `UsageCache` (scratch file in tests) and a `clock` (watch
 
 `UsageCache` keeps the last good reading per account, so a refusal shows dated figures (`.stale`, the card's “as of” line) instead of an empty error.
 
-- A window whose **reset has passed is dropped**, not aged; if every window has reset, report the error. Windows that never state a reset are capped at 24 h (`UsageCache.maximumAge`).
+- A window whose **reset has passed is dropped**, not aged; if every window has reset, report the error. A profile may opt into `expiresWholeBuckets` when a single expiry invalidates the whole window. Such a window is dropped when `nextExpiry.at` passes, `coversRemainder` is true and `lots` is absent. DimAgent enables this; the default is off because other providers' expiry summaries can group several lots or dates. Windows are still capped at 24 h (`UsageCache.maximumAge`).
 - **These age rules apply to fresh fetches too**: `observedAt` is when the *provider* took its figures, so `reconciled` filters a fetched reading before banking or drawing it. Devin is why — its figures come from a row its app writes at launch ([providers/devin.md](providers/devin.md)).
 - **A saved plan is banked even when stale.** Devin's comes from the app's own store, not a repeatable request, so `reconciled` keeps it, date-stamped; `--json` never fetches and reads only what is banked.
 - A confirmed empty Qoder allowance (`.qoderNoCredits`) or StepFun's "no Step Plan" (`.stepFunNoPlan`) is a successful answer that deletes the banked reading from memory and disk, so old figures cannot stand in on the panel, next launch or `--json`. Failed requests still fall back ([providers/qoder.md](providers/qoder.md)).

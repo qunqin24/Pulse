@@ -1,3 +1,6 @@
+"Runs dim usage --json with the CLI's saved login. Pulse does not read or store its credentials." = "透過 dim usage --json 讀取用量，使用 CLI 已儲存的登入。Pulse 不讀取或儲存其憑證。";
+"Uses the login saved by dim auth login." = "使用 dim auth login 儲存的登入。";
+
 /* Menu bar */
 "Settings…" = "設定…";
 "Quit Pulse" = "結束 Pulse";

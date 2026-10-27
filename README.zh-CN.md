@@ -30,7 +30,7 @@
   <img src="Docs/images/panel.webp" height="400" alt="指针移到圆环上，会打开一张卡片，列出每项额度和重置时间">
 </p>
 
-- **76 个服务，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每个都有自己的圆环。
+- **77 个服务，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每个都有自己的圆环。
 - **没有 Pulse 账号，也没有 Pulse 服务器**——直接用你已有的登录，不回传任何东西。
 - **只显示真实数字**——每个用量百分比都是服务商自己报告的。少数估算会明确标出；服务商没给数字时，Pulse 会直说，不去猜。
 - **原生、安静**——用 Swift 和 SwiftUI 写成，macOS 26 上是液态玻璃。可以停靠在左边、右边、顶部，或底部程序坞旁边，闲置时收成一条细线，也可以只待在菜单栏里。
@@ -109,7 +109,7 @@
 
 ## 支持的服务商与读取方式
 
-76 个服务，每个都按产品本身的方式读取——它自己的用量接口、编辑器的登录态、本地 Language Server，或你粘贴的 key；每个百分比都是服务商自己报告的。[完整列表和各自的读取方式](Docs/supported-services.md)（英文）。
+77 个服务，每个都按产品本身的方式读取——它自己的用量接口、编辑器的登录态、本地 Language Server，或你粘贴的 key；每个百分比都是服务商自己报告的。[完整列表和各自的读取方式](Docs/supported-services.md)（英文）。
 
 ---
 

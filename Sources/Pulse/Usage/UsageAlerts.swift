@@ -274,9 +274,7 @@ struct AlertMemory: Codable, Sendable, Equatable {
             return produced
         }
 
-        for window in reading.windows {
-            // A previously live snapshot can outlast its window between polls.
-            guard window.resetsAt.map({ $0 > now }) ?? true else { continue }
+        for window in reading.current(at: now)?.windows ?? [] {
             let seen = record.windows[window.id]
             // First sighting starts at nothing announced, so a limit that is
             // *already* past the line is said once, now.

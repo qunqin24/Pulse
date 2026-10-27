@@ -30,7 +30,7 @@
   <img src="Docs/images/panel.webp" height="400" alt="링에 포인터를 올리면 모든 한도와 초기화 시각을 담은 카드가 열립니다">
 </p>
 
-- **76개 서비스를 한눈에**——Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code 등, 서비스마다 링이 하나씩 있습니다.
+- **77개 서비스를 한눈에**——Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code 등, 서비스마다 링이 하나씩 있습니다.
 - **Pulse 계정도, Pulse 서버도 없습니다**——이미 쓰고 있는 로그인을 그대로 사용하며, 아무것도 되돌려 보내지 않습니다.
 - **실제 숫자만 보여 줍니다**——사용률은 모두 서비스가 직접 보고한 값입니다. 몇 안 되는 추정치는 추정이라고 표시하고, 서비스가 숫자를 주지 않으면 짐작하지 않고 그렇다고 알려 줍니다.
 - **네이티브하고 조용합니다**——Swift와 SwiftUI로 만들었고, macOS 26에서는 Liquid Glass로 그려집니다. 화면 왼쪽·오른쪽·위쪽, 또는 아래쪽 Dock 옆에 붙일 수 있고, 쓰지 않을 때는 가는 선으로 접히며, 메뉴 막대에만 둘 수도 있습니다.
@@ -109,7 +109,7 @@
 
 ## 지원 제공업체와 데이터 경로
 
-76개 서비스를 지원하며, 각각 그 제품이 동작하는 방식대로 읽습니다——제품의 사용량 엔드포인트, 편집기 로그인, 로컬 Language Server, 또는 붙여 넣은 키. 모든 비율은 서비스가 직접 알려 준 값입니다. [전체 목록과 각 서비스를 읽는 방법](Docs/supported-services.md)(영어).
+77개 서비스를 지원하며, 각각 그 제품이 동작하는 방식대로 읽습니다——제품의 사용량 엔드포인트, 편집기 로그인, 로컬 Language Server, 또는 붙여 넣은 키. 모든 비율은 서비스가 직접 알려 준 값입니다. [전체 목록과 각 서비스를 읽는 방법](Docs/supported-services.md)(영어).
 
 ---
 
