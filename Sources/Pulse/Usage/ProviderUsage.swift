@@ -115,6 +115,8 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     /// Stable across refreshes, so SwiftUI keeps a row's identity while its
     /// numbers change.
     let id: String
+    /// Provider-reported grant identity, separate from the stable row and any reset date.
+    var cycleID: String?
     let kind: Kind
     /// The model this limit is scoped to, when the provider scopes it to one.
     /// A product name, so it is never translated.
@@ -259,9 +261,11 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
         isExhausted: Bool = false,
         nextExpiry: Expiry? = nil,
         amounts: Amounts? = nil,
-        label: String? = nil
+        label: String? = nil,
+        cycleID: String? = nil
     ) {
         self.id = id
+        self.cycleID = cycleID
         self.kind = kind
         self.scope = scope
         self.usedFraction = usedFraction
@@ -288,6 +292,7 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
+        cycleID = try container.decodeIfPresent(String.self, forKey: .cycleID)
         kind = try container.decode(Kind.self, forKey: .kind)
         scope = try container.decodeIfPresent(String.self, forKey: .scope)
         usedFraction = try container.decode(Double.self, forKey: .usedFraction)
@@ -314,6 +319,7 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(cycleID, forKey: .cycleID)
         try container.encode(kind, forKey: .kind)
         try container.encodeIfPresent(scope, forKey: .scope)
         try container.encode(usedFraction, forKey: .usedFraction)
@@ -328,7 +334,7 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id, kind, scope, usedFraction, windowSeconds, resetsAt
+        case id, cycleID, kind, scope, usedFraction, windowSeconds, resetsAt
         case reportsLength, isExhausted, estimate, nextExpiry, amounts, label
         /// Written by 1.0.9 and earlier. Read, never written.
         case isEstimated

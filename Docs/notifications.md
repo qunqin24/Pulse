@@ -29,6 +29,8 @@ Guarded on the kind, pinned by `AlertMemoryTests`:
 - **`Kind.topUp` follows both rules.** V2EX's 加油包 is bought on top of the window's allowance, with no expiry or clock ([providers/v2ex.md](providers/v2ex.md)); a second pack drops the fraction over forty points with nothing turned over. Only V2EX's `remaining_tokens` may say the pack is gone.
 - **`Kind.credits`, `Kind.sharedCredits` and Qoder's parts (`planCredits`, `dedicatedCredits`) reset only when `nextResetAt` moves forward**, never on the forty-point fall: a bought pack raises the limit ([providers/qoder.md](providers/qoder.md)). A team pool states no reset and is never announced as reset. StepFun's Token Plan is the same kind ([providers/stepfun.md](providers/stepfun.md)): a monthly plan states no refill date, so its renewal is not announced.
 
+A provider may report a grant identity as `UsageWindow.cycleID` independently of its stable row `id`. Alert memory persists that identity; a change between two known identities clears the announced threshold without announcing a reset. DimAgent uses its reported bucket ID so a new subscription grant can warn once again while a pinned plan-credit row stays pinned. Missing identity (including old saved state) is not evidence of a new grant; the first known identity is adopted without clearing the prior threshold. Cache windows and alert memory decode older records without this optional field.
+
 ### Low balance is about money, not a share of anything
 
 Prepaid providers (DeepSeek first) report **no allowance**, so `alertThreshold` has nothing to act on; the warning is about the money.

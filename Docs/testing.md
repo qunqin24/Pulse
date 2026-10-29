@@ -90,7 +90,7 @@ Fixtures are captured unless marked second-hand or reconstructed; see [What is n
 | Suite | Pins |
 |---|---|
 | One suite per profiled provider (`ClinePassTests` … `XAIAPITests`), and `ProfileCookieTests` | Each reply from a **second-hand** fixture (CodexBar's code and tests, said in each suite); refusing a missing or negative figure, a guessed length, or a health flag as a percentage; credentials; `ProfileHTTP` status mapping. `ProfileCookieTests`: exact names, `*` prefixes, `\|` alternatives. [providers/README.md](providers/README.md#profiled-providers) |
-| `DimAgentTests` | CLI reply mapping from an anonymized observed shape; plan credits, independent packs and search, expiry versus reset, invalid/missing values, credential-free helper environment and failure classification. [providers/dimagent.md](providers/dimagent.md) |
+| `DimAgentTests`, `DimAgentReviewTests` | CLI reply mapping from an anonymized observed shape; plan credits, independent packs and search, expiry versus reset, invalid/missing values, credential-free helper environment and failure classification. Review regressions cover reported token windows driving headline/alerts, new-grant warnings across persistence with stable row IDs, old records without cycle identity, and explicit sign-out bypassing cached quotas while transient failures retain them. [providers/dimagent.md](providers/dimagent.md) |
 | `ZhipuProviderTests` | Both GLM storefronts share the `zai` mark. |
 | `ClaudeCodeSeverityTests` | Warning severities leave room; locked reasons and unknown severities mark the limit spent. [providers/claude-code.md](providers/claude-code.md) |
 | `AntigravityParsingTests` | A captured `RetrieveUserQuotaSummary` reply → `[UsageWindow]`. |

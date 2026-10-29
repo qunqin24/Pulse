@@ -6,7 +6,7 @@
 
 Pulse uses the CLI's saved login. No API key or cookie needs to be pasted into Pulse. The CLI must remain installed and available; mise users should keep the Node and Dim shims available to GUI applications as well as terminals.
 
-The card shows plan credits and the reported web-search allowance separately. Enable the detailed card's amounts to see used or remaining units alongside the percentage. Pin the plan-credit limit if you want that allowance to drive the ring regardless of search usage.
+The card shows plan credits, reported token windows and the web-search allowance separately. A full token window can pause consumption even when plan credits remain; its reported reset time tells you when that window ends. Enable the detailed card's amounts to see used or remaining units alongside the percentage. Pin the plan-credit limit if you want that allowance to drive the ring regardless of token-window or search usage.
 
 Credit expiry is shown as expiry, not automatic renewal. Add-on packs appear separately when reported. Credits are not a cash balance and local token logs are not used to estimate the subscription.
 

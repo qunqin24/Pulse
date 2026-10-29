@@ -53,7 +53,8 @@ enum DimAgentUsageService {
 
     static func exitReason(_ error: String) -> ProviderUsage.Unavailability {
         let text = error.lowercased()
-        if ["not logged in", "not signed in", "dim auth login", "unauthorized", "token expired"]
+        if ["not logged in", "not signed in"].contains(where: text.contains) { return .localLoginMissing }
+        if ["dim auth login", "unauthorized", "token expired"]
             .contains(where: text.contains) { return .localLoginExpired }
         if text.contains("429") || text.contains("rate limit") { return .rateLimited }
         return .unreachable
@@ -80,6 +81,15 @@ enum DimAgentUsageService {
         let remaining_units: Double?
         let expires_at: String?
         let status: String?
+        let window_states: [TokenWindow]?
+    }
+
+    struct TokenWindow: Decodable {
+        let id: Int?
+        let window_duration_hours: Double?
+        let window_token_cap: Double?
+        let window_token_used: Double?
+        let window_expires_at: String?
     }
 
     struct Meter: Decodable {
@@ -99,6 +109,7 @@ enum DimAgentUsageService {
         if let bucket = reply.credits?.subscription_bucket,
            let window = window(bucket, id: "dimagent.subscription", kind: .planCredits, now: now) {
             windows.append(window)
+            windows += tokenWindows(bucket, parent: window.id, now: now)
         }
         // Packs have separate expiry dates; never add them to the subscription denominator.
         for bucket in reply.credits?.addon_buckets ?? [] {
@@ -106,6 +117,7 @@ enum DimAgentUsageService {
                   let window = window(bucket, id: "dimagent.addon.\(id)", kind: .topUp, now: now),
                   !windows.contains(where: { $0.id == window.id }) else { continue }
             windows.append(window)
+            windows += tokenWindows(bucket, parent: window.id, now: now)
         }
         for meter in reply.feature_meters ?? [] where meter.feature_key == "web_search" && meter.unlimited != true {
             guard let amounts = amounts(used: meter.total_used, remaining: meter.total_remaining,
@@ -133,8 +145,40 @@ enum DimAgentUsageService {
             isExhausted: bucket.status == "exhausted",
             nextExpiry: expiry.flatMap { date in
                 amounts.remaining.map { UsageWindow.Expiry(amount: $0, at: date, coversRemainder: true) }
-            }, amounts: amounts
+            }, amounts: amounts, cycleID: bucket.id.map { "bucket:\($0)" }
         )
+    }
+
+    private static func tokenWindows(_ bucket: Bucket, parent: String, now: Date) -> [UsageWindow] {
+        var occurrences: [String: Int] = [:]
+        return (bucket.window_states ?? []).compactMap { token in
+            guard let hours = token.window_duration_hours, hours.isFinite, hours > 0,
+                  hours <= Double(UsageWindow.longestLength) / 3600,
+                  let seconds = Int(exactly: hours * 3600),
+                  let length = UsageWindow.length(seconds, unitSeconds: 1),
+                  let amounts = amounts(used: token.window_token_used, remaining: nil,
+                                        total: token.window_token_cap) else { return nil }
+            let key = token.id.map { "id:\($0)" } ?? "seconds:\(length)"
+            let occurrence = occurrences[key, default: 0]
+            occurrences[key] = occurrence + 1
+            let reset = ProfileHTTP.date(token.window_expires_at)
+            guard token.window_expires_at == nil || reset != nil,
+                  reset.map({ $0 > now }) ?? true else { return nil }
+            let kind: UsageWindow.Kind = switch length {
+            case 18_000: .fiveHour
+            case 86_400: .daily
+            case 604_800: .weekly
+            default: .other(seconds: length)
+            }
+            return UsageWindow(
+                id: "\(parent).tokens.\(key).\(occurrence)", kind: kind, scope: nil,
+                usedFraction: amounts.used / amounts.limit, windowSeconds: length,
+                resetsAt: reset,
+                nextExpiry: ProfileHTTP.date(bucket.expires_at).map {
+                    UsageWindow.Expiry(amount: max(0, amounts.limit - amounts.used), at: $0, coversRemainder: true)
+                }, amounts: amounts, cycleID: bucket.id.map { "bucket:\($0)" }
+            )
+        }
     }
 
     private static func amounts(used: Double?, remaining: Double?, total: Double?) -> UsageWindow.Amounts? {
