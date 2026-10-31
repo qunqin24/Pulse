@@ -33,6 +33,10 @@ enum PiTranscript {
         var model: String?
         var tally: TokenTally
         var unclassified: Int
+        /// The dollar figure the client recorded for this message (omp's
+        /// `usage.cost`), when the row states one. Nil means "price me from
+        /// the table"; a present-but-zero cost is a real zero price.
+        var recordedCost: TokenCost?
     }
 
     struct Attribution {
@@ -150,6 +154,28 @@ enum PiTranscript {
         return (tally, remainder > 0 ? remainder : 0)
     }
 
+    /// The `cost` object beside the token buckets, where the client wrote
+    /// one: the amount it billed, split by the same four kinds. A `total`
+    /// without a split is carried as unattributed cost in `input` rather than
+    /// dropped — the dollar figure is real either way.
+    static func recordedCost(_ object: [String: Any]) -> TokenCost? {
+        guard let cost = object["cost"] as? [String: Any] else { return nil }
+        func dollars(_ key: String) -> Double? {
+            guard let value = (cost[key] as? NSNumber)?.doubleValue, value.isFinite else { return nil }
+            return value
+        }
+        var parsed = TokenCost(
+            input: dollars("input") ?? 0,
+            cacheWrite: dollars("cacheWrite") ?? 0,
+            cacheRead: dollars("cacheRead") ?? 0,
+            output: dollars("output") ?? 0
+        )
+        if let total = dollars("total"), parsed.total == 0, total != 0 {
+            parsed = TokenCost(input: total)
+        }
+        return parsed
+    }
+
     private static func parseMessage(_ row: [String: Any]) -> Message? {
         guard
             let message = row["message"] as? [String: Any],
@@ -167,7 +193,8 @@ enum PiTranscript {
             provider: AgentLogIO.text(message["provider"]),
             model: AgentLogIO.text(message["model"]),
             tally: counts.tally,
-            unclassified: counts.unclassified
+            unclassified: counts.unclassified,
+            recordedCost: recordedCost(usageObject)
         )
     }
 
@@ -273,6 +300,8 @@ enum PiFamilySessionReader {
                             client: client, configuration: configuration,
                             sessionID: sessionID, message: message
                         ),
+                        provider: message.provider ?? configuration.providerFallback,
+                        recordedCost: message.recordedCost,
                         unclassifiedTokens: message.unclassified
                     )
                 )

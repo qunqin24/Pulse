@@ -297,6 +297,10 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         case .openCode, .openCodeReview: "opencode-go"
         case .kiloCLI, .kiloCode: "kilo"
         case .cline: "cline-pass"
+        // Devin prices its own models; `devin` is a supplement vendor (a
+        // list rate models.dev does not carry), consulted the same way —
+        // only where no first-party provider has the model.
+        case .devinCLI, .devinDesktop: "devin"
         default: nil
         }
     }
@@ -412,6 +416,16 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
     /// evidence behind the format, not about whether the reader runs; it is
     /// carried so a future surface can be honest without a second list.
     var hasCapturedValidation: Bool {
+        switch self {
+        case .claudeCode, .codex, .openCode, .kiloCLI, .grok, .kimiCLI, .devinCLI: true
+        default: false
+        }
+    }
+
+    /// Whether the agent is one of the seven readers that predate the
+    /// catalogue and keep their own store readers — none of which carry a
+    /// provider field a filtered view could select on.
+    var isLegacy: Bool {
         switch self {
         case .claudeCode, .codex, .openCode, .kiloCLI, .grok, .kimiCLI, .devinCLI: true
         default: false

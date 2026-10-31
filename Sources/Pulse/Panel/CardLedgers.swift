@@ -13,12 +13,25 @@ enum CardHistorySource: Equatable, Sendable {
     case transcripts
     /// Every agent that borrows this provider's mark. Antigravity is three
     /// (editor, IDE, CLI) and Devin two, added up.
-    case agents([SpendAgent])
+    ///
+    /// **One store can serve more than one provider.** A multi-provider agent
+    /// (Oh My Pi) can route a request to this provider's account, and the
+    /// record it writes says so; `slices` are those records as their own
+    /// ledger, so the card's history covers work done through another tool,
+    /// not only this provider's own clients.
+    case agents([SpendAgent], slices: [AgentSlice] = [])
     case accountStatistics
     /// A console's own record of the account, read with the console sign-in
     /// kept in Settings — OpenCode's request log, DeepSeek's daily usage: the
     /// whole account, priced as charged.
     case accountLogs
+
+    /// The records inside another agent's store that name this provider as
+    /// their backend — a view of that store, never a second agent.
+    struct AgentSlice: Equatable, Sendable {
+        let agent: SpendAgent
+        let provider: String
+    }
 
     /// Whether this Mac's records are read, which only Token spend allows.
     var readsThisMac: Bool { self != .accountStatistics && self != .accountLogs }
@@ -41,7 +54,15 @@ extension Provider {
         // records stand in before that: nothing on this Mac logs it.
         if self == .deepSeek, deepSeekSession { return .accountLogs }
         let agents = SpendAgent.allCases.filter { $0.iconProvider == self && $0.provider == nil }
-        return agents.isEmpty ? nil : .agents(agents)
+        var slices: [CardHistorySource.AgentSlice] = []
+        // Devin through Oh My Pi: the transcript names `devin` as its
+        // provider (`omp --model devin/…`), so those records answer the card
+        // even where neither Devin client is installed. A nil provider key
+        // asks only for records the agent itself wrote.
+        if self == .devin {
+            slices.append(CardHistorySource.AgentSlice(agent: .omp, provider: "devin"))
+        }
+        return agents.isEmpty && slices.isEmpty ? nil : .agents(agents, slices: slices)
     }
 }
 
@@ -203,8 +224,8 @@ final class CardLedgers {
         switch source {
         case .transcripts:
             return .answered(await UsageLedgerReader.shared.ledger(for: provider, refresh: true))
-        case .agents(let agents):
-            return .answered(await UsageLedger.reading(agents))
+        case .agents(let agents, let slices):
+            return .answered(await UsageLedger.reading(agents, slices: slices))
         case .accountStatistics:
             let read = await ZaiUsageService(provider: provider, enteredKey: APIKeyStore.key(for: provider)).history()
             switch read {
@@ -226,11 +247,15 @@ extension UsageLedger {
     /// Every agent that borrows a provider's mark, read and added up: the
     /// card's history for that provider and its settings pane's, read the
     /// same way so the two cannot disagree.
-    static func reading(_ agents: [SpendAgent]) async -> UsageLedger {
+    static func reading(_ agents: [SpendAgent], slices: [CardHistorySource.AgentSlice] = []) async -> UsageLedger {
         var ledgers: [UsageLedger] = []
         for agent in agents { ledgers.append(await AgentLedgers.shared.ledger(for: agent)) }
+        for slice in slices {
+            ledgers.append(await AgentLedgers.shared.ledger(for: slice.agent, provider: slice.provider))
+        }
         var combined = adding(ledgers)
         combined.reportsCacheReads = agents.contains { $0.reportsCacheReads }
+            || slices.contains { $0.agent.reportsCacheReads }
         return combined
     }
 

@@ -27,6 +27,8 @@ Once enabled, the first visit checks the disk caches and reads changed sources. 
 
 `SpendAgent.priceVendor` names the models.dev vendor an agent's plan is sold by (`opencode-go`, `kilo`, `cline-pass`). Those rates are stored **namespaced** as `vendor|id`, so only a lookup that asks for that vendor can reach them and they cannot collide with a first-party id. `ModelPrices.price(for:in:vendor:)` tries first-party spellings and aliases first; a first-party price always wins. An agent that calls model vendors directly has no `priceVendor`.
 
+**One vendor is a supplement, not a models.dev vendor.** Devin prices its own `swe-2` and models.dev carries no Cognition entry at all, so the fetched table can never price it. `ModelPrices.supplement` holds Devin's published list rate ($3.00/1M input, $15.00/1M output, $0.30/1M cache input — https://docs.devin.ai/desktop/models) keyed `devin|swe-2`, merged into every table `prices()` returns — fetched, cached or empty — and never written to `model-prices-5.json`. A first-party entry still wins a shared id, so the merge only fills a gap. `.devinCLI` and `.devinDesktop` name `devin` as their `priceVendor`. The omp → devin card slice needs no vendor: every omp record routed to `devin` already carries the dollar figure omp billed (`usage.cost`), and recorded cost outranks every table — it is the price actually charged, not an estimate of one.
+
 The vendor is passed through the shared pricing pass for **days, slots, model amounts and sessions**, so a priced session cannot coexist with an unpriced headline for the same tokens (`VendorPriceTests`). OpenCode and Kilo CLI share a database reader; each caller supplies its own vendor.
 
 **Bulk pricing** uses a read-local `ModelPriceLookup`: one lazily built case-folded index over an immutable table, memoizing resolved rates **and misses** by model and vendor. Exact first-party IDs go straight to the original dictionary, so a read containing only those needs no index. It shares the single-lookup alias/precedence rules. A replacement price table gets a new lookup, so a stale miss cannot survive a price refresh; there is no process-global resolution cache.
@@ -111,7 +113,7 @@ All three can be present at once, and each is surfaced on its own.
 
 ## What the readers agree on
 
-- **Money is `ModelPrices`, always.** A store's own cost column or a provider-reported cost (OpenCode, Cursor, Warp, Unsloth, Gajae Code, Junie, Fx and others) is **not** carried into priced totals: it reflects what that app believed at the time, is zero for plans it has no rate for, and would mix two differently sourced figures.
+- **Money is the recorded cost where the store writes one, `ModelPrices` where it does not.** omp's `usage.cost` prices each message at the amount the agent itself billed; the same rule would serve any record carrying `recordedCost`. A store's own cost **column** or a provider-reported cost (OpenCode, Cursor, Warp, Unsloth, Gajae Code, Junie, Fx and others) is still **not** carried into priced totals: it reflects what that app believed at the time, is zero for plans it has no rate for, and would mix two differently sourced figures. Records without a recorded cost price from the table, and a model with no recorded cost and no published price is counted and not costed.
 - **A store with no counters contributes no record.** Crush and Warp report cost or request counts and no tokens; Freebuff, Kiro's estimate-only variants and legacy Command Code/ZCode transcripts without a `usage` block leave only character estimates. None becomes a token number or a zero.
 - **A model with no published price is counted and not costed**, after its spelling is resolved ([below](#one-model-several-spellings)).
 - **`ModelPrices` covers twelve vendors, not two.** With only Anthropic and OpenAI, four of the seven original agents read $0.00. IDs are unique within a vendor but not across all 213 models.dev vendors, so the list is deliberate and ordered; `github-copilot` is left out because it re-lists other vendors' models.
@@ -137,6 +139,7 @@ A model id that misses the table is not free; it is a bill that silently reads z
 | `gpt-5-6-sol-medium` | `gpt-5.6-sol` | Devin writes dashes for dots and an effort on the end |
 | `gemini-3.8-flash-n` / `-control` / `-xpe` | `gemini-3.8-flash` | Antigravity's variants of one Flash, one published rate; `-n` seen in a store, the others as reported (#90) |
 | `gemini-3.5-flash-extra-low` | `gemini-3.5-flash` | Antigravity's lowest Flash effort; `-low` alone left `gemini-3.5-flash-extra` (#90) |
+| `gemini-3-1-pro` | `gemini-3.1-pro-preview` | Devin's clients spell the version with dashes and Google lists the preview build |
 | `minimax-m3` | `MiniMax-M3` | case only |
 
 **Rules, not fuzzy matching.** A loose match prices a model at another model's rate, a wrong number that looks right; `grok-build-0.1` is a real xAI model and must not be stripped to `grok`. A lookup that still misses stays unpriced (historical: eleven ids on one Mac, four of them `…-free` models that genuinely cost nothing).

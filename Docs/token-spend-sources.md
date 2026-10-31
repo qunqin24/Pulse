@@ -29,7 +29,7 @@ Pi-shaped JSONL: a session header, assistant `message` records, and a `usage` ob
 | Client | Default macOS location | Counter status | Evidence |
 |---|---|---|---|
 | `pi` | `~/.pi/agent/sessions/**/*.jsonl` | real | spec |
-| `omp` | `~/.omp/agent/sessions/**/*.jsonl` | real | spec |
+| `omp` | `~/.omp/agent/sessions/**/*.jsonl` | real; a message's `provider` names the backend that served the request (e.g. `devin`) and is what `CardHistorySource.AgentSlice` filters on for that provider's card; a message with none falls back to `omp` | spec |
 | `senpi` | `~/.senpi/agent/sessions`, plus `.omo/senpi-task/children` for each recorded `cwd` | real | spec |
 | `kimchi` | `~/.config/kimchi/harness/sessions` | real | spec |
 | `prime-agent` | `~/.prime/agent/sessions` + `session-artifacts`, redirected by a `settings.json` `sessionDir` | real, after parent/child reconciliation | spec |

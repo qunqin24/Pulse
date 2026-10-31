@@ -36,6 +36,19 @@ struct AgentUsageRecord: Sendable {
     var title: String? = nil
     var project: String? = nil
     var deduplicationID: String? = nil
+    /// The backend the store says the request went to — omp's `devin`,
+    /// `openai-codex`, `xai-oauth` and the like — where the format names one.
+    /// Never the reader's own guess: a record with none is left without a
+    /// provider, and a caller that filters on it keeps only what was stated.
+    var provider: String? = nil
+    /// The dollar figure the store itself recorded for this work, where the
+    /// format writes one (omp's `usage.cost`).
+    ///
+    /// A recorded cost is used as written instead of the price table: the
+    /// agent billed this exact amount, and a table lookup can only estimate
+    /// it. A zero cost is a real zero — a record priced at nothing — not a
+    /// missing price; `nil` alone falls back to the table.
+    var recordedCost: TokenCost? = nil
     /// Real tokens that could not be placed in any of the four kinds.
     ///
     /// **Not a second copy of the reported total.** The caller passes only the
@@ -111,6 +124,15 @@ enum AgentUsageLedger {
         // may become quarter-hour slots.
         var eventBuckets: [String: [String: TokenTally]] = [:]
         var eventUnknown: [String: [String: Int]] = [:]
+        // Records whose own store wrote the dollar figure: kept in parallel
+        // buckets with their recorded costs, so the shared pricing pass never
+        // re-derives a figure the agent already stated — and so a recorded
+        // cost never lands in `unpricedTokens` for lacking a table rate.
+        var recordedDayTallies: [Date: [String: TokenTally]] = [:]
+        var recordedDayCosts: [Date: [String: TokenCost]] = [:]
+        var recordedEventTallies: [String: [String: TokenTally]] = [:]
+        var recordedEventCosts: [String: [String: TokenCost]] = [:]
+        var recordedModels: Set<String> = []
         var dayUnknown: [Date: [String: Int]] = [:]
 
         var seen: Set<String> = []
@@ -165,11 +187,25 @@ enum AgentUsageLedger {
             let key = UsageLedgerReader.slotKey(for: record.timestamp)
             guard let day = Self.day(for: key, calendar: calendar) else { continue }
             if known > 0 {
-                knownBuckets[key, default: [:]][model] =
-                    (knownBuckets[key]?[model] ?? TokenTally()) + tally
-                if !record.isAggregate {
-                    eventBuckets[key, default: [:]][model] =
-                        (eventBuckets[key]?[model] ?? TokenTally()) + tally
+                if let recordedCost = record.recordedCost {
+                    recordedModels.insert(model)
+                    recordedDayTallies[day, default: [:]][model] =
+                        (recordedDayTallies[day]?[model] ?? TokenTally()) + tally
+                    recordedDayCosts[day, default: [:]][model] =
+                        (recordedDayCosts[day]?[model] ?? TokenCost()) + recordedCost
+                    if !record.isAggregate {
+                        recordedEventTallies[key, default: [:]][model] =
+                            (recordedEventTallies[key]?[model] ?? TokenTally()) + tally
+                        recordedEventCosts[key, default: [:]][model] =
+                            (recordedEventCosts[key]?[model] ?? TokenCost()) + recordedCost
+                    }
+                } else {
+                    knownBuckets[key, default: [:]][model] =
+                        (knownBuckets[key]?[model] ?? TokenTally()) + tally
+                    if !record.isAggregate {
+                        eventBuckets[key, default: [:]][model] =
+                            (eventBuckets[key]?[model] ?? TokenTally()) + tally
+                    }
                 }
             }
             if extra > 0 {
@@ -186,9 +222,9 @@ enum AgentUsageLedger {
             // still count toward the totals and the models.
             guard let sessionID = Self.nonBlank(record.sessionID) else { continue }
 
-            let price = lookup.price(for: model, vendor: vendor)
-            let money = price.map { record.tally.cost(at: $0) } ?? 0
-            let unpriced = extra + (price == nil ? known : 0)
+            let price = record.recordedCost == nil ? lookup.price(for: model, vendor: vendor) : nil
+            let money = record.recordedCost?.total ?? price.map { record.tally.cost(at: $0) } ?? 0
+            let unpriced = extra + (price == nil && record.recordedCost == nil ? known : 0)
             let name = Self.nonBlank(record.sessionName)
             let title = Self.nonBlank(record.title)
             let project = UsageProject(record.project)
@@ -229,7 +265,7 @@ enum AgentUsageLedger {
 
         // Nothing written at all is `.empty`, not a zero-shaped ledger.
         // Unclassified-only records still count, so both maps are checked.
-        guard !knownBuckets.isEmpty || !dayUnknown.isEmpty else { return .empty }
+        guard !knownBuckets.isEmpty || !recordedDayTallies.isEmpty || !dayUnknown.isEmpty else { return .empty }
 
         var ledger = UsageLedgerReader.price(knownBuckets, with: prices, calendar: calendar, vendor: vendor)
 
@@ -245,7 +281,9 @@ enum AgentUsageLedger {
         for model in acceptedModels {
             if let price = lookup.price(for: model, vendor: vendor) {
                 if let name = price.name { ledger.modelNames[model] = name }
-            } else {
+            } else if !recordedModels.contains(model) {
+                // A recorded cost is the price: the model was billed, so it
+                // is not an "unpriced" model even with no table rate.
                 unpriced.insert(model)
             }
         }
@@ -257,6 +295,20 @@ enum AgentUsageLedger {
         var slotByStart: [Date: UsageLedger.Slot] = [:]
         for slot in UsageLedgerReader.price(eventBuckets, with: prices, calendar: calendar, vendor: vendor).slots {
             slotByStart[slot.start] = slot
+        }
+        for (key, models) in recordedEventTallies {
+            guard let start = UsageLedgerReader.slotDate(key) else { continue }
+            let costs = recordedEventCosts[key] ?? [:]
+            let cost = costs.values.reduce(0) { $0 + $1.total }
+            let slot = slotByStart[start] ?? UsageLedger.Slot(start: start, tokens: 0, cost: 0)
+            var merged = slot.models
+            for (model, tally) in models {
+                merged[model] = (merged[model] ?? TokenTally()) + tally
+            }
+            slotByStart[start] = UsageLedger.Slot(
+                start: slot.start, tokens: slot.tokens + models.values.reduce(0) { $0 + $1.total },
+                cost: slot.cost + cost, unpricedTokens: slot.unpricedTokens, models: merged
+            )
         }
         for (key, models) in eventUnknown {
             guard let start = UsageLedgerReader.slotDate(key) else { continue }
@@ -272,6 +324,41 @@ enum AgentUsageLedger {
         // day that only has unclassified tokens is created rather than dropped.
         var dayByDate: [Date: LedgerDay] = [:]
         for day in ledger.days { dayByDate[day.date] = day }
+        // Recorded-cost days fold in at their own figures: tokens are counted
+        // like any other day's, but the money is what the store wrote — a day
+        // known only from recorded-cost records is created, not dropped, and
+        // none of its tokens are unpriced.
+        for (date, models) in recordedDayTallies {
+            let base = dayByDate[date]
+                ?? LedgerDay(date: date, tokens: 0, cost: 0, unpricedTokens: 0, models: [:])
+            var mergedModels = base.models
+            var mergedTally = base.tally
+            var mergedTallies = base.modelTallies
+            var mergedCosts = base.modelCosts
+            var tokens = 0
+            var cost = 0.0
+            for (model, tally) in models {
+                mergedModels[model] = (mergedModels[model] ?? 0) + tally.total
+                mergedTally = mergedTally + tally
+                mergedTallies[model] = (mergedTallies[model] ?? TokenTally()) + tally
+                tokens += tally.total
+            }
+            for (model, money) in recordedDayCosts[date] ?? [:] {
+                mergedCosts[model] = (mergedCosts[model] ?? TokenCost()) + money
+                cost += money.total
+            }
+            dayByDate[date] = LedgerDay(
+                date: base.date,
+                tokens: base.tokens + tokens,
+                cost: base.cost + cost,
+                unpricedTokens: base.unpricedTokens,
+                models: mergedModels,
+                tally: mergedTally,
+                modelTallies: mergedTallies,
+                modelCosts: mergedCosts,
+                modelUnclassifiedTokens: base.modelUnclassifiedTokens
+            )
+        }
         for (date, models) in dayUnknown {
             let base = dayByDate[date]
                 ?? LedgerDay(date: date, tokens: 0, cost: 0, unpricedTokens: 0, models: [:])

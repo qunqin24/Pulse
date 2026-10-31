@@ -8,6 +8,12 @@
 
 Service: [`../../Sources/Pulse/Providers/DevinUsageService.swift`](../../Sources/Pulse/Providers/DevinUsageService.swift).
 
+## The card's "On this Mac" history
+
+Not the same source as the ring. The history is `.agents([.devinCLI, .devinDesktop], slices: [omp → "devin"])`: the CLI's `sessions.db`, the desktop app's `acp-events` records, **plus a slice of Oh My Pi's store** — the records whose transcripts state `provider: "devin"`. On a Mac whose only Devin usage ran through `omp --model devin/…`, neither client has a store to read and the slice is the card's whole history. The provider is the stated backend, so a model routed to Devin's account under another name (`devin/glm-5-3-flash-1m`) still counts; the slice's view cache and the slice rules are in [../ui/panel-geometry.md](../ui/panel-geometry.md#detailed-card).
+
+**Pricing.** Each omp-routed record carries the dollar figure omp itself wrote (`usage.cost` — omp's own price tracking), and the slice prices at that recorded cost; only a record without one falls back to the table. Devin's own client stores record no cost, so their `swe-2` is priced from a compiled-in supplement at Devin's published list rate ($3.00/1M input, $15.00/1M output, $0.30/1M cache input, https://docs.devin.ai/desktop/models; the page's self-serve and enterprise promotions are account facts the card does not try to know). Devin's dash-spelled `gemini-3-1-pro` resolves to Google's `gemini-3.1-pro-preview`. Both Devin agents name `devin` as their `priceVendor`; see [../token-spend.md](../token-spend.md#pricing-a-model-its-own-maker-does-not-publish).
+
 Devin is Cognition's agent. Its Mac app is the **former Windsurf editor** — `/Applications/Devin.app` still identifies itself as `com.exafunction.windsurf`, and every key it writes is still named `windsurf.*`. That inheritance is the whole route: it is a VS Code fork, so its global state is an ordinary SQLite file, and the plan it last read from the account is one row in it.
 
 ## Verified against a live account

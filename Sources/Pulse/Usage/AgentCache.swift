@@ -29,7 +29,7 @@ enum AgentCache {
     /// archive itself: it is a file of its own, and this cache is what the
     /// first marks are taken from — a stable read a store has deleted from
     /// since.
-    static let version = 13
+    static let version = 14
 
     /// Whether the stores' real inputs, and the money behind their cost, are
     /// the same as when the ledger was kept.
@@ -385,7 +385,7 @@ enum AgentCache {
         try? data.write(to: destination, options: .atomic)
     }
 
-    static func file(for agent: SpendAgent, directory: URL = PulseStorage.directory) -> URL {
+    static func file(for agent: SpendAgent, directory: URL = PulseStorage.directory, view: String? = nil) -> URL {
         // **The number is the stored shape.** A `1` has a store-shaped stamp
         // and sessions without buckets; a `2` has the right stamp but no
         // per-model detail on its days or slots, so a model's categories and
@@ -405,7 +405,11 @@ enum AgentCache {
         // vendor-pricing, Devin mirror and Command Code rewind totals.
         // Version 7 preserves project identity independently of its display name.
         // Version 8 retains unpriced counts in sessions and their time buckets.
-        directory.appending(path: "agent-\(version)-\(agent.rawValue).json")
+        // Version 14 reprices records a store costs itself: omp writes a
+        // `usage.cost` per message, and a cached ledger priced from the table
+        // must not survive the switch to the recorded figure.
+        directory.appending(path: view.map { "agent-\(version)-\(agent.rawValue)-\($0).json" }
+            ?? "agent-\(version)-\(agent.rawValue).json")
     }
 }
 

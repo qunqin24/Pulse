@@ -130,17 +130,43 @@ actor AgentLedgers {
         return read?.ledger ?? .empty
     }
 
-    private func readCached(_ agent: SpendAgent, prices: [String: ModelPrice], refresh: Bool) throws -> ReadResult {
+    /// The records an agent's store routes to one provider, as a ledger of
+    /// their own: omp's Devin usage (`provider: "devin"` in its transcripts)
+    /// for the Devin card, which has no Devin store to read where Devin's own
+    /// clients are absent.
+    ///
+    /// **A view of a store, not another store.** It is read from the same
+    /// roots, fingerprinted with the same stamp, and kept in its own cache
+    /// file (`provider-<name>`), so the pane's whole ledger for the agent is
+    /// untouched and nothing is counted twice there. The kept-history archive
+    /// never applies: it belongs to the agent's whole ledger, not to a slice
+    /// of it.
+    func ledger(for agent: SpendAgent, provider: String) async -> UsageLedger {
+        let prices = await prices()
+        guard !Task.isCancelled else { return .empty }
+        // A view exists only over a catalog-read store: the transcript pair
+        // and the legacy readers keep no provider field to filter on.
+        guard agent.provider == nil, !agent.isLegacy else { return .empty }
+        let read = try? autoreleasepool {
+            try readCached(agent, prices: prices, refresh: false, provider: provider)
+        }
+        return read?.ledger ?? .empty
+    }
+
+    private func readCached(_ agent: SpendAgent, prices: [String: ModelPrice], refresh: Bool, provider: String? = nil) throws -> ReadResult {
         let before = Self.stamp(agent, home: home, environment: environment, prices: prices)
         try Task.checkCancellation()
-        let file = cacheDirectory.map { AgentCache.file(for: agent, directory: $0) }
+        let file = cacheDirectory.map { AgentCache.file(for: agent, directory: $0, view: provider.map { "provider-\($0)" }) }
         let saved = AgentCache.load(agent, at: file)
         if !refresh, let before, let saved, saved.stamp == before {
             try Task.checkCancellation()
+            if provider != nil {
+                return ReadResult(ledger: saved.ledger, notes: [])
+            }
             return ReadResult(ledger: kept(saved.ledger, stable: true, agent: agent, prices: prices), notes: [])
         }
 
-        let outcome = Self.read(agent, prices: prices, home: home, environment: environment)
+        let outcome = Self.read(agent, prices: prices, home: home, environment: environment, provider: provider)
         try Task.checkCancellation()
         let after = Self.stamp(agent, home: home, environment: environment, prices: prices)
         try Task.checkCancellation()
@@ -148,8 +174,11 @@ actor AgentLedgers {
         if stable, let before {
             AgentCache.save(outcome.ledger, stamp: before, for: agent, at: file)
         }
-        // The cache this read replaces was itself a stable read: what it held
-        // and this one does not is what the store has deleted since.
+        if provider != nil {
+            // A view is not the agent's history: the archive belongs to the
+            // whole ledger and is skipped for slices.
+            return ReadResult(ledger: outcome.ledger, notes: outcome.notes)
+        }
         let ledger = kept(outcome.ledger, previous: saved?.ledger, stable: stable, agent: agent, prices: prices)
         return ReadResult(ledger: ledger, notes: outcome.notes)
     }
@@ -219,7 +248,8 @@ actor AgentLedgers {
         _ agent: SpendAgent,
         prices: [String: ModelPrice],
         home: URL,
-        environment: [String: String]
+        environment: [String: String],
+        provider: String? = nil
     ) -> ReadResult {
         guard !Task.isCancelled else { return ReadResult(ledger: .empty, notes: []) }
         let stores = agent.stores(home: home, environment: environment)
@@ -241,14 +271,14 @@ actor AgentLedgers {
             return ReadResult(ledger: KimiCLIStore.ledger(at: stores, prices: prices), notes: [])
         case .devinCLI:
             guard let store = stores.first else { return ReadResult(ledger: .empty, notes: []) }
-            return ReadResult(ledger: DevinCLIStore.ledger(at: store, prices: prices), notes: [])
+            return ReadResult(ledger: DevinCLIStore.ledger(at: store, prices: prices, vendor: agent.priceVendor), notes: [])
         case .devinDesktop:
             let records = DevinDesktopReader.records(
                 roots: stores,
                 authoritativeDatabases: SpendAgent.devinCLI.stores(home: home, environment: environment)
             )
             return ReadResult(
-                ledger: AgentUsageLedger.build(records, prices: prices, namespace: agent.rawValue), notes: []
+                ledger: AgentUsageLedger.build(records, prices: prices, namespace: agent.rawValue, vendor: agent.priceVendor), notes: []
             )
         // Read by `UsageLedgerReader`, and never routed here.
         case .claudeCode, .codex:
@@ -257,8 +287,10 @@ actor AgentLedgers {
         default:
             guard !stores.isEmpty else { return ReadResult(ledger: .empty, notes: []) }
             let read = AgentRecordReaders.read(client: agent.sourceID, roots: stores)
+            let records = provider.map { wanted in read.records.filter { $0.provider == wanted } }
+                ?? read.records
             let ledger = AgentUsageLedger.build(
-                read.records,
+                records,
                 prices: prices,
                 namespace: agent.rawValue,
                 vendor: agent.priceVendor,

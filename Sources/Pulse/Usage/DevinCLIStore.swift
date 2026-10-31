@@ -18,7 +18,7 @@ import SQLite3
 /// desktop app's saved plan for the ring; this is the CLI's own transcript
 /// database, and the two know nothing about each other.
 enum DevinCLIStore {
-    static func ledger(at file: URL, prices: [String: ModelPrice]) -> UsageLedger {
+    static func ledger(at file: URL, prices: [String: ModelPrice], vendor: String? = nil) -> UsageLedger {
         var handle: OpaquePointer?
         guard sqlite3_open_v2(file.path, &handle, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
             sqlite3_close(handle)
@@ -44,7 +44,7 @@ enum DevinCLIStore {
             let key = UsageLedgerReader.slotKey(for: at)
             buckets[key, default: [:]][model] = (buckets[key]?[model] ?? TokenTally()) + tally
 
-            let price = lookup.price(for: model)
+            let price = lookup.price(for: model, vendor: vendor)
             let cost = price.map { tally.cost(at: $0) } ?? 0
             let unpriced = price == nil ? tally.total : 0
 
@@ -68,7 +68,7 @@ enum DevinCLIStore {
 
         guard !buckets.isEmpty else { return .empty }
 
-        var ledger = UsageLedgerReader.price(buckets, with: prices)
+        var ledger = UsageLedgerReader.price(buckets, with: prices, vendor: vendor)
         ledger.sessions = perSession.map { id, totals in
             let session = directories[id]
             return UsageLedger.Session(
