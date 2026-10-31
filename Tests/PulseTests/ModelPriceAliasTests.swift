@@ -15,6 +15,7 @@ struct ModelPriceAliasTests {
         "MiniMax-M3": ModelPrice(input: 5, output: 5, cacheRead: nil, cacheWrite: nil, name: "MiniMax-M3"),
         "gemini-3.5-flash": ModelPrice(input: 6, output: 6, cacheRead: nil, cacheWrite: nil, name: "Gemini 3.5 Flash"),
         "gemini-3.8-flash": ModelPrice(input: 7, output: 7, cacheRead: nil, cacheWrite: nil, name: "Gemini 3.8 Flash"),
+        "gemini-3.1-pro-preview": ModelPrice(input: 8, output: 8, cacheRead: nil, cacheWrite: nil, name: "Gemini 3.1 Pro Preview"),
     ]
 
     private static func name(_ id: String) -> String? {
@@ -65,6 +66,15 @@ struct ModelPriceAliasTests {
         #expect(Self.name("gpt-5-6-sol") == "GPT-5.6 Sol")
         // A dash between two words is not a version separator.
         #expect(ModelPrices.aliases(for: "gpt-sol").contains("gpt.sol") == false)
+    }
+
+    @Test("Devin spells a Gemini preview with dashes, no suffix")
+    func dashedGeminiPreviewResolves() {
+        #expect(Self.name("gemini-3-1-pro") == "Gemini 3.1 Pro Preview")
+        // Only a Gemini id picks up the preview spelling.
+        #expect(ModelPrices.aliases(for: "kimi-k3").contains("kimi-k3-preview") == false)
+        // The preview build itself still resolves directly.
+        #expect(Self.name("gemini-3.1-pro-preview") == "Gemini 3.1 Pro Preview")
     }
 
     @Test("Case is the only difference for MiniMax")

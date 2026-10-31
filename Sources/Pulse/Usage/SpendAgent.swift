@@ -297,6 +297,10 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         case .openCode, .openCodeReview: "opencode-go"
         case .kiloCLI, .kiloCode: "kilo"
         case .cline: "cline-pass"
+        // Devin prices its own models; `devin` is a supplement vendor (a
+        // list rate models.dev does not carry), consulted the same way —
+        // only where no first-party provider has the model.
+        case .devinCLI, .devinDesktop: "devin"
         default: nil
         }
     }

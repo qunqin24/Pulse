@@ -117,6 +117,32 @@ actor ModelPrices {
     /// cannot collide with a first-party id.
     private static let vendors = ["opencode-go", "kilo", "cline-pass"]
 
+    /// Published rates models.dev does not carry at all, keyed `vendor|id`
+    /// like a plan vendor so they can only be found by a lookup that asked
+    /// for that vendor.
+    ///
+    /// `swe-2` is Cognition's own model and Devin — the only vendor that
+    /// serves it — publishes its list rate on the models page: $3.00/1M
+    /// input, $15.00/1M output, $0.30/1M cache input
+    /// (https://docs.devin.ai/desktop/models, with promotions noted there:
+    /// free for self-serve plans through November 30, 2026, 75% off for
+    /// enterprise through December 31, 2026). It is not on models.dev under
+    /// any provider, so nothing in the fetch can ever price it; a first-party
+    /// entry would win a shared id the same way a fetched one does, so this
+    /// merge can only ever fill a gap.
+    private static let supplement: [String: ModelPrice] = [
+        vendorKey("devin", "swe-2"): ModelPrice(
+            input: 3, output: 15, cacheRead: 0.3, cacheWrite: nil, name: "SWE-2"
+        )
+    ]
+
+    /// The table with the supplement merged in, applied on the way out of
+    /// `prices()` so it is present for a fetched table, a cached one, and
+    /// the empty table alike — and is never written into the on-disk cache.
+    static func supplemented(_ table: [String: ModelPrice]) -> [String: ModelPrice] {
+        table.merging(supplement) { first, _ in first }
+    }
+
     /// Separates a vendor from a model id in the table. Not a character any
     /// models.dev id uses.
     static let vendorSeparator: Character = "|"
@@ -133,7 +159,7 @@ actor ModelPrices {
         if let inFlight { return await inFlight.value }
 
         let at = now()
-        if let nextFetchAt, at < nextFetchAt { return cached?.prices ?? [:] }
+        if let nextFetchAt, at < nextFetchAt { return Self.supplemented(cached?.prices ?? [:]) }
 
         if cached == nil {
             if let saved = Self.readCache(in: cacheDirectory) {
@@ -141,7 +167,7 @@ actor ModelPrices {
                 let expiresAt = saved.fetchedAt.addingTimeInterval(Self.refreshAfter)
                 if at < expiresAt {
                     nextFetchAt = expiresAt
-                    return saved.prices
+                    return Self.supplemented(saved.prices)
                 }
             } else {
                 // A pre-vendor table is useful offline, but even a recent one
@@ -164,7 +190,7 @@ actor ModelPrices {
                 nextFetchAt = now().addingTimeInterval(Self.retryAfter)
             }
             inFlight = nil
-            return cached?.prices ?? [:]
+            return Self.supplemented(cached?.prices ?? [:])
         }
         inFlight = task
         return await task.value
@@ -335,6 +361,14 @@ actor ModelPrices {
             for tag in ["-n", "-control", "-xpe"] where model.hasSuffix(tag) {
                 candidates.append(String(model.dropLast(tag.count)))
             }
+        }
+
+        // Devin's clients spell a version with dashes where Google lists the
+        // preview build: `gemini-3-1-pro` is `gemini-3.1-pro-preview`, at the
+        // preview's rates. Scoped to a Gemini id as the tags above are, so a
+        // dash-spelled id of another family never picks up a preview's price.
+        if model.hasPrefix("gemini-") {
+            candidates.append(Self.dotted(model) + "-preview")
         }
 
         // A context window on the end is the same model with more room:
