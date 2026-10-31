@@ -222,6 +222,38 @@ struct SessionLogReadersTests {
         #expect(records.first?.tally == TokenTally(input: 100, cacheWrite: 20, cacheRead: 30, output: 40))
     }
 
+    @Test("omp keeps the message's provider, and a provider view reads only that provider's records")
+    func ompProviderView() throws {
+        let home = try Self.temporary("omp-provider")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let roots = SessionLogReaders.inputs(client: "omp", home: home)
+        let root = try #require(roots.first)
+        try Self.write(
+            """
+            {"type":"session","id":"s","timestamp":"2026-01-02T03:05:00Z","cwd":"/work/pulse"}
+            {"type":"message","id":"d","timestamp":"2026-01-02T03:05:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":100,"output":10}}}
+            {"type":"message","id":"x","timestamp":"2026-01-02T03:05:02Z","message":{"role":"assistant","model":"grok-4","provider":"xai-oauth","usage":{"input":200,"output":20}}}
+            """,
+            to: root.appending(path: "cwd/session.jsonl")
+        )
+
+        // The whole store keeps both, each under the provider the message
+        // named; a message with none falls back to the client's own id.
+        let records = SessionLogReaders.records(client: "omp", roots: roots)
+        #expect(records.map(\.provider) == ["devin", "xai-oauth"])
+
+        // The Devin card's view of the same store is only the Devin records.
+        let devin = AgentLedgers.read(
+            .omp, prices: Self.prices, home: home, environment: [:], provider: "devin"
+        ).ledger
+        #expect(devin.days.reduce(0) { $0 + $1.tokens } == 110)
+        #expect(devin.days.first?.models == ["swe-2": 110])
+
+        // The unfiltered read through the same dispatch keeps everything.
+        let whole = AgentLedgers.read(.omp, prices: Self.prices, home: home, environment: [:]).ledger
+        #expect(whole.days.reduce(0) { $0 + $1.tokens } == 330)
+    }
+
     @Test("Senpi reads OmO project children named by a session header")
     func senpiDiscoversProjectChildren() throws {
         let home = try Self.temporary("senpi-children")

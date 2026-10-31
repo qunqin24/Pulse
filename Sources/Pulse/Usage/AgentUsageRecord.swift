@@ -36,6 +36,11 @@ struct AgentUsageRecord: Sendable {
     var title: String? = nil
     var project: String? = nil
     var deduplicationID: String? = nil
+    /// The backend the store says the request went to — omp's `devin`,
+    /// `openai-codex`, `xai-oauth` and the like — where the format names one.
+    /// Never the reader's own guess: a record with none is left without a
+    /// provider, and a caller that filters on it keeps only what was stated.
+    var provider: String? = nil
     /// Real tokens that could not be placed in any of the four kinds.
     ///
     /// **Not a second copy of the reported total.** The caller passes only the

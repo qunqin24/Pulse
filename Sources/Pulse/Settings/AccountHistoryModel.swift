@@ -149,13 +149,13 @@ final class AccountHistoryModel {
         // Code's log for MiniMax. Other apps' records, which Pulse reads only
         // with Token spend on, as the card does; off, nothing is read, and
         // the history group says what to turn on instead.
-        if case .agents(let agents) = source {
+        if case .agents(let agents, let slices) = source {
             guard settings.readsTokenSpend else {
                 ledgers[provider] = .empty
                 historyReads[provider] = nil
                 return
             }
-            let read = await UsageLedger.reading(agents)
+            let read = await UsageLedger.reading(agents, slices: slices)
             guard !Task.isCancelled else { return }
             ledgers[provider] = read
             historyReads[provider] = .answered(read)

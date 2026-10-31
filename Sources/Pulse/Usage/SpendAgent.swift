@@ -418,6 +418,16 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Whether the agent is one of the seven readers that predate the
+    /// catalogue and keep their own store readers — none of which carry a
+    /// provider field a filtered view could select on.
+    var isLegacy: Bool {
+        switch self {
+        case .claudeCode, .codex, .openCode, .kiloCLI, .grok, .kimiCLI, .devinCLI: true
+        default: false
+        }
+    }
+
     private static var home: URL { URL(fileURLWithPath: NSHomeDirectory()) }
 
     private static var environment: [String: String] { ProcessInfo.processInfo.environment }
