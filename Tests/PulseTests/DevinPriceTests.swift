@@ -42,8 +42,8 @@ struct DevinPriceTests {
         #expect(SpendAgent.omp.priceVendor == nil)
     }
 
-    @Test("An omp record routed to devin is priced through the slice vendor")
-    func sliceVendorPricesOmpRecords() throws {
+    @Test("An omp record's own recorded cost is the slice's figure, the table only its fallback")
+    func recordedCostPricesOmpRecords() throws {
         let home = try Self.temporary("devin-slice-price")
         defer { try? FileManager.default.removeItem(at: home) }
         let roots = SessionLogReaders.inputs(client: "omp", home: home)
@@ -51,24 +51,29 @@ struct DevinPriceTests {
         try Self.write(
             """
             {"type":"session","id":"s","timestamp":"2026-01-02T03:05:00Z","cwd":"/work/pulse"}
-            {"type":"message","id":"d","timestamp":"2026-01-02T03:05:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":1000000,"output":10000}}}
+            {"type":"message","id":"d","timestamp":"2026-01-02T03:05:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":1000000,"output":10000,"cost":{"input":0.75,"output":0.0375,"cacheRead":0,"cacheWrite":0,"total":0.7875}}}}
+            {"type":"message","id":"f","timestamp":"2026-01-02T03:06:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":1000000,"output":10000,"cost":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"total":0}}}}
+            {"type":"message","id":"t","timestamp":"2026-01-02T03:07:01Z","message":{"role":"assistant","model":"gemini-3-1-pro","provider":"devin","usage":{"input":1000000,"output":10000}}}
             """,
             to: root.appending(path: "cwd/session.jsonl")
         )
 
-        // The Devin card reads this store as a slice priced at Devin's rates:
-        // without `vendor: "devin"` the swe-2 tokens are counted but cost nothing.
+        // The Devin card's slice costs each omp record at the dollar figure
+        // omp itself wrote — omp's rate, not Devin's list rate, and not the
+        // supplement the slice no longer asks for.
         let prices = ModelPrices.supplemented([:])
         let slice = AgentLedgers.read(
-            .omp, prices: prices, home: home, environment: [:], provider: "devin", vendor: "devin"
+            .omp, prices: prices, home: home, environment: [:], provider: "devin"
         ).ledger
-        #expect(slice.unpricedModels.isEmpty)
-        #expect(abs(slice.allTime.cost - 3.15) < 0.0001)
+        #expect(abs(slice.allTime.cost - 0.7875) < 0.0001)
+        // A recorded cost of zero is a real price, not an unpriced record:
+        // only the cost-free record's million tokens stay unpriced.
+        #expect(slice.unpricedModels == ["gemini-3-1-pro"])
 
-        // The whole-store read is untouched: same records, no vendor, still
-        // unpriced there.
+        // The whole-store read prices the same way: recorded cost first.
         let whole = AgentLedgers.read(.omp, prices: prices, home: home, environment: [:]).ledger
-        #expect(whole.unpricedModels == ["swe-2"])
+        #expect(abs(whole.allTime.cost - 0.7875) < 0.0001)
+        #expect(whole.unpricedModels == ["gemini-3-1-pro"])
     }
 
     // MARK: - Store helpers

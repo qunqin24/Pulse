@@ -27,7 +27,7 @@ struct CardHistoryTests {
         #expect(
             Provider.devin.cardHistory
                 == .agents([.devinCLI, .devinDesktop], slices: [
-                    CardHistorySource.AgentSlice(agent: .omp, provider: "devin", vendor: "devin"),
+                    CardHistorySource.AgentSlice(agent: .omp, provider: "devin"),
                 ])
         )
     }

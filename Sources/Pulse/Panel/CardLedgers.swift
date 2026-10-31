@@ -31,11 +31,6 @@ enum CardHistorySource: Equatable, Sendable {
     struct AgentSlice: Equatable, Sendable {
         let agent: SpendAgent
         let provider: String
-        /// The plan vendor a slice's models are bought through, where the
-        /// agent carrying the store is not the vendor itself: omp's `devin`
-        /// records are priced at Devin's rates, not omp's (there are none).
-        /// Nil leaves the lookup at `agent.priceVendor`, as before.
-        var vendor: String? = nil
     }
 
     /// Whether this Mac's records are read, which only Token spend allows.
@@ -65,7 +60,7 @@ extension Provider {
         // even where neither Devin client is installed. A nil provider key
         // asks only for records the agent itself wrote.
         if self == .devin {
-            slices.append(CardHistorySource.AgentSlice(agent: .omp, provider: "devin", vendor: "devin"))
+            slices.append(CardHistorySource.AgentSlice(agent: .omp, provider: "devin"))
         }
         return agents.isEmpty && slices.isEmpty ? nil : .agents(agents, slices: slices)
     }
@@ -256,9 +251,7 @@ extension UsageLedger {
         var ledgers: [UsageLedger] = []
         for agent in agents { ledgers.append(await AgentLedgers.shared.ledger(for: agent)) }
         for slice in slices {
-            ledgers.append(await AgentLedgers.shared.ledger(
-                for: slice.agent, provider: slice.provider, vendor: slice.vendor
-            ))
+            ledgers.append(await AgentLedgers.shared.ledger(for: slice.agent, provider: slice.provider))
         }
         var combined = adding(ledgers)
         combined.reportsCacheReads = agents.contains { $0.reportsCacheReads }
