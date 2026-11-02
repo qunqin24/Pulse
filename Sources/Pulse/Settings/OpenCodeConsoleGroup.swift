@@ -69,7 +69,8 @@ struct OpenCodeConsoleGroup: View {
     private func read() {
         let browsers = BrowserCookies.present()
         guard !browsers.isEmpty else {
-            message = String.localized("No browser cookie store was found.")
+            message = BrowserCookies.refusalMessage(BrowserCookies.refused())
+                ?? String.localized("No browser cookie store was found.")
             return
         }
         isReading = true
@@ -80,7 +81,9 @@ struct OpenCodeConsoleGroup: View {
             }.value
             isReading = false
             guard let found else {
-                message = String.localized("No OpenCode console session found. Sign in at opencode.ai first.")
+                let refused = await Task.detached(priority: .userInitiated) { BrowserCookies.refused() }.value
+                message = BrowserCookies.refusalMessage(refused)
+                    ?? String.localized("No OpenCode console session found. Sign in at opencode.ai first.")
                 return
             }
             guard APIKeyStore.setKey(found.header, for: .openCodeGo, slot: OpenCodeConsole.slot) else { return }

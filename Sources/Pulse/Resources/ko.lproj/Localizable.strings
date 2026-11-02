@@ -378,6 +378,7 @@
 "Finds it in the browser you signed in with." = "로그인할 때 쓴 브라우저에서 찾습니다.";
 "Read" = "읽기";
 "No browser cookie store was found." = "브라우저의 쿠키 저장소를 찾지 못했습니다.";
+"macOS didn't allow Pulse to read %@'s cookies. In System Settings › Privacy & Security › Full Disk Access, turn on Pulse (if it is already on, remove it and add it again), then quit and reopen Pulse." = "macOS가 Pulse의 %@ 쿠키 읽기를 허용하지 않았습니다. 시스템 설정 › 개인정보 보호 및 보안 › 전체 디스크 접근 권한에서 Pulse를 켜십시오(이미 켜져 있으면 제거한 뒤 다시 추가하십시오). 그런 다음 Pulse를 종료하고 다시 여십시오.";
 "No Chromium browser was found." = "Chromium 계열 브라우저를 찾지 못했습니다.";
 "No Devin session found. Sign in at app.devin.ai first." = "Devin 세션을 찾지 못했습니다. 먼저 app.devin.ai에서 로그인하십시오.";
 "Token and organization" = "토큰과 조직";

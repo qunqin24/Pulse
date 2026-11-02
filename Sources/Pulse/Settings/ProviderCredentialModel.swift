@@ -81,10 +81,12 @@ final class ProviderCredentialModel {
 
         // Named, that one and no other. Left automatic, the default browser
         // leads and the rest follow.
-        let browsers = settings.sessionBrowser(for: account).map { [$0] } ?? BrowserCookies.present()
+        let chosen = settings.sessionBrowser(for: account).map { [$0] }
+        let browsers = chosen ?? BrowserCookies.present()
 
         guard !browsers.isEmpty else {
-            sessionMessage = String.localized("No browser cookie store was found.")
+            sessionMessage = BrowserCookies.refusalMessage(BrowserCookies.refused(chosen ?? BrowserCookies.Browser.allCases))
+                ?? String.localized("No browser cookie store was found.")
             return
         }
 
@@ -152,6 +154,16 @@ final class ProviderCredentialModel {
                     savedKey = found.header
                     sessionMessage = String.localized("Read from \(found.browser.name).")
                 }
+                return
+            }
+
+            // A store macOS kept shut is said as that, not as a missing
+            // sign-in (issue #101).
+            let refused = await Task.detached(priority: .userInitiated) {
+                BrowserCookies.refused(chosen ?? BrowserCookies.Browser.allCases)
+            }.value
+            if navigation.pane == .account(account), let message = BrowserCookies.refusalMessage(refused) {
+                sessionMessage = message
                 return
             }
 

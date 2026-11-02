@@ -149,6 +149,7 @@ Failure class this feature keeps rediscovering: **a wrong lookup reads as an emp
 - Edge’s keychain service is `Microsoft Edge Safe Storage`, not a name derived from the display string “Edge”.
 - Default browser first, even if it prompts. A cheap browser with a months-stale session is worse than a prompt.
 - Naming a browser in Settings means *only* that one is opened.
+- **A store macOS refuses is said as a refusal, not as a missing session.** Full Disk Access, and since macOS 26 the permission to read other apps' data, are tied to the code signature; Pulse is ad-hoc signed, so an update can lose them, and then every store opens as empty. When a read finds nothing, `BrowserCookies.refused` opens each store's folder and file and looks for `EPERM` / `EACCES`; if any was refused, Settings names that browser and points to Full Disk Access (remove and re-add when it is already on) instead of telling the user to sign in again (issue #101). A refused folder cannot be listed, so `present()` leaves that browser out and `refused` checks the folders itself.
 
 Parsers were driven against data built on purpose (synthetic `binarycookies`, Chromium values encrypted with the documented scheme). File discovery on a real machine is not claimed as verified here.
 

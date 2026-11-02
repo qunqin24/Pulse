@@ -378,6 +378,7 @@
 "Finds it in the browser you signed in with." = "Finds it in the browser you signed in with.";
 "Read" = "Read";
 "No browser cookie store was found." = "No browser cookie store was found.";
+"macOS didn't allow Pulse to read %@'s cookies. In System Settings › Privacy & Security › Full Disk Access, turn on Pulse (if it is already on, remove it and add it again), then quit and reopen Pulse." = "macOS didn't allow Pulse to read %@'s cookies. In System Settings › Privacy & Security › Full Disk Access, turn on Pulse (if it is already on, remove it and add it again), then quit and reopen Pulse.";
 "No Chromium browser was found." = "No Chromium browser was found.";
 "No Devin session found. Sign in at app.devin.ai first." = "No Devin session found. Sign in at app.devin.ai first.";
 "Token and organization" = "Token and organization";

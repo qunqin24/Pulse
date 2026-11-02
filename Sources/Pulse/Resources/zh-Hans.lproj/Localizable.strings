@@ -378,6 +378,7 @@
 "Finds it in the browser you signed in with." = "在你登录用的那个浏览器里找。";
 "Read" = "读取";
 "No browser cookie store was found." = "没有找到任何浏览器的 Cookie 存储。";
+"macOS didn't allow Pulse to read %@'s cookies. In System Settings › Privacy & Security › Full Disk Access, turn on Pulse (if it is already on, remove it and add it again), then quit and reopen Pulse." = "macOS 不允许 Pulse 读取 %@ 的 Cookie。请在「系统设置 › 隐私与安全性 › 完全磁盘访问权限」中打开 Pulse（如果已经打开，先移除再重新添加），然后退出并重新打开 Pulse。";
 "No Chromium browser was found." = "没有找到基于 Chromium 的浏览器。";
 "No Devin session found. Sign in at app.devin.ai first." = "未找到 Devin 的登录信息。请先在 app.devin.ai 登录。";
 "Token and organization" = "Token 与组织";

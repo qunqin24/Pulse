@@ -378,6 +378,7 @@
 "Finds it in the browser you signed in with." = "サインインに使ったブラウザの中から探します。";
 "Read" = "読み取る";
 "No browser cookie store was found." = "ブラウザの Cookie 保存先が見つかりませんでした。";
+"macOS didn't allow Pulse to read %@'s cookies. In System Settings › Privacy & Security › Full Disk Access, turn on Pulse (if it is already on, remove it and add it again), then quit and reopen Pulse." = "macOS が Pulse による %@ の Cookie の読み取りを許可していません。「システム設定 › プライバシーとセキュリティ › フルディスクアクセス」で Pulse をオンにし（すでにオンの場合は、いったん削除してから追加し直してください）、Pulse を終了してから開き直してください。";
 "No Chromium browser was found." = "Chromium 系のブラウザが見つかりませんでした。";
 "No Devin session found. Sign in at app.devin.ai first." = "Devin のセッションが見つかりません。先に app.devin.ai でサインインしてください。";
 "Token and organization" = "トークンと組織";
