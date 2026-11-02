@@ -73,10 +73,10 @@ struct OpenCodeConsoleTests {
         let today = try #require(ledger.days.last)
         #expect(today.tokens == 2 * 1020)
         #expect(abs(today.cost - 0.005) < 1e-9)
-        #expect(abs(ledger.total(overLast: 31).cost - 0.015) < 1e-9)
+        #expect(abs(ledger.total(overLast: 31, now: now).cost - 0.015) < 1e-9)
         #expect(ledger.topModel(overLast: 31)?.name == "deepseek-flash")
         // Every token sorted into its kind: the hit rate can be stated.
-        #expect(abs(try #require(ledger.cacheHitRate(overLast: 31)) - 0.9) < 1e-9)
+        #expect(abs(try #require(ledger.cacheHitRate(overLast: 31, now: now)) - 0.9) < 1e-9)
         // Quarter-hours for the value estimate, with the money in them.
         #expect(abs(ledger.spend(since: now.addingTimeInterval(-90 * 60)).cost - 0.002) < 1e-9)
     }
