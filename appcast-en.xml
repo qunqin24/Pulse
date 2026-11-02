@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.12.5</title>
+            <pubDate>Mon, 02 Nov 2026 05:59:23 -0000</pubDate>
+            <sparkle:version>1.12.5</sparkle:version>
+            <sparkle:shortVersionString>1.12.5</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.12.5</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.5</h2><p><strong>New</strong></p><ul><li><strong>The robot in the rings is now Agent Robot Avatar.</strong> The robot is an original character by CX ArtLab, turned on with Robot in the ring in an account&#x27;s settings, where its colour, personality and shape can be chosen; off by default, and it needs turning on again where it was on before.</li><li><strong>DimAgent support.</strong> DimAgent&#x27;s plan credits, add-on packs and token windows are read through the signed-in <code>dim</code> CLI; turn it on in Settings. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/99">@sunny0826</a> for the contribution.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>The Devin card shows usage made through Oh My Pi.</strong> Where Devin is used only through Oh My Pi, the detailed card&#x27;s On this Mac history is no longer empty. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/104">@Edfghdrtxxx</a> for the contribution.</li><li><strong>A Codex ring pinned to a limit stays pinned.</strong> The limit chosen in Ring shows still applies when Pulse reads Codex through <code>codex app-server</code>. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/102">@tyrival</a> for reporting it.</li><li><strong>A browser cookie store macOS refuses is reported as such.</strong> Settings asks to add Pulse again under Full Disk Access instead of asking to sign in again. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/101">@momusticks</a> for reporting it.</li><li><strong>Larger icons in the rings.</strong> A provider&#x27;s icon fills the disc in the middle of its ring, so it is easier to recognise.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.5">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.12.5/Pulse-1.12.5.zip"
+                       length="16332854"
+                       type="application/octet-stream"
+                       sparkle:edSignature="U8XXSy016n0lgozZdTsTbyMfnXGN9oM5esOtdAX983ycxioLJkwhoHl6EOSZfmYNQnbDKR64vMRQEqKf1GnGBg==" />
+        </item>
+        <item>
             <title>1.12.4</title>
             <pubDate>Sat, 24 Oct 2026 12:09:23 -0000</pubDate>
             <sparkle:version>1.12.4</sparkle:version>
