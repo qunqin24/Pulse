@@ -99,6 +99,13 @@ struct UsageRingView: View {
     /// rather than from the full diameter keeps the margin around it steady
     /// even if the ring's stroke gets thicker or thinner.
     private static let iconScale: CGFloat = 0.8
+    /// The robot's share of the same disc: **larger than a mark's**, and
+    /// wider than the disc. Its drawing carries the antenna and room to move
+    /// above the head, so at the mark's size the head read smaller than the
+    /// logo beside it. It may spread into the band between the disc and the
+    /// usage ring because a ring with a robot draws no activity arc there.
+    /// With a second ring that band is taken, so it keeps the mark's size.
+    private var robotScale: CGFloat { secondFraction == nil ? 1.1 : Self.iconScale }
 
     private var centreDiameter: CGFloat {
         // The disc gives up two points a side to the second ring, which needs
@@ -286,8 +293,8 @@ struct UsageRingView: View {
         .accessibilityHidden(true)
     }
 
-    /// What sits in the disc: the provider's mark, or the robot. The robot is
-    /// as wide as the mark would be, so nothing around it moves.
+    /// What sits in the disc: the provider's mark, or the robot, sized by
+    /// `robotScale`. Nothing around it moves either way.
     @ViewBuilder
     private var centreMark: some View {
         if let robot {
@@ -295,7 +302,7 @@ struct UsageRingView: View {
                 mood: RobotMood.resolve(hasReading: hasReading, isSpent: isSpent, isWorking: isBusy, isRefreshing: isRefreshing,
                                         activity: animatesActivity),
                 gesture: robot.gesture,
-                size: centreDiameter * Self.iconScale,
+                size: centreDiameter * robotScale,
                 isLive: isLive,
                 ink: robot.ink,
                 inkIsChosen: robot.inkIsChosen,
