@@ -67,7 +67,7 @@
 ### Rings at a glance
 - **Colours that follow usage** — green through amber to red, or a colour of your own for each account.
 - **Used or left** — `75% used` or `25% left`, with an optional clock arc for how much of the window has passed.
-- **Live activity** — a turning dot while an agent is working.
+- **Live activity** — a turning dot while an agent is working, and an optional robot (Agent Robot Avatar by CX ArtLab) that reacts to each account.
 
 ### Details when you point at a ring
 - **Every limit and its reset** on one card, in continuous or segmented bars.
