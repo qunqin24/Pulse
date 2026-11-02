@@ -7,6 +7,20 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.12.6
+
+**中文**
+
+**改进与修复**
+
+- **界面语言恢复正常。** 1.12.5 中，英文以外的界面语言都无法生效，界面全部显示为英文；现已修复。
+
+**English**
+
+**Changed and fixed**
+
+- **Interface languages work again.** In 1.12.5, every interface language other than English fell back to English; this is fixed.
+
 ## 1.12.5
 
 **中文**
