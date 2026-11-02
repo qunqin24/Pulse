@@ -6,6 +6,36 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.12.6</title>
+            <pubDate>Mon, 02 Nov 2026 06:25:17 -0000</pubDate>
+            <sparkle:version>1.12.6</sparkle:version>
+            <sparkle:shortVersionString>1.12.6</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.12.6</link>
+            <description xml:lang="zh-Hans"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.6</h2><p><strong>改进与修复</strong></p><ul><li><strong>界面语言恢复正常。</strong> 1.12.5 中，英文以外的界面语言都无法生效，界面全部显示为英文；现已修复。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.6">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="zh-Hant"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.6</h2><p><strong>改进与修复</strong></p><ul><li><strong>界面语言恢复正常。</strong> 1.12.5 中，英文以外的界面语言都无法生效，界面全部显示为英文；现已修复。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.6">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="en"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.6</h2><p><strong>Changed and fixed</strong></p><ul><li><strong>Interface languages work again.</strong> In 1.12.5, every interface language other than English fell back to English; this is fixed.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.6">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.12.6/Pulse-1.12.6.zip"
+                       length="16331053"
+                       type="application/octet-stream"
+                       sparkle:edSignature="wy6uxxKaM464S++Oijx4Okkyk/VmilvvqPpeEJkqisAQKS6t/L+YbCGl9q64FRQP+9UTgxY+ndT+BFAycHXlAw==" />
+        </item>
+        <item>
             <title>1.12.5</title>
             <pubDate>Mon, 02 Nov 2026 05:59:23 -0000</pubDate>
             <sparkle:version>1.12.5</sparkle:version>
