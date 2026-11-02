@@ -8,6 +8,8 @@ Toolchain and local `swift build`: [build-from-source.md](build-from-source.md).
 
 The version lives in `VERSION` and nowhere else. Tag `v$(cat VERSION)`. The update check reads GitHub’s latest release tag against `CFBundleShortVersionString`.
 
+**A note after the update is optional** and is not part of the tag: write `Messages/x.y.z/<language>.md` on `main` before or after releasing ([../Messages/README.md](../Messages/README.md), [update-message.md](update-message.md)).
+
 **Pushing a tag is the whole release.** `CHANGELOG.md` needs a `## x.y.z` section **before** the tag: the workflow stops without one, before it builds. Those words are the GitHub release body **and** the Sparkle update window. Generating notes from commit subjects is a fallback for forgotten entries, not the path for a tagged release.
 
 ```bash

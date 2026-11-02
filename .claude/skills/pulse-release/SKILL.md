@@ -62,6 +62,8 @@ A `## x.y.z` section at the top of `CHANGELOG.md`, **above** the previous one. I
 - Grammar is limited to bullets, `**bold**`, `` `code` `` and links (`Scripts/changelog.py`).
 - Validate: `python3 Scripts/changelog.py x.y.z > /dev/null` must exit cleanly.
 
+**The note after the update** is separate from the CHANGELOG: ask the user whether they want one for this version. If they do, they dictate it; write it to `Messages/x.y.z/<language>.md` (six files, or at least `en.md`, which every other language falls back to) and commit it to `main`. It is read from GitHub, so it can also go up after the tag. See `Messages/README.md`.
+
 If a new feature is user-visible, add it to the feature list in **all six** READMEs (`README.md`, `README.zh-CN.md`, `README.zh-Hant.md`, `README.ja.md`, `README.ko.md`, `README.ru.md`), in its own commit before the release commit.
 
 ## 4. Commit, tag, push

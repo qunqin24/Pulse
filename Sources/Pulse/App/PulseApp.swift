@@ -46,6 +46,10 @@ enum PulseMain {
         // which `UserDefaults` domain that means.
         LegacyDefaults.migrateIfNeeded()
 
+        // After the migration, so it reads the bundle's domain; before the
+        // settings are restored, which marks even a fresh install as run.
+        UpdateMessage.noteLaunch()
+
         PulseApp.main()
     }
 }

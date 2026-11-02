@@ -51,6 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: SettingsWindowController?
     private var recapWindow: RecapWindowController?
+    private var updateMessageWindow: UpdateMessageWindowController?
     /// One owner of the Dock icon for every window Pulse opens.
     private lazy var dock = DockPresence(settings: settings)
     /// "Your September recap is ready", when it is switched on.
@@ -124,6 +125,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restoreMenuBarEntryPointIfNeeded()
         updateMenuBarItem()
 
+        showUpdateMessageIfDue()
+
         if settings.needsProviderSelection {
             showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
         } else {
@@ -142,6 +145,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return .terminateCancel
     }
 
+    /// The maintainer's note for this version, if it is due and there is one
+    /// to fetch. Off the launch path: nothing waits for GitHub to answer.
+    private func showUpdateMessageIfDue() {
+        guard let version = UpdateMessage.due() else { return }
+        Task { [weak self] in
+            guard let paragraphs = await UpdateMessage.fetch(version: version), let self else { return }
+            let window = UpdateMessageWindowController(version: version, paragraphs: paragraphs) {
+                UpdateMessage.dismiss(version)
+            }
+            self.updateMessageWindow = window
+            window.show()
+        }
+    }
+
     private func showProviderSelection(providers: Set<Provider>, isInitial: Bool) {
         let window = ProviderSetupWindowController(settings: settings, providers: providers, isInitial: isInitial)
         providerSetupWindow = window
@@ -153,6 +170,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // Settings has no title to re-read: it is the open pane's name,
         // SwiftUI's, and the view is rebuilt in the new language.
         recapWindow?.refreshTitle()
+        updateMessageWindow?.refreshTitle()
         providerSetupWindow?.refreshTitle()
         guard !settings.needsProviderSelection else { return }
         if panelController == nil {

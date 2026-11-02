@@ -27,6 +27,7 @@ Topic docs, at the top of this folder. Subfolders are under [Folders](#folders).
 | [window-starter.md](window-starter.md) | Starting Claude Code's and Codex's usage windows after a reset: the risk confirmation, when, and what is sent |
 | [build-from-source.md](build-from-source.md) | Toolchain, `swift build`, `#Preview`, local run |
 | [releasing.md](releasing.md) | Tag, bundle, Sparkle, DMG, CI |
+| [update-message.md](update-message.md) | The maintainer's note shown after an update: when, from where, the window |
 | [update-mirror.md](update-mirror.md) | update.qunqin.org: the Cloudflare mirror of the feed and downloads, deploying it, how the app picks GitHub or the mirror |
 | [ollama-cloud.md](ollama-cloud.md) | The current contract for Ollama Cloud: how usage is read from a signed-in page (no quota API); [providers/ollama-cloud.md](providers/ollama-cloud.md) only places it in the matrix |
 
