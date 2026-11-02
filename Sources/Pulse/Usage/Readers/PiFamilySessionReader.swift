@@ -273,6 +273,7 @@ enum PiFamilySessionReader {
                             client: client, configuration: configuration,
                             sessionID: sessionID, message: message
                         ),
+                        provider: message.provider ?? configuration.providerFallback,
                         unclassifiedTokens: message.unclassified
                     )
                 )

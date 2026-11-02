@@ -20,6 +20,18 @@ struct CardHistoryTests {
         #expect(Provider.openCodeGo.cardHistory(openCodeSession: true, deepSeekSession: false) == .accountLogs)
     }
 
+    @Test func devinReadsItsOmpRecordsWhenItsOwnClientsAreAway() {
+        // The two Devin clients plus the records an omp transcript routes to
+        // the `devin` backend — the machine whose only Devin usage ran through
+        // `omp --model devin/…`.
+        #expect(
+            Provider.devin.cardHistory
+                == .agents([.devinCLI, .devinDesktop], slices: [
+                    CardHistorySource.AgentSlice(agent: .omp, provider: "devin"),
+                ])
+        )
+    }
+
     /// The settings pane shows a history exactly where the card does: the
     /// agents that borrow a provider's mark too, which the pane once left out
     /// — MiniMax's card had MiniMax Code's history and its pane had none.

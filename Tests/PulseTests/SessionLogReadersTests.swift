@@ -222,6 +222,81 @@ struct SessionLogReadersTests {
         #expect(records.first?.tally == TokenTally(input: 100, cacheWrite: 20, cacheRead: 30, output: 40))
     }
 
+    @Test("omp keeps the message's provider, and a provider view reads only that provider's records")
+    func ompProviderView() throws {
+        let home = try Self.temporary("omp-provider")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let roots = SessionLogReaders.inputs(client: "omp", home: home)
+        let root = try #require(roots.first)
+        try Self.write(
+            """
+            {"type":"session","id":"s","timestamp":"2026-01-02T03:05:00Z","cwd":"/work/pulse"}
+            {"type":"message","id":"d","timestamp":"2026-01-02T03:05:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":100,"output":10}}}
+            {"type":"message","id":"x","timestamp":"2026-01-02T03:05:02Z","message":{"role":"assistant","model":"grok-4","provider":"xai-oauth","usage":{"input":200,"output":20}}}
+            """,
+            to: root.appending(path: "cwd/session.jsonl")
+        )
+
+        // The whole store keeps both, each under the provider the message
+        // named; a message with none falls back to the client's own id.
+        let records = SessionLogReaders.records(client: "omp", roots: roots)
+        #expect(records.map(\.provider) == ["devin", "xai-oauth"])
+
+        // The Devin card's view of the same store is only the Devin records.
+        let devin = AgentLedgers.read(
+            .omp, prices: Self.prices, home: home, environment: [:], provider: "devin"
+        ).ledger
+        #expect(devin.days.reduce(0) { $0 + $1.tokens } == 110)
+        #expect(devin.days.first?.models == ["swe-2": 110])
+
+        // The unfiltered read through the same dispatch keeps everything.
+        let whole = AgentLedgers.read(.omp, prices: Self.prices, home: home, environment: [:]).ledger
+        #expect(whole.days.reduce(0) { $0 + $1.tokens } == 330)
+    }
+
+    @Test("A provider view keeps its own cache file and never fills the whole ledger's")
+    func ompProviderViewCacheIsItsOwnFile() async throws {
+        let home = try Self.temporary("omp-provider-cache")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let cache = try Self.temporary("omp-provider-cache-files")
+        defer { try? FileManager.default.removeItem(at: cache) }
+        let roots = SessionLogReaders.inputs(client: "omp", home: home)
+        let root = try #require(roots.first)
+        try Self.write(
+            """
+            {"type":"session","id":"s","timestamp":"2026-01-02T03:05:00Z","cwd":"/work/pulse"}
+            {"type":"message","id":"d","timestamp":"2026-01-02T03:05:01Z","message":{"role":"assistant","model":"swe-2","provider":"devin","usage":{"input":100,"output":10}}}
+            {"type":"message","id":"x","timestamp":"2026-01-02T03:05:02Z","message":{"role":"assistant","model":"grok-4","provider":"xai-oauth","usage":{"input":200,"output":20}}}
+            """,
+            to: root.appending(path: "cwd/session.jsonl")
+        )
+
+        let ledgers = AgentLedgers(home: home, environment: [:], cacheDirectory: cache, prices: { Self.prices })
+
+        // The whole ledger first: its cache file holds all 330 tokens.
+        let whole = await ledgers.ledger(for: .omp)
+        #expect(whole.allTime.tokens == 330)
+
+        // The view goes through `readCached` like the whole read, so the two
+        // caches must stay apart: 110 tokens under the view's own file.
+        let view = await ledgers.ledger(for: .omp, provider: "devin")
+        #expect(view.allTime.tokens == 110)
+        #expect(FileManager.default.fileExists(
+            atPath: AgentCache.file(for: .omp, directory: cache, view: "provider-devin").path))
+
+        // The whole ledger reads its own file back, not the slice's.
+        let wholeAgain = await ledgers.ledger(for: .omp)
+        #expect(wholeAgain.allTime.tokens == 330)
+
+        // The view has no archive of its own: the store dropping the sessions
+        // empties the card's days while the whole ledger keeps them.
+        try FileManager.default.removeItem(at: root.appending(path: "cwd/session.jsonl"))
+        let gone = await ledgers.ledger(for: .omp, provider: "devin")
+        #expect(gone.allTime.tokens == 0)
+        let kept = await ledgers.ledger(for: .omp)
+        #expect(kept.allTime.tokens == 330)
+    }
+
     @Test("Senpi reads OmO project children named by a session header")
     func senpiDiscoversProjectChildren() throws {
         let home = try Self.temporary("senpi-children")
