@@ -7,6 +7,36 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.12.5
+
+**中文**
+
+**新功能**
+
+- **圆环中的小机器人换成了 Agent Robot Avatar。** 小机器人现在是 CX ArtLab 的原创作品，在「设置」中对应账号的「圆环中显示小机器人」开启，并可选择颜色、性格和外形；默认关闭，之前开启过的需要重新开启。
+- **支持 DimAgent。** 通过已登录的 `dim` 命令行读取 DimAgent 的套餐额度、加油包和 token 窗口，在「设置」中启用。感谢 [@sunny0826](https://github.com/qunqin24/Pulse/pull/99) 贡献。
+
+**改进与修复**
+
+- **Devin 卡片显示经 Oh My Pi 产生的用量。** 只通过 Oh My Pi 使用 Devin 时，详细卡片的「本机」历史不再为空。感谢 [@Edfghdrtxxx](https://github.com/qunqin24/Pulse/pull/104) 贡献。
+- **Codex 固定的圆环不再失效。** Pulse 改用 `codex app-server` 读取时，「圆环显示」中选择的额度仍然生效。感谢 [@tyrival](https://github.com/qunqin24/Pulse/issues/102) 反馈。
+- **浏览器 Cookie 被系统拒绝读取时给出正确提示。** 设置中会提示在「完全磁盘访问权限」中重新添加 Pulse，不再提示重新登录。感谢 [@momusticks](https://github.com/qunqin24/Pulse/issues/101) 反馈。
+- **圆环中的图标更大。** 服务商图标填满中间的圆盘，更容易辨认。
+
+**English**
+
+**New**
+
+- **The robot in the rings is now Agent Robot Avatar.** The robot is an original character by CX ArtLab, turned on with Robot in the ring in an account's settings, where its colour, personality and shape can be chosen; off by default, and it needs turning on again where it was on before.
+- **DimAgent support.** DimAgent's plan credits, add-on packs and token windows are read through the signed-in `dim` CLI; turn it on in Settings. Thanks to [@sunny0826](https://github.com/qunqin24/Pulse/pull/99) for the contribution.
+
+**Changed and fixed**
+
+- **The Devin card shows usage made through Oh My Pi.** Where Devin is used only through Oh My Pi, the detailed card's On this Mac history is no longer empty. Thanks to [@Edfghdrtxxx](https://github.com/qunqin24/Pulse/pull/104) for the contribution.
+- **A Codex ring pinned to a limit stays pinned.** The limit chosen in Ring shows still applies when Pulse reads Codex through `codex app-server`. Thanks to [@tyrival](https://github.com/qunqin24/Pulse/issues/102) for reporting it.
+- **A browser cookie store macOS refuses is reported as such.** Settings asks to add Pulse again under Full Disk Access instead of asking to sign in again. Thanks to [@momusticks](https://github.com/qunqin24/Pulse/issues/101) for reporting it.
+- **Larger icons in the rings.** A provider's icon fills the disc in the middle of its ring, so it is easier to recognise.
+
 ## 1.12.4
 
 **中文**
