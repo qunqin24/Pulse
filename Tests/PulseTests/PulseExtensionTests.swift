@@ -471,6 +471,7 @@ struct ExtensionRunTests {
         let started = ContinuousClock.now
         let usage = await service.fetch()
         let returned = started.duration(to: .now)
+        watch.runReturned()
         #expect(usage.state == .unavailable(.extensionTimedOut))
         // Killed within the time limit plus the stop's own grace — about six
         // seconds at most, ten with margin — timed from the program's side.
@@ -478,9 +479,12 @@ struct ExtensionRunTests {
         // asked for: the caller resumes on a cooperative thread, and on a
         // loaded CI runner waiting for one took 16–20s with the program long
         // dead. See `ProcessDeathWatch`.
-        let killed = try #require(await watch.death, "the program outlived the run")
-        #expect(started.duration(to: killed) < .seconds(10))
+        let death = await watch.death
         #expect(returned < .seconds(120))
+        // Stopped before its first line on a loaded machine: nothing to time.
+        guard !watch.neverStarted else { return }
+        let killed = try #require(death, "the program outlived the run")
+        #expect(started.duration(to: killed) < .seconds(10))
     }
 
     @Test("A program deleted since the scan is reported missing")

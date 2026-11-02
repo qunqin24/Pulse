@@ -243,7 +243,12 @@ struct VolcengineProcessTests {
             Self.shell, ["-c", script, "pulse-test", watch.pidFile.path], deadline: 1
         )
         let returned = started.duration(to: .now)
-        return (result, returned, await watch.death.map { started.duration(to: $0) })
+        watch.runReturned()
+        let death = await watch.death
+        // Stopped before the script's first line on a loaded machine: there
+        // was nothing to outlive the call, so nothing to time.
+        if watch.neverStarted { return (result, returned, .zero) }
+        return (result, returned, death.map { started.duration(to: $0) })
     }
 
     @Test("A child that never finishes is killed at the deadline")

@@ -18,11 +18,31 @@ import Darwin
 /// 0)` on a dedicated thread that no test can starve. The script writes its
 /// own pid to `pidFile`; anything still alive at `giveUpAfter` is killed so a
 /// failing test does not leak it.
+///
+/// **A program stopped before its first line writes no pid.** On a loaded
+/// machine `/bin/sh` can take longer than a one-second deadline to start, so
+/// the runner kills it before `echo $$` runs — correctly — and a watch waiting
+/// for the pid waited thirty seconds and called it a survivor. That failed
+/// most local full runs of 1.12.5's checks. So the caller says when the run
+/// has returned (`runReturned()`); by then the runner has stopped the whole
+/// group, and a pid still unwritten a moment later never will be: the watch
+/// ends with `neverStarted` set instead.
 final class ProcessDeathWatch: @unchecked Sendable {
     let pidFile: URL
     private let lock = NSLock()
     private var outcome: ContinuousClock.Instant??
     private var waiter: CheckedContinuation<ContinuousClock.Instant?, Never>?
+    private var returnedAt: ContinuousClock.Instant?
+    private var stoppedEarly = false
+
+    /// Read after `death`: the program was stopped before it wrote its pid,
+    /// so there was nothing left to outlive the run.
+    var neverStarted: Bool { lock.withLock { stoppedEarly } }
+
+    /// The run has returned. See the type's comment.
+    func runReturned() {
+        lock.withLock { if returnedAt == nil { returnedAt = .now } }
+    }
 
     init(giveUpAfter: Duration = .seconds(30)) {
         pidFile = FileManager.default.temporaryDirectory.appending(path: "pulse-watched-\(UUID()).pid")
@@ -56,6 +76,11 @@ final class ProcessDeathWatch: @unchecked Sendable {
             }
             if let pid, kill(pid, 0) == -1, errno == ESRCH {
                 return finish(.now)
+            }
+            if pid == nil, let returnedAt = lock.withLock({ returnedAt }),
+               ContinuousClock.now > returnedAt + .seconds(2) {
+                lock.withLock { stoppedEarly = true }
+                return finish(nil)
             }
             Thread.sleep(forTimeInterval: 0.01)
         }
