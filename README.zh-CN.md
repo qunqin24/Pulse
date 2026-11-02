@@ -27,7 +27,7 @@
 <p align="center">
   <img src="Docs/images/demo.gif" height="400" alt="贴在屏幕边缘的 Pulse 悬浮胶囊">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.webp" height="400" alt="指针移到圆环上，会打开一张卡片，列出每项额度和重置时间">
+  <img src="Docs/images/panel.png" height="400" alt="指针移到圆环上，会打开一张卡片，列出每项额度和重置时间">
 </p>
 
 - **77 个服务，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每个都有自己的圆环。
@@ -76,7 +76,7 @@
 - **菜单栏**——把用得最多的圆环显示成数字、小圆环或并排的限额，可选打开用量面板。
 
 <p align="center">
-  <img src="Docs/images/detailed-card.webp" width="620" alt="同一个 Codex 账号的简洁额度卡与详细额度卡">
+  <img src="Docs/images/detailed-card.png" width="620" alt="同一个 Codex 账号的简洁额度卡与详细额度卡">
 </p>
 
 ### 不打扰你

@@ -27,7 +27,7 @@
 <p align="center">
   <img src="Docs/images/demo.gif" height="400" alt="Pulse floating rail docked against the screen edge">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.webp" height="400" alt="Hovering a ring opens a card with every limit and its reset">
+  <img src="Docs/images/panel.png" height="400" alt="Hovering a ring opens a card with every limit and its reset">
 </p>
 
 - **Seventy-seven services at a glance** — Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code and many more, each as its own ring.
@@ -76,7 +76,7 @@
 - **In the menu bar** — the fullest ring as a figure, a small ring or split limits, with an optional dashboard.
 
 <p align="center">
-  <img src="Docs/images/detailed-card.webp" width="620" alt="The same Codex card, compact and detailed">
+  <img src="Docs/images/detailed-card.png" width="620" alt="The same Codex card, compact and detailed">
 </p>
 
 ### Stays out of the way

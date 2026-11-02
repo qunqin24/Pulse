@@ -216,6 +216,7 @@ These write PNGs for a person to read and assert nothing about pixels; each runs
 | `RecapWindowRenderTests` (window chrome in five states, AppKit controls via `cacheDisplay`) | `PULSE_RECAP_WINDOW_PREVIEW=/tmp/recap-window` |
 | `TokenActivityRenderTests` (three views, light/dark, zh-Hans/en, 460 and 900pt) | `PULSE_ACTIVITY_PREVIEW=/tmp/activity` |
 | `TokenKindRenderTests` (model detail and day table, all six languages, 480 and 900pt) | `PULSE_TOKEN_KINDS_PREVIEW=/tmp/token-kinds swift test --filter TokenKindRenderTests` |
+| `ReadmeScreenshotRenderTests` (the README's `panel.png` and `detailed-card.png`, English, dark panel, 2×; copy them over `Docs/images/` after reading them) | `PULSE_README_SHOTS=/tmp/readme-shots swift test --filter ReadmeScreenshotRenderTests` |
 
 ## What is not, and why
 

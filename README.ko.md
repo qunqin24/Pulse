@@ -27,7 +27,7 @@
 <p align="center">
   <img src="Docs/images/demo.gif" height="400" alt="화면 가장자리에 붙은 Pulse 플로팅 레일">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.webp" height="400" alt="링에 포인터를 올리면 모든 한도와 초기화 시각을 담은 카드가 열립니다">
+  <img src="Docs/images/panel.png" height="400" alt="링에 포인터를 올리면 모든 한도와 초기화 시각을 담은 카드가 열립니다">
 </p>
 
 - **77개 서비스를 한눈에**——Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code 등, 서비스마다 링이 하나씩 있습니다.
@@ -76,7 +76,7 @@
 - **메뉴 막대**——가장 많이 쓴 링을 숫자, 작은 링, 나란한 한도로. 대시보드도 열 수 있습니다.
 
 <p align="center">
-  <img src="Docs/images/detailed-card.webp" width="620" alt="같은 Codex 계정의 간단한 카드와 자세한 카드">
+  <img src="Docs/images/detailed-card.png" width="620" alt="같은 Codex 계정의 간단한 카드와 자세한 카드">
 </p>
 
 ### 방해하지 않는

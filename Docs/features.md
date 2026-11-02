@@ -15,7 +15,7 @@ Everything Pulse does, in full. The [README](../README.md) has the short version
 - **Pin Primary Window**: Pin whichever limit matters most to the ring, or let Pulse automatically track the one closest to exhaustion.
 
 <p align="center">
-  <img src="images/detailed-card.webp" width="620" alt="The same Codex card, compact and detailed">
+  <img src="images/detailed-card.png" width="620" alt="The same Codex card, compact and detailed">
 </p>
 
 ## Native, Fluid & Non-Intrusive

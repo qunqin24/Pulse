@@ -27,7 +27,7 @@
 <p align="center">
   <img src="Docs/images/demo.gif" height="400" alt="画面の端に寄せた Pulse のフローティングレール">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.webp" height="400" alt="リングにポインタを乗せると、すべての上限とリセット時刻を並べたカードが開きます">
+  <img src="Docs/images/panel.png" height="400" alt="リングにポインタを乗せると、すべての上限とリセット時刻を並べたカードが開きます">
 </p>
 
 - **77 のサービスをひと目で**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code など。それぞれに専用のリングがあります。
@@ -76,7 +76,7 @@
 - **メニューバー**——いちばん使っているリングを数字・小さなリング・上限の並びで。ダッシュボードも開けます。
 
 <p align="center">
-  <img src="Docs/images/detailed-card.webp" width="620" alt="同じ Codex アカウントのコンパクトなカードと詳細カード">
+  <img src="Docs/images/detailed-card.png" width="620" alt="同じ Codex アカウントのコンパクトなカードと詳細カード">
 </p>
 
 ### じゃまにならない

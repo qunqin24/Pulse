@@ -27,7 +27,7 @@
 <p align="center">
   <img src="Docs/images/demo.gif" height="400" alt="Плавающая лента Pulse, прикреплённая к краю экрана">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.webp" height="400" alt="При наведении на кольцо открывается карточка со всеми лимитами и временем их сброса">
+  <img src="Docs/images/panel.png" height="400" alt="При наведении на кольцо открывается карточка со всеми лимитами и временем их сброса">
 </p>
 
 - **Семьдесят семь сервисов на одной ленте** — Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code и многие другие, у каждого своё кольцо.
@@ -76,7 +76,7 @@
 - **В строке меню** — самое заполненное кольцо в виде числа, маленького кольца или раздельных лимитов, с дополнительной панелью.
 
 <p align="center">
-  <img src="Docs/images/detailed-card.webp" width="620" alt="Одна и та же карточка Codex, краткая и подробная">
+  <img src="Docs/images/detailed-card.png" width="620" alt="Одна и та же карточка Codex, краткая и подробная">
 </p>
 
 ### Не мешает работать
