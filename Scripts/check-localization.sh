@@ -14,6 +14,12 @@
 #    literal*, leaving the caption asking for a key nobody had written — and
 #    the check as it stood could not see it, because both .strings files still
 #    agreed with each other perfectly.
+#
+# 0. Before either: every table must parse. One malformed line — an unescaped
+#    quote — makes macOS drop the **whole** file, so the app falls back to
+#    English everywhere while the keys above still match. 1.12.5 shipped that
+#    way: a script appended a dictionary instead of a translation, quote and
+#    all, to all six tables.
 
 set -euo pipefail
 
@@ -26,6 +32,13 @@ keys() { grep -o '^"[^"]*"' "$1" | sed 's/^"//; s/"$//' | sort; }
 
 status=0
 languages=0
+
+for table in "$RESOURCES"/*.lproj/Localizable.strings; do
+    if ! problem=$(plutil -lint "$table" 2>&1); then
+        echo "Not a valid strings file, so macOS would ignore all of it: $problem"
+        status=1
+    fi
+done
 
 # Every shipped language against English, rather than one named pair: a
 # language added to the app but not to this loop is a language nobody is

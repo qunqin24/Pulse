@@ -79,6 +79,10 @@ enum LocalizationSource {
         lock.withLock { override } ?? .module
     }
 
+    /// The module's bundle whatever the language, for a test that reads the
+    /// tables themselves.
+    static var moduleBundle: Bundle { .module }
+
     /// The language Pulse is set to, `.system` when it follows macOS.
     static var language: AppLanguage {
         lock.withLock { chosen }

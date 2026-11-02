@@ -1271,6 +1271,6 @@
 "Squarer" = "Более квадратная";
 "Rounder" = "Более круглая";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "Фирменный цвет сервиса. Если его нет — цвет, отличный от соседних роботов.";
-"A note from the developer" = "{'en': 'A note from the developer', 'zh-Hans': '来自开发者的话', 'zh-Hant': '來自開發者的話', 'ja': '開発者からのひとこと', 'ko': '개발자의 한마디', 'ru': 'Слово от разработчика'}";
-"Don't show again" = "{'en': "Don't show again", 'zh-Hans': '不再显示', 'zh-Hant': '不再顯示', 'ja': '今後表示しない', 'ko': '다시 표시 안 함', 'ru': 'Больше не показывать'}";
-"Close" = "{'en': 'Close', 'zh-Hans': '关闭', 'zh-Hant': '關閉', 'ja': '閉じる', 'ko': '닫기', 'ru': 'Закрыть'}";
+"A note from the developer" = "Слово от разработчика";
+"Don't show again" = "Больше не показывать";
+"Close" = "Закрыть";
