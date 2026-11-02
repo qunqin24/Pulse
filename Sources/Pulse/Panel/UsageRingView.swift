@@ -98,14 +98,19 @@ struct UsageRingView: View {
     /// The icon's share of that dark disc. Sizing the icon from the disc
     /// rather than from the full diameter keeps the margin around it steady
     /// even if the ring's stroke gets thicker or thinner.
-    private static let iconScale: CGFloat = 0.8
-    /// The robot's share of the same disc: **larger than a mark's**, and
-    /// wider than the disc. Its drawing carries the antenna and room to move
-    /// above the head, so at the mark's size the head read smaller than the
-    /// logo beside it. It may spread into the band between the disc and the
-    /// usage ring because a ring with a robot draws no activity arc there.
-    /// With a second ring that band is taken, so it keeps the mark's size.
-    private var robotScale: CGFloat { secondFraction == nil ? 1.1 : Self.iconScale }
+    ///
+    /// The whole disc: 0.8 read small beside the robot, and 0.9 and 1.0 were
+    /// drawn side by side and 1.0 was picked. The cost, accepted: a busy
+    /// ring's activity arc and a second ring both pass close to the glyph.
+    private static let iconScale: CGFloat = 1.0
+    /// The robot's share of the same disc: **wider than the disc**. Its
+    /// drawing carries the antenna and room to move above the head, so the
+    /// head needs the extra width to read as large as a logo. It may spread
+    /// into the band between the disc and the usage ring because a ring with
+    /// a robot draws no activity arc there. With a second ring that band is
+    /// taken, and its taller outline would touch the inner ring at the
+    /// logo's size, so it is drawn smaller there.
+    private var robotScale: CGFloat { secondFraction == nil ? 1.1 : 0.8 }
 
     private var centreDiameter: CGFloat {
         // The disc gives up two points a side to the second ring, which needs
