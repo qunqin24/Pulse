@@ -16,7 +16,7 @@ A decision records a reason, not proof the measurement still holds — a local p
 | [release-notes-in-changelog.md](release-notes-in-changelog.md) | [../releasing.md](../releasing.md) |
 | [sdk-stamp-and-appearance.md](sdk-stamp-and-appearance.md) | [../releasing.md](../releasing.md) |
 | [localization.md](localization.md) | [../development.md](../development.md) |
-| [bot-mark-removed.md](bot-mark-removed.md) — why the animated mark was removed, and what a replacement must be | [../ui/rings-and-surface.md](../ui/rings-and-surface.md) |
+| [bot-mark-removed.md](bot-mark-removed.md) — why the animated mark was removed, what a replacement had to be, and the CX ArtLab robot that replaced it | [../ui/rings-and-surface.md](../ui/rings-and-surface.md) |
 | [settings-window-title-bar.md](settings-window-title-bar.md) — how System Settings' title bar was matched, and every variant that missed | [../architecture.md](../architecture.md) |
 
 When the *reason* changes, edit the decision. When only the current fact changes (counts, intervals), edit the topic doc.

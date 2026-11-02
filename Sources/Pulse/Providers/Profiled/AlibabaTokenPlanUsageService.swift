@@ -23,6 +23,7 @@ extension ProviderProfile {
     static let alibabaTokenPlan = ProviderProfile(
         displayName: "Alibaba Token Plan",
         iconResource: "alibabacloud",
+        brandColour: 0xFF6A00,
         credential: .localLogin,
         accessDescription: {
             .localized("Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials.")

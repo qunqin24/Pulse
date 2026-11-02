@@ -16,7 +16,7 @@ All of it is in `Sources/Pulse/Settings`. `SettingsView.swift` is the shell only
 | `AppearancePane.swift`, `RingsPane.swift`, `PlacementPane.swift`, `GeneralPane.swift`, `NotificationsPane.swift`, `NetworkPane.swift`, `AboutPane.swift` | One fixed pane each, with its own state (the order list's drag target, the login-item nudge, the proxy text fields). |
 | `TokenSpendPane.swift`, `SpendPaneModel.swift` | The Token spend pane (switch, recap buttons, `TokenSpendView`) and its reading: combined and per-agent figures, scan progress, the drilled-in agent and model. |
 | `AccountPane.swift` | One account's pane: the cards in order, and the seed of the typed fields when the account or its switch changes. |
-| `AccountPanelGroup.swift` | Panel card: show in panel, ring window, split, Codex reset credits, detailed card (`detailedCardSubtitle`), ring colour. |
+| `AccountPanelGroup.swift` | Panel card: show in panel, ring window, split, Codex reset credits, detailed card (`detailedCardSubtitle`), ring colour, robot in the ring. |
 | `WindowStarterGroup.swift` | Claude Code / Codex window starter and its risk confirmation. |
 | `AccountConnectionGroup.swift`, `AccountConnectionRows.swift` | Connection card: route picker, Copilot sign-in, key field, browser read, and the single rows it draws (site, server address, balance basis, full tank, warn below). Scrolls and focuses itself when a remedy names a field. |
 | `AccountsGroup.swift` | Another subscription of the same provider: sign in, rename, remove. |
@@ -162,7 +162,7 @@ Two groups. The first is the app: version and update state, where the usage figu
 
 **Opening the pane checks for an update** (`AppUpdate.probe`, Sparkle's `checkForUpdateInformation`), unless a check or update is already running: no Sparkle window, only the Version subtitle changes ("Checking…", then the answer), so "up to date" is current. It runs **even with Check automatically off** — that switch covers Pulse's own schedule; opening About is the reader asking. **Check now** still puts up Sparkle's window.
 
-The second group is **Credits**: anything shipped here that somebody else made — the design it was built from and the provider marks.
+The second group is **Credits**: anything shipped here that somebody else made — the design it was built from, the provider marks, and the robot (CX ArtLab's Agent Robot Avatar, said to be a port of an original character under the MIT License, with **Open** for its repository).
 
 ## Provider panes
 
@@ -186,6 +186,12 @@ Per-account choices about *one ring* live here rather than on the Panel panes ([
 - **Reset credits on the card**, Codex's first account only: off by default; on, its hover card says how many limit reset credits Codex reports, or "Not available" ([../providers/codex.md](../providers/codex.md#limit-reset-credits)).
 - **Show each part of the credits**, Qoder only (`AppSettings.qoderShowsParts`, off by default): the plan's credits, a top-up pack and dedicated credits each get a row after the total, so the ring's automatic choice can follow the part closest to spent ([../providers/qoder.md](../providers/qoder.md#the-parts-issue-76)).
 - **Usage history**, Qoder only (`QoderCreditsGroup`): the account's credits used and charged today, over 7 and 31 days, and the month as bars, from Qoder's own usage records, read when the pane opens and on Refresh ([../providers/qoder.md](../providers/qoder.md#credit-history-issue-88)). The same figures are on Qoder's detailed card.
+- **Robot in the ring** on every account (`AppSettings.robotAccounts`, account ids; off by default), last in the group: CX ArtLab's robot in place of the provider's mark, showing what the account is doing ([rings-and-surface.md](rings-and-surface.md#robot)). Its subtitle names the robot and CX ArtLab, because the switch is where somebody first meets the character. **Only while it is on**, three rows follow it, because choices about something not drawn read as settings that do nothing:
+  - **Robot colour**: Automatic or Custom, with a **Colour** well under Custom, as the ring colour has. The subtitle says which: the provider's own colour or, without one, a colour that differs from its neighbours; or that the ring keeps its own colour. Custom starts from the colour Automatic gives a lone robot of that provider, so switching changes nothing until a colour is picked. Rules: [rings-and-surface.md](rings-and-surface.md#robot).
+  - **Robot personality**: Automatic, Calm, Curious, Lively; the subtitle describes the one chosen (`AccountPanelGroup.personalitySubtitle`).
+  - **Robot shape**: Original, Squarer, Rounder.
+
+  All four are cleared with the account (`removeAccount`), each in its own store (`robotAccounts`, `robotColours`, `robotPersonalities`, `robotShapes`); the defaults are stored as nothing.
 - **Show credit amounts**, Qoder only (`AppSettings.qoderShowsAmounts`, off by default): each row on the card also shows its credits, "5,843 / 6,000", the same way round as its percentage; the rail keeps its percentages ([../providers/qoder.md](../providers/qoder.md#the-credits-themselves-issue-88)).
 
 ### Provider-specific groups

@@ -1248,3 +1248,26 @@
 "Sent. If nothing appeared, check Focus and System Settings › Notifications." = "已发送。如果没有看到，请检查专注模式和「系统设置 › 通知」。";
 "This is a test notification. Pulse's notifications look like this." = "这是一条测试通知。Pulse 的通知会以这种样式显示。";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse 还没有获得发送通知的许可。再按一次「发送」会重新询问。";
+
+/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+"Robot in the ring" = "圆环中显示小机器人";
+"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "代替服务商图标，显示这个账号当前的状态。小机器人是 CX ArtLab 的 Agent Robot Avatar。";
+"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "圆环中的小机器人移植自 CX ArtLab 的 Agent Robot Avatar，角色由 CX ArtLab 原创，以 MIT 许可证授权。";
+
+/* Robot colour, personality and shape */
+"Robot colour" = "小机器人颜色";
+"Chosen so that neighbouring robots differ." = "自动选择，相邻的小机器人各不相同。";
+"A colour of your own. The ring keeps its colour." = "使用你选择的颜色，圆环的颜色不受影响。";
+"Robot personality" = "小机器人性格";
+"Robot shape" = "小机器人外形";
+"The outline of the robot's head." = "小机器人头部的轮廓。";
+"Glances and blinks slowly, and now and then looks slowly from side to side." = "环顾和眨眼都较慢，偶尔缓缓地左右张望。";
+"Glances about, and now and then narrows its eyes and looks up and down." = "四处张望，偶尔眯起眼睛上下打量。";
+"Glances quickly and often, and now and then opens its eyes wide." = "张望得又快又频繁，偶尔睁大眼睛。";
+"Calm" = "沉稳";
+"Curious" = "好奇";
+"Lively" = "活泼";
+"Original" = "原版";
+"Squarer" = "更方";
+"Rounder" = "更圆";
+"The provider's own colour. Where it has none, one that differs from neighbouring robots." = "使用服务商自己的品牌色；没有品牌色的，选一个与相邻小机器人不同的颜色。";

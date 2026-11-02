@@ -433,6 +433,8 @@ struct RailEntry: Identifiable, Equatable {
     /// together. Carried on the entry like the tint, because the item is built
     /// from this and doesn't otherwise see the settings.
     var showsRemaining: Bool = false
+    /// The robot in place of the provider's mark, or nil for the mark.
+    var robot: RobotCue?
 
     var id: String { slot.id }
 }
@@ -748,7 +750,9 @@ private struct UsageDockItem: View {
             highlight: isSelected,
             windowClockFraction: entry.windowClock,
             secondFraction: entry.second?.usedFraction,
-            secondIsSpent: UsageTint.isSpent(entry.second)
+            secondIsSpent: UsageTint.isSpent(entry.second),
+            robot: entry.robot,
+            isLive: isInteractive
         )
         .scaleEffect(isSelected ? 1.06 : 1)
     }

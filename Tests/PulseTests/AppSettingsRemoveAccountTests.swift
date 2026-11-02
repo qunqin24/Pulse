@@ -32,6 +32,10 @@ struct AppSettingsRemoveAccountTests {
             settings.balanceBases[kept.id] = nil
             settings.balanceBudgets[kept.id] = nil
             settings.detailedCards.remove(kept.id)
+            settings.robotAccounts.remove(kept.id)
+            settings.robotColours[kept.id] = nil
+            settings.robotPersonalities[kept.id] = nil
+            settings.robotShapes[kept.id] = nil
             settings.splitAccounts.remove(kept.id)
             settings.menuBarAccount = nil
         }
@@ -46,6 +50,10 @@ struct AppSettingsRemoveAccountTests {
             settings.setBalanceBasis(.budget, for: account)
             settings.setBalanceBudget(20, for: account)
             settings.setShowsDetailedCard(true, for: account)
+            settings.setShowsRobot(true, for: account)
+            settings.setRobotColour(.blue, for: account)
+            settings.setRobotPersonality(.lively, for: account)
+            settings.setRobotShape(.round, for: account)
             settings.setSplit(true, for: account)
         }
 
@@ -68,6 +76,10 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.balanceBases[removed.id] == nil)
         #expect(settings.balanceBudgets[removed.id] == nil)
         #expect(!settings.detailedCards.contains(removed.id))
+        #expect(!settings.robotAccounts.contains(removed.id))
+        #expect(settings.robotColours[removed.id] == nil)
+        #expect(settings.robotPersonalities[removed.id] == nil)
+        #expect(settings.robotShapes[removed.id] == nil)
         #expect(!settings.splitAccounts.contains(removed.id))
 
         // Reading them back through the account-scoped accessors agrees: every
@@ -81,6 +93,7 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.balanceBasis(for: removed) == .default)
         #expect(settings.balanceBudget(for: removed) == nil)
         #expect(!settings.showsDetailedCard(for: removed))
+        #expect(!settings.showsRobot(for: removed))
 
         // A second account's own settings are untouched by the removal.
         #expect(settings.pinnedWindow(for: kept) == "weekly")
@@ -92,5 +105,9 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.balanceBasis(for: kept) == .budget)
         #expect(settings.balanceBudget(for: kept) == 20)
         #expect(settings.splitAccounts.contains(kept.id))
+        #expect(settings.showsRobot(for: kept))
+        #expect(settings.robotColour(for: kept) != nil)
+        #expect(settings.robotPersonality(for: kept) == .lively)
+        #expect(settings.robotShape(for: kept) == .round)
     }
 }

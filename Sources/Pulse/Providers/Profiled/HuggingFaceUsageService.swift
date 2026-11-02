@@ -23,6 +23,7 @@ extension ProviderProfile {
     static let huggingFace = ProviderProfile(
         displayName: "Hugging Face",
         iconResource: "huggingface",
+        brandColour: 0xFFD21E,
         credential: .apiKey(optional: true),
         accessDescription: { .localized("Uses a token entered in Settings, or reads the one hf auth login saved in ~/.cache/huggingface. No Keychain prompt.") },
         keySubtitle: { .localized("From huggingface.co/settings/tokens. Stored encrypted on this Mac.") },

@@ -1,6 +1,6 @@
 # Rings and surface
 
-The panel's surface (solid, light, Liquid Glass), what ring colour means, and the arcs a ring can carry. The animated mark was removed: [../decisions/bot-mark-removed.md](../decisions/bot-mark-removed.md). Input and hit testing: [input.md](input.md).
+The panel's surface (solid, light, Liquid Glass), what ring colour means, the arcs a ring can carry, and the robot a ring can draw in place of the provider's mark. Input and hit testing: [input.md](input.md).
 
 ## Light panel
 
@@ -65,9 +65,39 @@ The rail's `railTop` / `railLeading` offsets track the pointer, so they sit **ou
 
 ## Activity mark
 
-White arc on the band between the icon disc and the usage stroke — **or just outside the disc while the second ring is on**. Core Animation, not `TimelineView`. Reset `spinning` on disappear. [../refresh-and-data.md](../refresh-and-data.md)
+White arc on the band between the icon disc and the usage stroke — **or just outside the disc while the second ring is on**. Core Animation, not `TimelineView`. Reset `spinning` on disappear. **Not drawn on a ring with the robot**, which shows the CLI working itself: one fact, drawn once. [../refresh-and-data.md](../refresh-and-data.md)
 
 **`AppSettings.animatesRingActivity`** (on by default) is the one switch over this arc and the refresh mark drawn over the usage arc during a fetch. `UsageRingView.isBusy` / `isRefreshing` track the facts either way; off only withholds the cue — no travelling arc, no refresh sweep, no dimming of the usage arc while it fetches. [settings.md](settings.md)
+
+## Robot
+
+`AppSettings.robotAccounts`, per account, **off by default** (key `settings.robotAccounts`; the removed mark's `settings.botMarks` and its siblings are not read). On, the ring draws a robot in place of the provider's mark. The robot is **CX ArtLab's [Agent Robot Avatar](https://github.com/CX-ArtLab/agent-robot-avatar)** (MIT, v0.7.1), ported to Swift in `Sources/Pulse/Panel/Robot` — not Pulse's character, and never described as one. Licence: `THIRD_PARTY_NOTICES.md`; credit: Settings › About › Credits and the switch's own subtitle. Why the earlier mark went: [../decisions/bot-mark-removed.md](../decisions/bot-mark-removed.md).
+
+**Each mood is one of the original's own actions, chosen from facts Pulse has seen** (`RobotMood.resolve`, in this order):
+
+| Fact | Mood | Original action |
+|---|---|---|
+| A refresh from this ring (`UsageStore.isRefreshing`) | refreshing | `waiting-wave`: the eyes bob in turn |
+| The provider's CLI is working (`UsageStore.isRunning`) | working | `waiting-spin`: the eyes circle each other |
+| No reading | asleep | `sleep`: drowsy, then the lids meet as the head sinks; `wake` when a reading arrives |
+| The provider says the limit is spent (`UsageTint.isSpent`) | spent | `failure`, held: sad lids, head and eyes lowered |
+| None of these | idle | `idle`: blinks and glances around |
+
+Two one-off gestures play over the mood when their fact becomes true (`RobotCue`): **a reset** (`UsageStore.justReset`, `ResetWatch`) plays `success`, **a finished turn** (`UsageStore.justFinishedWorking`) plays `affirm`, a nod; a reset wins if both are true. They play on the change, not on every frame the span is true, and not again when the panel reopens after the span.
+
+- **Refresh first** because it answers a click on the ring; **working before the reading**, because the CLI runs whatever the last reading said and the white arc this replaces has nowhere else to go; **no reading before spent**, because without a reading "spent" is a memory. Nothing near a limit gets a face of its own: the ring's colour already says it.
+- **`animatesRingActivity` off withholds working and refreshing** here as it withholds the arcs; the robot then shows only the reading's state. The refresh sweep on the usage arc is unchanged: it is on the ring, not in the disc.
+- **Size:** the robot is as wide as the mark (`centreDiameter × iconScale`), so nothing is measured differently and it is not a `PanelMetrics` entry. Dimmed with no reading, like the mark.
+- **Colour:** one colour with the eyes cut out (`.destinationOut`), not the original's black and white, so the surface (glass included) shows through the eyes; the original's `color` attribute sets the same thing. **The robot's colour says which product it is, and nothing else** — kept apart from the ring's colour (`AppSettings.robotColours`, not `ringTints`), which says how much is used; a spent limit still turns the ring red whatever the robot wears. All robots on the rail are coloured at once (`RobotAutomatic.inks`, applied in `FloatingUsagePanelView.spreadingRobots`):
+  1. **A chosen colour** (Custom, a colour well stored as hex like the ring colour) is fixed, and drawn exactly as chosen.
+  2. **The product's own colour** (`Provider.brandColour`: an exhaustive switch over the hand-written providers, `ProviderProfile.brandColour` for profiled ones) is fixed too. Claude Code `D97757`, DeepSeek `4D6BFE`, Volcengine `1664FF`, MiniMax `E8483F`, Antigravity `4285F4`, GLM Coding `3A7BF7`, Kimi Code `7AA5FF`, Xiaomi MiMo `FF6900` (Xiaomi's), sub2api `3875F6` (the blue end of its gradient), Qoder `2ADB5C`, StepFun `0160FF`; Alibaba Coding Plan and Token Plan `FF6A00`, Perplexity `20808D`, Hugging Face `FFD21E`, ZoomMate `0B5CFF`. MiniMax's and Antigravity's are the right family, exact value unconfirmed. Products with a black-and-white mark have none (Codex, Kiro, Cursor, OpenCode Go, Ollama Cloud, Z.ai, Copilot, Grok, Grok Bot, Command Code, Devin, New API — neither end of its gradient is its colour — V2EX, extensions, and every profile that does not set one).
+  3. **Everything else takes a colour from Pulse's wheel** (`RobotAutomatic.wheel`): twenty-four hues **less those near green, amber and red** (`usageClearances`: 66° from green, 50° from amber, 35° from the reds), which leaves blue to magenta. A robot Pulse coloured green inside a green ring read as part of the gauge in the rendered rail; a product's own colour is its own and is not held to this. Each robot, in rail order, takes the unused wheel hue farthest from its neighbours and from every colour on the panel, a neighbour counting double.
+
+  An automatic colour (2 or 3) is adjusted to stand **3:1** off the panel — towards white on the dark panel, towards black on the light one (`RobotInk.legible(onDark:)`), so Hugging Face's yellow is darkened on the light panel; a chosen colour is never adjusted, as with `RingTint`. Two accounts of one product share its colour: it says which product, and a split account's two rings are one login.
+- **Personality** (`AppSettings.robotPersonalities`, `RobotPersonality`): how the robot passes **idle time only** — how often and how fast it glances (`glanceGap`, `glanceSpeed`; the original's idle is Curious's), how often it blinks, and which of the original's idle actions it reaches for every half-minute or so (`pastime`). **Calm** looks slowly and now and then plays `bored`; **Curious** keeps the original's timing and plays `inspect`; **Lively** glances quickly and plays `surprise`. Pastimes are only actions that **claim nothing**: `success` and `affirm` are kept for a reset and a finished turn, so idle time never fakes one. Every mood that reports a fact looks the same whatever the personality. Never with Reduced Motion. **Automatic** spreads them like the colours.
+- **Shape** (`AppSettings.robotShapes`, `RobotShape`): the original's `setHeadRoundness` — **Original** (50, the default), **Squarer** (0) and **Rounder** (100), each the outline eased towards a superellipse of the same box. The only appearance variant the original has besides colour and its skins, which are not ported.
+- **Timing:** `TimelineView(.animation(minimumInterval: 1/30))` over a `Canvas`, the original's thirty frames a second; `RobotMotion` holds the state and has no clock of its own (`RobotMarkTests` drive it). **Paused while the rail is collapsed** (`UsageDockItem.isInteractive`) and once asleep and settled, as the original stops its frame loop asleep. Reduced Motion snaps between poses and holds still, as the original does.
+- **Not ported:** pointer following, dragging, squeezing and the antenna drag (the panel's input belongs to the window, and a ring is too small to grab), the skins, and the actions with neither a Pulse fact nor a personality behind them (`wary`, `angry`, `refuse`, `love`, `random`, `input`).
 
 ## Icons
 

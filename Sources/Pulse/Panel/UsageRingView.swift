@@ -80,6 +80,11 @@ struct UsageRingView: View {
     /// next person who forgets it is told.
     let secondFraction: Double?
     let secondIsSpent: Bool
+    /// CX ArtLab's robot in place of the provider's mark, or nil for the mark.
+    /// Per account, off by default (`AppSettings.robotAccounts`).
+    var robot: RobotCue?
+    /// False while the rail is collapsed, which stops the robot's timeline.
+    var isLive: Bool = true
 
     @State private var spinning = false
     @State private var refreshSpinning = false
@@ -231,19 +236,20 @@ struct UsageRingView: View {
 
             if isRefreshing && animatesActivity { refreshMark }
 
-            LobeIconView(
-                provider: provider,
-                size: centreDiameter * Self.iconScale
-            )
             // Dimmed while there is no reading, so the rail shows at a
-            // glance which providers it actually has data for.
-            .foregroundStyle(.primary.opacity(hasReading ? 1 : 0.35))
+            // glance which providers it actually has data for. An opacity
+            // rather than a dimmer foreground, because the robot may have a
+            // colour of its own.
+            centreMark
+                .opacity(hasReading ? 1 : 0.35)
 
             if let secondFraction {
                 secondRing(secondFraction)
             }
 
-            if isBusy && animatesActivity {
+            // **Not with the robot.** It shows the CLI working itself, and
+            // the same fact is not drawn twice on one ring.
+            if isBusy && animatesActivity && robot == nil {
                 Circle()
                     .trim(from: 0, to: Self.busySweep)
                     .stroke(
@@ -278,6 +284,30 @@ struct UsageRingView: View {
         .overlay { windowClock }
         .animation(.easeOut(duration: 0.2), value: isRefreshing)
         .accessibilityHidden(true)
+    }
+
+    /// What sits in the disc: the provider's mark, or the robot. The robot is
+    /// as wide as the mark would be, so nothing around it moves.
+    @ViewBuilder
+    private var centreMark: some View {
+        if let robot {
+            RobotMarkView(
+                mood: RobotMood.resolve(hasReading: hasReading, isSpent: isSpent, isWorking: isBusy, isRefreshing: isRefreshing,
+                                        activity: animatesActivity),
+                gesture: robot.gesture,
+                size: centreDiameter * Self.iconScale,
+                isLive: isLive,
+                ink: robot.ink,
+                inkIsChosen: robot.inkIsChosen,
+                personality: robot.personality,
+                shape: robot.shape
+            )
+        } else {
+            LobeIconView(
+                provider: provider,
+                size: centreDiameter * Self.iconScale
+            )
+        }
     }
 
     /// The selected side of the window clock: a hairline outside the usage

@@ -25,6 +25,7 @@ extension ProviderProfile {
     static let alibabaCodingPlan = ProviderProfile(
         displayName: "Alibaba Coding Plan",
         iconResource: "alibabacloud",
+        brandColour: 0xFF6A00,
         credential: .apiKey(optional: false),
         accessDescription: { .localized("Uses only the API key you enter in Settings. No Keychain prompt.") },
         keySubtitle: { .localized("From the Coding Plan page in Model Studio. Stored encrypted on this Mac.") },

@@ -1,5 +1,5 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
-import Foundation
+import SwiftUI
 
 // The floating panel: whether it is shown, where it may go, how big it is, and
 // everything about the rail that changes its length or thickness.
@@ -40,6 +40,12 @@ extension AppSettings.Key {
     static let usesLightPanel = "settings.usesLightPanel"
     static let autoCollapse = "settings.autoCollapse"
     static let splitAccounts = "settings.splitAccounts"
+    /// New with the CX ArtLab robot. The removed mark's `settings.botMarks`
+    /// is left alone and read by nothing (Docs/decisions/bot-mark-removed.md).
+    static let robotAccounts = "settings.robotAccounts"
+    static let robotColours = "settings.robotColours"
+    static let robotPersonalities = "settings.robotPersonalities"
+    static let robotShapes = "settings.robotShapes"
 }
 
 extension AppSettings.Default {
@@ -182,6 +188,30 @@ extension AppSettings {
         onLayoutChange?()
     }
 
+    func robotAccountsChanged(from old: Set<String>) {
+        guard robotAccounts != old else { return }
+        defaults.set(robotAccounts.sorted(), forKey: Key.robotAccounts)
+        onLayoutChange?()
+    }
+
+    func robotColoursChanged(from old: [String: String]) {
+        guard robotColours != old else { return }
+        defaults.set(robotColours, forKey: Key.robotColours)
+        onLayoutChange?()
+    }
+
+    func robotPersonalitiesChanged(from old: [String: String]) {
+        guard robotPersonalities != old else { return }
+        defaults.set(robotPersonalities, forKey: Key.robotPersonalities)
+        onLayoutChange?()
+    }
+
+    func robotShapesChanged(from old: [String: String]) {
+        guard robotShapes != old else { return }
+        defaults.set(robotShapes, forKey: Key.robotShapes)
+        onLayoutChange?()
+    }
+
     func usesGlassChanged(from old: Bool) {
         guard usesGlass != old else { return }
         defaults.set(usesGlass, forKey: Key.usesGlass)
@@ -219,6 +249,50 @@ extension AppSettings {
 
     func setShowsDetailedCard(_ shows: Bool, for account: AccountKey) {
         if shows { detailedCards.insert(account.id) } else { detailedCards.remove(account.id) }
+    }
+
+    func showsRobot(for account: AccountKey) -> Bool {
+        robotAccounts.contains(account.id)
+    }
+
+    func setShowsRobot(_ shows: Bool, for account: AccountKey) {
+        if shows { robotAccounts.insert(account.id) } else { robotAccounts.remove(account.id) }
+    }
+
+    /// The robot's own colour, or nil for Automatic. Kept apart from the
+    /// ring's colour: the ring's says how much is used, the robot's only tells
+    /// robots apart.
+    func robotColour(for account: AccountKey) -> Color? {
+        RingTint.color(from: robotColours[account.id])
+    }
+
+    func setRobotColour(_ colour: Color?, for account: AccountKey) {
+        // As with the ring colour, a colour with no sRGB hex keeps the last
+        // one rather than falling back to Automatic; only nil clears it.
+        guard let colour else {
+            robotColours[account.id] = nil
+            return
+        }
+        guard let hex = colour.hexString else { return }
+        robotColours[account.id] = hex
+    }
+
+    /// The robot's personality, or nil for Automatic.
+    func robotPersonality(for account: AccountKey) -> RobotPersonality? {
+        robotPersonalities[account.id].flatMap(RobotPersonality.init(rawValue:))
+    }
+
+    func setRobotPersonality(_ personality: RobotPersonality?, for account: AccountKey) {
+        robotPersonalities[account.id] = personality?.rawValue
+    }
+
+    func robotShape(for account: AccountKey) -> RobotShape {
+        robotShapes[account.id].flatMap(RobotShape.init(rawValue:)) ?? .standard
+    }
+
+    /// The standard shape is stored as nothing, like every other default.
+    func setRobotShape(_ shape: RobotShape, for account: AccountKey) {
+        robotShapes[account.id] = shape == .standard ? nil : shape.rawValue
     }
 
     func isSplit(_ account: AccountKey) -> Bool {
@@ -276,5 +350,9 @@ extension AppSettings {
     /// The settings `init` has no parameter for.
     func restorePanel(from defaults: UserDefaults) {
         detailedCards = Set(defaults.stringArray(forKey: Key.detailedCards) ?? [])
+        robotAccounts = Set(defaults.stringArray(forKey: Key.robotAccounts) ?? [])
+        robotColours = defaults.dictionary(forKey: Key.robotColours) as? [String: String] ?? [:]
+        robotPersonalities = defaults.dictionary(forKey: Key.robotPersonalities) as? [String: String] ?? [:]
+        robotShapes = defaults.dictionary(forKey: Key.robotShapes) as? [String: String] ?? [:]
     }
 }

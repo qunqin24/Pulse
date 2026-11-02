@@ -161,6 +161,126 @@ struct AccountPanelGroup: View {
                     .labelsHidden()
                 }
             }
+
+            SettingsRowDivider()
+
+            // Credited in the subtitle as well as in About: the character is
+            // CX ArtLab's, and the switch is where somebody first meets it.
+            SettingsRow(
+                String.localized("Robot in the ring"),
+                subtitle: String.localized("Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab.")
+            ) {
+                Toggle("", isOn: Binding(
+                    get: { settings.showsRobot(for: account) },
+                    set: { settings.setShowsRobot($0, for: account) }
+                ))
+                .labelsHidden()
+                .toggleStyle(.switch)
+            }
+
+            // Only while the robot is on: choices about something that is
+            // not drawn read as settings that do nothing.
+            if settings.showsRobot(for: account) {
+                robotRows
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var robotRows: some View {
+        SettingsRowDivider()
+
+        SettingsRow(
+            String.localized("Robot colour"),
+            subtitle: settings.robotColour(for: account) == nil
+                ? String.localized("The provider's own colour. Where it has none, one that differs from neighbouring robots.")
+                : String.localized("A colour of your own. The ring keeps its colour.")
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.robotColour(for: account) != nil },
+                set: { custom in
+                    // Starts from the colour Automatic would give a lone robot,
+                    // so switching to Custom changes nothing until a colour is
+                    // picked.
+                    let start = RobotAutomatic.inks(for: [provider], custom: [nil])[0].ink
+                    settings.setRobotColour(custom ? start.color : nil, for: account)
+                }
+            )) {
+                Text(localized: "Automatic").tag(false)
+                Text(localized: "Custom").tag(true)
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
+
+        if let chosen = settings.robotColour(for: account) {
+            SettingsRowDivider()
+
+            SettingsRow(String.localized("Colour"), subtitle: chosen.hexString) {
+                ColorPicker(
+                    "",
+                    selection: Binding(
+                        get: { chosen },
+                        set: { settings.setRobotColour($0, for: account) }
+                    ),
+                    supportsOpacity: false
+                )
+                .labelsHidden()
+            }
+        }
+
+        SettingsRowDivider()
+
+        SettingsRow(
+            String.localized("Robot personality"),
+            subtitle: Self.personalitySubtitle(settings.robotPersonality(for: account))
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.robotPersonality(for: account) },
+                set: { settings.setRobotPersonality($0, for: account) }
+            )) {
+                Text(localized: "Automatic").tag(RobotPersonality?.none)
+                ForEach(RobotPersonality.allCases) { personality in
+                    Text(personality.title).tag(RobotPersonality?.some(personality))
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
+
+        SettingsRowDivider()
+
+        SettingsRow(
+            String.localized("Robot shape"),
+            subtitle: String.localized("The outline of the robot's head.")
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.robotShape(for: account) },
+                set: { settings.setRobotShape($0, for: account) }
+            )) {
+                ForEach(RobotShape.allCases) { shape in
+                    Text(shape.title).tag(shape)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
+    }
+
+    /// What the personality does while idle, said for the one chosen.
+    static func personalitySubtitle(_ personality: RobotPersonality?) -> String {
+        switch personality {
+        case nil:
+            String.localized("Chosen so that neighbouring robots differ.")
+        case .calm:
+            String.localized("Glances and blinks slowly, and now and then looks slowly from side to side.")
+        case .curious:
+            String.localized("Glances about, and now and then narrows its eyes and looks up and down.")
+        case .lively:
+            String.localized("Glances quickly and often, and now and then opens its eyes wide.")
         }
     }
 

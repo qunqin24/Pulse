@@ -1248,3 +1248,26 @@
 "Sent. If nothing appeared, check Focus and System Settings › Notifications." = "Отправлено. Если ничего не появилось, проверьте режим фокусирования и Системные настройки › Уведомления.";
 "This is a test notification. Pulse's notifications look like this." = "Это тестовое уведомление. Так выглядят уведомления Pulse.";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse пока не получил разрешения на уведомления. Нажмите «Отправить» ещё раз, чтобы запрос появился снова.";
+
+/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+"Robot in the ring" = "Робот в кольце";
+"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "Заменяет логотип сервиса и показывает, что происходит с этим аккаунтом. Робот — Agent Robot Avatar от CX ArtLab.";
+"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "Робот в кольцах перенесён из проекта Agent Robot Avatar от CX ArtLab. Персонаж — оригинальная работа CX ArtLab, лицензия MIT.";
+
+/* Robot colour, personality and shape */
+"Robot colour" = "Цвет робота";
+"Chosen so that neighbouring robots differ." = "Подбирается так, чтобы соседние роботы различались.";
+"A colour of your own. The ring keeps its colour." = "Выбранный вами цвет. Цвет кольца не меняется.";
+"Robot personality" = "Характер робота";
+"Robot shape" = "Форма робота";
+"The outline of the robot's head." = "Очертания головы робота.";
+"Glances and blinks slowly, and now and then looks slowly from side to side." = "Медленно оглядывается и моргает, иногда неспешно смотрит по сторонам.";
+"Glances about, and now and then narrows its eyes and looks up and down." = "Оглядывается, иногда прищуривается и смотрит вверх и вниз.";
+"Glances quickly and often, and now and then opens its eyes wide." = "Часто и быстро оглядывается, иногда широко открывает глаза.";
+"Calm" = "Спокойный";
+"Curious" = "Любопытный";
+"Lively" = "Живой";
+"Original" = "Исходная";
+"Squarer" = "Более квадратная";
+"Rounder" = "Более круглая";
+"The provider's own colour. Where it has none, one that differs from neighbouring robots." = "Фирменный цвет сервиса. Если его нет — цвет, отличный от соседних роботов.";

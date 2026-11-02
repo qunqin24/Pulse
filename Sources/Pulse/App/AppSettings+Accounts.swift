@@ -294,6 +294,10 @@ extension AppSettings {
         balanceBases[account.id] = nil
         balanceBudgets[account.id] = nil
         detailedCards.remove(account.id)
+        robotAccounts.remove(account.id)
+        robotColours[account.id] = nil
+        robotPersonalities[account.id] = nil
+        robotShapes[account.id] = nil
         splitAccounts.remove(account.id)
         if menuBarAccount == account.id { menuBarAccount = nil }
     }

@@ -48,6 +48,10 @@ struct ProviderProfile: Sendable {
     var billing: Provider.Billing = .subscription
     /// An SVG in `Resources`, without its extension.
     let iconResource: String
+    /// The product's own colour, as `0xRRGGBB`, for the robot in its ring
+    /// only — never the ring, whose colour means usage. Nil for a product
+    /// whose mark is black and white.
+    var brandColour: UInt32? = nil
     let credential: Credential
     /// Shown before the provider is switched on, in the chooser and in
     /// Settings. What is read and from where — never a guess.

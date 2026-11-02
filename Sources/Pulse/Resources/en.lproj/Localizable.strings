@@ -1248,3 +1248,26 @@
 "Sent. If nothing appeared, check Focus and System Settings › Notifications." = "Sent. If nothing appeared, check Focus and System Settings › Notifications.";
 "This is a test notification. Pulse's notifications look like this." = "This is a test notification. Pulse's notifications look like this.";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse has not been allowed to post notifications yet. Press Send again to be asked.";
+
+/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+"Robot in the ring" = "Robot in the ring";
+"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab.";
+"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License.";
+
+/* Robot colour, personality and shape */
+"Robot colour" = "Robot colour";
+"Chosen so that neighbouring robots differ." = "Chosen so that neighbouring robots differ.";
+"A colour of your own. The ring keeps its colour." = "A colour of your own. The ring keeps its colour.";
+"Robot personality" = "Robot personality";
+"Robot shape" = "Robot shape";
+"The outline of the robot's head." = "The outline of the robot's head.";
+"Glances and blinks slowly, and now and then looks slowly from side to side." = "Glances and blinks slowly, and now and then looks slowly from side to side.";
+"Glances about, and now and then narrows its eyes and looks up and down." = "Glances about, and now and then narrows its eyes and looks up and down.";
+"Glances quickly and often, and now and then opens its eyes wide." = "Glances quickly and often, and now and then opens its eyes wide.";
+"Calm" = "Calm";
+"Curious" = "Curious";
+"Lively" = "Lively";
+"Original" = "Original";
+"Squarer" = "Squarer";
+"Rounder" = "Rounder";
+"The provider's own colour. Where it has none, one that differs from neighbouring robots." = "The provider's own colour. Where it has none, one that differs from neighbouring robots.";

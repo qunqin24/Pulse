@@ -96,6 +96,45 @@ SOFTWARE.
 in `Sources/Pulse/Resources` are not taken from Lobe Icons. `extension.svg` is
 Pulse's own.
 
+## Agent Robot Avatar
+
+The robot Pulse can draw in a ring in place of a provider's mark is ported to
+Swift from [Agent Robot Avatar](https://github.com/CX-ArtLab/agent-robot-avatar)
+by CX ArtLab (v0.7.1, commit `7e637d1`): the head outline, the eye poses and
+lids, the antenna, the head-roundness variants, and the timing of its idle,
+bored, inspect, surprise, waiting, success, affirm, failure, sleep and wake
+actions. The files are in `Sources/Pulse/Panel/Robot`.
+
+The Agent Robot Avatar character, including its robot appearance and visual
+identity, is an original design by CX ArtLab. Its licence covers the software;
+it does not transfer ownership of the Agent Robot Avatar name, character or
+visual identity, and Pulse does not present them as its own character or
+brand.
+
+```text
+MIT License
+
+Copyright (c) 2026 CX ART Lab
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## Sparkle
 
 Pulse links against [Sparkle](https://sparkle-project.org) 2.9.6, which handles

@@ -21,6 +21,7 @@ extension ProviderProfile {
     static let zoomMate = ProviderProfile(
         displayName: "ZoomMate",
         iconResource: "extension",
+        brandColour: 0x0B5CFF,
         credential: .sessionCookie(host: "zoom.us", cookies: ZoomMateUsageService.cookies),
         accessDescription: {
             .localized("Uses a browser session you import in Settings. Importing may ask for browser Keychain access.")

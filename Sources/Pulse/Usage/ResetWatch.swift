@@ -4,9 +4,8 @@ import Foundation
 /// Remembers when an account's limit last turned over.
 ///
 /// For anything on the rail that marks a reset, which has to be about
-/// something that happened. Nothing draws one since the animated mark was
-/// removed (Docs/decisions/bot-mark-removed.md); the signal is kept for
-/// whatever replaces it. This watches live readings go past and
+/// something that happened: the robot in a ring cheers on it (`RobotCue`).
+/// This watches live readings go past and
 /// records the moment one of an account's windows turned over, by the same
 /// test the reset notification uses — `UsageWindow.hasTurnedOver(since:)`.
 ///

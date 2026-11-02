@@ -87,6 +87,19 @@ struct AboutPane: View {
                 ) {
                     EmptyView()
                 }
+
+                SettingsRowDivider()
+
+                // A port, and said to be one: the character and its motion
+                // are CX ArtLab's original design, not Pulse's.
+                SettingsRow(
+                    "Agent Robot Avatar",
+                    subtitle: String.localized("The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License.")
+                ) {
+                    Button(String.localized("Open")) {
+                        NSWorkspace.shared.open(URL(string: "https://github.com/CX-ArtLab/agent-robot-avatar")!)
+                    }
+                }
             }
         }
         // Without this the row says "up to date" on nothing but the last

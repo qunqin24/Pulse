@@ -1248,3 +1248,26 @@
 "Sent. If nothing appeared, check Focus and System Settings › Notifications." = "보냈습니다. 보이지 않으면 집중 모드와 시스템 설정 › 알림을 확인하세요.";
 "This is a test notification. Pulse's notifications look like this." = "테스트 알림입니다. Pulse의 알림은 이렇게 표시됩니다.";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse에 아직 알림 권한이 없습니다. '보내기'를 다시 누르면 다시 묻습니다.";
+
+/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+"Robot in the ring" = "링에 로봇 표시";
+"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "제공업체 마크 대신 로봇이 이 계정의 상태를 보여 줍니다. 로봇은 CX ArtLab의 Agent Robot Avatar입니다.";
+"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "링의 로봇은 CX ArtLab의 Agent Robot Avatar를 옮겨 온 것입니다. 캐릭터는 CX ArtLab의 창작물이며 MIT 라이선스로 제공됩니다.";
+
+/* Robot colour, personality and shape */
+"Robot colour" = "로봇 색상";
+"Chosen so that neighbouring robots differ." = "이웃한 로봇끼리 겹치지 않도록 정해집니다.";
+"A colour of your own. The ring keeps its colour." = "직접 고른 색상을 씁니다. 링 색상은 그대로입니다.";
+"Robot personality" = "로봇 성격";
+"Robot shape" = "로봇 모양";
+"The outline of the robot's head." = "로봇 머리의 윤곽입니다.";
+"Glances and blinks slowly, and now and then looks slowly from side to side." = "시선과 눈 깜박임이 느리고, 가끔 천천히 좌우를 둘러봅니다.";
+"Glances about, and now and then narrows its eyes and looks up and down." = "이리저리 둘러보고, 가끔 눈을 가늘게 뜨고 위아래를 살핍니다.";
+"Glances quickly and often, and now and then opens its eyes wide." = "빠르고 자주 둘러보며, 가끔 눈을 크게 뜹니다.";
+"Calm" = "차분함";
+"Curious" = "호기심 많음";
+"Lively" = "활발함";
+"Original" = "원본";
+"Squarer" = "더 각진 모양";
+"Rounder" = "더 둥근 모양";
+"The provider's own colour. Where it has none, one that differs from neighbouring robots." = "제공업체 고유의 브랜드 색상을 씁니다. 없으면 이웃한 로봇과 다른 색상을 고릅니다.";

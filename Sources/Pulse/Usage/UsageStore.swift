@@ -243,7 +243,7 @@ final class UsageStore {
     ///
     /// Six seconds: long enough for something on the rail to pick it up on
     /// the next frame, short enough that reopening the panel a minute later
-    /// does not replay it. Unread since the animated mark was removed.
+    /// does not replay it. The robot in a ring nods on it (`RobotCue`).
     func justFinishedWorking(_ provider: Provider, within span: TimeInterval = 6,
                              now: Date = Date()) -> Bool {
         guard let at = activity.finishedAt[provider] else { return false }

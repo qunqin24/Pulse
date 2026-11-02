@@ -1248,3 +1248,26 @@
 "Sent. If nothing appeared, check Focus and System Settings › Notifications." = "送信しました。表示されない場合は、集中モードと「システム設定 › 通知」を確認してください。";
 "This is a test notification. Pulse's notifications look like this." = "これはテスト通知です。Pulse の通知はこのように表示されます。";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse はまだ通知の送信を許可されていません。もう一度「送信」を押すと、再度確認されます。";
+
+/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+"Robot in the ring" = "リングにロボットを表示";
+"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "プロバイダのマークの代わりに、このアカウントの状態をロボットで表示します。ロボットは CX ArtLab の Agent Robot Avatar です。";
+"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "リングのロボットは CX ArtLab の Agent Robot Avatar を移植したものです。キャラクターは CX ArtLab のオリジナルで、MIT ライセンスで提供されています。";
+
+/* Robot colour, personality and shape */
+"Robot colour" = "ロボットの色";
+"Chosen so that neighbouring robots differ." = "隣り合うロボットが同じにならないように選ばれます。";
+"A colour of your own. The ring keeps its colour." = "選んだ色を使います。リングの色は変わりません。";
+"Robot personality" = "ロボットの性格";
+"Robot shape" = "ロボットの形";
+"The outline of the robot's head." = "ロボットの頭の輪郭です。";
+"Glances and blinks slowly, and now and then looks slowly from side to side." = "視線の動きもまばたきもゆっくりで、ときどきゆっくりと左右を見回します。";
+"Glances about, and now and then narrows its eyes and looks up and down." = "あちこちを見回し、ときどき目を細めて上下を見ます。";
+"Glances quickly and often, and now and then opens its eyes wide." = "すばやく頻繁に見回し、ときどき目を大きく見開きます。";
+"Calm" = "おだやか";
+"Curious" = "好奇心旺盛";
+"Lively" = "元気";
+"Original" = "オリジナル";
+"Squarer" = "角ばった形";
+"Rounder" = "丸みのある形";
+"The provider's own colour. Where it has none, one that differs from neighbouring robots." = "プロバイダ自身のブランドカラーを使います。ない場合は、隣り合うロボットと異なる色を選びます。";
