@@ -418,12 +418,16 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Whether the agent is one of the seven readers that predate the
-    /// catalogue and keep their own store readers — none of which carry a
-    /// provider field a filtered view could select on.
+    /// Whether the agent's reader emits records with no provider field a
+    /// filtered view could select on.
+    ///
+    /// The seven readers that predate the catalogue keep their own store
+    /// readers, and Devin Desktop's events carry no provider either, so a
+    /// `provider:` read over any of them returns empty rather than its whole
+    /// store under another provider's name.
     var isLegacy: Bool {
         switch self {
-        case .claudeCode, .codex, .openCode, .kiloCLI, .grok, .kimiCLI, .devinCLI: true
+        case .claudeCode, .codex, .openCode, .kiloCLI, .grok, .kimiCLI, .devinCLI, .devinDesktop: true
         default: false
         }
     }
@@ -440,10 +444,11 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
     /// belongs to. `home` and `environment` are injected rather than read, so a
     /// test never touches the machine it runs on.
     ///
-    /// The seven legacy agents keep the exact home-relative paths they have
-    /// always used and do not honour an environment override, except Kimi
-    /// Code's store beside the Kimi CLI's, which honours `KIMI_CODE_HOME`; the
-    /// rest are resolved by their family, which does.
+    /// The seven agents that predate the catalogue keep the exact
+    /// home-relative paths they have always used and do not honour an
+    /// environment override, except Kimi Code's store beside the Kimi CLI's,
+    /// which honours `KIMI_CODE_HOME`; the rest are resolved by their family,
+    /// which does.
     func inputs(home: URL, environment: [String: String]) -> [URL] {
         guard !Task.isCancelled else { return [] }
         return switch self {
