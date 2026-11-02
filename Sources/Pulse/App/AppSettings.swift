@@ -1179,7 +1179,7 @@ final class AppSettings {
             extraAccounts: extras,
             providerOrder: defaults.stringArray(forKey: Key.providerOrder) ?? [],
             language: defaults.settingsChoice(Key.language) ?? .system,
-            pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:],
+            pinnedWindows: codexPinsNamedLikeHTTP(defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:]),
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
             sessionBrowsers: defaults.dictionary(forKey: Key.sessionBrowsers) as? [String: String] ?? [:],
             ringTints: defaults.dictionary(forKey: Key.ringTints) as? [String: String] ?? [:],

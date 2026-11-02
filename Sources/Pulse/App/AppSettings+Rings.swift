@@ -115,6 +115,21 @@ extension AppSettings {
 
     static var windowClockDirectionDefaultsKey: String { Key.windowClockDirection }
 
+    /// A Codex pin made while the app server answered, renamed to the id the
+    /// same limit carries on the HTTP route.
+    ///
+    /// The app server once named its limits `codex.primary`, the endpoint
+    /// `codex.primary_window`, so a pin made on one route did not match on the
+    /// other and the ring fell back to the fullest limit (issue #102). Both
+    /// now use the endpoint's spelling; this carries an old pin across.
+    static func codexPinsNamedLikeHTTP(_ pins: [String: String]) -> [String: String] {
+        pins.reduce(into: [:]) { result, pin in
+            let isCodex = AccountKey(id: pin.key)?.provider == .codex
+            let renamed = isCodex && (pin.value.hasSuffix(".primary") || pin.value.hasSuffix(".secondary"))
+            result[pin.key] = renamed ? pin.value + "_window" : pin.value
+        }
+    }
+
     // MARK: - Per-account accessors
 
     /// The window pinned for an account, if any.

@@ -156,7 +156,7 @@ struct CodexUsageService: Sendable {
     }
 
     /// The shape `wham/usage` returns.
-    private static func parseUsageResponse(_ root: [String: Any], for account: AccountKey) -> ProviderUsage {
+    static func parseUsageResponse(_ root: [String: Any], for account: AccountKey) -> ProviderUsage {
         var windows: [UsageWindow] = []
 
         // Account-wide limits, which the server leaves unnamed.
@@ -256,7 +256,7 @@ struct CodexUsageService: Sendable {
 
     /// The shape `account/rateLimits/read` returns, which names its fields
     /// differently from the HTTP endpoint.
-    private static func parseAppServerResponse(_ result: [String: Any]) -> ProviderUsage {
+    static func parseAppServerResponse(_ result: [String: Any]) -> ProviderUsage {
         let groups = result["rateLimitsByLimitId"] as? [String: [String: Any]]
             ?? (result["rateLimits"] as? [String: Any]).map { ["codex": $0] }
             ?? [:]
@@ -300,8 +300,13 @@ struct CodexUsageService: Sendable {
                 let minutes = number(node["windowDurationMins"]).map { Int($0) }
                 let resets = number(node["resetsAt"]).map { Date(timeIntervalSince1970: $0) }
 
+                // **Named as the HTTP route names it** (`primary_window`), so a
+                // limit keeps its id when the read falls back here: the pinned
+                // ring, the alert memory and the reset watch all key on it, and
+                // under two spellings a fallback silently unpinned the ring
+                // (issue #102).
                 return UsageWindow(
-                    id: "\(key).\(slot)",
+                    id: "\(key).\(slot)_window",
                     kind: minutes.map { kind(seconds: $0 * 60) } ?? .other(seconds: 0),
                     scope: scope,
                     usedFraction: percent / 100,

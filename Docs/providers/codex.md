@@ -22,6 +22,8 @@ The two answers have **different field names** (`used_percent` / `limit_window_s
 
 Never assume a fixed pair. `primary` / `secondary` are not tied to particular durations; which exist depends on the plan — ChatGPT Pro has no 5-hour limit at all, only the tiers below it do. A window’s kind is derived from its duration. The UI renders however many come back.
 
+**A limit has one id on both routes.** The endpoint names a slot `primary_window` / `secondary_window`; the app server says `primary` / `secondary`, and its windows take the endpoint's spelling (`codex.primary_window`). The pinned ring, the alert memory and the reset watch key on that id, so under two spellings a fallback to the app server unpinned the ring and the outer ring went back to the fullest limit (issue #102). `AppSettings.codexPinsNamedLikeHTTP` renames a pin saved under the old app-server spelling when settings load. Group keys match too: `rateLimitsByLimitId` is keyed by the endpoint's `metered_feature`, and the legacy single `rateLimits` is filed under `codex`.
+
 Codex reports `limit_reached` / `allowed` per group plus top-level `rate_limit_reached_type` and `spend_control.reached`. Those flags describe a whole group, which may hold both a 5-hour and a weekly window, so spent is pinned to the fullest window rather than smeared across both.
 
 ## Limit reset credits
