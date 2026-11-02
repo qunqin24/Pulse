@@ -96,16 +96,6 @@ SOFTWARE.
 in `Sources/Pulse/Resources` are not taken from Lobe Icons. `extension.svg` is
 Pulse's own.
 
-## Animated mark data
-
-`Sources/Pulse/Resources/bot-data.json` is extracted by
-`Scripts/extract-bot-data.py` from
-[iduu/grokbot-animation](https://github.com/iduu/grokbot-animation), an
-unofficial study of the Grok Bot mark published on [x.ai/bot](https://x.ai/bot).
-That project grants no open-source licence and states that its
-reference-derived assets are not licensed by it. The record of that position:
-[Docs/decisions/bot-mark-geometry.md](Docs/decisions/bot-mark-geometry.md).
-
 ## Sparkle
 
 Pulse links against [Sparkle](https://sparkle-project.org) 2.9.6, which handles

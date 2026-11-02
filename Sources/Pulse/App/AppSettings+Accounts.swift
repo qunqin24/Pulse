@@ -293,10 +293,6 @@ extension AppSettings {
         lowBalanceAlerts[account.id] = nil
         balanceBases[account.id] = nil
         balanceBudgets[account.id] = nil
-        botMarks[account.id] = nil
-        botPersonas[account.id] = nil
-        botColours[account.id] = nil
-        botShapes[account.id] = nil
         detailedCards.remove(account.id)
         splitAccounts.remove(account.id)
         if menuBarAccount == account.id { menuBarAccount = nil }

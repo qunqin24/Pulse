@@ -10,35 +10,17 @@ struct FloatingUsagePanelView: View {
 
     /// The clock arc moves to the minute even when quota refresh backs off.
     @State private var minute = Date()
-    /// Bumped each second while a mark's event is showing; see below.
-    @State private var eventCheck = 0
 
     var body: some View {
         // Formatting reads the selected language through a plain function.
         let _ = settings.language
-        let _ = eventCheck
         let entries = entries
-        let hasEvent = entries.contains { $0.botEvent != nil }
         FloatingUsagePanelContent(store: store, settings: settings, entries: entries, placement: placement)
             .task(id: settings.showsWindowClock) {
                 guard settings.showsWindowClock else { return }
                 while !Task.isCancelled {
                     minute = Date()
                     try? await Task.sleep(for: .seconds(60))
-                }
-            }
-            // `botEvent` comes from clocks — a reset in the last 20 s, a turn
-            // finished in the last 6 — and nothing observed changes when they
-            // run out. Built here, away from the pointer state that used to
-            // re-run it by accident, it would stay set: a mark remounted later
-            // replayed it, and the next real event, never preceded by nil, did
-            // not play at all. So while one shows, look again each second;
-            // once none does, this stops.
-            .task(id: hasEvent) {
-                guard hasEvent else { return }
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(1))
-                    eventCheck += 1
                 }
             }
     }
@@ -94,13 +76,6 @@ struct FloatingUsagePanelView: View {
             isRunning: store.isRunning(account.provider),
             isRefreshing: store.isRefreshing(account),
             tint: settings.ringTint(for: account),
-            showsBotMark: settings.showsBotMark(for: account),
-            botPersona: settings.botPersona(for: account),
-            botBody: settings.botBody(for: account),
-            // A witnessed reset outranks a finished turn.
-            botEvent: store.justReset(account) ? .limitReset
-                : store.justFinishedWorking(account.provider) ? .workFinished : nil,
-            botColour: settings.botColour(for: account),
             slot: slot,
             title: slot.group.map { "\(label) · \($0)" } ?? label,
             windowClock: settings.showsWindowClock

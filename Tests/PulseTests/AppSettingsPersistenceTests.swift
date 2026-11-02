@@ -167,14 +167,6 @@ struct AppSettingsPersistenceTests {
         #expect(defaults.dictionary(forKey: "settings.sessionBrowsers") as? [String: String] == ["devin": "chrome"])
         settings.ringTints = ["codex": "#112233"]
         #expect(defaults.dictionary(forKey: "settings.ringTints") as? [String: String] == ["codex": "#112233"])
-        settings.botMarks = ["codex": true]
-        #expect(defaults.dictionary(forKey: "settings.botMarks") as? [String: Bool] == ["codex": true])
-        settings.botPersonas = ["codex": "sleepy"]
-        #expect(defaults.dictionary(forKey: "settings.botPersonas") as? [String: String] == ["codex": "sleepy"])
-        settings.botColours = ["codex": "#445566"]
-        #expect(defaults.dictionary(forKey: "settings.botColours") as? [String: String] == ["codex": "#445566"])
-        settings.botShapes = ["codex": "square"]
-        #expect(defaults.dictionary(forKey: "settings.botShapes") as? [String: String] == ["codex": "square"])
         settings.providerOrder = ["codex", "claudeCode"]
         #expect(defaults.stringArray(forKey: "settings.providerOrder") == ["codex", "claudeCode"])
         settings.splitAccounts = ["antigravity"]
@@ -228,10 +220,6 @@ struct AppSettingsPersistenceTests {
         first.sources = ["codex": "endpoint"]
         first.sessionBrowsers = ["devin": "chrome"]
         first.ringTints = ["codex": "#112233"]
-        first.botMarks = ["codex": true]
-        first.botPersonas = ["codex": "sleepy"]
-        first.botShapes = ["codex": "square"]
-        first.botColours = ["codex": "#445566"]
         first.refreshInterval = .fiveMinutes
         first.autoCollapse = false
         first.panelSize = .large
@@ -303,10 +291,6 @@ struct AppSettingsPersistenceTests {
         #expect(back.sources == ["codex": "endpoint"])
         #expect(back.sessionBrowsers == ["devin": "chrome"])
         #expect(back.ringTints == ["codex": "#112233"])
-        #expect(back.botMarks == ["codex": true])
-        #expect(back.botPersonas == ["codex": "sleepy"])
-        #expect(back.botShapes == ["codex": "square"])
-        #expect(back.botColours == ["codex": "#445566"])
         #expect(back.refreshInterval == .fiveMinutes)
         #expect(back.autoCollapse == false)
         #expect(back.panelSize == .large)

@@ -35,7 +35,6 @@ extension ProviderProfile {
         },
         reportsSpendableBalance: true,
         spendingIsWatchedLocally: false,
-        brandColor: 0x20808D,
         setupSlug: "perplexity",
         fetch: { await PerplexityUsageService.fetch($0) }
     )

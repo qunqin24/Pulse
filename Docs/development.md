@@ -37,7 +37,7 @@ Six languages: English, Simplified Chinese, Traditional Chinese, Japanese, Korea
 `check-localization.sh` compares keys. **Nothing checks whether a translation reads like the language it is in**, so that is a review job, done by reading the rows in the running app rather than the pairs in the file. Every rule below is a shipped mistake.
 
 - **No English syntax.** The worst offender in Chinese is a long attributive stacked in front of its noun: *用会随该账号状态反应的小机器人代替供应商图标*. English builds that way and Chinese does not — it wants two clauses. Keep a list parallel, too: *用哪些动作、节奏多快* joins a noun phrase to a predicate.
-- **Translate the thing, not the word.** `Animated mark` became *动画标记*, naming the ring's logo slot — an idea that exists in this codebase and nowhere in the reader's head. The row is a small robot, so it is *小机器人*.
+- **Translate the thing, not the word.** The removed `Animated mark` row became *动画标记*, naming the ring's logo slot — an idea that exists in this codebase and nowhere in the reader's head. The row was a small robot, so it became *小机器人*.
 - **A control agrees with its own settings.** That same toggle sat directly above three rows saying *小机器人…*, so the switch and the things it switched were named differently. Japanese and Korean still have this split (`アニメーションマーク` / `애니메이션 마크` over `ボットの…` / `봇 …`) and want someone who reads them.
 - **Mind the register.** *人格* is a psychiatric word; a cartoon face has *性格*, or *個性* in Taiwan.
 - **Do not invent objects the interface has not got.** *不随它在轨道上的位置变化* gave the rail an 轨道 nobody had mentioned.

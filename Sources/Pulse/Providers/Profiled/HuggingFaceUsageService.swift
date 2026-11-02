@@ -27,7 +27,6 @@ extension ProviderProfile {
         accessDescription: { .localized("Uses a token entered in Settings, or reads the one hf auth login saved in ~/.cache/huggingface. No Keychain prompt.") },
         keySubtitle: { .localized("From huggingface.co/settings/tokens. Stored encrypted on this Mac.") },
         spendingIsWatchedLocally: false,
-        brandColor: 0xFFD21E,
         setupSlug: "hugging-face",
         discoveryPaths: [".cache/huggingface/token"],
         fetch: { await HuggingFaceUsageService.fetch($0) }

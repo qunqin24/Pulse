@@ -3,14 +3,16 @@ import Foundation
 
 /// Remembers when an account's limit last turned over.
 ///
-/// The rail's animated mark celebrates a reset, and a celebration has to be
-/// about something that happened: this watches live readings go past and
+/// For anything on the rail that marks a reset, which has to be about
+/// something that happened. Nothing draws one since the animated mark was
+/// removed (Docs/decisions/bot-mark-removed.md); the signal is kept for
+/// whatever replaces it. This watches live readings go past and
 /// records the moment one of an account's windows turned over, by the same
 /// test the reset notification uses — `UsageWindow.hasTurnedOver(since:)`.
 ///
 /// **Separate from `UsageAlerts`' own memory on purpose.** The alert rules
 /// keep a richer record, but the whole of that loop sits behind "notifications
-/// are switched on", and the mark is not a notification: it has to work for
+/// are switched on", and a mark on the rail is not a notification: it has to work for
 /// somebody who has every alert off. Sharing the *rule* and not the bookkeeping
 /// is what keeps the two from drifting while leaving the announcement path
 /// untouched.

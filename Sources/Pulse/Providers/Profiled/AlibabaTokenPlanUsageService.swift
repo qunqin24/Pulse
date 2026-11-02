@@ -30,7 +30,6 @@ extension ProviderProfile {
         soleRoute: {
             (.localized("Bailian CLI"), .localized("Uses the login the Bailian CLI already saved."))
         },
-        brandColor: 0xFF6A00,
         setupSlug: "alibaba-token-plan",
         fetch: { await AlibabaTokenPlanUsageService.fetch($0) }
     )

@@ -204,25 +204,12 @@ Synthetic stores, fixed clocks and UTC calendars; not live-client validation. [t
 | `RecapFormatTests` | Numbers, money, times, weekdays and months in each language's own units and names, agreeing with `TokenCount.short`. |
 | `RecapWindowTests` | Offered periods and the opening one (the month just ended during days 1–7, the running one from the 8th); typed prices (nothing and 0 are no price; over 10,000 refused); `RecapPeriods.earliest` clamped to 2020; a late cancelled read never replaces a newer one. **The notification rule**: on the 1st with records last month, once per month, never for a month without tokens or before a scan, only in the first three days and about the month before. [recap.md](recap.md#the-window), [notifications.md](notifications.md#the-monthly-recap) |
 
-### The animated mark
-
-Tested where it fails silently: a mark reading `idle` about a signed-out provider, or a black body on a black disc, crashes nothing. What the animation *looks like* is a screenshot question and is not tested; motion a screenshot cannot show is measured off the frames. Local engine frames, not real panel input. [ui/rings-and-surface.md](ui/rings-and-surface.md#animated-marks)
-
-| Suite | Pins |
-|---|---|
-| `BotMarkTests` | Mood and persona rules (no state contradicting the reading), neighbouring rings never within 30° of hue, contrast against the disc, a whole table (18 shapes of 96 points, 25 eye pairs, 39 states). Working pumps harder than idle and throws ribbons within thirty seconds — both failed when written, because a spring swallowed the rotation emphasis. The original animation may run past the viewBox, so there is no position bound. |
-| `BotMarkRestTests` | Through `BotMarkProgramme.forMood`, sleeping, powering-down and bored never appear and drowsy only for sleepy, in every mood and context; two-minute simulations allow no resting frames for other personas and keep sleepy's night idle accent under a quarter. |
-| `BotMarkContinuityTests` | Ninety seconds of seeded switching per persona: no frame at 30fps moves more than 30 units or 30°. Before `BotMarkEngine.render` carried the difference across a state change, interrupted turns reached 144° and 108 units; ordinary motion peaks near 15° and 16. Fails against the unfixed engine. |
-| `BotMarkAttentionTests` | The largest one-frame eye step as the pointer arrives (median of twenty-one runs, playful left out): before `attention` was eased, 30–60 units; after, 1–5. |
-| `BotMarkChoreographyTests` | Personalities stay distinct (eight idle signatures; everyday states disjoint from **every** persona's work states); no idle ribbons; event particles stop with playback; every beat visited in order within the rail's movement budget. |
-
 ### Rendered for review
 
 These write PNGs for a person to read and assert nothing about pixels; each runs only when its variable is set.
 
 | Suite | Run |
 |---|---|
-| `BotMarkChoreographyTests` (contact sheet via `drawBotMark` and `ImageRenderer`) | `PULSE_BOT_PREVIEW=/path/to/existing/folder/bot-personalities.png swift test --filter renderContactSheet` |
 | `RecapRenderTests` (every card of the day, week, month and year decks, every language) | `PULSE_RECAP_PREVIEW=/tmp/recap swift test --filter RecapRenderTests` |
 | `RecapWindowRenderTests` (window chrome in five states, AppKit controls via `cacheDisplay`) | `PULSE_RECAP_WINDOW_PREVIEW=/tmp/recap-window` |
 | `TokenActivityRenderTests` (three views, light/dark, zh-Hans/en, 460 and 900pt) | `PULSE_ACTIVITY_PREVIEW=/tmp/activity` |

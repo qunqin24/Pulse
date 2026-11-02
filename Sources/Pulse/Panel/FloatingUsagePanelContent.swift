@@ -59,12 +59,6 @@ struct FloatingUsagePanelContent: View {
                         .offset(x: target.minX, y: target.minY)
                 }
             }
-            // **Named, because the pointer is reported in this space.** The
-            // watcher above fills this view and is flipped, so its points are
-            // this view's points — which is what lets a mark deep in the rail
-            // work out where the pointer is relative to itself without the
-            // rail's layout being restated anywhere.
-            .coordinateSpace(name: BotMarkView.panelSpace)
             .overlay(alignment: placement.edge.railAlignment) {
                 // The card hangs off the rail as an overlay rather than
                 // sitting beside it in a stack. In a stack, the container has
@@ -86,21 +80,6 @@ struct FloatingUsagePanelContent: View {
                 // vanishing while another appears in its place.
                 UsageDockView(
                     entries: entries,
-                    // Where the pointer is on the panel, for the marks' eyes
-                    // to follow. Nil when it is off the panel, which is what
-                    // makes them look back to their own business.
-                    pointer: pointerPoint,
-                    // Twenty minutes with nothing written by any CLI. The
-                    // sleepy persona may show it; nothing else reads it.
-                    //
-                    // **Nil is not quiet.** `lastWrite` is nil until the first
-                    // activity scan lands, and it is nil for somebody with no
-                    // CLI transcripts at all — so `?? true` had every mark
-                    // drowsy for the first seconds after launch, about nothing
-                    // it had looked at yet.
-                    isQuiet: store.activity.lastWrite.map {
-                        Date().timeIntervalSince($0) > 20 * 60
-                    } ?? false,
                     selectedSlot: selectedSlot,
                     edge: placement.edge,
                     isDocked: placement.isDocked,

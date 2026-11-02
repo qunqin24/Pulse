@@ -87,22 +87,6 @@ struct AboutPane: View {
                 ) {
                     EmptyView()
                 }
-
-                SettingsRowDivider()
-
-                // Credited for the same reason the icons above are: it is
-                // somebody else's work, shipped here. What that data is and
-                // where it came from: Docs/decisions/bot-mark-geometry.md.
-                SettingsRow(
-                    "Morph Bot",
-                    subtitle: String.localized("The animated marks are a port of github.com/iduu/grokbot-animation, itself a study of the bot on x.ai.")
-                ) {
-                    Button(String.localized("Open")) {
-                        NSWorkspace.shared.open(
-                            URL(string: "https://github.com/iduu/grokbot-animation")!
-                        )
-                    }
-                }
             }
         }
         // Without this the row says "up to date" on nothing but the last

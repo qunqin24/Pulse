@@ -25,8 +25,7 @@ enum MiniMaxMerge {
 
     /// Every setting kept by account id, so every one that can mention it.
     static let accountKeyed = [
-        "settings.providerOrder", "settings.ringTints", "settings.botMarks", "settings.botPersonas",
-        "settings.botShapes", "settings.botColours", "settings.detailedCards", "settings.splitAccounts",
+        "settings.providerOrder", "settings.ringTints", "settings.detailedCards", "settings.splitAccounts",
         "settings.lowBalanceAlerts", "settings.pinnedWindows", "settings.sources", "settings.sessionBrowsers",
         "settings.balanceBases", "settings.balanceBudgets", "settings.serverAddresses", "settings.menuBarAccount",
         ProviderSelection.enabledKey, ProviderSelection.offeredKey,

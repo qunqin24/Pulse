@@ -35,11 +35,7 @@
 - **Real numbers only** — every usage percentage is the one the service itself reported. The few estimates are marked as such, and where a service reports nothing, Pulse says so instead of guessing.
 - **Native and quiet** — Swift and SwiftUI, Liquid Glass on macOS 26. Dock it left, right, along the top or along the bottom beside the Dock, let it fold to a sliver when idle, or keep it in the menu bar.
 
-**Recently added:** usage in the menu bar with a dashboard for each account, starting usage windows after a reset, and animated bot marks. [What's new](https://github.com/qunqin24/Pulse/releases/latest).
-
-<p align="center">
-  <img src="Docs/images/bot-mark.gif" width="300" alt="Pulse animated marks: a bot in each ring reacting to what that account is doing">
-</p>
+**Recently added:** usage in the menu bar with a dashboard for each account and starting usage windows after a reset. [What's new](https://github.com/qunqin24/Pulse/releases/latest).
 
 <p align="center">
   <sub>If Pulse has saved you from a surprise rate limit, a ⭐ helps other people find it.</sub>
@@ -71,7 +67,7 @@
 ### Rings at a glance
 - **Colours that follow usage** — green through amber to red, or a colour of your own for each account.
 - **Used or left** — `75% used` or `25% left`, with an optional clock arc for how much of the window has passed.
-- **Live activity** — a turning dot while an agent is working, and optional animated bots that react to each account.
+- **Live activity** — a turning dot while an agent is working.
 
 ### Details when you point at a ring
 - **Every limit and its reset** on one card, in continuous or segmented bars.

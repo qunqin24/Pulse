@@ -26,7 +26,6 @@ extension ProviderProfile {
             .localized("Uses a browser session you import in Settings. Importing may ask for browser Keychain access.")
         },
         spendingIsWatchedLocally: false,
-        brandColor: 0x0B5CFF,
         setupSlug: "zoommate",
         fetch: { await ZoomMateUsageService.fetch($0) }
     )

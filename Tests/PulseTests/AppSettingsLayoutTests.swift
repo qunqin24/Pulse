@@ -137,7 +137,6 @@ struct AppSettingsLayoutTests {
         settings.dockShowsAlertColor = false
         settings.animatesRingActivity = false
         settings.setRingTint(nil, for: AccountKey(.codex))
-        settings.setShowsBotMark(true, for: AccountKey(.codex))
         settings.spendSpan = .month
         settings.readsTokenSpend = true
         settings.alertThreshold = .ninety

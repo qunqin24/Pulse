@@ -16,7 +16,7 @@ All of it is in `Sources/Pulse/Settings`. `SettingsView.swift` is the shell only
 | `AppearancePane.swift`, `RingsPane.swift`, `PlacementPane.swift`, `GeneralPane.swift`, `NotificationsPane.swift`, `NetworkPane.swift`, `AboutPane.swift` | One fixed pane each, with its own state (the order list's drag target, the login-item nudge, the proxy text fields). |
 | `TokenSpendPane.swift`, `SpendPaneModel.swift` | The Token spend pane (switch, recap buttons, `TokenSpendView`) and its reading: combined and per-agent figures, scan progress, the drilled-in agent and model. |
 | `AccountPane.swift` | One account's pane: the cards in order, and the seed of the typed fields when the account or its switch changes. |
-| `AccountPanelGroup.swift` | Panel card: show in panel, ring window, split, Codex reset credits, detailed card (`detailedCardSubtitle`), animated mark, ring colour. |
+| `AccountPanelGroup.swift` | Panel card: show in panel, ring window, split, Codex reset credits, detailed card (`detailedCardSubtitle`), ring colour. |
 | `WindowStarterGroup.swift` | Claude Code / Codex window starter and its risk confirmation. |
 | `AccountConnectionGroup.swift`, `AccountConnectionRows.swift` | Connection card: route picker, Copilot sign-in, key field, browser read, and the single rows it draws (site, server address, balance basis, full tank, warn below). Scrolls and focuses itself when a remedy names a field. |
 | `AccountsGroup.swift` | Another subscription of the same provider: sign in, rename, remove. |
@@ -162,7 +162,7 @@ Two groups. The first is the app: version and update state, where the usage figu
 
 **Opening the pane checks for an update** (`AppUpdate.probe`, Sparkle's `checkForUpdateInformation`), unless a check or update is already running: no Sparkle window, only the Version subtitle changes ("Checking…", then the answer), so "up to date" is current. It runs **even with Check automatically off** — that switch covers Pulse's own schedule; opening About is the reader asking. **Check now** still puts up Sparkle's window.
 
-The second group is **Credits**: anything shipped here that somebody else made — the design it was built from, the provider marks, and the animated marks' geometry ([../decisions/bot-mark-geometry.md](../decisions/bot-mark-geometry.md)).
+The second group is **Credits**: anything shipped here that somebody else made — the design it was built from and the provider marks.
 
 ## Provider panes
 
@@ -181,7 +181,6 @@ The second group is **Credits**: anything shipped here that somebody else made �
 Per-account choices about *one ring* live here rather than on the Panel panes ([rings-and-surface.md](rings-and-surface.md)):
 
 - **Show in panel**, **Ring shows**, **Ring colour**.
-- **Animated mark**, and while it is on, its **personality**, **colour** and **shape** (controls over something invisible are hidden, as the colour well is). All five (`ringTints`, `botMarks`, `botPersonas`, `botColours`, `botShapes`) are keyed by account id and store "off" / "automatic" / "round" as an absent key, not a value.
 - **A ring for each model group**, only where `Provider.splitsByModelGroup` is true — a switch promising a second ring it can never draw is worse than none. Off by default: it costs a slot, and docked, the rail is the whole panel.
 - **Detailed card** on every account (`AppSettings.detailedCards`, account ids; off by default) — per account, because it is worth its height only on an account somebody watches closely. The subtitle says what the card adds and which history it will carry (`AccountPanelGroup.detailedCardSubtitle`): none, the account's month from the provider (Z.ai, Zhipu), or this Mac's recent activity with Token spend on. The card: [panel-geometry.md](panel-geometry.md#detailed-card).
 - **Reset credits on the card**, Codex's first account only: off by default; on, its hover card says how many limit reset credits Codex reports, or "Not available" ([../providers/codex.md](../providers/codex.md#limit-reset-credits)).

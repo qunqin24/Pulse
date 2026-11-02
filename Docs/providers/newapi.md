@@ -99,8 +99,6 @@ The relay's `sk-` key, pasted into Settings and kept encrypted on this Mac by `A
 
 **Not the logo in New API's own web UI.** That one (`web/src/assets/logo.tsx`) is the command-key glyph, which is exactly what Command Code's mark already is — two rings a reader could not tell apart, which is the one thing a rail of logos must not do. The icon here is the project's brand logo (`web/public/logo.png`) reduced to a monochrome outline: two crescents and the spark between them. A reduction, not a trace — the original is a cyan-to-pink gradient and none of that survives a template image.
 
-For the same reason `BotMarkTint.brand` gives it no colour: neither end of a gradient is "the" brand colour, so it takes one of Pulse's own.
-
 ## Not carried
 
 - **`access_until`.** The key's expiry, 0 for none. There is no subscription-expiry row on the card for any provider yet.

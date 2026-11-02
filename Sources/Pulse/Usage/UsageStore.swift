@@ -241,9 +241,9 @@ final class UsageStore {
 
     /// Whether this provider's CLI finished a turn just now.
     ///
-    /// The rail's mark celebrates a finished turn. Six seconds is long enough
-    /// for the celebration to start on the next frame and short enough that
-    /// reopening the panel a minute later does not replay it.
+    /// Six seconds: long enough for something on the rail to pick it up on
+    /// the next frame, short enough that reopening the panel a minute later
+    /// does not replay it. Unread since the animated mark was removed.
     func justFinishedWorking(_ provider: Provider, within span: TimeInterval = 6,
                              now: Date = Date()) -> Bool {
         guard let at = activity.finishedAt[provider] else { return false }

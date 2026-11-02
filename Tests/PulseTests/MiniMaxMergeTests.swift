@@ -67,7 +67,6 @@ struct MiniMaxMergeTests {
         defaults.set(["minimax", "minimaxCN"], forKey: ProviderSelection.enabledKey)
         defaults.set(["minimaxCN", "minimax"], forKey: "settings.providerOrder")
         defaults.set(["minimaxCN": "#FF0000", "minimax": "#00FF00"], forKey: "settings.ringTints")
-        defaults.set(["minimaxCN": true], forKey: "settings.botMarks")
 
         MiniMaxMerge.migrate(defaults: defaults, keys: keys)
 
@@ -75,7 +74,6 @@ struct MiniMaxMergeTests {
         #expect(defaults.object(forKey: AppSettings.Key.minimaxSite) == nil)
         #expect(defaults.stringArray(forKey: "settings.providerOrder") == ["minimax"])
         #expect(defaults.dictionary(forKey: "settings.ringTints") as? [String: String] == ["minimax": "#00FF00"])
-        #expect(defaults.dictionary(forKey: "settings.botMarks") as? [String: Bool] == ["minimax": true])
         #expect(APIKeyStore.key(for: .minimax, in: keys) == "intl-key")
         #expect(APIKeyStore.key(for: .minimax, slot: MiniMaxSite.china.keySlot, in: keys) == "cn-key")
     }
