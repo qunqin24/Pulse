@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.12.7</title>
+            <pubDate>Thu, 05 Nov 2026 04:09:50 -0000</pubDate>
+            <sparkle:version>1.12.7</sparkle:version>
+            <sparkle:shortVersionString>1.12.7</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.12.7</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.7</h2><p><strong>新功能</strong></p><ul><li><strong>Antigravity 最多显示三个分组圆环，并可逐组关闭。</strong> 在 Antigravity 设置中打开「每个模型分组一个圆环」后，Gemini 4 Argon 的周额度单独显示为一个圆环，不需要的分组可以单独关闭。感谢 <a href="https://github.com/qunqin24/Pulse/issues/106">@iblueer</a> 提议。</li><li><strong>读取 Gemini.app 自带的 agy。</strong> 只安装了 Gemini.app 时，Pulse 也能通过它自带的 <code>agy</code> 读取 Antigravity 的额度。<a href="https://github.com/qunqin24/Pulse/issues/106">#106</a></li><li><strong>小米按量计费账号显示余额。</strong> 没有 Coding Plan 的小米账号在圆环中显示余额，可在设置中选择圆环的计算方式并设置低余额提醒。感谢 <a href="https://github.com/qunqin24/Pulse/issues/82">@kahomesl</a> 提议。</li><li><strong>Command Code 显示工作状态。</strong> Command Code 正在工作时，圆环上显示转动的标记，与 Claude Code 和 Codex 相同。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>带登录信息的请求不再跟随跨域跳转。</strong> 读取 Qoder、StepFun、小米、OpenCode Go 和 Claude Desktop 时，登录 Cookie 不会再随跳转发送到其他网站。</li><li><strong>切换站点后不再写回旧站点的登录信息。</strong> 从浏览器读取登录信息期间切换 Qoder 或 StepFun 的站点，读取结果会被丢弃。</li><li><strong>更换 Z.ai 或智谱的 key 后，卡片重新读取用量记录。</strong> 卡片不再继续显示上一个账号的历史。</li><li><strong>额外账号续期失败时不再误报退出登录。</strong> 网络中断、限流或服务端错误时保留上次的读数，只有登录被拒绝时才提示重新登录。</li><li><strong>Command Code 的 deepseek-v4.1-flash 可以估算金额。</strong> 按 models.dev 上 Command Code 公布的价格计算。</li><li><strong>用量记录只有一天时也显示柱状图。</strong> 设置中的用量记录从第一天起就显示每日柱状图。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.7">在 GitHub 上查看更新说明</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.12.7/Pulse-1.12.7.zip"
+                       length="16367463"
+                       type="application/octet-stream"
+                       sparkle:edSignature="tNHZ52qaiwOMw9MRBW+xAwLWL6IqjK4Z/b5YMie3C7EMLHyCEB8MqJyUKLWOiYUKGIEMJpJkna1WmtvubqaQAw==" />
+        </item>
+        <item>
             <title>1.12.6</title>
             <pubDate>Mon, 02 Nov 2026 06:25:17 -0000</pubDate>
             <sparkle:version>1.12.6</sparkle:version>
