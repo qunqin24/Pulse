@@ -7,6 +7,44 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.12.7
+
+**中文**
+
+**新功能**
+
+- **Antigravity 最多显示三个分组圆环，并可逐组关闭。** 在 Antigravity 设置中打开「每个模型分组一个圆环」后，Gemini 4 Argon 的周额度单独显示为一个圆环，不需要的分组可以单独关闭。感谢 [@iblueer](https://github.com/qunqin24/Pulse/issues/106) 提议。
+- **读取 Gemini.app 自带的 agy。** 只安装了 Gemini.app 时，Pulse 也能通过它自带的 `agy` 读取 Antigravity 的额度。[#106](https://github.com/qunqin24/Pulse/issues/106)
+- **小米按量计费账号显示余额。** 没有 Coding Plan 的小米账号在圆环中显示余额，可在设置中选择圆环的计算方式并设置低余额提醒。感谢 [@kahomesl](https://github.com/qunqin24/Pulse/issues/82) 提议。
+- **Command Code 显示工作状态。** Command Code 正在工作时，圆环上显示转动的标记，与 Claude Code 和 Codex 相同。
+
+**改进与修复**
+
+- **带登录信息的请求不再跟随跨域跳转。** 读取 Qoder、StepFun、小米、OpenCode Go 和 Claude Desktop 时，登录 Cookie 不会再随跳转发送到其他网站。
+- **切换站点后不再写回旧站点的登录信息。** 从浏览器读取登录信息期间切换 Qoder 或 StepFun 的站点，读取结果会被丢弃。
+- **更换 Z.ai 或智谱的 key 后，卡片重新读取用量记录。** 卡片不再继续显示上一个账号的历史。
+- **额外账号续期失败时不再误报退出登录。** 网络中断、限流或服务端错误时保留上次的读数，只有登录被拒绝时才提示重新登录。
+- **Command Code 的 deepseek-v4.1-flash 可以估算金额。** 按 models.dev 上 Command Code 公布的价格计算。
+- **用量记录只有一天时也显示柱状图。** 设置中的用量记录从第一天起就显示每日柱状图。
+
+**English**
+
+**New**
+
+- **Antigravity shows up to three group rings, each of which can be switched off.** With "A ring for each model group" on in Antigravity's settings, Gemini 4 Argon's weekly allowance gets a ring of its own, and any group can be left off the panel. Thanks to [@iblueer](https://github.com/qunqin24/Pulse/issues/106) for the suggestion.
+- **Gemini.app's own agy is read.** With only Gemini.app installed, Pulse reads Antigravity's allowances through the `agy` it ships. [#106](https://github.com/qunqin24/Pulse/issues/106)
+- **Xiaomi pay-as-you-go accounts show their balance.** A Xiaomi account with no Coding Plan shows its balance in the ring, with the ring's basis and a low-balance alert set in Settings. Thanks to [@kahomesl](https://github.com/qunqin24/Pulse/issues/82) for the suggestion.
+- **Command Code shows when it is working.** While Command Code is working, its ring shows the turning mark, as Claude Code's and Codex's do.
+
+**Changed and fixed**
+
+- **Requests carrying a sign-in no longer follow redirects to other sites.** When Qoder, StepFun, Xiaomi, OpenCode Go and Claude Desktop are read, the sign-in cookie is no longer sent on to another site by a redirect.
+- **Switching sites no longer saves the previous site's sign-in.** A browser read still in progress when Qoder's or StepFun's site is switched is discarded.
+- **Changing Z.ai's or Zhipu's key reads the card's history again.** The card no longer shows the previous account's history.
+- **A failed renewal of an added account no longer reads as signed out.** A dropped network, rate limiting or a server error keeps the last reading; only a refused sign-in asks to sign in again.
+- **Command Code's deepseek-v4.1-flash is priced.** It is estimated at the rates models.dev lists for Command Code.
+- **Usage history shows its chart from the first day.** The usage history in Settings draws its daily bars from the first day of records.
+
 ## 1.12.6
 
 **中文**
