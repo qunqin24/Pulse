@@ -45,7 +45,7 @@ That payload is committed as `Tests/PulseTests/Fixtures/antigravity-quota.json` 
 
 ## The `agy` CLI
 
-Google's standalone CLI, `agy` (installed to `~/.local/bin/agy`; state under `~/.gemini/antigravity-cli`), is the second route. It works with no editor open, using the login the CLI saved. Pulse starts the program and reads its standard output; it never reads the CLI's credentials.
+Google's standalone CLI, `agy` (installed to `~/.local/bin/agy`; state under `~/.gemini/antigravity-cli`), is the second route. **Gemini.app installs the same CLI to `~/.gemini/bin/agy`** (with `agy.version.json` from its own updater) and runs no language server of its own, so for someone using Antigravity inside Gemini.app this CLI is the only route there is; `locateCLI()` tries it after the usual install locations (#106, measured with Gemini.app 1.138 on 2026-11-05). It works with no editor open, using the login the CLI saved. Pulse starts the program and reads its standard output; it never reads the CLI's credentials.
 
 ### What was measured (2026-10-14, `agy` 1.3.5)
 
@@ -92,11 +92,11 @@ So history, money estimate, and activity cannot be built from the language serve
 
 Antigravity also reports a monthly credit *allowance*, never a balance, which is why `creditBalance` stays nil: an allowance shown there would read as what is left.
 
-## Two allowances, optionally two rings
+## Separate allowances, optionally one ring each
 
-The plan carries a Gemini allowance and a separate one for Claude and GPT, reported as two `scope`s of one login — the reason `Provider.splitsByModelGroup` exists and names only this provider. The Antigravity pane offers "A ring for each model group", off by default; on, the rail draws one ring per group, both with this provider's icon and both refreshing the same login. The rail-side rules are in [../ui/rings-and-surface.md](../ui/rings-and-surface.md).
+The plan carries a Gemini allowance and a separate one for Claude and GPT, reported as `scope`s of one login — the reason `Provider.splitsByModelGroup` exists and names only this provider. Since 2026-11 some accounts report a third group, a weekly-only allowance for Gemini 4 Argon outside the Gemini one (#106, reported; not on the account measured here, whose `agy` 1.4.6 still answered two groups on 2026-11-05). The Antigravity pane offers "A ring for each model group", off by default; on, the rail draws one ring per group, each with this provider's icon and all refreshing the same login, and each group has its own switch so a group nobody uses need not cost a ring. A weekly-only group is one window, so its ring has no second ring. The rail-side rules are in [../ui/rings-and-surface.md](../ui/rings-and-surface.md#one-ring-per-model-group).
 
-`modelGroupCount` is a fixed 2 rather than counted from a reading, so the rail's own budget does not move when a reply arrives one group short.
+`modelGroupCount` is a fixed 3 rather than counted from a reading, so the rail's own budget does not move when a reply arrives one group short; with groups left off, the budget is the groups chosen.
 
 ## First run
 

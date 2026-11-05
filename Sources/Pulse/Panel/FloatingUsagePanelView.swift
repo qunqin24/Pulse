@@ -54,7 +54,8 @@ struct FloatingUsagePanelView: View {
         RailSlot.rail(
             for: settings.shownAccounts,
             isSplit: settings.isSplit,
-            groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+            groups: { RailSlot.modelGroups(of: store.usage(for: $0)) },
+            shown: settings.shownModelGroups(for:)
         ).map { slot in
             let usage = store.usage(for: slot.account)
             return entry(

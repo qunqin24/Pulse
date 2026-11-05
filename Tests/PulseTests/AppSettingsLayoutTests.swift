@@ -39,6 +39,7 @@ struct AppSettingsLayoutTests {
     private static let layoutSettings: [(name: String, change: (AppSettings) -> Void)] = [
         ("panelSize", { $0.panelSize = .large }),
         ("railSpacing", { $0.railSpacing = .roomy }),
+        ("shownModelGroups", { $0.shownModelGroups = ["antigravity": ["Gemini"]] }),
         ("usageBarStyle", { $0.usageBarStyle = .segmented }),
         ("topRailShowsPercentages", { $0.topRailShowsPercentages = true }),
         ("sideRailShowsPercentages", { $0.sideRailShowsPercentages = false }),

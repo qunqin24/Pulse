@@ -40,6 +40,7 @@ extension AppSettings.Key {
     static let usesLightPanel = "settings.usesLightPanel"
     static let autoCollapse = "settings.autoCollapse"
     static let splitAccounts = "settings.splitAccounts"
+    static let shownModelGroups = "settings.shownModelGroups"
     /// New with the CX ArtLab robot. The removed mark's `settings.botMarks`
     /// is left alone and read by nothing (Docs/decisions/bot-mark-removed.md).
     static let robotAccounts = "settings.robotAccounts"
@@ -295,6 +296,44 @@ extension AppSettings {
         robotShapes[account.id] = shape == .standard ? nil : shape.rawValue
     }
 
+    /// Through `onLayoutChange`: the rings change and the rail with them,
+    /// and nothing needs fetching again.
+    func shownModelGroupsChanged(from old: [String: [String]]) {
+        guard shownModelGroups != old else { return }
+        resizeRail()
+        defaults.set(shownModelGroups, forKey: Key.shownModelGroups)
+        onLayoutChange?()
+    }
+
+    /// The groups chosen to get a ring, or nil for every group.
+    func shownModelGroups(for account: AccountKey) -> [String]? {
+        shownModelGroups[account.id]
+    }
+
+    /// Whether `group` gets a ring on this account.
+    func showsModelGroup(_ group: String, for account: AccountKey) -> Bool {
+        shownModelGroups[account.id].map { $0.contains(group) } ?? true
+    }
+
+    /// Shows or hides one group's ring. `known` is every group the account's
+    /// reading carries, which an unset choice ("every group") stands for.
+    /// **The last shown group stays shown:** a split account with no ring
+    /// would be an account gone from the rail; switching the split off is
+    /// how to have one ring.
+    func setShowsModelGroup(_ shows: Bool, _ group: String, known: [String], for account: AccountKey) {
+        var chosen = shownModelGroups[account.id] ?? known
+        if shows {
+            if !chosen.contains(group) { chosen.append(group) }
+        } else {
+            chosen.removeAll { $0 == group }
+            guard !chosen.filter(known.contains).isEmpty else { return }
+        }
+        var updated = shownModelGroups
+        // Every known group shown is the same as no choice, and stored so.
+        updated[account.id] = Set(known).isSubset(of: chosen) ? nil : chosen
+        shownModelGroups = updated
+    }
+
     func isSplit(_ account: AccountKey) -> Bool {
         account.provider.splitsByModelGroup && splitAccounts.contains(account.id)
     }
@@ -327,8 +366,15 @@ extension AppSettings {
     /// the budget: only a setting does.
     var railSlotCount: Int {
         shownAccounts.reduce(0) { total, account in
-            total + (isSplit(account) ? account.provider.modelGroupCount : 1)
+            total + (isSplit(account) ? modelGroupBudget(for: account) : 1)
         }
+    }
+
+    /// The rings a split account reserves: the groups chosen to show, or as
+    /// many as the provider can produce while every group is shown.
+    func modelGroupBudget(for account: AccountKey) -> Int {
+        let cap = account.provider.modelGroupCount
+        return shownModelGroups[account.id].map { min(max($0.count, 1), cap) } ?? cap
     }
 
     /// Brings `PanelMetrics` in line with what was just restored, before this

@@ -299,6 +299,7 @@ extension AppSettings {
         robotPersonalities[account.id] = nil
         robotShapes[account.id] = nil
         splitAccounts.remove(account.id)
+        shownModelGroups[account.id] = nil
         if menuBarAccount == account.id { menuBarAccount = nil }
     }
 

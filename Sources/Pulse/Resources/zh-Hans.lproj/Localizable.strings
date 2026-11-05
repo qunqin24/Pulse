@@ -490,7 +490,10 @@
 
 /* 按模型分组拆分环 */
 "A ring for each model group" = "按模型分组拆成多个圆环";
-"Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini 和第三方模型的额度各自独立，一个圆环只能反映其中用得多的那一边。";
+"Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them." = "Antigravity 的各个模型分组分别使用独立的额度，一个圆环只能显示用量最高的那一组。";
+"Ring for %@" = "%@ 的圆环";
+"Shown on the panel." = "显示在面板上。";
+"Not shown on the panel." = "不在面板上显示。";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ 没有返回数据，暂时没有可显示的图表。请稍后重试。";
 "Add a key above and Pulse can read this account's history." = "在上方填入密钥，即可读取该账号的用量历史。";
 "This account is switched off, so Pulse hasn't asked for its history." = "该账号已关闭，Pulse 没有读取它的用量历史。";

@@ -490,7 +490,10 @@
 
 /* Splitting one account's rail ring into one per model group */
 "A ring for each model group" = "Отдельное кольцо для каждой группы моделей";
-"Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "У Gemini и сторонних моделей отдельные лимиты. Одно кольцо показывает только тот, что расходуется активнее.";
+"Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them." = "Группы моделей Antigravity расходуют отдельные лимиты. Одно кольцо может показать только самую загруженную из них.";
+"Ring for %@" = "Кольцо для %@";
+"Shown on the panel." = "Показывается на панели.";
+"Not shown on the panel." = "Не показывается на панели.";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "Нет ответа от %@, поэтому графика пока нет. Повторите попытку чуть позже.";
 "Add a key above and Pulse can read this account's history." = "Добавьте ключ выше, и Pulse сможет прочитать историю этого аккаунта.";
 "This account is switched off, so Pulse hasn't asked for its history." = "Этот аккаунт выключен, поэтому Pulse не запрашивал его историю.";

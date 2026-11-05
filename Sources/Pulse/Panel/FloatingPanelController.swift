@@ -232,7 +232,8 @@ final class FloatingPanelController {
             let slots = RailSlot.rail(
                 for: settings.shownAccounts,
                 isSplit: settings.isSplit,
-                groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
+                groups: { RailSlot.modelGroups(of: store.usage(for: $0)) },
+            shown: settings.shownModelGroups(for:)
             )
             guard let slot = PanelHitArea.slot(
                 at: point,
@@ -393,7 +394,8 @@ final class FloatingPanelController {
         RailSlot.rail(
             for: settings.shownAccounts,
             isSplit: settings.isSplit,
-            groups: { RailSlot.modelGroups(of: usage($0)) }
+            groups: { RailSlot.modelGroups(of: usage($0)) },
+            shown: settings.shownModelGroups(for:)
         ).count
     }
 

@@ -86,7 +86,8 @@ struct RailSlot: Hashable, Identifiable, Sendable {
     static func rail(
         for accounts: [AccountKey],
         isSplit: (AccountKey) -> Bool,
-        groups: (AccountKey) -> [String]
+        groups: (AccountKey) -> [String],
+        shown: (AccountKey) -> [String]? = { _ in nil }
     ) -> [RailSlot] {
         accounts.flatMap { account -> [RailSlot] in
             guard isSplit(account) else { return [RailSlot(account)] }
@@ -104,7 +105,14 @@ struct RailSlot: Hashable, Identifiable, Sendable {
             guard groups.count > 1, groups.count <= account.provider.modelGroupCount else {
                 return [RailSlot(account)]
             }
-            return groups.map { RailSlot(account, group: $0) }
+            // Only the groups chosen to show, in the reading's order (#106):
+            // a group somebody never uses need not cost a ring. Nil is every
+            // group. A choice that matches none of what the reading carries —
+            // groups renamed since — keeps the account whole rather than
+            // drawing nothing.
+            let chosen = shown(account).map { wanted in groups.filter(wanted.contains) } ?? groups
+            guard !chosen.isEmpty else { return [RailSlot(account)] }
+            return chosen.map { RailSlot(account, group: $0) }
         }
     }
 

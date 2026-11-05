@@ -51,8 +51,20 @@ extension AntigravityUsageService {
     /// The installer puts `agy` in `~/.local/bin`; Homebrew's cask links it
     /// into its own `bin`. Only `agy` is looked for: `antigravity` is also the
     /// name of the editor's own shell command, which is a different program.
-    static func locateCLI() -> URL? {
-        CommandLocator.locate("agy")
+    ///
+    /// **Then the copy Gemini.app keeps.** The Gemini desktop app carries
+    /// Antigravity and installs the same CLI to `~/.gemini/bin/agy`, kept up
+    /// to date by its own updater (`agy.version.json` beside it); it runs no
+    /// language server of its own. Someone who has only Gemini.app has only
+    /// this copy (#106). Last, so a CLI installed on purpose is the one asked.
+    static func locateCLI(home: String = NSHomeDirectory(),
+                          isExecutable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:)) -> URL? {
+        CommandLocator.locate("agy") ?? geminiAppCLI(home: home, isExecutable: isExecutable)
+    }
+
+    static func geminiAppCLI(home: String, isExecutable: (String) -> Bool) -> URL? {
+        let path = "\(home)/.gemini/bin/agy"
+        return isExecutable(path) ? URL(fileURLWithPath: path) : nil
     }
 
     static func askCLI(_ binary: URL) async -> CLIAnswer {

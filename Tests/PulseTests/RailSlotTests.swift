@@ -187,15 +187,15 @@ struct RailSlotTests {
     }
 
     /// The rail's own budget reserves `modelGroupCount` per split account and
-    /// `PanelMetrics` sizes the rail from that, so a third group cannot be
-    /// drawn. Taking the first two would leave the third belonging to no ring
-    /// and gone from every card, so the account stays whole instead.
+    /// `PanelMetrics` sizes the rail from that, so a group past it cannot be
+    /// drawn. Taking the first three would leave the fourth belonging to no
+    /// ring and gone from every card, so the account stays whole instead.
     @Test("More groups than the rail budgeted for leaves the account whole")
     func tooManyGroupsStayWhole() {
         let slots = RailSlot.rail(
             for: [antigravity],
             isSplit: { _ in true },
-            groups: { _ in ["Gemini", "Third-party", "Something new"] }
+            groups: { _ in ["Gemini", "Third-party", "Gemini 4 Argon", "Something new"] }
         )
 
         #expect(slots == [RailSlot(antigravity)])
@@ -211,9 +211,42 @@ struct RailSlotTests {
         let slots = RailSlot.rail(
             for: [antigravity],
             isSplit: { _ in true },
-            groups: { _ in ["Gemini", "Third-party"] }
+            groups: { _ in ["Gemini", "Third-party", "Gemini 4 Argon"] }
         )
 
         #expect(slots.count == Provider.antigravity.modelGroupCount)
+    }
+
+    /// Antigravity's third allowance, Gemini 4 Argon's week, left a split
+    /// account whole while the budget was two (#106).
+    @Test("Three groups split into three rings")
+    func threeGroupsSplit() {
+        let slots = RailSlot.rail(
+            for: [antigravity],
+            isSplit: { _ in true },
+            groups: { _ in ["Gemini", "Claude and GPT", "Gemini 4 Argon"] }
+        )
+
+        #expect(slots.map(\.group) == ["Gemini", "Claude and GPT", "Gemini 4 Argon"])
+    }
+
+    @Test("Only the groups chosen to show get a ring, in the reading's order; one is enough")
+    func chosenGroupsOnly() {
+        let reading = ["Gemini", "Claude and GPT", "Gemini 4 Argon"]
+        let two = RailSlot.rail(for: [antigravity], isSplit: { _ in true }, groups: { _ in reading },
+                                shown: { _ in ["Gemini 4 Argon", "Gemini"] })
+        #expect(two.map(\.group) == ["Gemini", "Gemini 4 Argon"])
+
+        let one = RailSlot.rail(for: [antigravity], isSplit: { _ in true }, groups: { _ in reading },
+                                shown: { _ in ["Gemini"] })
+        #expect(one == [RailSlot(antigravity, group: "Gemini")])
+    }
+
+    @Test("A choice matching nothing the reading carries keeps the account whole")
+    func staleChoiceStaysWhole() {
+        let slots = RailSlot.rail(for: [antigravity], isSplit: { _ in true },
+                                  groups: { _ in ["Gemini", "Claude and GPT"] },
+                                  shown: { _ in ["Renamed since"] })
+        #expect(slots == [RailSlot(antigravity)])
     }
 }
