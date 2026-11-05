@@ -224,4 +224,43 @@ struct XiaomiMiMoTests {
         #expect(LobeIconStore.image(named: Provider.xiaomiMiMo.iconResource) != nil,
                 "\(Provider.xiaomiMiMo.iconResource).svg does not load")
     }
+
+    // MARK: - A pay-as-you-go account (#82)
+
+    @Test("No plan with a balance is a live balance reading, not 'no plan'")
+    func noPlanBalanceIsAReading() {
+        let reading = XiaomiMiMoUsageService.reading(
+            from: XiaomiMiMoSnapshot(plan: nil, balance: 52.3, currency: "CNY"))
+        #expect(reading.state == .live)
+        #expect(reading.windows.isEmpty)
+        #expect(reading.creditRemaining == .init(amount: 52.3, currency: "CNY"))
+        #expect(reading.creditBalance != nil)
+    }
+
+    @Test("No plan and no balance still says there is no plan")
+    func noPlanNoBalance() {
+        let reading = XiaomiMiMoUsageService.reading(from: XiaomiMiMoSnapshot(plan: nil, balance: nil, currency: nil))
+        #expect(reading.state == .unavailable(.xiaomiNoCodingPlan))
+    }
+
+    @Test("Beside a plan the balance stays a line on the card, not a balance reading")
+    func planKeepsBalanceAsALine() {
+        let plan = XiaomiMiMoSnapshot.Plan(used: 1, limit: 10, periodEnd: nil, code: "coding-pro")
+        let reading = XiaomiMiMoUsageService.reading(from: XiaomiMiMoSnapshot(plan: plan, balance: 52.3, currency: "CNY"))
+        #expect(reading.windows.count == 1)
+        #expect(reading.creditRemaining == nil)
+        #expect(reading.creditBalance != nil)
+    }
+
+    /// Only a stated "no plan" may become a balance reading: a usage route that
+    /// failed must not turn a subscriber into a pay-as-you-go account.
+    @Test("Only a usage reply that says so means no plan")
+    func onlyAStatedNoPlan() throws {
+        #expect(XiaomiMiMoClient.saysNoPlan(detail: nil, usage: try Self.fixture("xiaomi-no-plan")))
+        #expect(!XiaomiMiMoClient.saysNoPlan(detail: nil, usage: nil))
+        #expect(!XiaomiMiMoClient.saysNoPlan(detail: nil, usage: Data(#"{"code":500,"data":{"monthUsage":{"items":[]}}}"#.utf8)))
+        #expect(!XiaomiMiMoClient.saysNoPlan(detail: nil, usage: Data("not json".utf8)))
+        let expired = Data(#"{"code":0,"data":{"planCode":"coding-pro","currentPeriodEnd":"2026-08-01 00:00:00","expired":true}}"#.utf8)
+        #expect(XiaomiMiMoClient.saysNoPlan(detail: expired, usage: try Self.fixture("xiaomi-plan-usage")))
+    }
 }

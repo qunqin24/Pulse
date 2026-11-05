@@ -698,7 +698,9 @@ final class UsageStore {
         let account = raw.account
         // Extensions too: one that reports a balance and no limit is a relay's
         // prepaid credit, and `applying` leaves every other reading as it is.
-        let takesRing = account.provider == .pulseExtension
+        // And Xiaomi's pay-as-you-go account, which has a balance and no plan
+        // (#82); a Coding Plan reading has its window and is left as it came.
+        let takesRing = account.provider == .pulseExtension || account.provider == .xiaomiMiMo
             || (account.provider.billing == .api && account.provider != .deepSeek)
         guard takesRing else { return raw }
         return BalanceRing.applying(

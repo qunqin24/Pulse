@@ -60,9 +60,13 @@ Safari's store needs Full Disk Access; the Chromium browsers ask for keychain pe
 | `tokenPlan/detail` | `data.planCode`, `data.currentPeriodEnd`, `data.expired` |
 | `balance` | `data.balance` and `data.currency`, as strings |
 
-**The plan's failure is the call's failure; the balance's is one line on the card.** The ring comes from `tokenPlan/usage`, so a usage route that does not answer is an unavailable provider. The balance is money on the card and nothing else depends on it, so losing it costs that line. `tokenPlan/detail` is in between: it carries the reset and the plan's name, and without it the row still draws with neither.
+**The plan's failure is the call's failure; beside a plan, the balance's is one line on the card.** The ring comes from `tokenPlan/usage`, so a usage route that does not answer is an unavailable provider. The balance is money on the card and nothing else depends on it, so losing it costs that line. `tokenPlan/detail` is in between: it carries the reset and the plan's name, and without it the row still draws with neither.
 
-`monthUsage.items` is a list because the console draws a row per bucket. The plan's own allowance is the first, and an **empty list is an account with no plan** — one that buys tokens by the yuan. That is a complete answer (`.xiaomiNoCodingPlan`), not a fault, and it is reported rather than drawn as 0%, which would read as a full month nobody has. `zaiNoCodingPlan` exists for exactly the same reason.
+`monthUsage.items` is a list because the console draws a row per bucket. The plan's own allowance is the first, and an **empty list is an account with no plan** — one that buys tokens by the yuan. Never drawn as 0%, which would read as a full month nobody has.
+
+**An account with no plan is read as its balance** (#82, `XiaomiMiMoUsageService.reading(from:)`). Such an account has money and no allowance, which is what an API account is, so it gets an API account's ring: a live reading with no windows and `creditRemaining` set, which `UsageStore.ringed` gives the `BalanceRing` basis chosen in Settings (balance only, since the last top-up, or a budget; [deepseek.md](deepseek.md)), with the money on the rail until there is a denominator. The pane offers the basis and the "warn below" line for it, as for any account whose reading is a balance (`AccountEntryFields.reportsBalance`). Only with neither a plan nor a balance is it `.xiaomiNoCodingPlan`, still a complete answer rather than a fault; `zaiNoCodingPlan` exists for the same reason.
+
+**Only a stated "no plan" counts** (`XiaomiMiMoClient.saysNoPlan`): a usage reply with code 0 and no allowance in it, or a plan the detail route calls expired. A usage route that did not answer, answered with a non-zero code, or did not decode is the call's failure — otherwise a usage route timing out beside a balance that answered would turn a Coding Plan subscriber into a pay-as-you-go account for a refresh.
 
 An `expired` plan keeps reporting last month's figures until it renews. Those are not a current allowance, so nothing is drawn.
 
@@ -84,7 +88,7 @@ One window, `kind: .monthly`, `id` `xiaomi.plan`.
 
 `windowSeconds` is thirty days and **`reportsLength` is false**. The platform states when the period ends and never how long it is, and a billing month is not a fixed number of seconds — so the length is a sort key, the window-clock arc is not drawn, and the forecast does not divide by it. Copilot's calendar month is carried the same way; see the `windowSeconds` section of [README.md](README.md).
 
-The balance rides along as `creditBalance`, a formatted string. **Not `creditRemaining`**, which is the number-and-currency pair the "warn below" line is built on: there is no allowance to compare a prepaid balance against here, so `reportsSpendableBalance` stays false and no low-balance alert is offered. The providers that do offer one (`reportsSpendableBalance`) report a money balance of their own — DeepSeek, Command Code and the API-account providers.
+Beside a plan, the balance rides along as `creditBalance`, a formatted string, **not `creditRemaining`**: the plan is the ring, and the balance there is what is spent past it, so no "warn below" line is offered. Without a plan the balance is the reading itself and carries `creditRemaining` (above). `reportsSpendableBalance` stays false for the provider either way; the pane asks the reading.
 
 ## Unconfirmed
 

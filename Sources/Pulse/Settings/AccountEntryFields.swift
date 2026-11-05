@@ -54,7 +54,8 @@ final class AccountEntryFields {
     /// provider's figures; a basis picker beside them would change nothing,
     /// and a control that does nothing is worse than none. See `BalanceRing`.
     func hasBalanceRing(_ account: AccountKey) -> Bool {
-        let takesRing = account.provider == .pulseExtension || account.provider.billing == .api
+        let takesRing = account.provider == .pulseExtension || account.provider == .xiaomiMiMo
+            || account.provider.billing == .api
         guard takesRing, reportsBalance(account) else { return false }
         return store.usage(for: account).windows.allSatisfy { $0.estimate == .sinceTopUp || $0.estimate == .yourBudget }
     }
@@ -65,6 +66,11 @@ final class AccountEntryFields {
     /// reports limits only has nothing a "warn below" figure could compare.
     func reportsBalance(_ account: AccountKey) -> Bool {
         if account.provider == .pulseExtension { return store.usage(for: account).creditRemaining != nil }
+        // Xiaomi by its reading too: a pay-as-you-go account's balance is the
+        // reading, while beside a Coding Plan it is only a line on the card.
+        if account.provider == .xiaomiMiMo {
+            return account.isPrimary && store.usage(for: account).creditRemaining != nil
+        }
         return account.isPrimary && account.provider.reportsSpendableBalance
     }
 

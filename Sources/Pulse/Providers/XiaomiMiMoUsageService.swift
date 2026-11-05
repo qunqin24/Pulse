@@ -158,9 +158,19 @@ struct XiaomiMiMoClient: Sendable {
             throw Self.worst(of: routes)
         }
 
+        // **A plan route that did not answer is not an account without a
+        // plan.** With the balance now a reading of its own (#82), a usage
+        // route timing out beside a balance that answered would otherwise
+        // turn a Coding Plan subscriber into a pay-as-you-go account for a
+        // refresh. The plan's failure stays the call's failure.
+        let plan = Self.parsePlan(detail: detailData, usage: usageData)
+        if plan == nil, !Self.saysNoPlan(detail: detailData, usage: usageData) {
+            throw usageData == nil ? Self.worst(of: [routes[0], routes[1]]) : Self.planFailure(usage: usageData)
+        }
+
         let money = balanceData.flatMap { try? Self.parseBalance($0) }
         return XiaomiMiMoSnapshot(
-            plan: Self.parsePlan(detail: detailData, usage: usageData),
+            plan: plan,
             balance: money?.amount,
             currency: money?.currency)
     }
@@ -242,6 +252,31 @@ struct XiaomiMiMoClient: Sendable {
         case 401, 403: return .sessionExpired
         default: return nil
         }
+    }
+
+    /// Whether the plan routes **said** there is no current plan: a usage
+    /// reply with code 0 and no allowance in it, or a plan the detail route
+    /// calls expired. Anything else that leaves `parsePlan` empty — a route
+    /// that did not answer, a non-zero code, a body that does not decode —
+    /// is a failure, not an account without a plan.
+    static func saysNoPlan(detail: Data?, usage: Data?) -> Bool {
+        let decoder = JSONDecoder()
+        if let detail, let payload = try? decoder.decode(PlanDetail.self, from: detail),
+           payload.code == 0, payload.data?.expired == true {
+            return true
+        }
+        guard let usage, let payload = try? decoder.decode(PlanUsage.self, from: usage), payload.code == 0 else {
+            return false
+        }
+        return (payload.data?.monthUsage?.items.first.map { $0.limit <= 0 }) ?? true
+    }
+
+    /// What a usage route that answered without a plan in it failed with.
+    private static func planFailure(usage: Data?) -> XiaomiMiMoError {
+        guard let usage, let envelope = try? JSONDecoder().decode(Envelope.self, from: usage) else {
+            return .unreadableReply("plan usage did not decode")
+        }
+        return envelope.code == 0 ? .unreadableReply("plan usage carried no plan") : .serverError
     }
 
     static func parsePlan(detail: Data?, usage: Data?) -> XiaomiMiMoSnapshot.Plan? {
@@ -337,37 +372,7 @@ struct XiaomiMiMoUsageService: Sendable {
             return .unavailable(.xiaomiMiMo, reason: .xiaomiSessionMissing)
         }
         do {
-            let snapshot = try await client.fetch(cookie: cookie)
-            guard let plan = snapshot.plan else {
-                // Not a failure: an account can buy tokens by the yuan with no
-                // plan at all. Saying so beats a ring at 0%, which would read
-                // as a full month nobody has.
-                return .unavailable(.xiaomiMiMo, reason: .xiaomiNoCodingPlan)
-            }
-
-            let window = UsageWindow(
-                id: "xiaomi.plan",
-                kind: .monthly,
-                scope: nil,
-                usedFraction: Double(plan.used) / Double(plan.limit),
-                // Thirty days is a **sort key, not a reported length**. The
-                // platform states when the period ends and never how long it
-                // is, and a billing month is not a fixed number of seconds —
-                // so `reportsLength` is false and the window-clock arc and the
-                // forecast leave it alone rather than dividing by a number
-                // nobody stated. Copilot's calendar month is carried the same
-                // way; see `UsageWindow.reportsLength`.
-                windowSeconds: 30 * 86_400,
-                resetsAt: plan.periodEnd,
-                reportsLength: false,
-                isExhausted: plan.used >= plan.limit)
-
-            return .init(account: AccountKey(.xiaomiMiMo),
-                         windows: [window],
-                         observedAt: Date(),
-                         state: .live,
-                         plan: plan.code,
-                         creditBalance: Self.money(snapshot))
+            return Self.reading(from: try await client.fetch(cookie: cookie))
         } catch let error as XiaomiMiMoError {
             let reason: ProviderUsage.Unavailability = switch error {
             case .missingCookie, .invalidCookie: .xiaomiSessionMissing
@@ -384,10 +389,58 @@ struct XiaomiMiMoUsageService: Sendable {
         }
     }
 
-    /// The prepaid balance as a line on the card. A display string rather than
-    /// a `creditRemaining`, because there is no allowance to compare it
-    /// against — `reportsSpendableBalance` stays false and no "warn below"
-    /// line is offered for something Pulse cannot say is running out.
+    /// A reading from what the console said.
+    ///
+    /// **An account with no plan is a prepaid balance, not a missing reading**
+    /// (#82). The platform sells tokens by the yuan to anyone with a key, and
+    /// such an account has money and no allowance — what an API account is,
+    /// so it gets an API account's ring (`BalanceRing`, through
+    /// `UsageStore.ringed`): no denominator until one is chosen, the money on
+    /// the rail meanwhile. Only with neither a plan nor a balance is there
+    /// nothing to show, and that is still said rather than drawn as 0%.
+    static func reading(from snapshot: XiaomiMiMoSnapshot, at now: Date = Date()) -> ProviderUsage {
+        guard let plan = snapshot.plan else {
+            guard let balance = snapshot.balance, let currency = snapshot.currency else {
+                return .unavailable(.xiaomiMiMo, reason: .xiaomiNoCodingPlan)
+            }
+            return .init(account: AccountKey(.xiaomiMiMo),
+                         windows: [],
+                         observedAt: now,
+                         state: .live,
+                         plan: nil,
+                         creditBalance: Self.money(snapshot),
+                         creditRemaining: .init(amount: balance, currency: currency))
+        }
+
+        let window = UsageWindow(
+            id: "xiaomi.plan",
+            kind: .monthly,
+            scope: nil,
+            usedFraction: Double(plan.used) / Double(plan.limit),
+            // Thirty days is a **sort key, not a reported length**. The
+            // platform states when the period ends and never how long it
+            // is, and a billing month is not a fixed number of seconds —
+            // so `reportsLength` is false and the window-clock arc and the
+            // forecast leave it alone rather than dividing by a number
+            // nobody stated. Copilot's calendar month is carried the same
+            // way; see `UsageWindow.reportsLength`.
+            windowSeconds: 30 * 86_400,
+            resetsAt: plan.periodEnd,
+            reportsLength: false,
+            isExhausted: plan.used >= plan.limit)
+
+        return .init(account: AccountKey(.xiaomiMiMo),
+                     windows: [window],
+                     observedAt: now,
+                     state: .live,
+                     plan: plan.code,
+                     creditBalance: Self.money(snapshot))
+    }
+
+    /// The prepaid balance as a line on the card. Beside a plan it stays a
+    /// display string, not a `creditRemaining`: the plan is the ring, and the
+    /// balance there is what is spent past it. Without a plan it is the
+    /// reading itself (`reading(from:)`).
     private static func money(_ snapshot: XiaomiMiMoSnapshot) -> String? {
         guard let balance = snapshot.balance, let currency = snapshot.currency else { return nil }
         return Money.reported(balance, code: currency)
