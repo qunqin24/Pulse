@@ -44,12 +44,13 @@ struct AccountUsageCard: View {
 
                     figures
 
-                    if ledger.days.count > 1 {
-                        DailyTokensChart(days: ledger.recent(Self.span), slots: Self.span)
-                            .frame(height: 58)
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 10)
-                    }
+                    // From the first day, as the panel's detailed card draws
+                    // it: one bar at the end of the month still says when
+                    // the use was, which the figures above do not.
+                    DailyTokensChart(days: ledger.recent(Self.span), slots: Self.span)
+                        .frame(height: 58)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 10)
 
                     if let credits, credits.lifetimeTokens > ledger.allTime.tokens {
                         Divider()
