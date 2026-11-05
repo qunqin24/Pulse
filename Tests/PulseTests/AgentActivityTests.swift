@@ -43,7 +43,7 @@ struct AgentActivityTests {
     }
 
     @Test("The scanner reads only the selected activity providers", arguments: [
-        Set<Provider>(), [.deepSeek], [.claudeCode], [.codex], [.kiro], [.claudeCode, .codex]
+        Set<Provider>(), [.deepSeek], [.claudeCode], [.codex], [.kiro], [.commandCode], [.claudeCode, .codex]
     ])
     func selectedTranscripts(providers: Set<Provider>) throws {
         let home = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
@@ -57,7 +57,9 @@ struct AgentActivityTests {
             ".codex/sessions/test/session.jsonl":
                 "{\"type\":\"event_msg\",\"timestamp\":\"\(stamp)\",\"payload\":{\"type\":\"task_started\"}}\n",
             ".kiro/sessions/cli/session.jsonl":
-                "{\"version\":\"v1\",\"kind\":\"Prompt\",\"data\":{\"content\":\"test\"}}\n"
+                "{\"version\":\"v1\",\"kind\":\"Prompt\",\"data\":{\"content\":\"test\"}}\n",
+            ".commandcode/projects/test/session.jsonl":
+                "{\"type\":\"message\",\"message\":{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"test\"}]}}\n"
         ]
         for (path, text) in logs {
             let file = home.appending(path: path)
@@ -102,6 +104,57 @@ struct AgentActivityTests {
             ]],
         ], to: file)
         #expect(AgentActivity.verdict(for: file, provider: .kiro) == .finished)
+    }
+
+    /// Command Code appends each message as it completes, with the turn's
+    /// state in who spoke last and whether the model asked for a tool.
+    @Test("Command Code's messages bracket model and tool work")
+    func commandCodeVerdicts() throws {
+        let home = try EditorTestSupport.temporary("commandcode-activity")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let file = home.appending(path: "session.jsonl")
+        let createdAt = Self.now.timeIntervalSince1970 * 1000
+
+        try EditorTestSupport.jsonLines([
+            ["type": "session", "id": "s"],
+            ["type": "message", "message": ["role": "user", "meta": ["createdAt": createdAt, "source": "user"],
+                                            "content": [["type": "text", "text": "review"]]]],
+        ], to: file)
+        #expect(AgentActivity.verdict(for: file, provider: .commandCode) == .working(.model, at: Self.now))
+
+        try EditorTestSupport.jsonLines([
+            ["type": "message", "message": ["role": "assistant", "meta": ["createdAt": createdAt, "source": "model"],
+                                            "content": [["type": "thinking"], ["type": "tool_use", "name": "read"]]]],
+        ], to: file)
+        #expect(AgentActivity.verdict(for: file, provider: .commandCode) == .working(.tool, at: Self.now))
+
+        // A tool's results carry no `createdAt`: timed from the file instead.
+        try EditorTestSupport.jsonLines([
+            ["type": "message", "message": ["role": "user", "meta": ["source": "tool"],
+                                            "content": [["type": "tool_result"]]]],
+        ], to: file)
+        #expect(AgentActivity.verdict(for: file, provider: .commandCode) == .working(.model, at: nil))
+
+        try EditorTestSupport.jsonLines([
+            ["type": "message", "message": ["role": "assistant", "meta": ["createdAt": createdAt, "source": "model"],
+                                            "content": [["type": "thinking"], ["type": "text", "text": "done"]]]],
+        ], to: file)
+        #expect(AgentActivity.verdict(for: file, provider: .commandCode) == .finished)
+    }
+
+    @Test("Command Code's checkpoint files are not sessions")
+    func commandCodeCheckpointsIgnored() throws {
+        let home = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: home) }
+        let folder = home.appending(path: ".commandcode/projects/test")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let checkpoints = folder.appending(path: "s.checkpoints.jsonl")
+        try Data("{\"kind\":\"checkpoint\"}\n".utf8).write(to: checkpoints)
+        try FileManager.default.setAttributes([.modificationDate: Self.now], ofItemAtPath: checkpoints.path)
+
+        let state = try #require(AgentActivity.states(for: [.commandCode], now: Self.now, home: home)[.commandCode])
+        #expect(!state.isWorking)
+        #expect(state.lastWrite == nil)
     }
 
     @Test("Kiro Desktop and v2 ACP lifecycle records bracket a turn")

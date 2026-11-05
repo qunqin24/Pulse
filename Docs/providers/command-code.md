@@ -193,6 +193,10 @@ The billing period is a **stated length only where the reply gave both ends of i
 
 `creditBalance` is the three pots added up, formatted in US dollars — the currency the service prices in, whatever the reader's own is.
 
+## Activity
+
+The ring's activity mark follows Command Code's session files, the CLI's and the desktop app's alike (`~/.commandcode/projects/<project>/<session>.jsonl`; the `.checkpoints.jsonl` beside each is not a session). Each message is appended when it completes, so the last one says whose move it is: a `user` message — a prompt, or tool results coming back — is the model's, an `assistant` message holding a `tool_use` part is a tool's, and one without ends the turn. Rules and graces: [../refresh-and-data.md](../refresh-and-data.md).
+
 ## Not offered
 
 - **No extra accounts.** `supportsMultipleAccounts` is unchanged; there is no second login to add. See [authentication.md](authentication.md).

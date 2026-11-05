@@ -24,6 +24,10 @@ import Observation
 ///   same lifecycle with Prompt, ToolResults and AssistantMessage records.
 /// - ZCode Desktop, its TUI and `zcode-acp` share turn lifecycle telemetry,
 ///   including a stable turn id when several turns overlap.
+/// - Command Code's CLI and desktop app append each message as it completes:
+///   a `user` message (a prompt, or tool results coming back) leaves the move
+///   with the model, an `assistant` message holding `tool_use` hands it to a
+///   tool, and one without ends the turn.
 ///
 /// So only the tail of the newest transcripts is read, and the answer is exact
 /// rather than a guess with a timer attached.
@@ -282,9 +286,32 @@ enum AgentActivity {
                     continue
                 }
 
+            case .commandCode:
+                guard record["type"] as? String == "message",
+                      let message = record["message"] as? [String: Any] else { continue }
+                // Timed from the message's own `createdAt` where it has one.
+                // A tool's results carry none, and their `timestamp` is the
+                // moment the tool was *called*, minutes before a long one
+                // returns — so those are timed from the file instead, which
+                // the result was just written to.
+                let at = (message["meta"] as? [String: Any])?["createdAt"]
+                    .flatMap { ($0 as? NSNumber)?.doubleValue }
+                    .map { Date(timeIntervalSince1970: $0 / 1000) }
+                switch message["role"] as? String {
+                case "user":
+                    return .working(.model, at: at)
+                case "assistant":
+                    let parts = message["content"] as? [[String: Any]] ?? []
+                    return parts.contains { ($0["type"] as? String) == "tool_use" }
+                        ? .working(.tool, at: at)
+                        : .finished
+                default:
+                    continue
+                }
+
             case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .copilot, .grok, .grokBot,
-             .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo,
+             .volcengine, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension:
                 // None of these leaves transcripts Pulse reads, so nothing
                 // ever gets this far.
@@ -451,6 +478,9 @@ enum AgentActivity {
 
     private static func isActivityFile(_ url: URL, provider: Provider) -> Bool {
         guard url.pathExtension == "jsonl" else { return false }
+        // A session's checkpoints sit beside it in the same folder and say
+        // nothing about a turn.
+        if provider == .commandCode { return !url.lastPathComponent.hasSuffix(".checkpoints.jsonl") }
         guard provider == .kiro else { return true }
 
         // v1 CLI sessions are flat under `cli`; v2 Desktop and ACP sessions
@@ -477,9 +507,12 @@ enum AgentActivity {
         case .kiro: home.appending(path: ".kiro/sessions")
         case .zai, .glmCoding:
             zcodeStorefront(home: home) == provider ? home.appending(path: ".zcode/cli/log") : nil
+        // The CLI's and the desktop app's sessions, one file per session
+        // under a folder per project.
+        case .commandCode: home.appending(path: ".commandcode/projects")
         case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .minimax, .copilot, .grok, .grokBot,
-             .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo,
+             .volcengine, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: nil
         }
     }

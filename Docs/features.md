@@ -4,7 +4,7 @@ Everything Pulse does, in full. The [README](../README.md) has the short version
 
 ## At-a-Glance Status Rings
 - **Usage-Aware Colors**: Dynamic color gradients shift from green to amber, red, and deep red when exhausted — or set custom accent colors per account.
-- **Active Turn Indicator**: A subtle revolving dot indicates whether an agent is actively generating responses in real-time (Claude Code, Codex, Kiro, Zhipu and z.ai).
+- **Active Turn Indicator**: A subtle revolving dot indicates whether an agent is actively generating responses in real-time (Claude Code, Codex, Kiro, Command Code, Zhipu and z.ai).
 - **Window Clock Arc**: An optional secondary outer arc can show how much of the current rate-limit window has elapsed or remains.
 - **Countdown Mode**: Toggle between showing spent quota (`75% used`) or remaining balance (`25% left`).
 

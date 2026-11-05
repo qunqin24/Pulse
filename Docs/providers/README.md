@@ -201,7 +201,7 @@ A provider's first account id is its raw value, so stored preferences and cache 
 Shared counting, cache filename, burn rate and estimate: [`../refresh-and-data.md`](../refresh-and-data.md).
 
 - `keepsLocalTranscripts` — Claude Code and Codex; gates the money estimate. OpenCode keeps sessions (`opencode stats`) in its own store, not the JSONL the ledger reads, so it is false.
-- `supportsLocalActivity` — gates the activity mark. Also Kiro (Desktop/CLI/ACP session records) and ZCode (Desktop/native/ACP turn telemetry, attributed only when its endpoint identifies Zhipu or z.ai): lifecycle state without ledger token buckets.
+- `supportsLocalActivity` — gates the activity mark. Also Kiro (Desktop/CLI/ACP session records), Command Code (its session files) and ZCode (Desktop/native/ACP turn telemetry, attributed only when its endpoint identifies Zhipu or z.ai): lifecycle state without ledger token buckets.
 - `providesHistory` — wider, and exactly `cardHistory != nil`: Z.ai and Zhipu from account statistics ([zai.md](zai.md)); OpenCode Go and DeepSeek from their consoles once a console sign-in is kept ([opencode-go.md](opencode-go.md), [deepseek.md](deepseek.md#the-console-usage-history-and-a-balance-without-a-key)); every provider whose mark a Token spend agent borrows (MiniMax Code for MiniMax, the Kimi CLI for Kimi Code, OpenCode's store before its console sign-in, and the rest listed in [../ui/panel-geometry.md](../ui/panel-geometry.md#detailed-card)), read only with Token spend on. Unsupported values are omitted, not zeroed.
 
 Token-field differences (cache excluded vs included; per-turn vs running total): [claude-code.md](claude-code.md), [codex.md](codex.md).
