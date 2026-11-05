@@ -34,6 +34,30 @@ struct AntigravityCLITests {
         #expect(windows.map(\.scope) == ["Gemini", "Gemini", "Claude and GPT", "Claude and GPT"])
     }
 
+    /// The shape a Pro account printed on 2026-11-05 (#106), fractions
+    /// changed: a third group, Gemini 4 Argon, with a weekly bucket alone.
+    @Test("Gemini 4 Argon is a third group with one weekly window, and splits into a third ring")
+    func argonGroup() throws {
+        let url = try #require(
+            Bundle.module.url(forResource: "antigravity-cli-usage-argon", withExtension: "json", subdirectory: "Fixtures")
+        )
+        guard case .windows(let windows) = AntigravityUsageService.cliAnswer(from: try Data(contentsOf: url)) else {
+            Issue.record("The Argon reply did not produce windows")
+            return
+        }
+        let argon = try #require(windows.first { $0.id == "gemini-argon-wtu-weekly" })
+        #expect(argon.kind == .weekly)
+        #expect(argon.scope == "Gemini 4 Argon")
+        #expect(abs(argon.usedFraction - 0.6) < 1e-9)
+
+        let usage = ProviderUsage(account: AccountKey(.antigravity), windows: windows, observedAt: Date(),
+                                  state: .live, plan: nil, creditBalance: nil)
+        let groups = RailSlot.modelGroups(of: usage)
+        #expect(groups == ["Gemini", "Claude and GPT", "Gemini 4 Argon"])
+        let slots = RailSlot.rail(for: [AccountKey(.antigravity)], isSplit: { _ in true }, groups: { _ in groups })
+        #expect(slots.count == 3)
+    }
+
     @Test("What is left is turned into what is gone, from the fraction rather than the rounded text")
     func remainingIsInverted() throws {
         let windows = try Self.windows()
