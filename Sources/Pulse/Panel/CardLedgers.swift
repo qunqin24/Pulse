@@ -205,6 +205,15 @@ final class CardLedgers {
             return "\(token)|\(AppSettings.storedDeepSeekCurrency ?? "")"
         case .openCodeGo:
             return APIKeyStore.key(for: provider, slot: OpenCodeConsole.slot).map { String($0.hashValue) } ?? ""
+        // **And Z.ai's and Zhipu's key.** Their statistics are the account's,
+        // so a key changed to another account's left the card on the first
+        // account's month while `lifetime` held it fresh, and a read still out
+        // could not tell. The key the read actually uses: the one entered in
+        // Settings, else the one found where the tools keep it.
+        case .zai, .glmCoding:
+            let key = APIKeyStore.key(for: provider).flatMap { $0.isEmpty ? nil : $0 }
+                ?? ZaiUsageService.storedKey(for: provider)
+            return key.map { String($0.hashValue) } ?? ""
         default:
             return ""
         }
