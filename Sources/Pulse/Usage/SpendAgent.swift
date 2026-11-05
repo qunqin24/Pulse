@@ -297,6 +297,7 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         case .openCode, .openCodeReview: "opencode-go"
         case .kiloCLI, .kiloCode: "kilo"
         case .cline: "cline-pass"
+        case .commandCode: "commandcode"
         default: nil
         }
     }

@@ -143,3 +143,28 @@ struct VendorPriceTests {
         #expect(direct.sessions.first?.cost == 1)
     }
 }
+
+/// Command Code's records name `deepseek-v4.1-flash`, which DeepSeek does not
+/// list and Command Code's own price list sells as
+/// `deepseek/deepseek-v4.1-flash`.
+struct CommandCodeVendorPriceTests {
+    private static var document: [String: Any] { [
+        "deepseek": ["models": ["deepseek-v4-flash": ["cost": ["input": 0.27, "output": 1.1]]]],
+        "commandcode": ["models": [
+            "deepseek/deepseek-v4.1-flash": ["cost": ["input": 0.15, "output": 0.6, "cache_read": 0.003]],
+            "deepseek/deepseek-v4-flash": ["cost": ["input": 9, "output": 9]],
+        ]],
+    ] }
+
+    @Test("Command Code's own list prices a model DeepSeek does not, by its bare name")
+    func barePrice() throws {
+        let table = try #require(ModelPrices.table(from: Self.document))
+        let price = ModelPrices.price(for: "deepseek-v4.1-flash", in: table, vendor: SpendAgent.commandCode.priceVendor)
+        #expect(price?.input == 0.15)
+        #expect(price?.cacheRead == 0.003)
+        // Never for anyone who did not ask for Command Code's list.
+        #expect(ModelPrices.price(for: "deepseek-v4.1-flash", in: table) == nil)
+        // And never over the maker's own rate.
+        #expect(ModelPrices.price(for: "deepseek-v4-flash", in: table, vendor: "commandcode")?.input == 0.27)
+    }
+}

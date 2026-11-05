@@ -115,7 +115,11 @@ actor ModelPrices {
     /// Stored **namespaced** (`vendor|id`) so a vendor's price can never be
     /// found by a lookup that did not ask for that vendor, and so adding one
     /// cannot collide with a first-party id.
-    private static let vendors = ["opencode-go", "kilo", "cline-pass"]
+    ///
+    /// `commandcode` is Command Code's own price list: it sells
+    /// `deepseek/deepseek-v4.1-flash` and DeepSeek does not list it, so
+    /// Command Code's records of it were counted and never costed.
+    private static let vendors = ["opencode-go", "kilo", "cline-pass", "commandcode"]
 
     /// Separates a vendor from a model id in the table. Not a character any
     /// models.dev id uses.
@@ -182,6 +186,13 @@ actor ModelPrices {
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return nil }
 
+        return table(from: root)
+    }
+
+    /// The kept table from models.dev's document. Split from `download` so
+    /// the rules — which providers, which vendors, which spellings — can be
+    /// pinned without the network.
+    static func table(from root: [String: Any]) -> [String: ModelPrice]? {
         var prices: [String: ModelPrice] = [:]
         for provider in providers {
             let models = (root[provider] as? [String: Any])?["models"] as? [String: Any] ?? [:]
@@ -210,15 +221,16 @@ actor ModelPrices {
         // model must not shadow that model's own rate.
         for vendor in vendors {
             let models = (root[vendor] as? [String: Any])?["models"] as? [String: Any] ?? [:]
-            for (id, model) in models {
-                guard prices[id] == nil else { continue }
+            // Exact ids first, so a vendor's own `deepseek-v4.1-flash` wins
+            // over the bare spelling of its `deepseek/deepseek-v4.1-flash`.
+            for (id, model) in models.sorted(by: { ($0.key.contains("/") ? 1 : 0, $0.key) < ($1.key.contains("/") ? 1 : 0, $1.key) }) {
                 guard
                     let cost = (model as? [String: Any])?["cost"] as? [String: Any],
                     let input = number(cost["input"]),
                     let output = number(cost["output"])
                 else { continue }
 
-                prices[vendorKey(vendor, id)] = ModelPrice(
+                let price = ModelPrice(
                     input: input,
                     output: output,
                     cacheRead: number(cost["cache_read"]),
@@ -226,6 +238,14 @@ actor ModelPrices {
                     name: (model as? [String: Any])?["name"] as? String,
                     tiers: tiers(in: cost)
                 )
+                // A vendor that names models `maker/model` is also found by
+                // the bare model, which is how a store that drops the maker
+                // records it (Command Code). Still only in the vendor's own
+                // namespace, and never for an id a first-party provider prices.
+                let bare = id.split(separator: "/").last.map(String.init)
+                for key in Set([id] + (bare.map { [$0] } ?? [])) where prices[key] == nil {
+                    if prices[vendorKey(vendor, key)] == nil { prices[vendorKey(vendor, key)] = price }
+                }
             }
         }
 
