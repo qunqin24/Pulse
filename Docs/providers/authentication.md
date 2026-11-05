@@ -134,6 +134,8 @@ Tokens last about **sixty days** (measured from `exp` on one Mac). No refresh en
 
 `OAuthLogin.Configuration.of(.grokBot)` is nil. `fetchAdded` still calls `OAuthLogin.refresh` when the token is no longer fresh; that fails closed into `.signedOut`, which is the honest path.
 
+**A renewal that fails is classified, not assumed signed out** (`LiveUsageServices.renewalFailure`). The token endpoint not answering is `.unreachable`, a 429 `.rateLimited`, a 5xx `.serverError`, an unreadable reply `.unreadableReply`; only a refusal (400/401/403, such as `invalid_grant`) or a provider with no renewal is `.signedOut`. Every failure used to be `.signedOut`, which takes no cached reading, so a dropped network cleared the ring and asked for a sign-in over a login that was still good. `OAuthLogin.post` throws `.unreachable` and `.rejected(status:detail:)` for this; the sign-in pane shows them with the same words as before. `RenewalFailureTests`.
+
 Pulse does **not** read `~/Library/Application Support/Grok Bot/sand-secrets.json`. That file was identified during investigation; the extra-account token Pulse obtained itself is what is stored.
 
 ## Browser cookies
@@ -149,6 +151,7 @@ Failure class this feature keeps rediscovering: **a wrong lookup reads as an emp
 - Edge’s keychain service is `Microsoft Edge Safe Storage`, not a name derived from the display string “Edge”.
 - Default browser first, even if it prompts. A cheap browser with a months-stale session is worse than a prompt.
 - Naming a browser in Settings means *only* that one is opened.
+- **A read that comes back late keeps nothing** (`ProviderCredentialModel.sessionReadID`). The keychain prompt can hold a read for as long as it is up; switching Qoder's or StepFun's site meanwhile, forgetting the session or saving a key by hand gives the read a new id, and a read whose id or host no longer matches stores nothing. Before this, switching sites during the prompt saved the old site's session after the switch had cleared it, and the refresh that followed sent it to the new site.
 - **A request carrying a session in a hand-set `Cookie` header never follows a redirect** (`NoRedirects`). URLSession forwards hand-set headers to wherever a 3xx points, another host included. `ProfileHTTP` always did this; Qoder, StepFun, Xiaomi, OpenCode Go and its console, and Claude Desktop's session did not until 2026-11-05. A 3xx arrives as itself and is read as the session being turned away. `CookieRedirectTests` pins it with a stubbed cross-host 302.
 - **A store macOS refuses is said as a refusal, not as a missing session.** Full Disk Access, and since macOS 26 the permission to read other apps' data, are tied to the code signature; Pulse is ad-hoc signed, so an update can lose them, and then every store opens as empty. When a read finds nothing, `BrowserCookies.refused` opens each store's folder and file and looks for `EPERM` / `EACCES`; if any was refused, Settings names that browser and points to Full Disk Access (remove and re-add when it is already on) instead of telling the user to sign in again (issue #101). A refused folder cannot be listed, so `present()` leaves that browser out and `refused` checks the folders itself.
 

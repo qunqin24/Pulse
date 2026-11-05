@@ -33,6 +33,11 @@ final class ProviderCredentialModel {
     var savedKey = ""
     /// What the last look through the browsers found.
     var sessionMessage: String?
+    /// The browser read in flight, if any. A read that comes back after the
+    /// site changed, the session was forgotten, or a key was saved by hand
+    /// finds a different id here and keeps nothing: what it found is the
+    /// other host's session, or no longer the one the user chose.
+    private var sessionReadID: UUID?
 
     /// The account pane opened, or its account or its switch changed: what the
     /// store holds is what the field shows.
@@ -54,6 +59,7 @@ final class ProviderCredentialModel {
     /// Changing a site discards the saved session, which belongs to the other
     /// host; this is what follows the discard.
     func forgetSession(of provider: Provider, for account: AccountKey) {
+        sessionReadID = nil
         guard APIKeyStore.setKey(nil, for: provider) else { return }
         apiKey = ""
         savedKey = ""
@@ -140,9 +146,22 @@ final class ProviderCredentialModel {
                 keep = { ProviderProfile.keep($0, cookies: cookies) }
             }
 
+            let readID = UUID()
+            sessionReadID = readID
             let found = await Task.detached(priority: .userInitiated) {
                 BrowserCookies.session(forHost: host, allowing: browsers, keep: keep)
             }.value
+
+            // **Still the read the user is waiting for, for the same host.**
+            // Switching Qoder's or StepFun's site while the keychain prompt was
+            // up used to save the old site's session after the switch had
+            // cleared it, and the refresh that followed sent it to the new
+            // site. Checked before anything is stored, not only before the
+            // message is shown.
+            guard sessionReadID == readID, Self.sessionHost(for: account.provider, settings: settings) ?? host == host else {
+                return
+            }
+            sessionReadID = nil
 
             if let found {
                 guard APIKeyStore.setKey(found.header, for: account.provider) else { return }
@@ -248,7 +267,19 @@ final class ProviderCredentialModel {
         }
     }
 
+    /// The host a site-dependent provider's session is read for now, or nil
+    /// for one whose host does not move.
+    static func sessionHost(for provider: Provider, settings: AppSettings) -> String? {
+        switch provider {
+        case .qoder: settings.qoderSite.host
+        case .stepFun: settings.stepFunSite.host
+        default: nil
+        }
+    }
+
     func saveKey(for account: AccountKey) {
+        // A key typed and saved by hand outranks a browser read still out.
+        sessionReadID = nil
         // Only call it saved if it was. Otherwise the Save button greys out
         // over a key that never reached disk.
         guard APIKeyStore.setKey(apiKey, for: account.provider, slot: settings.keySlot(for: account.provider)) else { return }
