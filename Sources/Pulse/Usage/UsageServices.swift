@@ -173,6 +173,25 @@ final class LiveUsageServices: UsageServiceFactory {
         )
     }
 
+    /// Why a renewal failed, as the reading says it.
+    ///
+    /// **Only a refused login is signed out.** Every failure used to be, so a
+    /// dropped network, a 429 or a 5xx from the token endpoint asked the user
+    /// to sign in again and, since `.signedOut` takes no cached reading,
+    /// cleared what the ring was showing — over a login that was still good.
+    /// Those are now the ordinary transient reasons, which keep the cache.
+    nonisolated static func renewalFailure(_ error: Error) -> ProviderUsage.Unavailability {
+        switch error as? OAuthLogin.Failure {
+        case .unreachable?: .unreachable
+        case .rejected(let status, _)? where status == 429: .rateLimited
+        case .rejected(let status, _)? where (500...599).contains(status): .serverError
+        case .unreadableReply?: .unreadableReply
+        // 400/401/403 (`invalid_grant`, a revoked or expired refresh token),
+        // and a provider with no renewal at all, such as Grok Bot.
+        default: error is CancellationError ? .unreachable : .signedOut
+        }
+    }
+
     /// An account Pulse signed in to itself.
     ///
     /// Its token is renewed here when it is close to expiring, because nothing
@@ -197,10 +216,11 @@ final class LiveUsageServices: UsageServiceFactory {
             // refresh endpoint was found in Cursor's own client. Its tokens
             // run **sixty days** (measured), so signing in again twice a year
             // is the honest answer rather than a renewal that cannot happen.
-            guard let renewed = try? await OAuthLogin.refresh(credentials, for: account.provider) else {
-                return .unavailable(account, reason: .signedOut)
+            do {
+                credentials = try await OAuthLogin.refresh(credentials, for: account.provider)
+            } catch {
+                return .unavailable(account, reason: Self.renewalFailure(error))
             }
-            credentials = renewed
             // Compare-and-set: a pass that was given up on can still be in
             // here, and its answer must not replace a newer login.
             AccountCredentialStore.renewed(credentials, for: account)

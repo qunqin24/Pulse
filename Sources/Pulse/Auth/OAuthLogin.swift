@@ -172,6 +172,12 @@ enum OAuthLogin {
         case timedOut
         case refused(String)
         case unreadableReply
+        /// The token endpoint never answered. Only `post` says this, so a
+        /// renewal can tell a dropped network from a refused login.
+        case unreachable
+        /// The token endpoint answered with a status other than 200, and
+        /// what it said. Only `post` says this, for the same reason.
+        case rejected(status: Int, detail: String)
 
         var message: String {
             switch self {
@@ -181,6 +187,8 @@ enum OAuthLogin {
             case .timedOut: .localized("The browser didn't come back. If it showed an error, try again.")
             case .refused(let why): why
             case .unreadableReply: .localized("Couldn't read the reply.")
+            case .unreachable: .localized("The service didn't respond.")
+            case .rejected(_, let detail): detail
             }
         }
     }
@@ -655,7 +663,7 @@ enum OAuthLogin {
             // just cleared on purpose.
             if error is CancellationError { throw error }
             try Task.checkCancellation()
-            throw Failure.refused(String.localized("The service didn't respond."))
+            throw Failure.unreachable
         }
 
         // The status is read **before** the body is parsed. A provider that
@@ -669,7 +677,10 @@ enum OAuthLogin {
             // The provider's own words when it has them: "invalid_scope" says
             // something a generic failure cannot.
             let said = (json?["error_description"] as? String) ?? (json?["error"] as? String)
-            throw Failure.refused(said.map { "oauth/token: HTTP \(status) — \($0)" } ?? "oauth/token: HTTP \(status)")
+            throw Failure.rejected(
+                status: status,
+                detail: said.map { "oauth/token: HTTP \(status) — \($0)" } ?? "oauth/token: HTTP \(status)"
+            )
         }
 
         guard let json else { throw Failure.unreadableReply }
