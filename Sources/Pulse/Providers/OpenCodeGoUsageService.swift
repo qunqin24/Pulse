@@ -55,7 +55,7 @@ struct OpenCodeGoUsageService: Sendable {
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         request.timeoutInterval = 15
 
-        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request) else {
+        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request, delegate: NoRedirects()) else {
             return .unavailable(.openCodeGo, reason: .unreachable)
         }
 
@@ -146,7 +146,7 @@ struct OpenCodeGoUsageService: Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 15
 
-        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request) else {
+        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request, delegate: NoRedirects()) else {
             return .unavailable(.openCodeGo, reason: .unreachable)
         }
         switch (response as? HTTPURLResponse)?.statusCode {
@@ -184,7 +184,7 @@ struct OpenCodeGoUsageService: Sendable {
         request.setValue(cookie, forHTTPHeaderField: "Cookie")
         request.setValue(org, forHTTPHeaderField: "x-org-id")
         request.timeoutInterval = 15
-        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request),
+        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request, delegate: NoRedirects()),
               (response as? HTTPURLResponse)?.statusCode == 200,
               let status = try? JSONDecoder().decode(ConsoleStatus.self, from: data)
         else { return false }

@@ -235,7 +235,11 @@ struct StepFunClient: Sendable {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await (session ?? NetworkSession.shared).recordedData(for: request)
+            // **Redirects are not followed**: the request carries the session
+            // as a hand-written `Cookie` header, and URLSession would send it
+            // on to wherever a 3xx pointed, another host included.
+            (data, response) = try await (session ?? NetworkSession.shared)
+                .recordedData(for: request, delegate: NoRedirects())
         } catch {
             throw StepFunError.unreachable
         }

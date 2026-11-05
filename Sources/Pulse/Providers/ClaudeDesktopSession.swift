@@ -401,7 +401,10 @@ enum ClaudeDesktopSession {
 
         for attempt in 0...retryLimit {
             do {
-                let (data, response) = try await session.recordedData(for: request)
+                // Redirects are not followed: the desktop app's session rides
+                // in a hand-written `Cookie` header, which URLSession would
+                // send on to whatever host a 3xx named.
+                let (data, response) = try await session.recordedData(for: request, delegate: NoRedirects())
                 guard let http = response as? HTTPURLResponse else { return .failure(.unreachable) }
 
                 switch http.statusCode {

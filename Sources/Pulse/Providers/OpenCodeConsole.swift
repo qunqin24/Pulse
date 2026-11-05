@@ -194,7 +194,7 @@ enum OpenCodeConsole {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 20
 
-        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request) else { return .failed }
+        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request, delegate: NoRedirects()) else { return .failed }
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
         case 401, 403: return .signedOut
@@ -229,7 +229,7 @@ enum OpenCodeConsole {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 15
 
-        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request) else { return .failure(.failed) }
+        guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request, delegate: NoRedirects()) else { return .failure(.failed) }
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
         case 401, 403: return .failure(.signedOut)

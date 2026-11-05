@@ -223,7 +223,11 @@ struct XiaomiMiMoClient: Sendable {
         request.setValue("https://\(Self.host)", forHTTPHeaderField: "Origin")
         request.setValue(Self.consoleURL.absoluteString, forHTTPHeaderField: "Referer")
 
-        let (data, response) = try await (session ?? NetworkSession.shared).recordedData(for: request)
+        // **Redirects are not followed**: the request carries the session as
+        // a hand-written `Cookie` header, and URLSession would send it on to
+        // wherever a 3xx pointed, another host included.
+        let (data, response) = try await (session ?? NetworkSession.shared)
+            .recordedData(for: request, delegate: NoRedirects())
         guard let http = response as? HTTPURLResponse else {
             throw XiaomiMiMoError.unreadableReply("no HTTP response")
         }
@@ -231,8 +235,7 @@ struct XiaomiMiMoClient: Sendable {
         case 200: return data
         // An expired session is answered by redirecting the API call at the
         // login flow, so a 3xx here is a sign-in problem rather than a moved
-        // endpoint. `URLSession` follows redirects, so this is only reached
-        // when one was not followed.
+        // endpoint. Redirects are not followed (above), so it arrives as one.
         case 300..<400, 401: throw XiaomiMiMoError.sessionExpired
         case 403: throw XiaomiMiMoError.sessionExpired
         case 429: throw XiaomiMiMoError.rateLimited

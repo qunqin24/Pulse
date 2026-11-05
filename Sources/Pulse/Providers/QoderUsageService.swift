@@ -267,7 +267,11 @@ struct QoderClient: Sendable {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await (session ?? NetworkSession.shared).recordedData(for: request)
+            // **Redirects are not followed**: the request carries the session
+            // as a hand-written `Cookie` header, and URLSession would send it
+            // on to wherever a 3xx pointed, another host included.
+            (data, response) = try await (session ?? NetworkSession.shared)
+                .recordedData(for: request, delegate: NoRedirects())
         } catch {
             throw QoderError.unreachable
         }
@@ -275,8 +279,8 @@ struct QoderClient: Sendable {
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: return try Self.parse(data)
         // A signed-out page answers the API call by redirecting it at the
-        // sign-in flow; `URLSession` follows redirects, so a 3xx is only seen
-        // when one was not followed, and it means the same thing.
+        // sign-in flow. Redirects are not followed (above), so that 3xx is
+        // what arrives, and it means the session is gone.
         case .some(300..<400), 401, 403: throw QoderError.sessionExpired
         case 429: throw QoderError.rateLimited
         case .some(500...599): throw QoderError.serverError
