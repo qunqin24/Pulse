@@ -86,13 +86,13 @@ struct UsageBubbleShape: Shape {
     /// The tail, as a subpath overlapping the body's edge so the two read as a
     /// single silhouette once filled.
     private func pointerPath(in rect: CGRect, body: CGRect) -> Path {
-        let half = pointerHeight / 2
-        // Keep the tail clear of the rounded corners, and inside the card even
-        // when the caller asks for something out of range.
-        let centre = min(
-            max(pointerCenter, cornerRadius + half),
-            max(rect.height - cornerRadius - half, cornerRadius + half)
-        )
+        let radius = min(cornerRadius, rect.height / 2)
+        let half = min(pointerHeight / 2, max(rect.height / 2 - radius, 0))
+        // Keep the base off the corners, but aim the tip at the actual ring.
+        // Clamping the tip with the base made end rings point beside the arrow.
+        let tip = min(max(pointerCenter, 0), rect.height)
+        let inset = radius + half
+        let centre = min(max(tip, inset), max(rect.height - inset, inset))
 
         let baseX = tailLeads ? body.minX : body.maxX
         let tipX = tailLeads ? rect.minX : rect.maxX
@@ -125,13 +125,15 @@ struct UsageBubbleShape: Shape {
         var path = Path()
         path.move(to: CGPoint(x: baseX, y: centre - sweep))
         path.addCurve(
-            to: CGPoint(x: tipX, y: centre),
+            to: CGPoint(x: tipX, y: tip),
             control1: CGPoint(x: baseX + reach * nearAlong, y: centre - sweep * nearAcross),
-            control2: CGPoint(x: baseX + reach * farAlong, y: centre - sweep * farAcross)
+            control2: CGPoint(x: baseX + reach * farAlong,
+                              y: min(max(tip - sweep * farAcross, 0), rect.height))
         )
         path.addCurve(
             to: CGPoint(x: baseX, y: centre + sweep),
-            control1: CGPoint(x: baseX + reach * farAlong, y: centre + sweep * farAcross),
+            control1: CGPoint(x: baseX + reach * farAlong,
+                              y: min(max(tip + sweep * farAcross, 0), rect.height)),
             control2: CGPoint(x: baseX + reach * nearAlong, y: centre + sweep * nearAcross)
         )
         // Bite back into the body so the join is covered by the fill rather

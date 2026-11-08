@@ -105,6 +105,7 @@ struct FloatingUsagePanelContent: View {
                             usesGlass: settings.usesGlass,
                             usage: selected,
                             title: selectedTitle ?? "",
+                            preferredWindowID: entries[index].headline?.id,
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
                             showsForecast: settings.showsForecast,
@@ -318,13 +319,12 @@ struct FloatingUsagePanelContent: View {
     /// stay level with the ring it belongs to.
     private var alongEdge: Edge.Set { placement.edge.isVertical ? .top : .leading }
 
-    /// The panel's own extent along that axis, which is what the card is
-    /// clamped inside.
-    private var panelAlong: CGFloat {
-        let panel = FloatingPanelController.Layout.size(
+    /// Use the granted window geometry for both placement and pointer bands.
+    /// The default is only needed before the controller's first placement.
+    private var panelSize: CGSize {
+        placement.panelSize ?? FloatingPanelController.Layout.size(
             for: placement.edge, notchSize: placement.notch?.size, docked: placement.isDocked
         )
-        return placement.edge.isVertical ? panel.height : panel.width
     }
 
     /// How far the rail is offset along its own run inside the panel.
@@ -383,33 +383,29 @@ struct FloatingUsagePanelContent: View {
         placement.edge.isVertical ? cardHeight : DetailCardLayout.width
     }
 
-    /// How far along the rail the card starts, measured from the rail's own
-    /// leading corner.
-    ///
-    /// Clamped against the *panel*, not the rail: the card can be longer than
-    /// the rail, and the panel has room past it at both ends, so the card is
-    /// allowed into that space — going negative to start before the rail does
-    /// — rather than being pushed past the window's edge and cut off square.
-    private func cardPadding(for index: Int) -> CGFloat {
-        let raw = ringCentre(for: index) - cardAlong / 2
-        let first = -railAlong
-        let last = max(panelAlong - railAlong - cardAlong, first)
-        return min(max(raw, first), last)
+    /// Clamp in the visible part of the actual panel, retaining its origin
+    /// when the window extends above or beside the owning display.
+    private func cardAnchor(for index: Int) -> DetailCardAnchor {
+        let bounds = placement.cardPlacementBounds ?? CGRect(origin: .zero, size: panelSize)
+        return DetailCardAnchor(
+            ring: railAlong + ringCentre(for: index), length: cardAlong,
+            lowerBound: placement.edge.isVertical ? bounds.minY : bounds.minX,
+            upperBound: placement.edge.isVertical ? bounds.maxY : bounds.maxX,
+            panelLength: placement.edge.isVertical ? panelSize.height : panelSize.width
+        )
     }
 
-    /// Where the pointer sits inside the card: the ring's centre expressed
-    /// relative to the card's own leading corner, so the tip keeps aiming at
-    /// the ring even when the card has been clamped away from centre. Kept
-    /// clear of the card's rounded corners by one corner radius.
+    /// The overlay starts in the rail's coordinates, so convert back once.
+    private func cardPadding(for index: Int) -> CGFloat {
+        cardAnchor(for: index).origin - railAlong
+    }
+
     /// The pointer, in the panel's own coordinates. See `pointerMoved`.
     @State private var pointerPoint: CGPoint?
 
+    /// Only the base avoids the corners; the tip stays aligned with the ring.
     private func pointerCentre(for index: Int) -> CGFloat {
-        let raw = ringCentre(for: index) - cardPadding(for: index)
-        let inset = DetailCardLayout.cornerRadius + DetailCardLayout.pointerHeight / 2
-        let first = min(inset, cardAlong / 2)
-        let last = max(cardAlong - inset, first)
-        return min(max(raw, first), last)
+        cardAnchor(for: index).pointer
     }
 
     /// How far the card sits clear of the rail: beside it, its own width plus
@@ -628,9 +624,7 @@ struct FloatingUsagePanelContent: View {
         // stopping at the card's own edge, so the gap the pointer crosses
         // between the rail and the card is covered too. The slack along it
         // keeps the boundary from feeling like a trip wire at the card's edge.
-        let panel = FloatingPanelController.Layout.size(
-            for: edge, notchSize: placement.notch?.size, docked: placement.isDocked
-        )
+        let panel = panelSize
         let start = railAlong + cardPadding(for: index) - PanelHitArea.slack
         let length = cardAlong + PanelHitArea.slack * 2
 

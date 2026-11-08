@@ -70,16 +70,15 @@ enum DetailCardLayout {
     /// instead — see its `cardHeight`.
     static var estimatedHeight: CGFloat { height(forWindows: 2) }
 
-    /// Room the panel has to leave for the tallest card it might have to show.
-    ///
-    /// The panel's frame is fixed, and a card taller than it gets sliced off
-    /// square against the window's edge — which looks like a rendering bug,
-    /// not like a card that didn't fit. Providers report a variable number of
-    /// limits (Codex adds one group per model with its own limits), so this
-    /// budgets for more than are on screen today.
-    /// One row more than the limits for Codex's reset-credit lines: the count
-    /// and the soonest expiry are two text lines, which together are shorter
-    /// than a limit's row and so fit inside the budget of one.
+    /// Leave space around a long card on the display that owns the rail.
+    static var maximumScreenFraction: CGFloat { 0.75 }
+    static func screenHeightLimit(in visible: CGRect) -> CGFloat {
+        max(visible.height, 0) * maximumScreenFraction
+    }
+
+    /// Fallback body budget for previews and views not yet placed on a screen.
+    /// The live panel reserves 75% of its owning display's usable height
+    /// before any card opens; that screen budget replaces this row estimate.
     static var maximumHeight: CGFloat { height(forWindows: 6, footnote: true) }
 
     static func height(forWindows count: Int, footnote: Bool = false) -> CGFloat {
@@ -154,6 +153,9 @@ struct UsageDetailCard: View {
     /// same plan are told apart by nothing else, and a card headed "Codex" on
     /// both of them is a card that cannot say which one you are looking at.
     var title: String?
+    /// The resolved quota used by the selected ring, including a native pin
+    /// and any per-model group filtering. It remains visible while scrolling.
+    var preferredWindowID: String?
     /// Which screen edge the panel is docked against; the pointer goes on the
     /// side facing the rail.
     let edge: PanelEdge
@@ -194,19 +196,17 @@ struct UsageDetailCard: View {
     /// Where red begins, so the card's bars agree with the rail's rings.
     @Environment(\.usageWarningThreshold) private var warningThreshold
 
-    /// The tallest the card may be, pointer included, or nil for no limit —
-    /// the room between the rail and the screen's edge on the side it opens
-    /// to, for a rail lying across (`PanelPlacement.cardRoom`).
+    /// Available screen height, pointer included. Even without a placement
+    /// limit the body must fit the fixed panel's card budget.
     var maxHeight: CGFloat?
-    /// The card's contents at their own height, measured inside the scroll
-    /// view so a limited card knows whether it has to scroll at all.
-    @State private var naturalHeight: CGFloat?
+    @State private var summaryHeight: CGFloat?
+    @State private var detailHeight: CGFloat?
 
     var body: some View {
         bounded
         // Room for the pointer on the side facing the rail. The shape below
         // covers the whole frame, body and pointer together.
-        .padding(Self.pointerSide(for: edge), DetailCardLayout.pointerWidth)
+        .padding(Self.pointerSide(for: edge), pointerLength)
         // **Inside the card, never ahead of it.** Switching between two cards
         // of different heights keeps this one view and swaps its rows: the
         // outline grows on the panel's spring, but a row the new card adds is
@@ -223,62 +223,123 @@ struct UsageDetailCard: View {
         .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
     }
 
-    /// The contents, scrolling **only when the screen cannot hold them**.
-    ///
-    /// A rail lying across opens its card into one half of the screen, and
-    /// near the middle that half can be shorter than a tall card — a detailed
-    /// card with a forecast and many limits on a 13" display was 95pt taller
-    /// than the room below the rail, and its foot was cut off by the screen.
-    /// Turning the card the other way does not help there: the rail already
-    /// opens it to the roomier half. So it scrolls, inside the same outline.
-    /// The window keeps its size; only the card is shorter.
+    /// The ring's own selection, kept out of the scrolling details. Selecting
+    /// a quota near the end of a long extension must not hide the summary.
+    var summaryWindow: UsageWindow? { usage.headlineWindow(preferring: preferredWindowID) }
+    var detailWindows: [UsageWindow] {
+        let summaryID = summaryWindow?.id
+        return usage.windows.filter { $0.id != summaryID }
+    }
+
+    private var hasDetails: Bool {
+        if !detailWindows.isEmpty || resetCredits != nil || !usage.metrics.isEmpty || saysNothing
+            || footnote != nil || (isDetailed && (spend != nil || qoderCredits != nil)) {
+            return true
+        }
+        if (usage.windows.isEmpty || usage.provider == .pulseExtension), usage.creditBalance != nil { return true }
+        if case .unavailable = usage.state { return true }
+        return false
+    }
+
+    private var viewport: DetailCardViewport {
+        let summary = summaryHeight ?? (DetailCardLayout.headerHeight
+            + (isDetailed ? DetailCardLayout.rowTextLineHeight : 0)
+            + (summaryWindow == nil ? 0 : DetailCardLayout.contentSpacing + DetailCardLayout.rowHeight))
+        return DetailCardViewport(
+            limit: DetailCardViewport.bodyLimit(
+                maxHeight: maxHeight, fallbackHeight: DetailCardLayout.maximumHeight,
+                pointerHeight: edge.isVertical ? 0 : DetailCardLayout.pointerWidth),
+            summary: summary,
+            details: hasDetails ? (detailHeight ?? DetailCardLayout.rowHeight) : 0,
+            spacing: DetailCardLayout.contentSpacing, padding: DetailCardLayout.padding,
+            minimumDetailHeight: DetailCardLayout.rowHeight
+        )
+    }
+
+    /// Always bounded by the fixed window, on every edge. Short cards retain
+    /// their natural height. Only an unusually small placement scrolls the
+    /// summary too, so neither it nor the details become unreachable.
     @ViewBuilder
     private var bounded: some View {
-        if let limit = maxHeight.map({ $0 - DetailCardLayout.pointerWidth }),
-           limit < DetailCardLayout.maximumHeight {
-            let natural = naturalHeight ?? min(DetailCardLayout.estimatedHeight, limit)
-            ScrollView(.vertical) {
-                content.background(
-                    GeometryReader { proxy in
-                        Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
-                            naturalHeight = height
-                        }
+        let layout = viewport
+        if layout.fixesSummary {
+            VStack(alignment: .leading, spacing: hasDetails ? DetailCardLayout.contentSpacing : 0) {
+                measuredSummary
+                if hasDetails {
+                    ScrollView(.vertical) {
+                        measuredDetails
                     }
-                )
+                    .defaultScrollAnchor(.top)
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDisabled(!layout.scrolls)
+                    .frame(height: layout.detailHeight)
+                    .id(usage.account.id + ":" + (summaryWindow?.id ?? ""))
+                }
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .scrollDisabled(natural <= limit)
-            .frame(width: DetailCardLayout.width, height: max(min(natural, limit), 0))
+            .padding(DetailCardLayout.padding)
+            .frame(width: DetailCardLayout.width, height: layout.height, alignment: .topLeading)
         } else {
-            content
+            ScrollView(.vertical) {
+                VStack(alignment: .leading, spacing: hasDetails ? DetailCardLayout.contentSpacing : 0) {
+                    measuredSummary
+                    if hasDetails { measuredDetails }
+                }
+                .padding(DetailCardLayout.padding)
+            }
+            .defaultScrollAnchor(.top)
+            .scrollBounceBehavior(.basedOnSize)
+            .frame(width: DetailCardLayout.width, height: layout.height)
+            .id(usage.account.id + ":" + (summaryWindow?.id ?? ""))
         }
     }
 
-    private var content: some View {
+    private var measuredSummary: some View {
         VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
             header
+            if let window = summaryWindow { quotaRow(window) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .fixedSize(horizontal: false, vertical: true)
+        .background(GeometryReader { proxy in
+            Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
+                summaryHeight = height
+            }
+        })
+    }
 
-            // However many limits the provider reports — one account-wide
-            // window for some plans, several once per-model limits apply.
-            ForEach(usage.windows) { window in
-                ProgressMetricRow(
-                    title: window.name,
-                    resetDescription: Self.resetText(window),
-                    progress: showsRemaining ? window.remainingFraction : window.usedFraction,
-                    accent: window.tint(warningAt: warningThreshold),
-                    percentageText: window.percentText(remaining: showsRemaining),
-                    isSpent: UsageTint.isSpent(window),
-                    showsRemaining: showsRemaining,
-                    // Every provider, not a chosen few: what this needs is a
-                    // percentage, a reset and a length the provider actually
-                    // stated, and `BurnRate` refuses the windows that lack one
-                    // rather than being told in advance which they are.
-                    burn: showsForecast ? BurnRate.reading(for: window) : nil,
-                    value: valueText(window),
-                    amount: showsAmounts || window.amounts?.currency != nil
-                        ? Self.amountText(window, remaining: showsRemaining) : nil
-                )
-                .transition(Self.rowTransition)
+    private var measuredDetails: some View {
+        details
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(GeometryReader { proxy in
+                Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
+                    detailHeight = height
+                }
+            })
+    }
+
+    private func quotaRow(_ window: UsageWindow) -> some View {
+        ProgressMetricRow(
+            title: window.name,
+            resetDescription: Self.resetText(window),
+            progress: showsRemaining ? window.remainingFraction : window.usedFraction,
+            accent: window.tint(warningAt: warningThreshold),
+            percentageText: window.percentText(remaining: showsRemaining),
+            isSpent: UsageTint.isSpent(window),
+            showsRemaining: showsRemaining,
+            burn: showsForecast ? BurnRate.reading(for: window) : nil,
+            value: valueText(window),
+            amount: showsAmounts || window.amounts?.currency != nil
+                ? Self.amountText(window, remaining: showsRemaining) : nil
+        )
+        .transition(Self.rowTransition)
+    }
+
+    private var details: some View {
+        VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
+            // Keep every other quota in source order, including the last one.
+            ForEach(detailWindows) { window in
+                quotaRow(window)
             }
 
             // **A card with only a title in it reads as a card that failed to
@@ -346,8 +407,6 @@ struct UsageDetailCard: View {
                     .transition(Self.rowTransition)
             }
         }
-        .padding(DetailCardLayout.padding)
-        .frame(width: DetailCardLayout.width, alignment: .leading)
     }
 
     /// The soonest available credit's expiry, with the year: a credit can
@@ -395,12 +454,17 @@ struct UsageDetailCard: View {
         )
     }
 
+    private var pointerLength: CGFloat {
+        edge.isVertical ? DetailCardLayout.pointerWidth
+            : min(DetailCardLayout.pointerWidth, max(maxHeight ?? DetailCardLayout.pointerWidth, 0))
+    }
+
     private var bubble: UsageBubbleShape {
         UsageBubbleShape(
             edge: edge,
             pointerCenter: pointerCenter,
             cornerRadius: DetailCardLayout.cornerRadius,
-            pointerWidth: DetailCardLayout.pointerWidth,
+            pointerWidth: pointerLength,
             pointerHeight: DetailCardLayout.pointerHeight
         )
     }

@@ -55,21 +55,32 @@ extension PanelGlobalsSuite {
         }
     }
 
-    /// The room a card has beyond a rail lying across, which is what limits it
-    /// and makes it scroll when the screen cannot hold it.
+    /// Available card height on every edge, including a rail standing upright.
     @Suite("Card room")
     struct CardRoomTests {
         private let visible = CGRect(x: 0, y: 72, width: 1470, height: 855)
         private let rail = CGSize(width: 400, height: 64)
 
-        @Test("Below a rail it is down to the visible bottom, above one up to the visible top, less the gap; none down a side")
+        @Test("Every edge has bounded room, with the rail-to-screen gap respected across")
         func room() {
             // Rail top at y 600: its bottom is 536, 464 above the Dock's line.
             let below = PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: 600), rail: rail, in: visible)
             #expect(below == 600 - 64 - 72 - DetailCardLayout.horizontalGap)
             let above = PanelPlacement.cardRoom(edge: .bottom, railOrigin: CGPoint(x: 0, y: 600), rail: rail, in: visible)
             #expect(above == 72 + 855 - 600 - DetailCardLayout.horizontalGap)
-            #expect(PanelPlacement.cardRoom(edge: .left, railOrigin: .zero, rail: rail, in: visible) == nil)
+            for edge in [PanelEdge.left, .right] {
+                #expect(PanelPlacement.cardRoom(edge: edge, railOrigin: .zero, rail: rail, in: visible)
+                    == visible.height * DetailCardLayout.maximumScreenFraction)
+            }
+            // A docked rail can have more room than the card should occupy.
+            #expect(PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: visible.maxY),
+                                           rail: rail, in: visible)
+                == visible.height * DetailCardLayout.maximumScreenFraction)
+            let offset = visible.offsetBy(dx: -1800, dy: -400)
+            #expect(PanelPlacement.cardRoom(edge: .bottom, railOrigin: CGPoint(x: offset.minX, y: 200),
+                                           rail: rail, in: offset)
+                == offset.maxY - 200 - DetailCardLayout.horizontalGap)
+            #expect(PanelPlacement.cardRoom(edge: .right, railOrigin: .zero, rail: rail, in: .zero) == 0)
             // Never negative, whatever the rail is doing.
             #expect(PanelPlacement.cardRoom(edge: .top, railOrigin: CGPoint(x: 0, y: 80), rail: rail, in: visible) == 0)
         }
