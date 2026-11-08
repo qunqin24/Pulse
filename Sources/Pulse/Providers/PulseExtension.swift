@@ -1,5 +1,6 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
+import ImageIO
 
 /// A program in the extensions folder that reports one account's usage.
 ///
@@ -25,6 +26,19 @@ struct PulseExtension: Identifiable, Equatable, Sendable {
     let executable: URL
     /// How long a run may take before it is stopped.
     let timeout: TimeInterval
+    /// Validated PNG bytes from this extension's folder. Capturing the bytes
+    /// makes a same-path icon replacement observable on the next scan.
+    let iconData: Data?
+
+    init(id: String, name: String, directory: URL, executable: URL,
+         timeout: TimeInterval, iconData: Data? = nil) {
+        self.id = id
+        self.name = name
+        self.directory = directory
+        self.executable = executable
+        self.timeout = timeout
+        self.iconData = iconData
+    }
 
     var account: AccountKey { AccountKey(.pulseExtension, slot: id) }
 }
@@ -103,6 +117,47 @@ enum ExtensionCatalog {
         let name: String
         let executable: String
         let timeoutSeconds: Double?
+        let icon: IconPath?
+    }
+
+    /// An optional presentation field must not disable a working program if
+    /// its value has the wrong type.
+    private struct IconPath: Decodable {
+        let value: String?
+
+        init(from decoder: Decoder) throws {
+            value = try? decoder.singleValueContainer().decode(String.self)
+        }
+    }
+
+    static let iconByteCeiling = 256 * 1024
+    static let iconDimensionCeiling = 1024
+
+    /// Read a bounded local PNG during discovery, never during drawing. An
+    /// unavailable or invalid icon leaves the program and its readings intact.
+    private static func iconData(at path: String?, in root: URL) -> Data? {
+        guard let path, !path.isEmpty, !path.hasPrefix("/") else { return nil }
+        let file = root.appending(path: path).resolvingSymlinksInPath().standardizedFileURL
+        guard file.path.hasPrefix(root.path + "/"),
+              let values = try? file.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey]),
+              values.isRegularFile == true,
+              let size = values.fileSize, (1...iconByteCeiling).contains(size),
+              let handle = try? FileHandle(forReadingFrom: file)
+        else { return nil }
+        defer { try? handle.close() }
+        guard let data = try? handle.read(upToCount: iconByteCeiling + 1),
+              !data.isEmpty, data.count <= iconByteCeiling,
+              let source = CGImageSourceCreateWithData(data as CFData, nil),
+              CGImageSourceGetType(source) as String? == "public.png",
+              CGImageSourceGetCount(source) == 1,
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [String: Any],
+              let width = properties[kCGImagePropertyPixelWidth as String] as? Int,
+              let height = properties[kCGImagePropertyPixelHeight as String] as? Int,
+              (1...iconDimensionCeiling).contains(width),
+              (1...iconDimensionCeiling).contains(height),
+              CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCache: false] as CFDictionary) != nil
+        else { return nil }
+        return data
     }
 
     /// Letters, digits and `.-_`, lowercase, starting with a letter or digit.
@@ -192,7 +247,8 @@ enum ExtensionCatalog {
             name: String(name.prefix(60)),
             directory: root,
             executable: executable,
-            timeout: timeout
+            timeout: timeout,
+            iconData: iconData(at: manifest.icon?.value, in: root)
         ))
     }
 }

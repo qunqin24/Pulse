@@ -7,7 +7,8 @@ An extension is a program you add yourself, and it reports **one account's** usa
 Scope, schema 1:
 
 - **Rings, and rows on the card.** One account per extension, drawn with Pulse's own components: its limits and balance drive the ring, and its metrics are rows on the card under them. An extension cannot draw anything of its own, and cannot load code into Pulse.
-- **Not yet in this schema:** several accounts from one program, an icon of its own, and a metric shown on the rail. Every extension shows the same puzzle-piece mark, and its name tells it apart.
+- **An optional local icon.** A manifest can name a PNG inside its own folder; Pulse draws it in its original colours. Without a usable icon, the extension keeps the puzzle-piece mark.
+- **Not yet in this schema:** several accounts from one program and a metric shown on the rail.
 
 ## Where it lives
 
@@ -41,8 +42,19 @@ Pulse reads the folder when it starts and when that pane opens. After adding or 
 | `name` | Shown on the rail's card, in Settings and in notifications. Trimmed and cut to 60 characters. It is never translated. |
 | `executable` | A path relative to the folder. After links and `..` are resolved, it must still be a file **inside the folder** and executable. `/bin/sh` or `../other/run` is refused, so the folder Settings shows is always the folder whose program runs. |
 | `timeoutSeconds` | Optional; default 20, kept within 1–60. |
+| `icon` | Optional relative path to a PNG inside this extension's folder, such as `"icon.png"`. See below. |
 
 Reading a manifest never runs anything.
+
+### Optional icon
+
+Place a PNG in the extension folder and add `"icon": "icon.png"` to the manifest. Pulse draws that account's icon on the ring, in the card header, settings rows and menu marks. It preserves the image's original colours and aspect ratio. Selecting a robot for the ring still takes precedence there.
+
+The image must be a regular file **inside the extension's own folder**, after symlinks and `..` are resolved. Absolute paths and remote URLs are not supported. The file must contain one PNG image, use at most **256 KiB**, and measure **1–1024 pixels on each side**. Pulse reads and validates the bytes during discovery, never while drawing or by asking the extension to run.
+
+A missing, unreadable, invalid or oversized icon — or an `icon` value of the wrong type — falls back to the existing puzzle-piece mark without disabling the extension. Old manifests need no changes. This is an optional addition to schema 1: older Pulse builds ignore it and keep their generic mark.
+
+Press **Look again** after changing or removing the image. Pulse snapshots the bytes on each scan, so replacing the contents at the same path updates the displayed icon without changing the account identity or refreshing its usage.
 
 ## How Pulse runs it
 

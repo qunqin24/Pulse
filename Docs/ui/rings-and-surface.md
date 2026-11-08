@@ -102,6 +102,8 @@ Two one-off gestures play over the mood when their fact becomes true (`RobotCue`
 
 ## Icons
 
-`LobeIconView` is a template image with **no colour of its own**. Do not hardcode white there: the settings sidebar needs the ordinary label colour.
+`LobeIconView` draws **bundled marks as template images with no colour of their own**. Do not hardcode white there: the settings sidebar needs the ordinary label colour. An extension's optional PNG is drawn in its **original colours**, so an opaque background does not erase an interior glyph. The same account snapshot supplies the ring, card header, settings rows and menu marks; see [../extensions.md](../extensions.md#optional-icon).
+
+`LobeIconStore` caches bundled SVGs by resource name and extension PNGs separately by byte content, with limits of 64 images and 16 MiB estimated cost. A rescan with new bytes selects a new image even at the same filename; two extensions cannot share a mark merely because their filenames match. Menu-sized copies preserve aspect ratio without resizing the cached image.
 
 **On a ring it fills the icon disc** (`UsageRingView.iconScale` 1.0, 20pt at standard size, 16pt with the second ring on). 0.8 read small beside the robot; 0.9 and 1.0 were drawn side by side and 1.0 was picked, accepting that a busy ring's activity arc and the second ring pass close to the glyph.

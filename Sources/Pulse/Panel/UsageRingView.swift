@@ -85,6 +85,8 @@ struct UsageRingView: View {
     var robot: RobotCue?
     /// False while the rail is collapsed, which stops the robot's timeline.
     var isLive: Bool = true
+    /// The account's discovered PNG, or nil for the bundled provider mark.
+    var iconData: Data? = nil
 
     @State private var spinning = false
     @State private var refreshSpinning = false
@@ -317,7 +319,8 @@ struct UsageRingView: View {
         } else {
             LobeIconView(
                 provider: provider,
-                size: centreDiameter * Self.iconScale
+                size: centreDiameter * Self.iconScale,
+                iconData: iconData
             )
         }
     }
@@ -445,28 +448,31 @@ struct UsageRingView: View {
 }
 
 struct LobeIconView: View {
-    /// The SVG in `Resources` to draw, without its extension.
+    /// The fallback SVG in `Resources` to draw, without its extension.
     let resource: String
     let size: CGFloat
+    let iconData: Data?
 
-    init(provider: Provider, size: CGFloat) {
+    init(provider: Provider, size: CGFloat, iconData: Data? = nil) {
         self.resource = provider.iconResource
         self.size = size
+        self.iconData = iconData
     }
 
     /// For a mark that belongs to an agent rather than to a provider. See
     /// `LobeIconStore`.
-    init(resource: String, size: CGFloat) {
+    init(resource: String, size: CGFloat, iconData: Data? = nil) {
         self.resource = resource
         self.size = size
+        self.iconData = iconData
     }
 
     var body: some View {
         Group {
-            if let image = LobeIconStore.image(named: resource) {
+            if let image = LobeIconStore.image(named: resource, iconData: iconData) {
                 Image(nsImage: image)
                     .resizable()
-                    .renderingMode(.template)
+                    .renderingMode(image.isTemplate ? .template : .original)
                     .scaledToFit()
             } else {
                 Image(systemName: "questionmark")
@@ -480,8 +486,8 @@ struct LobeIconView: View {
     }
 }
 
-/// Loads the bundled Lobe Icons (https://github.com/lobehub/lobe-icons) once
-/// and keeps them around, keyed by provider.
+/// Loads bundled Lobe Icons (https://github.com/lobehub/lobe-icons) by resource
+/// name, or an extension's PNG snapshot by content in a separate bounded cache.
 ///
 /// The icons ship as SVG, which `NSImage` renders as vectors, so one file
 /// serves every size the app draws at (36pt in the dock rail, 16pt in the
@@ -514,7 +520,17 @@ enum LobeIconStore {
     /// handful of them.
     private static var images: [String: NSImage] = [:]
 
-    static func image(named name: String) -> NSImage? {
+    /// NSData compares bytes, so two accounts cannot collide just because they
+    /// share a filename, and changed bytes after a rescan get a new image.
+    private static let externalImages: NSCache<NSData, NSImage> = {
+        let cache = NSCache<NSData, NSImage>()
+        cache.countLimit = 64
+        cache.totalCostLimit = 16 * 1024 * 1024
+        return cache
+    }()
+
+    static func image(named name: String, iconData: Data? = nil) -> NSImage? {
+        if let iconData, let image = externalImage(data: iconData) { return image }
         if let cached = images[name] { return cached }
         guard
             let url = Bundle.module.url(forResource: name, withExtension: "svg"),
@@ -528,8 +544,21 @@ enum LobeIconStore {
         return image
     }
 
-    static func image(for provider: Provider) -> NSImage? {
-        image(named: provider.iconResource)
+    static func image(for provider: Provider, iconData: Data? = nil) -> NSImage? {
+        image(named: provider.iconResource, iconData: iconData)
+    }
+
+    private static func externalImage(data: Data) -> NSImage? {
+        let key = data as NSData
+        if let cached = externalImages.object(forKey: key) { return cached }
+        guard let image = NSImage(data: data), image.isValid else { return nil }
+        // PNGs are app artwork: treating their opaque interiors as a template
+        // would erase details such as a black glyph on a white background.
+        image.isTemplate = false
+        let cost = image.representations.compactMap { $0 as? NSBitmapImageRep }
+            .reduce(data.count) { $0 + $1.bytesPerRow * $1.pixelsHigh }
+        externalImages.setObject(image, forKey: key, cost: cost)
+        return image
     }
 }
 

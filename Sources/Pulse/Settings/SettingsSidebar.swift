@@ -147,7 +147,8 @@ struct SettingsSidebar: View {
         } icon: {
             switch pane {
             case .account(let account):
-                LobeIconView(provider: account.provider, size: 14)
+                LobeIconView(provider: account.provider, size: 14,
+                             iconData: settings.pulseExtension(for: account)?.iconData)
             default:
                 Image(systemName: pane.symbol)
             }

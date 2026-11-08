@@ -435,6 +435,8 @@ struct RailEntry: Identifiable, Equatable {
     var showsRemaining: Bool = false
     /// The robot in place of the provider's mark, or nil for the mark.
     var robot: RobotCue?
+    /// The account's discovered PNG, shared by its ring and detail card.
+    var iconData: Data? = nil
 
     var id: String { slot.id }
 }
@@ -752,7 +754,8 @@ private struct UsageDockItem: View {
             secondFraction: entry.second?.usedFraction,
             secondIsSpent: UsageTint.isSpent(entry.second),
             robot: entry.robot,
-            isLive: isInteractive
+            isLive: isInteractive,
+            iconData: entry.iconData
         )
         .scaleEffect(isSelected ? 1.06 : 1)
     }

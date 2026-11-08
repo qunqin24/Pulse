@@ -200,6 +200,8 @@ struct UsageDetailCard: View {
     /// Available screen height, pointer included. Even without a placement
     /// limit the body must fit the fixed panel's card budget.
     var maxHeight: CGFloat?
+    /// The account's discovered PNG, or nil for the bundled provider mark.
+    var iconData: Data? = nil
     /// The header's and the details' measured heights, for the account they
     /// were measured on. The card is one view across every account, so a
     /// height measured on the last one must not lay out the next.
@@ -690,7 +692,7 @@ struct UsageDetailCard: View {
         ZStack(alignment: .leading) {
             VStack(alignment: .leading, spacing: DetailCardLayout.headerLineSpacing) {
                 HStack(spacing: 8) {
-                    LobeIconView(provider: usage.provider, size: DetailCardLayout.headerIconSize)
+                    LobeIconView(provider: usage.provider, size: DetailCardLayout.headerIconSize, iconData: iconData)
                         .foregroundStyle(.primary)
 
                     Text(localized: "\(title ?? usage.provider.displayName) Usage")
