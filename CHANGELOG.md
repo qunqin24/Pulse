@@ -7,6 +7,20 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.12.8
+
+**中文**
+
+**改进与修复**
+
+- **详情卡片过长时可以滚动。** 额度很多的账号，卡片保持原有高度，标题固定在顶部，其余内容在卡片内滚动。感谢 [@Jiar](https://github.com/qunqin24/Pulse/pull/107) 贡献。
+
+**English**
+
+**Changed and fixed**
+
+- **Long detail cards scroll.** An account with many limits keeps its card at the usual height, with the title fixed at the top and the rest scrolling inside the card. Thanks to [@Jiar](https://github.com/qunqin24/Pulse/pull/107) for the contribution.
+
 ## 1.12.7
 
 **中文**
