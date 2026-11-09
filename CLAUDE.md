@@ -53,7 +53,7 @@ swift build
 | 玻璃效果、圆环、颜色、活动标记 | [Docs/ui/rings-and-surface.md](Docs/ui/rings-and-surface.md) |
 | 设置窗口的文案与布局 | [Docs/ui/settings.md](Docs/ui/settings.md) |
 | 刷新、缓存、活动、账本 | [Docs/refresh-and-data.md](Docs/refresh-and-data.md) |
-| Token 消耗页面、agent、消耗读取器 | [Docs/token-spend.md](Docs/token-spend.md) |
+| Token 消耗页面、agent、消耗读取器 | [Docs/token-spend.md](Docs/token-spend.md) / [Docs/token-spend-sources.md](Docs/token-spend-sources.md) |
 | 月度与年度回顾卡片和窗口 | [Docs/recap.md](Docs/recap.md) |
 | 通知与提醒规则 | [Docs/notifications.md](Docs/notifications.md) |
 | 测试范围与样例数据 | [Docs/testing.md](Docs/testing.md) |
@@ -62,8 +62,12 @@ swift build
 | 重置后启动用量窗口 | [Docs/window-starter.md](Docs/window-starter.md) |
 | 本地化、资源、新增界面 | [Docs/development.md](Docs/development.md) |
 | 打包、打 tag、Sparkle、DMG | [Docs/releasing.md](Docs/releasing.md) / [Docs/build-from-source.md](Docs/build-from-source.md) |
+| 更新检查的镜像、更新后的开发者留言 | [Docs/update-mirror.md](Docs/update-mirror.md) / [Docs/update-message.md](Docs/update-message.md) |
+| 代理与网络请求 | [Docs/networking.md](Docs/networking.md) |
+| 扩展（用户添加的程序） | [Docs/extensions.md](Docs/extensions.md) |
+| 功能全貌、支持的服务商列表 | [Docs/features.md](Docs/features.md) / [Docs/supported-services.md](Docs/supported-services.md) |
 | 设计缘由与失败教训 | [Docs/decisions/README.md](Docs/decisions/README.md) |
-| 服务商读取通道与额外账号 | [Docs/providers/README.md](Docs/providers/README.md) |
+| 服务商读取通道与额外账号 | [Docs/providers/README.md](Docs/providers/README.md)（Ollama Cloud 的页面解析见 [Docs/ollama-cloud.md](Docs/ollama-cloud.md)） |
 
 ## 当前事实（关键时请在代码里核实）
 

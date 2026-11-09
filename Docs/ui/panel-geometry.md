@@ -80,7 +80,7 @@ Other rules:
   - **One scroll view across accounts.** A new account scrolls back to the top (`ScrollViewReader`, without animation). Giving the scroll view the account as its `.id` replaced it inside the card's spring, and two accounts' rows cross-faded over each other.
   - **Heights are measured per account.** The card is one view across accounts, so the header's and the rows' measured heights are kept with the account they were measured on; a new account is estimated from its own limits until it is measured. Reusing the last account's height laid the first frame out at the wrong size and the card jumped.
   - **A 75%-of-screen card** (PR #107 as submitted) was a column down the whole side of the screen, far from its ring. Six rows and a scroll read as one card.
-  - Short cards keep their natural height and disable scrolling and bounce. If even the header plus one row cannot fit, the whole card scrolls. Opening, switching and scrolling never resize the panel or move the rail. `CardRoomTests`, `DetailCardOverflowTests`.
+  - Short cards keep their natural height and disable scrolling and bounce. If even the header plus one row cannot fit, the whole card scrolls. Opening, switching and scrolling never resize the panel or move the rail. `CardRoomTests`, `DetailCardViewportTests`, `DetailCardOverflowTests`, `DetailCardAnchorTests`.
 - Any display, remembered by **UUID**, not `CGDirectDisplayID`; missing display → main. `didChangeScreenParametersNotification` re-places (not during a drag).
 - Clamp each frame to the screen under the **pointer**, not the window's screen, or a second monitor is unreachable.
 - Store the **rail's** position, never the window's: the window is much wider, and the rail's side flips at screen mid.

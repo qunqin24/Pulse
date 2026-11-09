@@ -1,4 +1,4 @@
-# DimAgent
+# Set up DimAgent in Pulse
 
 1. Install the Dim CLI and sign in with `dim auth login`.
 2. Run `dim usage --json` once to confirm your subscription is readable. Pulse was checked against dimcode 0.5.21.

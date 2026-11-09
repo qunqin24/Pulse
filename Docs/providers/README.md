@@ -281,6 +281,6 @@ A provider with a status page Pulse can read gets a **Service status** group in 
 - A case in `Provider.HandWrittenProvider` itself (`UsageProvider.swift`).
 - An SVG in `Sources/Pulse/Resources/`, and a service returning `ProviderUsage`.
 - Branches in `UsageStore` refresh and `fetchAdded` if relevant. `AgentActivity` and `UsageLedger` return optional roots, so an agent with no transcripts opts out there.
-- This directory updated in the same patch, and a user setup page in [`../setup/`](../setup/) under the slug `ConnectionRemedy.helpURL` gives it — the in-app **Setup help** link opens that page.
+- This directory updated in the same patch, and a user setup page in [`../setup/`](../setup/) under the slug `ConnectionRemedy.helpURL` gives it, listed in that folder's README — the in-app **Setup help** link opens that page.
 
 Do not document how to obtain someone else's auth tokens in issues or the repo. Do not paste session cookies, keys or page HTML into pull requests.
