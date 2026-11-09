@@ -216,21 +216,42 @@ final class PanelPlacement {
         return !visible.insetBy(dx: -0.5, dy: -0.5).contains(rect)
     }
 
-    /// How tall a card may be on the side it opens to, for a rail lying
-    /// across: from the rail to the screen's usable edge, less the gap. Nil
-    /// down a side, where the card slides along the rail instead. Set where
-    /// the panel is placed, never persisted (`UsageDetailCard.maxHeight`).
+    /// The card's height limit, including a vertical pointer. Computed for
+    /// every edge at placement and while dragging, never persisted.
     var cardRoom: CGFloat?
+    /// Granted panel geometry, shared by card placement and pointer hit bands.
+    /// These are transient measurements, never persisted or driven by a card.
+    private(set) var panelSize: CGSize?
+    private(set) var cardPlacementBounds: CGRect?
 
-    /// The room a card has beyond a lying rail whose top-left is `railOrigin`.
+    /// Converts the owning screen's usable area to the actual panel's flipped
+    /// coordinates. Preserve the origin: an oversized window can extend above it.
+    static func cardBounds(visible: CGRect, panelFrame: CGRect) -> CGRect {
+        let local = CGRect(x: visible.minX - panelFrame.minX,
+                           y: panelFrame.maxY - visible.maxY,
+                           width: visible.width, height: visible.height)
+        let bounds = local.intersection(CGRect(origin: .zero, size: panelFrame.size))
+        return bounds.isNull || bounds.isEmpty ? .zero : bounds
+    }
+
+    func setPanelFrame(_ frame: CGRect, visible: CGRect) {
+        panelSize = frame.size
+        cardPlacementBounds = Self.cardBounds(visible: visible, panelFrame: frame)
+    }
+
+    /// The card's height limit, pointer included: the card budget, and for a
+    /// rail lying across no more than the room between the rail and the
+    /// usable edge, less the gap. Beside a side rail the pointer is on the
+    /// card's flank and takes no height.
     static func cardRoom(edge: PanelEdge, railOrigin: CGPoint, rail: CGSize, in visible: CGRect) -> CGFloat? {
+        let budget = DetailCardLayout.screenHeightLimit(in: visible)
         let room: CGFloat
         switch edge {
         case .top: room = (railOrigin.y - rail.height) - visible.minY
         case .bottom: room = visible.maxY - railOrigin.y
-        case .left, .right: return nil
+        case .left, .right: return max(min(visible.height - DetailCardLayout.horizontalGap, budget), 0)
         }
-        return max(room - DetailCardLayout.horizontalGap, 0)
+        return max(min(room - DetailCardLayout.horizontalGap, budget + DetailCardLayout.pointerWidth), 0)
     }
 
     /// Which display the rail was left on, as `PanelScreen` names them.

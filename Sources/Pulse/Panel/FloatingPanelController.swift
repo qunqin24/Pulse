@@ -45,16 +45,19 @@ final class FloatingPanelController {
             for edge: PanelEdge,
             notchSize: CGSize? = nil,
             capacity: Int = PanelMetrics.railCapacity,
-            docked: Bool = true
+            docked: Bool = true,
+            cardHeight: CGFloat = DetailCardLayout.maximumHeight
         ) -> CGSize {
-            let size = unrounded(for: edge, notchSize: notchSize, capacity: capacity, docked: docked)
+            let size = unrounded(for: edge, notchSize: notchSize, capacity: capacity,
+                                 docked: docked, cardHeight: max(cardHeight, 0))
             return CGSize(width: size.width.rounded(.up), height: size.height.rounded(.up))
         }
 
         /// `docked` only moves the lying rail's thickness: free across with
         /// its figures under the rings it is thicker than the top dock, and
         /// the top dock keeps exactly its own budget.
-        private static func unrounded(for edge: PanelEdge, notchSize: CGSize?, capacity: Int, docked: Bool) -> CGSize {
+        private static func unrounded(for edge: PanelEdge, notchSize: CGSize?, capacity: Int,
+                                      docked: Bool, cardHeight: CGFloat) -> CGSize {
             // Card + its pointer + the gap after it, which is the room the
             // card unfolds into whichever way it unfolds.
             let reach = DetailCardLayout.width
@@ -70,7 +73,7 @@ final class FloatingPanelController {
                     // beside it. A card taller than the window gets sliced off
                     // flat against its edge, which reads as a drawing bug
                     // rather than as a card that didn't fit.
-                    height: max(DockLayout.maximumLength(on: .vertical, capacity: capacity), DetailCardLayout.maximumHeight)
+                    height: max(DockLayout.maximumLength(on: .vertical, capacity: capacity), cardHeight)
                 )
             case .horizontal:
                 // At a notch, the housing **and** the fillets either side of
@@ -86,7 +89,7 @@ final class FloatingPanelController {
                         + (notchSize?.height ?? 0)
                         + DetailCardLayout.horizontalGap
                         + DetailCardLayout.pointerWidth
-                        + DetailCardLayout.maximumHeight
+                        + cardHeight
                 )
             }
         }
@@ -466,7 +469,8 @@ final class FloatingPanelController {
             in: placement.room(visible: screen.visibleFrame, screen: screen.frame),
             topEdge: FloatingPanel.topEdge(of: screen),
             bottomEdge: screen.frame.minY,
-            panel: Layout.size(for: edge, notchSize: placement.notch?.size, docked: placement.isDocked),
+            panel: Layout.size(for: edge, notchSize: placement.notch?.size, docked: placement.isDocked,
+                               cardHeight: DetailCardLayout.screenHeightLimit(in: screen.visibleFrame)),
             rail: railSize
         )
 
@@ -478,6 +482,7 @@ final class FloatingPanelController {
             beyond: PanelPlacement.isBeyond(screen.visibleFrame, railOrigin: layout.railOrigin, rail: railSize)
         )
         panel.setFrame(layout.frame, display: true)
+        placement.setPanelFrame(panel.frame, visible: screen.visibleFrame)
         // **Measured against the frame the window actually got**, not the one
         // it was asked for. The panel is as tall as a rail with every account
         // on, which is taller than a laptop's usable screen, and AppKit will
@@ -752,7 +757,7 @@ private final class FloatingPanel: NSPanel {
             // drawing back while the rail already follows the hand inside
             // it; only then does the rail stand free. Cut short if the rail
             // would leave the window.
-            let inside = distance < Self.room(inside: held, rail: rail, notch: placement.notch) - 2
+            let inside = distance < Self.room(inside: held, rail: rail, notch: placement.notch, visible: visible) - 2
             let now = CACurrentMediaTime()
             if !elsewhere {
                 if let since = partingSince {
@@ -916,8 +921,11 @@ private final class FloatingPanel: NSPanel {
 
     /// How far a rail can be drawn in from `edge` and stay inside the window
     /// the dock gives it.
-    private static func room(inside edge: PanelEdge, rail: CGSize, notch: CGRect?) -> CGFloat {
-        let panel = FloatingPanelController.Layout.size(for: edge, notchSize: notch?.size, docked: true)
+    private static func room(inside edge: PanelEdge, rail: CGSize, notch: CGRect?, visible: CGRect) -> CGFloat {
+        let panel = FloatingPanelController.Layout.size(
+            for: edge, notchSize: notch?.size, docked: true,
+            cardHeight: DetailCardLayout.screenHeightLimit(in: visible)
+        )
         return edge.isVertical
             ? panel.width - rail.width
             : panel.height - rail.height - (notch?.height ?? 0)
@@ -1061,7 +1069,8 @@ private final class FloatingPanel: NSPanel {
 
         placement.notch = target.notch
         let panelSize = FloatingPanelController.Layout.size(
-            for: placement.edge, notchSize: target.notch?.size, docked: target.dock.isDocked
+            for: placement.edge, notchSize: target.notch?.size, docked: target.dock.isDocked,
+            cardHeight: DetailCardLayout.screenHeightLimit(in: visible)
         )
 
         // One source of truth for the geometry: ask the placement where that
@@ -1081,6 +1090,7 @@ private final class FloatingPanel: NSPanel {
             beyond: PanelPlacement.isBeyond(visible, railOrigin: layout.railOrigin, rail: target.rail)
         )
         setFrame(layout.frame, display: true)
+        placement.setPanelFrame(frame, visible: visible)
         // Same rule as `placePanel`: the frame is a request, and on a screen
         // the panel does not fit the rail has to be measured against what the
         // window was actually given, or it slides out from under the pointer
@@ -1116,7 +1126,10 @@ private final class FloatingPanel: NSPanel {
             in: room,
             topEdge: Self.topEdge(of: screen),
             bottomEdge: screen.frame.minY,
-            panel: FloatingPanelController.Layout.size(for: placement.edge, notchSize: notch?.size, docked: true),
+            panel: FloatingPanelController.Layout.size(
+                for: placement.edge, notchSize: notch?.size, docked: true,
+                cardHeight: DetailCardLayout.screenHeightLimit(in: screen.visibleFrame)
+            ),
             rail: rail
         )
         return CGPoint(x: layout.railOrigin.x, y: layout.railOrigin.y - rail.height)
