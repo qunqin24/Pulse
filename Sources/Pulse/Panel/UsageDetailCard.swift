@@ -75,6 +75,10 @@ enum DetailCardLayout {
     /// than growing into a column down the screen.
     static var maximumHeight: CGFloat { height(forWindows: 6, footnote: true) }
 
+    /// How far a long card's scrolled rows fade under its header. Taken out
+    /// of `contentSpacing`, so it must stay smaller than that.
+    static var topFade: CGFloat { 8 * PanelMetrics.scale }
+
     /// The card budget on a display: `maximumHeight`, or less on a screen too
     /// short to leave a quarter of it clear around the card.
     static func screenHeightLimit(in visible: CGRect) -> CGFloat {
@@ -196,8 +200,10 @@ struct UsageDetailCard: View {
     /// Available screen height, pointer included. Even without a placement
     /// limit the body must fit the fixed panel's card budget.
     var maxHeight: CGFloat?
-    @State private var summaryHeight: CGFloat?
-    @State private var detailHeight: CGFloat?
+    /// The header's and the details' measured heights, for the account they
+    /// were measured on. The card is one view across every account, so a
+    /// height measured on the last one must not lay out the next.
+    @State private var measured = MeasuredHeights()
 
     var body: some View {
         bounded
@@ -220,80 +226,108 @@ struct UsageDetailCard: View {
         .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
     }
 
-    private var hasDetails: Bool {
-        if !usage.windows.isEmpty || resetCredits != nil || !usage.metrics.isEmpty || saysNothing
-            || footnote != nil || (isDetailed && (spend != nil || qoderCredits != nil)) {
-            return true
+    private struct MeasuredHeights {
+        var account = ""
+        var summary: CGFloat?
+        var details: CGFloat?
+    }
+
+    /// What a height is reported against: the same height on another account
+    /// is a new measurement, not an unchanged one.
+    private struct Measurement: Equatable {
+        let account: String
+        let height: CGFloat
+    }
+
+    private func record(_ measurement: Measurement, summary: Bool) {
+        if measured.account != measurement.account {
+            measured = MeasuredHeights(account: measurement.account)
         }
-        if (usage.windows.isEmpty || usage.provider == .pulseExtension), usage.creditBalance != nil { return true }
-        if case .unavailable = usage.state { return true }
-        return false
+        if summary { measured.summary = measurement.height } else { measured.details = measurement.height }
+    }
+
+    private var current: MeasuredHeights {
+        measured.account == usage.account.id ? measured : MeasuredHeights(account: usage.account.id)
     }
 
     private var viewport: DetailCardViewport {
-        let summary = summaryHeight ?? (DetailCardLayout.headerHeight
-            + (isDetailed ? DetailCardLayout.rowTextLineHeight : 0))
+        // Until this account's rows are measured, estimate them from its own
+        // limits rather than the last account's height.
+        let summary = current.summary ?? (DetailCardLayout.headerHeight
+            + (isDetailed ? DetailCardLayout.headerLineSpacing + DetailCardLayout.footnoteHeight : 0))
+        let rows = CGFloat(max(usage.windows.count, 1))
+        let details = current.details
+            ?? rows * DetailCardLayout.rowHeight + (rows - 1) * DetailCardLayout.contentSpacing
         return DetailCardViewport(
             limit: DetailCardViewport.bodyLimit(
                 maxHeight: maxHeight, fallbackHeight: DetailCardLayout.maximumHeight,
                 pointerHeight: edge.isVertical ? 0 : DetailCardLayout.pointerWidth),
             summary: summary,
-            details: hasDetails ? (detailHeight ?? DetailCardLayout.rowHeight) : 0,
+            details: details,
             spacing: DetailCardLayout.contentSpacing, padding: DetailCardLayout.padding,
-            minimumDetailHeight: DetailCardLayout.rowHeight
+            minimumDetailHeight: DetailCardLayout.rowHeight,
+            fade: DetailCardLayout.topFade
         )
     }
+
+    /// The top of the scrolled content, which a new account scrolls back to.
+    private static let scrollTop = "detail-card-top"
 
     /// Always bounded by the fixed window, on every edge. Short cards keep
     /// their natural height. A long card keeps its header and scrolls the
     /// rest, with no scroller: the rows fade into the card's foot instead, so
     /// every row keeps the card's full width. Only an unusually small
     /// placement scrolls the header too.
-    @ViewBuilder
+    ///
+    /// **One scroll view across accounts, scrolled back to the top on a new
+    /// one.** Giving it the account as its identity replaced the whole view
+    /// inside the card's spring, and the two accounts' rows cross-faded over
+    /// each other.
     private var bounded: some View {
         let layout = viewport
-        if layout.fixesSummary {
-            let fades = layout.scrolls
-            VStack(alignment: .leading,
-                   spacing: hasDetails ? DetailCardLayout.contentSpacing - (fades ? Self.topFade : 0) : 0) {
-                measuredSummary
-                if hasDetails {
+        return ScrollViewReader { proxy in
+            Group {
+                if layout.fixesSummary {
+                    VStack(alignment: .leading, spacing: layout.stackSpacing) {
+                        measuredSummary
+                        ScrollView(.vertical) {
+                            measuredDetails
+                                .padding(.top, layout.topFade)
+                                .padding(.bottom, layout.bottomFade)
+                                .id(Self.scrollTop)
+                        }
+                        .scrollIndicators(.never)
+                        .defaultScrollAnchor(.top)
+                        .scrollBounceBehavior(.basedOnSize)
+                        .scrollDisabled(!layout.scrolls)
+                        .mask { Self.fadeMask(top: layout.topFade, bottom: layout.bottomFade) }
+                        .frame(height: layout.scrollHeight)
+                    }
+                    .padding([.horizontal, .top], DetailCardLayout.padding)
+                    .padding(.bottom, layout.bottomPadding)
+                    .frame(width: DetailCardLayout.width, height: layout.height, alignment: .topLeading)
+                } else {
                     ScrollView(.vertical) {
-                        measuredDetails
-                            .padding(.top, fades ? Self.topFade : 0)
-                            .padding(.bottom, fades ? DetailCardLayout.padding : 0)
+                        VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
+                            measuredSummary
+                            measuredDetails
+                        }
+                        .padding(DetailCardLayout.padding)
+                        .id(Self.scrollTop)
                     }
                     .scrollIndicators(.never)
                     .defaultScrollAnchor(.top)
                     .scrollBounceBehavior(.basedOnSize)
-                    .scrollDisabled(!fades)
-                    .mask { Self.fadeMask(top: fades ? Self.topFade : 0, bottom: fades ? DetailCardLayout.padding : 0) }
-                    // Into the card's bottom padding, so the fade ends at its edge.
-                    .frame(height: layout.detailHeight + (fades ? Self.topFade + DetailCardLayout.padding : 0))
-                    .id(usage.account.id)
+                    .frame(width: DetailCardLayout.width, height: layout.height)
                 }
             }
-            .padding([.horizontal, .top], DetailCardLayout.padding)
-            .padding(.bottom, fades ? 0 : DetailCardLayout.padding)
-            .frame(width: DetailCardLayout.width, height: layout.height, alignment: .topLeading)
-        } else {
-            ScrollView(.vertical) {
-                VStack(alignment: .leading, spacing: hasDetails ? DetailCardLayout.contentSpacing : 0) {
-                    measuredSummary
-                    if hasDetails { measuredDetails }
-                }
-                .padding(DetailCardLayout.padding)
+            .onChange(of: usage.account.id) {
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { proxy.scrollTo(Self.scrollTop, anchor: .top) }
             }
-            .scrollIndicators(.never)
-            .defaultScrollAnchor(.top)
-            .scrollBounceBehavior(.basedOnSize)
-            .frame(width: DetailCardLayout.width, height: layout.height)
-            .id(usage.account.id)
         }
     }
-
-    /// The scrolled rows fade under the header over this distance.
-    private static var topFade: CGFloat { 8 * PanelMetrics.scale }
 
     private static func fadeMask(top: CGFloat, bottom: CGFloat) -> some View {
         VStack(spacing: 0) {
@@ -304,16 +338,15 @@ struct UsageDetailCard: View {
     }
 
     private var measuredSummary: some View {
-        VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
-            header
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .fixedSize(horizontal: false, vertical: true)
-        .background(GeometryReader { proxy in
-            Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
-                summaryHeight = height
-            }
-        })
+        header
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .background(GeometryReader { proxy in
+                Color.clear.onChange(of: Measurement(account: usage.account.id, height: proxy.size.height),
+                                     initial: true) { _, measurement in
+                    record(measurement, summary: true)
+                }
+            })
     }
 
     private var measuredDetails: some View {
@@ -321,8 +354,9 @@ struct UsageDetailCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .background(GeometryReader { proxy in
-                Color.clear.onChange(of: proxy.size.height, initial: true) { _, height in
-                    detailHeight = height
+                Color.clear.onChange(of: Measurement(account: usage.account.id, height: proxy.size.height),
+                                     initial: true) { _, measurement in
+                    record(measurement, summary: false)
                 }
             })
     }

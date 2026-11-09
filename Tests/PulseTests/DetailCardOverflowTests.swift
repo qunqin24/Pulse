@@ -34,6 +34,37 @@ struct DetailCardViewportTests {
         #expect(result.detailHeight >= 0)
     }
 
+    @Test("A fading card's parts add up to its height, and only a scrolling one fades",
+          arguments: [CGFloat(300), 429, 430, 500])
+    func fades(limit: CGFloat) {
+        let result = DetailCardViewport(limit: limit, summary: 80, details: 300, spacing: 14,
+                                        padding: 18, minimumDetailHeight: 34, fade: 8)
+        // Top padding, summary, spacing, scroll view, bottom padding.
+        let stacked = 18 + 80 + result.stackSpacing + result.scrollHeight + result.bottomPadding
+        #expect(abs(stacked - result.height) < 0.001)
+        #expect(result.stackSpacing >= 0 && result.bottomPadding >= 0)
+        if result.scrolls {
+            #expect(result.topFade == 8 && result.bottomFade == 18)
+        } else {
+            #expect(result.topFade == 0 && result.bottomFade == 0)
+            #expect(result.scrollHeight == 300)
+        }
+        // A fade wider than the spacing is held to it.
+        let wide = DetailCardViewport(limit: 300, summary: 80, details: 300, spacing: 14,
+                                      padding: 18, minimumDetailHeight: 34, fade: 40)
+        #expect(wide.topFade == 14 && wide.stackSpacing == 0)
+    }
+
+    @Test("The top fade fits inside the card's spacing at every size")
+    func fadeBudget() {
+        let size = PanelSize.allCases.first { $0.scale == PanelMetrics.scale } ?? .default
+        defer { PanelMetrics.use(size) }
+        for size in PanelSize.allCases {
+            PanelMetrics.use(size)
+            #expect(DetailCardLayout.topFade < DetailCardLayout.contentSpacing)
+        }
+    }
+
     @Test("A title-only card has no extra details gap")
     func titleOnly() {
         let result = layout(300, details: 0)
@@ -183,6 +214,49 @@ extension PanelGlobalsSuite {
                     try capture(host, to: captureDirectory.appendingPathComponent("detail-bottom.png"))
                 }
             }
+        }
+
+        @Test("Another account opens at the top, at its own height")
+        func switchingAccounts() async throws {
+            let first = reading(slot: "first")
+            let second = reading(slot: "second")
+            let short = reading(count: 2, slot: "short")
+            func card(_ usage: ProviderUsage) -> some View {
+                UsageDetailCard(usage: usage, edge: .right, pointerCenter: 60).fixedSize()
+            }
+            let host = NSHostingView(rootView: card(first))
+            host.setFrameSize(CGSize(width: 500, height: 1_400))
+            let window = NSWindow(contentRect: host.frame, styleMask: .borderless,
+                                  backing: .buffered, defer: false)
+            window.isReleasedWhenClosed = false
+            window.contentView = host
+            defer { window.contentView = nil; window.close() }
+            try await settle(host)
+
+            // Scrolled to the foot of the first account's card…
+            var scroll = try #require(scrollView(in: host))
+            let document = try #require(scroll.documentView)
+            let top = scroll.contentView.bounds.minY
+            let foot = document.isFlipped
+                ? max(document.bounds.maxY - scroll.contentView.bounds.height, document.bounds.minY)
+                : document.bounds.minY
+            scroll.contentView.scroll(to: CGPoint(x: 0, y: foot))
+            scroll.reflectScrolledClipView(scroll.contentView)
+            #expect(abs(scroll.contentView.bounds.minY - top) > 1)
+
+            // …the next account's opens at the top.
+            host.rootView = card(second)
+            try await settle(host)
+            scroll = try #require(scrollView(in: host))
+            #expect(abs(scroll.contentView.bounds.minY - top) < 1)
+
+            // A short account is laid out at its own height, not the last one's.
+            let fresh = NSHostingView(rootView: card(short))
+            fresh.setFrameSize(CGSize(width: 500, height: 1_400))
+            fresh.layoutSubtreeIfNeeded()
+            host.rootView = card(short)
+            try await settle(host)
+            #expect(abs(host.fittingSize.height - fresh.fittingSize.height) < 1)
         }
 
         @Test("Switching a long reading to a balance-only reading and back recovers height")

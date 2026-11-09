@@ -8,6 +8,18 @@ struct DetailCardViewport: Equatable {
     let detailHeight: CGFloat
     let fixesSummary: Bool
     let scrolls: Bool
+    /// How far the scrolled rows fade under the summary, and into the card's
+    /// foot. Zero unless the details scroll under a fixed summary.
+    let topFade: CGFloat
+    let bottomFade: CGFloat
+    /// Between the summary and the scroll view: the spacing, less the part of
+    /// it the top fade takes inside the scroll view.
+    let stackSpacing: CGFloat
+    /// The scroll view's height: the details' room, plus the top fade and
+    /// the card's bottom padding it reaches into.
+    var scrollHeight: CGFloat { detailHeight + topFade + bottomFade }
+    /// The card's padding below the scroll view; the bottom fade takes it.
+    let bottomPadding: CGFloat
 
     /// Placement reserves the screen budget before any card opens. Only a
     /// top/bottom pointer consumes vertical room; unplaced previews use a fallback.
@@ -17,7 +29,7 @@ struct DetailCardViewport: Equatable {
     }
 
     init(limit: CGFloat, summary: CGFloat, details: CGFloat, spacing: CGFloat, padding: CGFloat,
-         minimumDetailHeight: CGFloat) {
+         minimumDetailHeight: CGFloat, fade: CGFloat = 0) {
         let limit = max(limit, 0)
         let summary = max(summary, 0)
         let details = max(details, 0)
@@ -31,6 +43,13 @@ struct DetailCardViewport: Equatable {
         let room = max(limit - padding * 2 - summary - gap, 0)
         detailHeight = fixesSummary ? min(details, room) : height
         scrolls = natural > limit
+        // The rows rest clear of both fades: the content is padded by the same
+        // amounts, so only rows scrolled past an edge are faded.
+        let fades = fixesSummary && scrolls && details > 0
+        topFade = fades ? min(max(fade, 0), gap) : 0
+        bottomFade = fades ? padding : 0
+        stackSpacing = gap - topFade
+        bottomPadding = padding - bottomFade
     }
 }
 

@@ -88,11 +88,14 @@ struct UsageBubbleShape: Shape {
     private func pointerPath(in rect: CGRect, body: CGRect) -> Path {
         let radius = min(cornerRadius, rect.height / 2)
         let half = min(pointerHeight / 2, max(rect.height / 2 - radius, 0))
-        // Keep the base off the corners, but aim the tip at the actual ring.
-        // Clamping the tip with the base made end rings point beside the arrow.
-        let tip = min(max(pointerCenter, 0), rect.height)
+        // Keep the base off the corners, and let the tip lean towards the ring
+        // by up to half the base. Clamping the tip with the base made end
+        // rings point beside the arrow; an unbounded lean drew a tail skewed
+        // into a thin sliver, which glass refracts as all rim.
+        let ring = min(max(pointerCenter, 0), rect.height)
         let inset = radius + half
-        let centre = min(max(tip, inset), max(rect.height - inset, inset))
+        let centre = min(max(ring, inset), max(rect.height - inset, inset))
+        let tip = min(max(ring, centre - half), centre + half)
 
         let baseX = tailLeads ? body.minX : body.maxX
         let tipX = tailLeads ? rect.minX : rect.maxX

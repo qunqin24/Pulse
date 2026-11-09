@@ -249,7 +249,7 @@ final class PanelPlacement {
         switch edge {
         case .top: room = (railOrigin.y - rail.height) - visible.minY
         case .bottom: room = visible.maxY - railOrigin.y
-        case .left, .right: return max(min(visible.height - DetailCardLayout.horizontalGap, budget), 0)
+        case .left, .right: return budget
         }
         return max(min(room - DetailCardLayout.horizontalGap, budget + DetailCardLayout.pointerWidth), 0)
     }

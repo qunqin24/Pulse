@@ -319,10 +319,13 @@ struct FloatingUsagePanelContent: View {
     private var alongEdge: Edge.Set { placement.edge.isVertical ? .top : .leading }
 
     /// Use the granted window geometry for both placement and pointer bands.
-    /// The default is only needed before the controller's first placement.
+    /// The default is only needed before the controller's first placement,
+    /// and asks for the card budget placement would, on the main display.
     private var panelSize: CGSize {
         placement.panelSize ?? FloatingPanelController.Layout.size(
-            for: placement.edge, notchSize: placement.notch?.size, docked: placement.isDocked
+            for: placement.edge, notchSize: placement.notch?.size, docked: placement.isDocked,
+            cardHeight: NSScreen.main.map { DetailCardLayout.screenHeightLimit(in: $0.visibleFrame) }
+                ?? DetailCardLayout.maximumHeight
         )
     }
 
