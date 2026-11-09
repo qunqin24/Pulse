@@ -151,6 +151,16 @@ Pulse 的靈感來自 [**Vinz**（@hivinz_）](https://x.com/hivinz_/status/2092
 
 ---
 
+## 貢獻者
+
+感謝每一位為 Pulse 做出貢獻的人。
+
+<a href="https://github.com/qunqin24/Pulse/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=qunqin24/Pulse" alt="Pulse 貢獻者" />
+</a>
+
+---
+
 ## 支持 Pulse
 
 <p align="center">

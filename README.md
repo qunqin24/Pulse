@@ -151,6 +151,16 @@ Pulse was inspired by a UI concept shared by [**Vinz** (@hivinz_)](https://x.com
 
 ---
 
+## Contributors
+
+Thanks to everyone who has contributed to Pulse.
+
+<a href="https://github.com/qunqin24/Pulse/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=qunqin24/Pulse" alt="Pulse contributors" />
+</a>
+
+---
+
 ## Support Pulse
 
 <p align="center">

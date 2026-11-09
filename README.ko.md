@@ -151,6 +151,16 @@ Pulse는 2026년 8월 [**Vinz**(@hivinz_)](https://x.com/hivinz_/status/20929960
 
 ---
 
+## 기여자
+
+Pulse에 기여해 주신 모든 분께 감사드립니다.
+
+<a href="https://github.com/qunqin24/Pulse/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=qunqin24/Pulse" alt="Pulse 기여자" />
+</a>
+
+---
+
 ## Pulse 후원하기
 
 <p align="center">
