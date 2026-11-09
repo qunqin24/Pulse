@@ -18,6 +18,9 @@ final class SettingsNavigation {
         }
     }
     var isWindowVisible = false
+    /// The star request's banner, for the time this window stays open
+    /// (`StarRequest`). Set as the window opens, cleared as it closes.
+    var showsStarRequest = false
     private(set) var requestID = UUID()
 
     /// The panes visited before this one, and those gone back from — the

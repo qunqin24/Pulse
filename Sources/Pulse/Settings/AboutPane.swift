@@ -62,7 +62,20 @@ struct AboutPane: View {
                     subtitle: "github.com/qunqin24/Pulse"
                 ) {
                     Button(String.localized("Open")) {
-                        NSWorkspace.shared.open(URL(string: "https://github.com/qunqin24/Pulse")!)
+                        NSWorkspace.shared.open(StarRequest.repository)
+                    }
+                }
+
+                SettingsRowDivider()
+
+                // Always here, whether or not the one-time banner was shown
+                // (`StarRequest`).
+                SettingsRow(
+                    String.localized("Star on GitHub"),
+                    subtitle: String.localized("Stars help other people find Pulse.")
+                ) {
+                    Button(String.localized("Open")) {
+                        NSWorkspace.shared.open(StarRequest.repository)
                     }
                 }
             }

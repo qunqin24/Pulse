@@ -1277,3 +1277,8 @@
 "A note from the developer" = "來自開發者的話";
 "Don't show again" = "不再顯示";
 "Close" = "關閉";
+
+/* Star request: StarRequestBanner, AboutPane */
+"You have used Pulse for two weeks. If Pulse has been useful, a star on GitHub helps other people find it." = "你已經使用 Pulse 兩週了。如果 Pulse 對你有幫助，歡迎在 GitHub 上按一個 Star，讓更多人發現這個專案。";
+"Star on GitHub" = "在 GitHub 上按 Star";
+"Stars help other people find Pulse." = "Star 能讓更多人發現 Pulse。";

@@ -1277,3 +1277,8 @@
 "A note from the developer" = "開発者からのひとこと";
 "Don't show again" = "今後表示しない";
 "Close" = "閉じる";
+
+/* Star request: StarRequestBanner, AboutPane */
+"You have used Pulse for two weeks. If Pulse has been useful, a star on GitHub helps other people find it." = "Pulse をお使いいただいて 2 週間になります。お役に立っていれば、GitHub で Star を付けていただけると、より多くの人に Pulse を知ってもらえます。";
+"Star on GitHub" = "GitHub で Star を付ける";
+"Stars help other people find Pulse." = "Star は、より多くの人が Pulse を知るきっかけになります。";

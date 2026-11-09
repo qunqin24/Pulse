@@ -130,6 +130,12 @@ struct SettingsView: View {
                         Color.clear.frame(height: 0)
                             .id("heading")
 
+                        // Above every pane, for as long as this window stays
+                        // open (`StarRequest`).
+                        if navigation.showsStarRequest {
+                            StarRequestBanner { navigation.showsStarRequest = false }
+                        }
+
                         switch pane {
                         case .appearance: AppearancePane(settings: settings)
                         case .rings: RingsPane(settings: settings)

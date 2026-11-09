@@ -59,6 +59,8 @@ final class SettingsWindowController {
         // Centred when it comes up, not when it is already on screen: the
         // recap's "Open Token spend" reaches an open window, which stays put.
         let wasVisible = window.isVisible
+        // Only as the window opens, never on a window already in front.
+        if !wasVisible, StarRequest.claimIfDue() { navigation.showsStarRequest = true }
         window.makeKeyAndOrderFront(nil)
         if !wasVisible { window.center() }
         dock.apply()
@@ -99,6 +101,7 @@ final class SettingsWindowController {
         dock.track(window)
         window.onClose = { [weak self, weak window] in
             self?.navigation.isWindowVisible = false
+            self?.navigation.showsStarRequest = false
             // `close()` runs this before the window is off screen, so the
             // window is named rather than read from `isVisible`.
             self?.dock.apply(closing: window)

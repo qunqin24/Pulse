@@ -158,11 +158,20 @@ In the sidebar's last, untitled section. It copies the actual executable's `--js
 
 ## About
 
-Two groups. The first is the app: version and update state, where the usage figures come from, and the **source address**, with the URL itself as the subtitle so it can be typed.
+Two groups. The first is the app: version and update state, where the usage figures come from, the **source address**, with the URL itself as the subtitle so it can be typed, and **Star on GitHub**, always there whether or not the star request below was shown.
 
 **Opening the pane checks for an update** (`AppUpdate.probe`, Sparkle's `checkForUpdateInformation`), unless a check or update is already running: no Sparkle window, only the Version subtitle changes ("Checking…", then the answer), so "up to date" is current. It runs **even with Check automatically off** — that switch covers Pulse's own schedule; opening About is the reader asking. **Check now** still puts up Sparkle's window.
 
 The second group is **Credits**: anything shipped here that somebody else made — the design it was built from, the provider marks, and the robot (CX ArtLab's Agent Robot Avatar, said to be a port of an original character under the MIT License, with **Open** for its repository).
+
+## Star request
+
+**Once, as a banner at the top of the settings window** (`StarRequest`, `StarRequestBanner`): a sentence, **Star on GitHub**, and a close button. Never a window of its own and never a notification; the user asked for neither, and a window that appears by itself interrupts whatever they were doing.
+
+- **Due after use, not after installation.** At least 14 days since the first day counted, and Pulse ran on at least 7 separate days since. A day is counted at launch, at midnight (`NSCalendarDayChanged`) and on waking, so a Mac left running counts each day. A copy installed and forgotten is never asked.
+- **Counted from the first launch of a version that counts**, for existing users too, so nobody is asked on the day they update.
+- **Spent when shown.** It is claimed as the settings window opens (not on a window already in front), stays for as long as that window is open, and is gone after the window closes, the button is pressed or it is closed. Pulse cannot tell whether a star was given and does not try to.
+- `StarRequestTests`.
 
 ## Provider panes
 
