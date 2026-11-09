@@ -11,7 +11,7 @@ A Perplexity account, signed in to a browser at perplexity.ai.
 1. Sign in at [perplexity.ai](https://www.perplexity.ai) and open [your account's usage page](https://www.perplexity.ai/account/usage) once to check it shows your credit.
 2. In Pulse: **Settings → Perplexity**. Turn on **Show in panel**.
 3. Under **Read from browser**, pick the browser you signed in with (or leave it on Automatic) and click **Read**.
-   - Chrome, Edge, Brave, Arc and Vivaldi: macOS asks once for Keychain permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi and ego lite: macOS asks once for Keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
 4. Within a few seconds the account's card shows the balance, and the ring if there is one.
 

@@ -4,7 +4,7 @@ Pulse shows your Qwen Cloud individual Token Plan's allowances: the 5-hour windo
 
 ## What you need
 
-A Qwen Cloud individual Token Plan, and a browser (Safari, Chrome, Edge, Brave, Arc, Vivaldi or Firefox) signed in at [home.qwencloud.com](https://home.qwencloud.com/billing/subscription/token-plan-individual).
+A Qwen Cloud individual Token Plan, and a browser (Safari, Chrome, Edge, Brave, Arc, Vivaldi, ego lite or Firefox) signed in at [home.qwencloud.com](https://home.qwencloud.com/billing/subscription/token-plan-individual).
 
 ## Steps
 

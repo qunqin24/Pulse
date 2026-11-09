@@ -125,6 +125,8 @@ The session's `userId` is kept as the credential's `accountID`, and the `last-in
 
 **Which browser** is the reader's choice, in Settings, defaulting to the one this Mac opens links with and then the rest. Only Chromium browsers are offered: Firefox and Safari keep no `localStorage` LevelDB, so listing them would be a choice that cannot work. **No keychain prompt** — unlike cookies, `localStorage` is not encrypted.
 
+**ego lite is read the same way.** Measured 2026-11-09 on ego lite 0.6.2.9 (bundle id `com.citrolabs.ego.lite`): the same two keys sit under `https://app.devin.ai`, its profile folders are `Profile N` with no `Default`, and the endpoint answered with the fields shown above, except that the percentages arrived as floats (`0.0`, `1.0`) and `hide_daily_quota` was `true`. No `hide_weekly_quota` key was sent; its absence reads as not hidden.
+
 ### Binary storage boundaries
 
 `ChromiumLocalStorage` converts on-disk lengths and offsets with checked casts and bounds each range against the bytes remaining. Oversized varints and lengths are rejected before they can overflow an integer or index a buffer. Table entries stop before the restart array; those bytes cannot complete a truncated key or value.

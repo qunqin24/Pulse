@@ -4,13 +4,13 @@ Pulse shows your T3 Chat usage: the four-hour window and the monthly allowance, 
 
 ## What you need
 
-A T3 Chat account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave, Arc or Vivaldi). T3 Chat has no API key for this — the reading comes from your signed-in session.
+A T3 Chat account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave, Arc, Vivaldi or ego lite). T3 Chat has no API key for this — the reading comes from your signed-in session.
 
 ## Steps
 
 1. Sign in at [t3.chat](https://t3.chat) in your browser.
 2. In Pulse: **Settings → T3 Chat**. Turn on **Show in panel**. Under **Read from browser**, pick your browser (or leave it on Automatic) and click **Read**.
-   - Chrome, Edge, Brave, Arc and Vivaldi keep their cookies in the login keychain, so macOS asks once for permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi and ego lite keep their cookies in the login keychain, so macOS asks once for permission.
    - Safari needs Full Disk Access for Pulse in System Settings → Privacy & Security.
    - Firefox needs nothing extra.
 3. Within a few seconds the ring appears, and the account's pane lists the four-hour window and the monthly allowance.

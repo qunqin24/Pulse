@@ -6,13 +6,13 @@ This is the short version. For the full detail — what exactly gets read, what 
 
 ## What you need
 
-An Ollama account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave, Arc, or Vivaldi). Ollama has no API key for this — the reading comes from your signed-in account page, not a key.
+An Ollama account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave, Arc, Vivaldi, or ego lite). Ollama has no API key for this — the reading comes from your signed-in account page, not a key.
 
 ## Steps
 
 1. Sign in at https://ollama.com in your browser.
 2. In Pulse, go to Settings → Ollama Cloud and turn on "Show in panel". Under "Read from browser", pick your browser (or leave it on Automatic — it starts with your Mac's default browser) and click "Read".
-   - Chrome, Edge, Brave, Arc, and Vivaldi keep their cookies in the login keychain, so macOS will ask once for permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi, and ego lite keep their cookies in the login keychain, so macOS will ask once for permission.
    - Safari needs Full Disk Access, granted to Pulse in System Settings → Privacy & Security, because its cookie file is otherwise off-limits.
    - Firefox needs nothing extra.
 3. Success looks like a ring for Ollama Cloud on the Pulse panel, showing session and weekly usage.

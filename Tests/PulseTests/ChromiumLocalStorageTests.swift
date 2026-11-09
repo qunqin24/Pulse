@@ -554,4 +554,22 @@ struct ChromiumLocalStorageTests {
         block += [0, 0, 0, 0, 1, 0, 0, 0]
         #expect(LevelDB.table(Self.tableWithDataBlock(block)).isEmpty)
     }
+
+    // MARK: - The browser catalogue
+
+    @Test("ego lite is a Chromium store like any other, under its own names")
+    func egoLiteIsCatalogued() throws {
+        let browser = try #require(BrowserCookies.Browser(rawValue: "egoLite"))
+        #expect(browser == .egoLite)
+
+        // The product's own lowercase spellings: the display name and the
+        // keychain service are not built from each other. Measured 2026-11-09
+        // on ego lite 0.6.2.9.
+        #expect(browser.name == "ego lite")
+        #expect(browser.keychainService == "ego safe storage")
+        #expect(browser.promptsForKeychain)
+
+        let root = try #require(BrowserCookies.chromiumRoot(.egoLite))
+        #expect(root.path.hasSuffix("Library/Application Support/Citro Labs/ego lite"))
+    }
 }

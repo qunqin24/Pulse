@@ -4,7 +4,7 @@ Pulse shows your LongCat API platform allowance — the tokens used out of your 
 
 ## What you need
 
-A LongCat account, and a browser (Safari, Chrome, Edge, Brave, Arc, Vivaldi or Firefox) signed in at [longcat.chat](https://longcat.chat/platform/).
+A LongCat account, and a browser (Safari, Chrome, Edge, Brave, Arc, Vivaldi, ego lite or Firefox) signed in at [longcat.chat](https://longcat.chat/platform/).
 
 ## Steps
 

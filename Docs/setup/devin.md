@@ -4,7 +4,7 @@ Pulse shows Devin's daily and weekly usage remaining, as percentages, when your 
 
 ## What you need
 
-A Devin (Cognition) account. Either the Devin Mac app, signed in, or a Chromium-based browser (Chrome, Edge, Brave, Arc, or Vivaldi — not Safari or Firefox) signed in at app.devin.ai.
+A Devin (Cognition) account. Either the Devin Mac app, signed in, or a Chromium-based browser (Chrome, Edge, Brave, Arc, Vivaldi, or ego lite — not Safari or Firefox) signed in at app.devin.ai.
 
 ## Steps
 
@@ -12,7 +12,7 @@ A Devin (Cognition) account. Either the Devin Mac app, signed in, or a Chromium-
 2. In Pulse, go to Settings → Devin and turn on "Show in panel". Under "Read from browser", pick the browser you signed in with (or leave it on Automatic) and click "Read". Nothing needs to be pasted, and there is no keychain prompt.
 3. Success looks like a ring for Devin on the Pulse panel, showing your daily and weekly usage remaining (or a messages-left count on a free plan).
 
-Pulse can only read Chrome, Edge, Brave, Arc, and Vivaldi for Devin. If you use Safari or Firefox, either sign in at app.devin.ai once in one of those, or just open the Devin Mac app: without a browser session, Pulse shows the plan the app saved the last time it started. That is a snapshot, so the card marks it "as of" when the app last launched — open the app again to refresh it.
+Pulse can only read Chrome, Edge, Brave, Arc, Vivaldi, and ego lite for Devin. If you use Safari or Firefox, either sign in at app.devin.ai once in one of those, or just open the Devin Mac app: without a browser session, Pulse shows the plan the app saved the last time it started. That is a snapshot, so the card marks it "as of" when the app last launched — open the app again to refresh it.
 
 ## If it doesn't work
 

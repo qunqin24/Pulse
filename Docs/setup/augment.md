@@ -10,7 +10,7 @@ An Augment Code account, signed in at [app.augmentcode.com](https://app.augmentc
 
 1. Sign in at [app.augmentcode.com](https://app.augmentcode.com) in your browser.
 2. In Pulse: **Settings → Augment Code**. Turn on **Show in panel**. Under **Read from browser**, pick your browser (or leave it on Automatic) and click **Read**.
-   - Chrome, Edge, Brave, Arc and Vivaldi keep their cookies in the login keychain, so macOS may ask once for permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi and ego lite keep their cookies in the login keychain, so macOS may ask once for permission.
    - Safari needs Full Disk Access for Pulse, in System Settings → Privacy & Security.
 3. Within a few seconds the ring appears, and the account's pane shows the credits used and when they reset.
 

@@ -12,7 +12,7 @@ A Step Plan subscription, signed in to a browser at platform.stepfun.com (or pla
 2. In Pulse, go to Settings → StepFun and turn on "Show in panel".
 3. Under "Site", pick the site you signed in to. Switching it later clears the saved session, so you read the new site's.
 4. Under "Read from browser", pick the browser you signed in with (or leave it on Automatic) and click "Read".
-   - Chrome, Edge, Brave, Arc, and Vivaldi: macOS asks once for keychain permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi, and ego lite: macOS asks once for keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
    - Firefox: nothing extra.
 5. Success looks like a StepFun ring on the Pulse panel. Its card shows "Credit allowance" (Token Plan) or the 5-hour and weekly limits (Coding Plan).

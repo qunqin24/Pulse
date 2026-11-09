@@ -192,6 +192,23 @@ struct DevinParsingTests {
         #expect(DevinUsageService.windows(from: reply).isEmpty)
     }
 
+    @Test("Floats, a hidden daily window, and no weekly hide flag")
+    func endpointHandlesTheNovemberShape() throws {
+        // Captured 2026-11-09 from ego lite 0.6.2.9 against a live account:
+        // the percentages arrive as floats, `hide_weekly_quota` is absent
+        // entirely, and `overage_balance` is a float zero.
+        let reply = try Self.reply("devin-usage-2026-11")
+        #expect(reply.planName == nil)
+        #expect(reply.overageBalance == 0)
+
+        let windows = DevinUsageService.windows(from: reply)
+        #expect(windows.map(\.id) == ["devin-weekly"])
+        let weekly = windows[0]
+        #expect(weekly.kind == .weekly)
+        #expect(abs(weekly.usedFraction - 0.01) < 0.0001)
+        #expect(weekly.resetsAt == ISO8601DateFormatter().date(from: "2026-11-15T08:00:00Z"))
+    }
+
     @Test("Epoch milliseconds, cents, and a hidden daily window")
     func endpointHandlesTheOtherShapes() throws {
         let reply = try Self.reply("devin-quota-hidden")
