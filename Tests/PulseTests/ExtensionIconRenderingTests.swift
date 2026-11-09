@@ -33,6 +33,26 @@ struct ExtensionIconRenderingTests {
         return NSBitmapImageRep(cgImage: try #require(renderer.cgImage))
     }
 
+    /// Menu marks are AppKit drawing-handler images. Rasterize both the mark
+    /// and its PNG reference into sRGB; ImageRenderer can bridge the handler
+    /// through a display-profile bitmap while keeping the PNG in sRGB.
+    private func render(_ image: NSImage, scale: Int) throws -> NSBitmapImageRep {
+        let width = Int(image.size.width) * scale
+        let height = Int(image.size.height) * scale
+        let space = try #require(CGColorSpace(name: CGColorSpace.sRGB))
+        let context = try #require(CGContext(
+            data: nil, width: width, height: height, bitsPerComponent: 8,
+            bytesPerRow: width * 4, space: space,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.scaleBy(x: CGFloat(scale), y: CGFloat(scale))
+        NSGraphicsContext.saveGraphicsState()
+        defer { NSGraphicsContext.restoreGraphicsState() }
+        NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        return NSBitmapImageRep(cgImage: try #require(context.makeImage()))
+    }
+
     private func color(_ bitmap: NSBitmapImageRep, x: Int, y: Int) throws -> NSColor {
         try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
     }
@@ -91,8 +111,8 @@ struct ExtensionIconRenderingTests {
         #expect(glyph.alphaComponent > 0.9)
     }
 
-    @Test("Menu artwork fits its square without stretching or mutating the cached image")
-    func menuSizing() throws {
+    @Test("Menu artwork fits its square without stretching or mutating the cached image", arguments: [1, 2])
+    func menuSizing(scale: Int) throws {
         let red = NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
         let data = try png(background: red, glyph: red, width: 16, height: 8)
         let source = try #require(LobeIconStore.image(for: .pulseExtension, iconData: data))
@@ -107,17 +127,16 @@ struct ExtensionIconRenderingTests {
         #expect(!mark.isTemplate)
         #expect(!smaller.isTemplate)
 
-        let bitmap = try render(Image(nsImage: mark).renderingMode(.original))
-        let centre = try color(bitmap, x: 8, y: 8)
-        // Compare the same colour-managed rendering path, not raw PNG channels.
-        let original = try render(Image(nsImage: source).renderingMode(.original))
-        let expected = try color(original, x: 8, y: 4)
+        let bitmap = try render(mark, scale: scale)
+        let centre = try color(bitmap, x: 8 * scale, y: 8 * scale)
+        let original = try render(source, scale: scale)
+        let expected = try color(original, x: 8 * scale, y: 4 * scale)
         #expect(centre.redComponent > 0.9)
         #expect(abs(centre.redComponent - expected.redComponent) < 0.02)
         #expect(abs(centre.greenComponent - expected.greenComponent) < 0.02)
         #expect(abs(centre.blueComponent - expected.blueComponent) < 0.02)
-        #expect(try color(bitmap, x: 8, y: 1).alphaComponent < 0.1)
-        #expect(try color(bitmap, x: 1, y: 8).alphaComponent > 0.9)
+        #expect(try color(bitmap, x: 8 * scale, y: scale).alphaComponent < 0.1)
+        #expect(try color(bitmap, x: scale, y: 8 * scale).alphaComponent > 0.9)
     }
 
     @Test("Account metadata keeps independent snapshots and changes rail equality after a rescan")
