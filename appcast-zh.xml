@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.12.8</title>
+            <pubDate>Mon, 09 Nov 2026 03:21:19 -0000</pubDate>
+            <sparkle:version>1.12.8</sparkle:version>
+            <sparkle:shortVersionString>1.12.8</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.12.8</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.12.8</h2><p><strong>改进与修复</strong></p><ul><li><strong>详情卡片过长时可以滚动。</strong> 额度很多的账号，卡片保持原有高度，标题固定在顶部，其余内容在卡片内滚动。感谢 <a href="https://github.com/qunqin24/Pulse/pull/107">@Jiar</a> 贡献。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.12.8">在 GitHub 上查看更新说明</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.12.8/Pulse-1.12.8.zip"
+                       length="16425210"
+                       type="application/octet-stream"
+                       sparkle:edSignature="gSLydyqhLZUqpWc6yvnH+4szR1NG5dD2ihBbaUd9ShGD9BBmFnecfjqxoyE+drB9Lyo6I5N8YwUAhke5RtoMCg==" />
+        </item>
+        <item>
             <title>1.12.7</title>
             <pubDate>Thu, 05 Nov 2026 04:09:50 -0000</pubDate>
             <sparkle:version>1.12.7</sparkle:version>
