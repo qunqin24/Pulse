@@ -112,8 +112,7 @@ struct FloatingUsagePanelView: View {
                 ? RobotCue(justReset: store.justReset(account),
                            justFinished: store.justFinishedWorking(account.provider),
                            shape: settings.robotShape(for: account))
-                : nil,
-            iconData: settings.pulseExtension(for: account)?.iconData
+                : nil
         )
     }
 }

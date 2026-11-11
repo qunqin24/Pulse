@@ -111,6 +111,7 @@ final class SettingsWindowController {
                 store: store, settings: settings, placement: placement, update: update, alerts: alerts,
                 shortcuts: shortcuts, navigation: navigation, openRecap: openRecap
             )
+            .environment(\.extensionIcons, settings.extensionIcons)
         )
         // A hosting **view**: with a hosting controller, the window binds its
         // title to the controller's, which is nil.

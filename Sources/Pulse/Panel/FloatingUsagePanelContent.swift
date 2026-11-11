@@ -120,8 +120,7 @@ struct FloatingUsagePanelContent: View {
                                 store.usedElsewhere($0, account: selected.account)
                             }.map(\.id)),
                             pointerCenter: pointerCentre(for: index),
-                            maxHeight: placement.cardRoom,
-                            iconData: entries[index].iconData
+                            maxHeight: placement.cardRoom
                         )
                         .fixedSize()
                         .background(
@@ -238,6 +237,7 @@ struct FloatingUsagePanelContent: View {
             // Where red begins, for every ring, bar and figure below here at
             // once. Read off `settings` in one place so they cannot disagree.
             .environment(\.usageWarningThreshold, settings.warningThreshold.fraction)
+            .environment(\.extensionIcons, settings.extensionIcons)
             .accessibilityElement(children: .contain)
             .accessibilityLabel(String.localized("Pulse floating usage panel"))
             // Strings and layout constants are both read through plain

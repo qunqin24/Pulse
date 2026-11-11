@@ -291,7 +291,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let button = statusItem?.button else { return }
         menuBarGeneration += 1
         let generation = menuBarGeneration
-        let (reading, remaining, style, label, iconData) = withObservationTracking {
+        let (reading, remaining, style, label) = withObservationTracking {
             let reading = settings.showsUsageInMenuBar
                 ? MenuBarReading.choose(
                     among: settings.shownAccounts,
@@ -301,10 +301,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     warningAt: settings.warningThreshold.fraction
                 )
                 : nil
-            // Track the label and PNG too, so a rename or rescan redraws it.
+            // The label inside too: renaming the account is a change to show.
+            // So is an extension's icon changing on a rescan; reading it here
+            // is what subscribes to that.
+            _ = reading.flatMap { settings.extensionIcons.image(for: $0.account) }
             return (reading, settings.showsRemaining, settings.menuBarStyle,
-                    reading.map { settings.label(for: $0.account) },
-                    reading.flatMap { settings.pulseExtension(for: $0.account)?.iconData })
+                    reading.map { settings.label(for: $0.account) })
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self, self.menuBarGeneration == generation else { return }
@@ -312,7 +314,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
 
-        MenuBarReading.draw(reading, remaining: remaining, style: style, label: label, iconData: iconData, on: button)
+        MenuBarReading.draw(reading, remaining: remaining, style: style, label: label,
+                            icons: settings.extensionIcons, on: button)
     }
 
     /// An accessory app has no Dock icon. When the panel is also hidden, a
@@ -378,7 +381,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 guard let hosting, hosting.frame.size != size else { return }
                 hosting.setFrameSize(size)
             }
-        ))
+        ).environment(\.extensionIcons, settings.extensionIcons))
         hosting.setFrameSize(hosting.fittingSize)
         item.view = hosting
         menu.addItem(item)

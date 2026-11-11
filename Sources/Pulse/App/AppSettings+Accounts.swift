@@ -40,6 +40,7 @@ extension AppSettings {
 
     func extensionsChanged(from old: [PulseExtension]) {
         orderedCache = nil
+        extensionIcons.update(from: extensions)
         // What `storedRail()` — `--json` — lists, so it never has to read
         // the folder itself.
         let names = Dictionary(extensions.map { ($0.account.id, $0.name) }, uniquingKeysWith: { first, _ in first })

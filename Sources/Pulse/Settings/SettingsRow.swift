@@ -53,8 +53,9 @@ struct SettingsRow<Control: View>: View {
     /// A resource name rather than a `Provider` because the spend pane draws
     /// clients that are not providers at all; see `SpendAgent.iconResource`.
     let icon: String?
-    /// An account's PNG artwork, with `icon` kept as its bundled fallback.
-    let iconData: Data?
+    /// The account the row stands for, drawn with its own mark — an
+    /// extension's icon included. Takes the place of `icon`.
+    let account: AccountKey?
     let controlBelow: Bool
     @ViewBuilder let control: Control
 
@@ -62,14 +63,14 @@ struct SettingsRow<Control: View>: View {
         _ title: String,
         subtitle: String? = nil,
         icon: String? = nil,
-        iconData: Data? = nil,
+        account: AccountKey? = nil,
         controlBelow: Bool = false,
         @ViewBuilder control: () -> Control
     ) {
         self.title = title
         self.subtitle = subtitle
         self.icon = icon
-        self.iconData = iconData
+        self.account = account
         self.controlBelow = controlBelow
         self.control = control()
     }
@@ -97,8 +98,10 @@ struct SettingsRow<Control: View>: View {
 
     private var label: some View {
         HStack(alignment: .center, spacing: 16) {
-            if let icon {
-                LobeIconView(resource: icon, size: 15, iconData: iconData)
+            if let account {
+                LobeIconView(account: account, size: 15)
+            } else if let icon {
+                LobeIconView(resource: icon, size: 15)
             }
 
             VStack(alignment: .leading, spacing: 3) {

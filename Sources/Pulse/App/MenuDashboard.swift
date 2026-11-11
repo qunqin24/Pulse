@@ -87,8 +87,7 @@ struct MenuDashboard: View {
             }
             ForEach(accounts, id: \.id) { account in
                 tab(id: account.id, label: settings.label(for: account), labelled: labelled) {
-                    LobeIconView(provider: account.provider, size: 15,
-                                 iconData: settings.pulseExtension(for: account)?.iconData)
+                    LobeIconView(account: account, size: 15)
                 }
             }
         }
@@ -156,8 +155,7 @@ struct MenuDashboard: View {
         } ?? (reading.money == nil ? String.localized("No reading") : nil)
 
         return HStack(alignment: .firstTextBaseline, spacing: 6) {
-            LobeIconView(provider: account.provider, size: 15,
-                         iconData: settings.pulseExtension(for: account)?.iconData)
+            LobeIconView(account: account, size: 15)
                 .foregroundStyle(.primary)
                 .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
             VStack(alignment: .leading, spacing: 1) {

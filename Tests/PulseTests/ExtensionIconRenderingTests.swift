@@ -57,47 +57,82 @@ struct ExtensionIconRenderingTests {
         try #require(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.sRGB))
     }
 
-    @Test("Different PNG content stays isolated even with the same provider fallback")
-    func contentIsolation() throws {
+    private func account(_ id: String = UUID().uuidString) -> AccountKey {
+        AccountKey(.pulseExtension, slot: id)
+    }
+
+    /// A store holding `data` for `account`, as a scan would leave it.
+    private func icons(_ pairs: [(AccountKey, Data)]) -> ExtensionIcons {
+        let icons = ExtensionIcons()
+        icons.update(from: pairs.map { found(id: $0.0.slot, data: $0.1) })
+        return icons
+    }
+
+    @Test("Each account draws its own PNG, found by the account alone")
+    func perAccountIcons() throws {
         let red = try png(background: .red)
         let blue = try png(background: .blue)
-        let first = try #require(LobeIconStore.image(for: .pulseExtension, iconData: red))
-        let second = try #require(LobeIconStore.image(for: .pulseExtension, iconData: blue))
-        #expect(first !== second)
-        #expect(LobeIconStore.image(for: .pulseExtension, iconData: Data(red)) === first)
-        // The external cache is independent of the fallback's resource name.
-        #expect(LobeIconStore.image(for: .codex, iconData: red) === first)
-        #expect(!first.isTemplate)
-        #expect(!second.isTemplate)
+        let first = account(), second = account()
+        let store = icons([(first, red), (second, blue)])
+        let firstImage = try #require(store.image(for: first))
+        let secondImage = try #require(store.image(for: second))
+        #expect(firstImage !== secondImage)
+        #expect(!firstImage.isTemplate)
+        #expect(store.image(for: account()) == nil)
+        #expect(store.image(for: AccountKey(.codex)) == nil)
 
-        let redBitmap = try render(LobeIconView(provider: .pulseExtension, size: 16, iconData: red))
-        let blueBitmap = try render(LobeIconView(provider: .pulseExtension, size: 16, iconData: blue))
+        let redBitmap = try render(LobeIconView(account: first, size: 16).environment(\.extensionIcons, store))
+        let blueBitmap = try render(LobeIconView(account: second, size: 16).environment(\.extensionIcons, store))
         #expect(try color(redBitmap, x: 1, y: 1).redComponent > 0.9)
         #expect(try color(redBitmap, x: 1, y: 1).blueComponent < 0.1)
         #expect(try color(blueBitmap, x: 1, y: 1).blueComponent > 0.9)
         #expect(try color(blueBitmap, x: 1, y: 1).redComponent < 0.1)
     }
 
-    @Test("Missing or undecodable data uses the existing template provider mark")
+    @Test("A rescan keeps an unchanged image and decodes changed bytes at the same path")
+    func rescan() throws {
+        let red = try png(background: .red)
+        let blue = try png(background: .blue)
+        let key = account()
+        let store = icons([(key, red)])
+        let original = try #require(store.image(for: key))
+
+        store.update(from: [found(id: key.slot, data: Data(red))])
+        #expect(store.image(for: key) === original)
+
+        store.update(from: [found(id: key.slot, data: blue)])
+        let replaced = try #require(store.image(for: key))
+        #expect(replaced !== original)
+
+        store.update(from: [])
+        #expect(store.image(for: key) == nil)
+    }
+
+    @Test("Missing or undecodable data, or no store, uses the template provider mark")
     func fallback() throws {
         let bundled = try #require(LobeIconStore.image(for: .pulseExtension))
-        let invalid = Data("not a PNG".utf8)
-        #expect(LobeIconStore.image(for: .pulseExtension, iconData: invalid) === bundled)
-        #expect(LobeIconStore.image(for: .pulseExtension, iconData: Data()) === bundled)
         #expect(bundled.isTemplate)
-        #expect(LobeIconView(provider: .pulseExtension, size: 16).iconData == nil)
-        #expect(LobeIconView(resource: Provider.pulseExtension.iconResource, size: 16).iconData == nil)
-
-        let menuFallback = try #require(MenuBarReading.markImage(for: .pulseExtension, size: 15, iconData: invalid))
-        #expect(menuFallback.isTemplate)
         #expect(bundled.size == NSSize(width: 256, height: 256))
+
+        let invalid = account(), empty = account()
+        let store = icons([(invalid, Data("not a PNG".utf8)), (empty, Data())])
+        #expect(store.image(for: invalid) == nil)
+        #expect(store.image(for: empty) == nil)
+
+        let menuFallback = try #require(MenuBarReading.markImage(for: invalid, size: 15, icons: store))
+        #expect(menuFallback.isTemplate)
+        let noStore = try #require(MenuBarReading.markImage(for: invalid, size: 15))
+        #expect(noStore.isTemplate)
     }
 
     @Test("PNG interiors retain their original colours under a foreground tint")
     func originalColors() throws {
+        let key = account()
+        let store = icons([(key, try png())])
         let bitmap = try render(
-            LobeIconView(provider: .pulseExtension, size: 16, iconData: png())
+            LobeIconView(account: key, size: 16)
                 .foregroundStyle(Color.red)
+                .environment(\.extensionIcons, store)
         )
         let background = try color(bitmap, x: 1, y: 1)
         let glyph = try color(bitmap, x: 8, y: 8)
@@ -111,14 +146,15 @@ struct ExtensionIconRenderingTests {
         #expect(glyph.alphaComponent > 0.9)
     }
 
-    @Test("Menu artwork fits its square without stretching or mutating the cached image", arguments: [1, 2])
+    @Test("Menu artwork fits its square without stretching or mutating the stored image", arguments: [1, 2])
     func menuSizing(scale: Int) throws {
         let red = NSColor(srgbRed: 1, green: 0, blue: 0, alpha: 1)
-        let data = try png(background: red, glyph: red, width: 16, height: 8)
-        let source = try #require(LobeIconStore.image(for: .pulseExtension, iconData: data))
+        let key = account()
+        let store = icons([(key, try png(background: red, glyph: red, width: 16, height: 8))])
+        let source = try #require(store.image(for: key))
         let sourceSize = source.size
-        let mark = try #require(MenuBarReading.markImage(for: .pulseExtension, size: 16, iconData: data))
-        let smaller = try #require(MenuBarReading.markImage(for: .pulseExtension, size: 8, iconData: data))
+        let mark = try #require(MenuBarReading.markImage(for: key, size: 16, icons: store))
+        let smaller = try #require(MenuBarReading.markImage(for: key, size: 8, icons: store))
         #expect(mark !== source)
         #expect(mark.size == NSSize(width: 16, height: 16))
         #expect(smaller.size == NSSize(width: 8, height: 8))
@@ -139,8 +175,8 @@ struct ExtensionIconRenderingTests {
         #expect(try color(bitmap, x: scale, y: 8 * scale).alphaComponent > 0.9)
     }
 
-    @Test("Account metadata keeps independent snapshots and changes rail equality after a rescan")
-    func accountSnapshots() throws {
+    @Test("Settings keep the store in step with each scan, per account")
+    func settingsUpdateTheStore() throws {
         let (defaults, cleanup) = TestDefaults.make("extensionIconRendering")
         defer { cleanup() }
         let settings = AppSettings(enabledAccounts: [], defaults: defaults)
@@ -149,37 +185,15 @@ struct ExtensionIconRenderingTests {
         let first = found(id: UUID().uuidString, data: red)
         let second = found(id: UUID().uuidString, data: blue)
         settings.apply(ExtensionCatalog.Scan(extensions: [first, second]))
-        let snapshot = settings.pulseExtension(for: first.account)?.iconData
-        #expect(snapshot == red)
-        #expect(settings.pulseExtension(for: second.account)?.iconData == blue)
-        #expect(settings.pulseExtension(for: AccountKey(.codex))?.iconData == nil)
+        let original = try #require(settings.extensionIcons.image(for: first.account))
+        #expect(settings.extensionIcons.image(for: second.account) != nil)
 
-        let usage = ProviderUsage.unavailable(first.account, reason: .loading)
-        let original = RailEntry(usage: usage, headline: nil, slot: RailSlot(first.account),
-                                 title: first.name, windowClock: nil, figure: nil, second: nil,
-                                 iconData: snapshot)
         settings.apply(ExtensionCatalog.Scan(extensions: [found(id: first.id, data: blue), second]))
-        var updated = original
-        updated.iconData = settings.pulseExtension(for: first.account)?.iconData
-        #expect(snapshot == red)
-        #expect(updated.iconData == blue)
-        #expect(updated.id == original.id)
-        #expect(updated != original)
-    }
+        let replaced = try #require(settings.extensionIcons.image(for: first.account))
+        #expect(replaced !== original)
 
-    @Test("Existing ring, card and settings row constructors default to no PNG metadata")
-    func optionalMetadataDefaults() {
-        let usage = ProviderUsage.unavailable(AccountKey(.pulseExtension), reason: .loading)
-        let ring = UsageRingView(provider: .pulseExtension, usedFraction: nil, diameter: 36, lineWidth: 4,
-                                 secondFraction: nil, secondIsSpent: false)
-        let card = UsageDetailCard(usage: usage, edge: .right, pointerCenter: 0)
-        let row = SettingsRow("Extension", icon: Provider.pulseExtension.iconResource) { EmptyView() }
-        let entry = RailEntry(usage: usage, headline: nil, slot: RailSlot(usage.account),
-                              title: "Extension", windowClock: nil, figure: nil, second: nil)
-        #expect(ring.iconData == nil)
-        #expect(card.iconData == nil)
-        #expect(row.iconData == nil)
-        #expect(entry.iconData == nil)
+        settings.apply(ExtensionCatalog.Scan(extensions: [second]))
+        #expect(settings.extensionIcons.image(for: first.account) == nil)
     }
 
     private func found(id: String, data: Data) -> PulseExtension {

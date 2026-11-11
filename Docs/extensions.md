@@ -6,7 +6,7 @@ An extension is a program you add yourself, and it reports **one account's** usa
 
 Scope, schema 1:
 
-- **Rings, and rows on the card.** One account per extension, drawn with Pulse's own components: its limits and balance drive the ring, and its metrics are rows on the card under them. An extension cannot draw anything of its own, and cannot load code into Pulse.
+- **Rings, and rows on the card.** One account per extension, drawn with Pulse's own components: its limits and balance drive the ring, and its metrics are rows on the card under them. Apart from the optional icon below, an extension cannot draw anything of its own, and it cannot load code into Pulse.
 - **An optional local icon.** A manifest can name a PNG inside its own folder; Pulse draws it in its original colours. Without a usable icon, the extension keeps the puzzle-piece mark.
 - **Not yet in this schema:** several accounts from one program and a metric shown on the rail.
 

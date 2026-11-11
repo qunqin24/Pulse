@@ -85,8 +85,9 @@ struct UsageRingView: View {
     var robot: RobotCue?
     /// False while the rail is collapsed, which stops the robot's timeline.
     var isLive: Bool = true
-    /// The account's discovered PNG, or nil for the bundled provider mark.
-    var iconData: Data? = nil
+    /// The account this ring belongs to, so an extension's own icon is found
+    /// for it. Nil draws the provider's bundled mark.
+    var account: AccountKey?
 
     @State private var spinning = false
     @State private var refreshSpinning = false
@@ -319,8 +320,8 @@ struct UsageRingView: View {
         } else {
             LobeIconView(
                 provider: provider,
-                size: centreDiameter * Self.iconScale,
-                iconData: iconData
+                account: account,
+                size: centreDiameter * Self.iconScale
             )
         }
     }
@@ -448,28 +449,43 @@ struct UsageRingView: View {
 }
 
 struct LobeIconView: View {
-    /// The fallback SVG in `Resources` to draw, without its extension.
+    /// The SVG in `Resources` to draw, without its extension.
     let resource: String
+    /// Whose mark this is. An extension account with an icon of its own is
+    /// drawn with that instead of `resource`; see `ExtensionIcons`.
+    let account: AccountKey?
     let size: CGFloat
-    let iconData: Data?
+    @Environment(\.extensionIcons) private var extensionIcons
 
-    init(provider: Provider, size: CGFloat, iconData: Data? = nil) {
+    init(provider: Provider, size: CGFloat) {
+        self.init(provider: provider, account: nil, size: size)
+    }
+
+    /// An account's mark: the provider's, or an extension's own icon. Pass
+    /// the account wherever one is being drawn, so no call site has to look
+    /// the icon up itself.
+    init(account: AccountKey, size: CGFloat) {
+        self.init(provider: account.provider, account: account, size: size)
+    }
+
+    init(provider: Provider, account: AccountKey?, size: CGFloat) {
         self.resource = provider.iconResource
+        self.account = account
         self.size = size
-        self.iconData = iconData
     }
 
     /// For a mark that belongs to an agent rather than to a provider. See
     /// `LobeIconStore`.
-    init(resource: String, size: CGFloat, iconData: Data? = nil) {
+    init(resource: String, size: CGFloat) {
         self.resource = resource
+        self.account = nil
         self.size = size
-        self.iconData = iconData
     }
 
     var body: some View {
         Group {
-            if let image = LobeIconStore.image(named: resource, iconData: iconData) {
+            if let image = account.flatMap({ extensionIcons?.image(for: $0) })
+                ?? LobeIconStore.image(named: resource) {
                 Image(nsImage: image)
                     .resizable()
                     .renderingMode(image.isTemplate ? .template : .original)
@@ -486,8 +502,9 @@ struct LobeIconView: View {
     }
 }
 
-/// Loads bundled Lobe Icons (https://github.com/lobehub/lobe-icons) by resource
-/// name, or an extension's PNG snapshot by content in a separate bounded cache.
+/// Loads the bundled Lobe Icons (https://github.com/lobehub/lobe-icons) once
+/// and keeps them around, keyed by resource name. Extension icons are kept
+/// apart, per account, in `ExtensionIcons`.
 ///
 /// The icons ship as SVG, which `NSImage` renders as vectors, so one file
 /// serves every size the app draws at (36pt in the dock rail, 16pt in the
@@ -520,17 +537,7 @@ enum LobeIconStore {
     /// handful of them.
     private static var images: [String: NSImage] = [:]
 
-    /// NSData compares bytes, so two accounts cannot collide just because they
-    /// share a filename, and changed bytes after a rescan get a new image.
-    private static let externalImages: NSCache<NSData, NSImage> = {
-        let cache = NSCache<NSData, NSImage>()
-        cache.countLimit = 64
-        cache.totalCostLimit = 16 * 1024 * 1024
-        return cache
-    }()
-
-    static func image(named name: String, iconData: Data? = nil) -> NSImage? {
-        if let iconData, let image = externalImage(data: iconData) { return image }
+    static func image(named name: String) -> NSImage? {
         if let cached = images[name] { return cached }
         guard
             let url = Bundle.module.url(forResource: name, withExtension: "svg"),
@@ -544,21 +551,68 @@ enum LobeIconStore {
         return image
     }
 
-    static func image(for provider: Provider, iconData: Data? = nil) -> NSImage? {
-        image(named: provider.iconResource, iconData: iconData)
+    static func image(for provider: Provider) -> NSImage? {
+        image(named: provider.iconResource)
+    }
+}
+
+/// Each extension account's own icon, decoded once when the extensions folder
+/// is scanned, not while drawing.
+///
+/// Keyed by account, so a view only needs to know whose mark it draws:
+/// `LobeIconView(account:)` finds the icon by itself, through
+/// `\.extensionIcons`, which the panel, the settings window and the menu set
+/// once at their root. Observable, so a rescan that changes an icon redraws
+/// every place it appears.
+///
+/// One per `AppSettings`, which updates it whenever its extensions change.
+@Observable
+final class ExtensionIcons {
+    private struct Entry {
+        let data: Data
+        let image: NSImage
     }
 
-    private static func externalImage(data: Data) -> NSImage? {
-        let key = data as NSData
-        if let cached = externalImages.object(forKey: key) { return cached }
-        guard let image = NSImage(data: data), image.isValid else { return nil }
-        // PNGs are app artwork: treating their opaque interiors as a template
-        // would erase details such as a black glyph on a white background.
-        image.isTemplate = false
-        let cost = image.representations.compactMap { $0 as? NSBitmapImageRep }
-            .reduce(data.count) { $0 + $1.bytesPerRow * $1.pixelsHigh }
-        externalImages.setObject(image, forKey: key, cost: cost)
-        return image
+    private var entries: [AccountKey: Entry] = [:]
+
+    func image(for account: AccountKey) -> NSImage? {
+        guard account.provider == .pulseExtension else { return nil }
+        return entries[account]?.image
+    }
+
+    /// Called with each scan. An icon whose bytes did not change keeps its
+    /// image; one that did is decoded again, even at the same path.
+    func update(from extensions: [PulseExtension]) {
+        var next: [AccountKey: Entry] = [:]
+        for found in extensions {
+            guard let data = found.iconData else { continue }
+            if let kept = entries[found.account], kept.data == data {
+                next[found.account] = kept
+                continue
+            }
+            guard let image = NSImage(data: data), image.isValid else { continue }
+            // PNGs are app artwork: treating their opaque interiors as a
+            // template would erase details such as a black glyph on white.
+            image.isTemplate = false
+            next[found.account] = Entry(data: data, image: image)
+        }
+        // Assigned only on a change, so an unchanged rescan redraws nothing.
+        let changed = next.count != entries.count
+            || next.contains { entries[$0.key]?.image !== $0.value.image }
+        if changed { entries = next }
+    }
+}
+
+private struct ExtensionIconsKey: EnvironmentKey {
+    static var defaultValue: ExtensionIcons? { nil }
+}
+
+extension EnvironmentValues {
+    /// The extension icons `LobeIconView(account:)` draws from. Nil, as in a
+    /// preview, draws every account with its provider's mark.
+    var extensionIcons: ExtensionIcons? {
+        get { self[ExtensionIconsKey.self] }
+        set { self[ExtensionIconsKey.self] = newValue }
     }
 }
 

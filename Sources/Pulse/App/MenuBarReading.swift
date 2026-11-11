@@ -156,7 +156,7 @@ extension MenuBarReading {
         remaining: Bool,
         style: MenuBarStyle,
         label: String?,
-        iconData: Data? = nil,
+        icons: ExtensionIcons? = nil,
         on button: NSStatusBarButton
     ) {
         guard let reading else {
@@ -167,7 +167,7 @@ extension MenuBarReading {
             return
         }
 
-        let mark = markImage(for: reading.account.provider, size: 15, iconData: iconData)
+        let mark = markImage(for: reading.account, size: 15, icons: icons)
         let tooltipFigure: String
         if let window = reading.window {
             tooltipFigure = remaining
@@ -249,8 +249,8 @@ extension MenuBarReading {
     /// Fits a mark inside the menu's square without resizing a cached image.
     /// Bundled marks stay templates; extension artwork keeps its own colours.
     @MainActor
-    static func markImage(for provider: Provider, size: CGFloat, iconData: Data? = nil) -> NSImage? {
-        guard let source = LobeIconStore.image(for: provider, iconData: iconData) else {
+    static func markImage(for account: AccountKey, size: CGFloat, icons: ExtensionIcons? = nil) -> NSImage? {
+        guard let source = icons?.image(for: account) ?? LobeIconStore.image(for: account.provider) else {
             let fallback = NSImage(systemSymbolName: "chart.pie.fill", accessibilityDescription: nil)
             fallback?.size = NSSize(width: size, height: size)
             fallback?.isTemplate = true
