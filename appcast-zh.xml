@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.13.0</title>
+            <pubDate>Wed, 11 Nov 2026 03:07:19 -0000</pubDate>
+            <sparkle:version>1.13.0</sparkle:version>
+            <sparkle:shortVersionString>1.13.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.13.0</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.13.0</h2><p><strong>新功能</strong></p><ul><li><strong>扩展可以使用自己的图标。</strong> 在扩展的 <code>pulse-extension.json</code> 中用 <code>icon</code> 指定扩展文件夹内的 PNG，圆环、卡片、设置和菜单栏都会按原色显示它。感谢 <a href="https://github.com/qunqin24/Pulse/pull/109">@Jiar</a> 贡献。</li><li><strong>支持从 ego lite 浏览器读取登录信息。</strong> 在服务商设置的「从浏览器读取」中可以选择 ego lite，Devin 和其他通过浏览器登录的服务商都能使用。感谢 <a href="https://github.com/qunqin24/Pulse/pull/108">@RoacherM</a> 贡献。</li><li><strong>设置项前显示图标。</strong> 设置窗口中的设置项和操作按钮前都有一个小图标，便于快速找到。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>关于页新增 Star 和爱发电入口。</strong> 在「设置 → 关于」中可以打开 GitHub 页面点 Star，或在爱发电支持 Pulse。</li><li><strong>使用两周后提示一次 Star。</strong> 设置窗口顶部会显示一次请求 Star 的横幅，之后不再出现。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.13.0">在 GitHub 上查看更新说明</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.13.0/Pulse-1.13.0.zip"
+                       length="16511623"
+                       type="application/octet-stream"
+                       sparkle:edSignature="B0KsxusaXtzB8AS54x9cREgYAscL0/2+4cWgjageXAfGbIj5tsq9jm65YMsTjd0JGnfVC3icjrwZ9eViabxLAg==" />
+        </item>
+        <item>
             <title>1.12.8</title>
             <pubDate>Mon, 09 Nov 2026 03:21:19 -0000</pubDate>
             <sparkle:version>1.12.8</sparkle:version>

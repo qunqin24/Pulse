@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.13.0</title>
+            <pubDate>Wed, 11 Nov 2026 03:07:19 -0000</pubDate>
+            <sparkle:version>1.13.0</sparkle:version>
+            <sparkle:shortVersionString>1.13.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.13.0</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.13.0</h2><p><strong>New</strong></p><ul><li><strong>Extensions can use their own icon.</strong> Name a PNG in the extension&#x27;s folder with <code>icon</code> in its <code>pulse-extension.json</code>, and the ring, card, settings and menu bar show it in its own colours. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/109">@Jiar</a> for the contribution.</li><li><strong>Sign-in sessions can be read from ego lite.</strong> Choose ego lite under Read from browser in a provider&#x27;s settings; it works for Devin and for every provider that signs in through a browser. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/108">@RoacherM</a> for the contribution.</li><li><strong>Settings rows have icons.</strong> Every setting and action in the settings window has a small icon before it, so it is easier to find.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>About links to GitHub stars and Afdian.</strong> Settings → About can open the GitHub page to star Pulse, or Afdian to support it.</li><li><strong>A one-time star request after two weeks.</strong> A banner at the top of the settings window asks for a star once and does not come back.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.13.0">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.13.0/Pulse-1.13.0.zip"
+                       length="16511623"
+                       type="application/octet-stream"
+                       sparkle:edSignature="B0KsxusaXtzB8AS54x9cREgYAscL0/2+4cWgjageXAfGbIj5tsq9jm65YMsTjd0JGnfVC3icjrwZ9eViabxLAg==" />
+        </item>
+        <item>
             <title>1.12.8</title>
             <pubDate>Mon, 09 Nov 2026 03:21:19 -0000</pubDate>
             <sparkle:version>1.12.8</sparkle:version>
