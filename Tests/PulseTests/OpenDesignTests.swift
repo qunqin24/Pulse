@@ -77,6 +77,23 @@ struct OpenDesignTests {
         #expect(usage.creditBalance != nil)
     }
 
+    @Test("The console's coding-plan-usage reply: the plan object alone, remaining credits only")
+    func consoleCodingPlanUsage() throws {
+        let reply = Data(#"""
+        {"eligible":true,"tier":"go","windows":[
+          {"policyId":"go-7d","durationSeconds":604800,"remainingCredits":"45","limitCredits":"100","resetsAt":"2026-11-15T00:00:00Z"},
+          {"policyId":"go-5h","durationSeconds":18000,"remainingCredits":"20","limitCredits":"20","resetsAt":"2026-11-11T12:00:00Z"}
+        ]}
+        """#.utf8)
+        let usage = OpenDesignUsageService.codingPlanReading(from: reply, context: context)
+        #expect(usage.state == .live)
+        #expect(usage.plan == "Go")
+        #expect(usage.windows.map(\.kind) == [.fiveHour, .weekly])
+        #expect(usage.windows[0].usedFraction == 0)
+        #expect(abs(usage.windows[1].usedFraction - 0.55) < 0.000_1)
+        #expect(usage.creditBalance == nil)
+    }
+
     @Test("A Coding Plan window of a length Pulse has no kind for is left off, not guessed")
     func codingPlanOddLength() {
         let reply = Data(#"""

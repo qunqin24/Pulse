@@ -12,23 +12,26 @@ import Foundation
 ///
 /// - `GET /api/v1/workspaces` — the workspaces the login can see. The
 ///   personal one is read: the owner's default, else the first personal one.
-/// - `GET /api/v1/workspaces/<id>/billing/funding-check` — the Coding Plan:
-///   `codingPlan.tier` and `codingPlan.windows`, each with its
-///   `durationSeconds`, `usedCredits`, `limitCredits` and `resetsAt`, and
-///   `balanceUsd`. This is what Open Design's own billing panel draws.
-/// - `GET /api/v1/workspaces/<id>/billing/snapshot` — only when that answers
-///   with no window: `billing.planId`, `wallet.balanceUsd` and
-///   `designPlanWindows` (`kind` `5h` or `7d`, `remainingCredits`,
-///   `limitCredits`, `resetsAt`).
+/// - The plan's windows, from the first of these that has any:
+///   `billing/coding-plan-usage` (what the open-design.ai console's usage
+///   panel reads), `billing/funding-check` (what the desktop daemon reads),
+///   each `{ tier, windows: [{ policyId, durationSeconds, usedCredits,
+///   remainingCredits, limitCredits, resetsAt }] }` — the second inside
+///   `codingPlan`, with `balanceUsd` beside it — and last `billing/snapshot`
+///   (`billing.planId`, `wallet.balanceUsd`, `designPlanWindows` with `kind`
+///   `5h` or `7d`). All under `/api/v1/workspaces/<id>/`, with the workspace
+///   also named in `x-vela-workspace-id`, as the console sends it.
 ///
 /// **An OpenDesign Go API key cannot read any of this.** Open Design's API
-/// takes only the account login (the control key) for billing and turns away
-/// the keys made for model calls, so there is no key field.
+/// takes the account login — the control key, or the console's browser
+/// session — for account and billing reads, and turns away the keys made for
+/// model calls, so there is no key field.
 ///
-/// The shapes are second-hand — taken from Open Design's own source (its
+/// The shapes are second-hand — taken from Open Design's own code (the
 /// `WorkspaceBillingPreflight` and `WorkspaceBillingSnapshot` contracts, the
-/// daemon's billing and workspace directory reads and its end-to-end billing
-/// fixture), not from a captured reply — and the fixtures in the tests say so.
+/// daemon's billing and workspace directory reads, and the console's
+/// published bundle), not from a captured reply — and the fixtures in the
+/// tests say so.
 extension ProviderProfile {
     static let openDesign = ProviderProfile(
         displayName: "Open Design",
@@ -77,35 +80,29 @@ enum OpenDesignUsageService {
         }
 
         // The Coding Plan first: it is what the plan is enforced by. A login
-        // turned away here is turned away everywhere, so that is final; any
-        // other failure, or an answer with no window, falls to the snapshot.
-        let funding = await ProfileHTTP.data(
-            for: ProfileHTTP.bearer(billingURL(login, workspaceID, "funding-check"), token: login.controlKey),
-            refused: .localLoginExpired,
-            session: session
-        )
-        var codingPlan: ProviderUsage?
-        switch funding {
-        case .failure(.localLoginExpired): return context.unavailable(.localLoginExpired)
-        case .failure: break
-        case .success(let data):
-            let usage = codingPlanReading(from: data, context: context)
-            if usage.state == .live, !usage.windows.isEmpty { return usage }
-            if usage.state == .live { codingPlan = usage }
+        // turned away is turned away everywhere, so that is final; any other
+        // failure, or an answer with no window, falls to the next route. A
+        // reading with figures but no window is kept in case none has one.
+        var fallback: ProviderUsage?
+        var lastReason: ProviderUsage.Unavailability = .noLimitsReported
+        for route in ["coding-plan-usage", "funding-check", "snapshot"] {
+            var request = ProfileHTTP.bearer(billingURL(login, workspaceID, route), token: login.controlKey)
+            request.setValue(workspaceID, forHTTPHeaderField: "x-vela-workspace-id")
+            switch await ProfileHTTP.data(for: request, refused: .localLoginExpired, session: session) {
+            case .failure(.localLoginExpired):
+                return context.unavailable(.localLoginExpired)
+            case .failure(let reason):
+                lastReason = reason
+            case .success(let data):
+                let usage = route == "snapshot"
+                    ? reading(from: data, context: context)
+                    : codingPlanReading(from: data, context: context)
+                guard usage.state == .live else { continue }
+                if !usage.windows.isEmpty { return usage }
+                fallback = fallback ?? usage
+            }
         }
-
-        switch await ProfileHTTP.data(
-            for: ProfileHTTP.bearer(billingURL(login, workspaceID, "snapshot"), token: login.controlKey),
-            refused: .localLoginExpired,
-            session: session
-        ) {
-        case .success(let data):
-            let usage = reading(from: data, context: context)
-            if usage.state == .live { return usage }
-            return codingPlan ?? usage
-        case .failure(let reason):
-            return codingPlan ?? context.unavailable(reason)
-        }
+        return fallback ?? context.unavailable(lastReason)
     }
 
     static func billingURL(_ login: Login, _ workspaceID: String, _ name: String) -> URL {
@@ -162,24 +159,25 @@ enum OpenDesignUsageService {
 
     // MARK: - Reading the Coding Plan
 
-    /// `{ balanceUsd, codingPlan: { tier, windows: [{ policyId,
-    /// durationSeconds, usedCredits, remainingCredits, limitCredits,
-    /// resetsAt }] } }`. A window is named by its length, as Open Design's own
-    /// panel names it; a length Pulse has no kind for is left off.
+    /// `{ tier, windows: [{ policyId, durationSeconds, usedCredits,
+    /// remainingCredits, limitCredits, resetsAt }] }`, alone (the console's
+    /// read) or as `codingPlan` beside `balanceUsd` (the daemon's). A window
+    /// is named by its length, as Open Design's own panels name it; a length
+    /// Pulse has no kind for is left off.
     static func codingPlanReading(from data: Data, context: ProfileContext, now: Date = Date()) -> ProviderUsage {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return context.unavailable(.unreadableReply) }
-        let plan = root["codingPlan"] as? [String: Any]
+        let plan = root["codingPlan"] as? [String: Any] ?? root
 
         var windows: [UsageWindow] = []
-        for window in plan?["windows"] as? [[String: Any]] ?? [] {
+        for window in plan["windows"] as? [[String: Any]] ?? [] {
+            let remaining = credits(window["remainingCredits"])
             guard let limit = credits(window["limitCredits"]), limit > 0,
-                  let used = credits(window["usedCredits"]),
+                  let used = credits(window["usedCredits"]) ?? remaining.map({ max(limit - min($0, limit), 0) }),
                   let duration = (window["durationSeconds"] as? NSNumber)?.intValue,
                   let seconds = UsageWindow.length(duration, unitSeconds: 1),
                   let kind = kind(lasting: seconds)
             else { continue }
-            let remaining = credits(window["remainingCredits"])
             let policy = (window["policyId"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? "\(seconds)s"
             windows.append(UsageWindow(
                 id: "openDesign.codingPlan.\(policy)",
@@ -195,7 +193,7 @@ enum OpenDesignUsageService {
 
         let balance = money(root["balanceUsd"])
         guard !windows.isEmpty || balance != nil else { return context.unavailable(.noLimitsReported) }
-        return context.reading(windows, plan: tier(plan?["tier"]), creditBalance: balance, at: now)
+        return context.reading(windows, plan: tier(plan["tier"]), creditBalance: balance, at: now)
     }
 
     /// The kinds a Coding Plan window can be, by its length.
