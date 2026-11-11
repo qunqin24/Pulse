@@ -12,7 +12,7 @@ A Qoder account, signed in to a browser at qoder.com (or qoder.com.cn for the ma
 2. In Pulse, go to Settings → Qoder and turn on "Show in panel".
 3. Under "Site", pick the site you signed in to. Switching it later clears the saved session, so you read the new site's.
 4. Under "Read from browser", pick the browser you signed in with (or leave it on Automatic) and click "Read".
-   - Chrome, Edge, Brave, Arc, and Vivaldi: macOS asks once for keychain permission.
+   - Chrome, Edge, Brave, Arc, Vivaldi, and ego lite: macOS asks once for keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
    - Firefox: nothing extra.
 5. Success looks like a Qoder ring on the Pulse panel. Its card shows "Credit allowance", and "Team credits" if you are on a team plan.

@@ -36,7 +36,7 @@ the morning. What that costs you is stated on the row before you press it:
 - **Safari needs Full Disk Access**, because its cookie file lives inside its
   container. Only the installed `Pulse.app` can be granted it; a `swift run`
   build cannot.
-- **Chrome, Edge, Brave and Arc keep their key in the login keychain**, so
+- **Chrome, Edge, Brave, Arc and ego lite keep their key in the login keychain**, so
   macOS will ask once — "Pulse wants to use your confidential information".
   The row says so before you press it.
 - **Firefox** is plain SQLite and asks for nothing.
