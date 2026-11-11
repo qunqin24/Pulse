@@ -78,6 +78,19 @@ struct AboutPane: View {
                         NSWorkspace.shared.open(StarRequest.repository)
                     }
                 }
+
+                SettingsRowDivider()
+
+                // The address as the subtitle, like the source code's: it is
+                // where the button goes, and some will rather type it.
+                SettingsRow(
+                    String.localized("Support Pulse on Afdian"),
+                    subtitle: "afdian.com/a/qunqin"
+                ) {
+                    Button(String.localized("Open")) {
+                        NSWorkspace.shared.open(Self.afdian)
+                    }
+                }
             }
 
             SettingsGroup(String.localized("Credits")) {
@@ -133,6 +146,9 @@ struct AboutPane: View {
         if !update.canCheck { return .localized("Built from source — no update check.") }
         return .localized("\(Self.version) · up to date")
     }
+
+    /// The author's Afdian page, the same one the README links to.
+    static let afdian = URL(string: "https://afdian.com/a/qunqin")!
 
     private static var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1 (prototype)"

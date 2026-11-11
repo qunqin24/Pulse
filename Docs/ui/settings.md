@@ -158,7 +158,7 @@ In the sidebar's last, untitled section. It copies the actual executable's `--js
 
 ## About
 
-Two groups. The first is the app: version and update state, where the usage figures come from, the **source address**, with the URL itself as the subtitle so it can be typed, and **Star on GitHub**, always there whether or not the star request below was shown.
+Two groups. The first is the app: version and update state, where the usage figures come from, the **source address**, with the URL itself as the subtitle so it can be typed, **Star on GitHub**, always there whether or not the star request below was shown, and **Support Pulse on Afdian**, with the address `afdian.com/a/qunqin` as its subtitle, the same page the README links to.
 
 **Opening the pane checks for an update** (`AppUpdate.probe`, Sparkle's `checkForUpdateInformation`), unless a check or update is already running: no Sparkle window, only the Version subtitle changes ("Checking…", then the answer), so "up to date" is current. It runs **even with Check automatically off** — that switch covers Pulse's own schedule; opening About is the reader asking. **Check now** still puts up Sparkle's window.
 
