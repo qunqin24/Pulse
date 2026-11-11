@@ -72,7 +72,7 @@ Ported by reading [CodexBar](https://github.com/steipete/CodexBar)'s providers. 
 | | **Neuralwatt** | Pasted API key | kWh subscription, spending allowance and balance |
 | <img src="icons/notion.svg" width="24" height="24" alt=""> | **Notion AI** | Your signed-in browser session (Read), or a pasted `Cookie:` header | Rolling and billing-period allowance (Business and Enterprise) |
 | <img src="icons/hermesagent.svg" width="24" height="24" alt=""> | **Nous Portal** | Hermes Agent's saved login, read only | Monthly credit grant and balance |
-| <img src="icons/opendesign.svg" width="24" height="24" alt=""> | **Open Design** (OpenDesign Go included) | Open Design's saved login in `~/.amr`, read only | The plan's credit windows (5-hour and 7-day on Go, 7-day on Plus, Pro and Max) and wallet balance |
+| <img src="icons/opendesign.svg" width="24" height="24" alt=""> | **Open Design** (OpenDesign Go included) | Your signed-in browser session at open-design.ai (Read), or the Open Design app's saved login in `~/.amr` | The plan's credit windows (5-hour and 7-day on Go, 7-day on Plus, Pro and Max) and wallet balance |
 | <img src="icons/openai.svg" width="24" height="24" alt=""> | **OpenAI API** | Pasted API key | Prepaid credit balance, where the older billing route still answers |
 | <img src="icons/perplexity.svg" width="24" height="24" alt=""> | **Perplexity** | Your signed-in browser session (Read), or a pasted `Cookie:` header | API credit balance |
 | <img src="icons/poe.svg" width="24" height="24" alt=""> | **Poe** | Pasted API key | Point balance |

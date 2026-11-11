@@ -110,7 +110,7 @@ Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page he
 | `.replicate` | [Replicate](replicate.md) | browser session | yes |
 | `.typeSafe` | [TypeSafe](typesafe.md) | browser session | yes |
 | `.vercelAIGateway` | [Vercel AI Gateway](vercel-ai-gateway.md) | pasted key | yes |
-| `.openDesign` | [Open Design](open-design.md) | Open Design's own login on this Mac (`~/.amr`) | yes |
+| `.openDesign` | [Open Design](open-design.md) | browser session, else the app's own login (`~/.amr`) | yes |
 
 Left out, and why:
 

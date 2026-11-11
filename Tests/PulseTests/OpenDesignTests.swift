@@ -3,11 +3,12 @@ import Testing
 @testable import Pulse
 
 /// Open Design's plan windows — the Coding Plan's (OpenDesign Go) and the
-/// billing snapshot's — read with the login its runtime saved.
+/// billing snapshot's — read with the console's browser session or the login
+/// the desktop app saved.
 ///
-/// **The fixtures are second-hand**: written from Open Design's own source —
-/// its `WorkspaceBillingSnapshot` contract, the daemon's workspace directory
-/// read and its end-to-end billing fixture — not captured from a live account.
+/// **The fixtures are second-hand**: written from Open Design's own code
+/// (contracts, the daemon's reads, the console's bundle) and from CodexBar's
+/// and the DSH plugins' notes — not captured from a live account.
 /// They pin the shape Pulse reads; they do not prove the shape is right.
 @Suite("Open Design")
 struct OpenDesignTests {
@@ -149,6 +150,48 @@ struct OpenDesignTests {
         let teamOnly = Data(#"{"items":[{"workspaceId":"t","workspaceType":"team","isDefault":true}]}"#.utf8)
         #expect(OpenDesignUsageService.personalWorkspace(from: teamOnly) == nil)
         #expect(OpenDesignUsageService.personalWorkspace(from: Data("{}".utf8)) == nil)
+    }
+
+    @Test("The browser session goes as a Cookie header, the app's login as a bearer, both naming the workspace")
+    func credentials() throws {
+        let cookie = OpenDesignUsageService.Credential.session("__Secure-better-auth.session_token=abc")
+        let url = OpenDesignUsageService.billingURL(cookie.api, "ws 1", "coding-plan-usage")
+        #expect(url.absoluteString == "https://amr-api.open-design.ai/api/v1/workspaces/ws%201/billing/coding-plan-usage")
+        let byCookie = cookie.request(url, workspace: "ws 1")
+        #expect(byCookie.value(forHTTPHeaderField: "Cookie") == "__Secure-better-auth.session_token=abc")
+        #expect(byCookie.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(byCookie.value(forHTTPHeaderField: "x-vela-workspace-id") == "ws 1")
+        #expect(cookie.routes == ["coding-plan-usage", "snapshot"])
+        #expect(cookie.refused == .sessionExpired)
+
+        let app = OpenDesignUsageService.Credential.app(.init(controlKey: "ck", api: OpenDesignUsageService.defaultAPI))
+        let byKey = app.request(url, workspace: "ws 1")
+        #expect(byKey.value(forHTTPHeaderField: "Authorization") == "Bearer ck")
+        #expect(byKey.value(forHTTPHeaderField: "Cookie") == nil)
+        #expect(app.routes.first == "funding-check")
+        #expect(app.refused == .localLoginExpired)
+    }
+
+    @Test("Only the better-auth cookies are kept, and the session token must be among them")
+    func cookieFilter() throws {
+        let names = ["__Secure-better-auth.session_token", "__Secure-better-auth.*"]
+        let kept = ProviderProfile.keep(
+            "_ga=1; __Secure-better-auth.session_token=t; __Secure-better-auth.session_data=d; other=x",
+            cookies: names
+        )
+        #expect(kept?.contains("__Secure-better-auth.session_token=t") == true)
+        #expect(kept?.contains("__Secure-better-auth.session_data=d") == true)
+        #expect(kept?.contains("_ga") == false)
+        #expect(kept?.contains("other") == false)
+        #expect(ProviderProfile.keep("__Secure-better-auth.session_data=d", cookies: names) == nil)
+    }
+
+    @Test("With no browser session and no app login, Pulse asks for the session, and sends nothing")
+    func nothingToReadWith() async throws {
+        let (folder, cleanup) = try home(config: #"{"profiles":{}}"#)
+        defer { cleanup() }
+        let usage = await OpenDesignUsageService.fetch(context, home: folder)
+        #expect(usage.state == .unavailable(.sessionMissing))
     }
 
     @Test("The prod profile's control key and API address are read from ~/.amr")

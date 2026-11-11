@@ -839,9 +839,7 @@
 "Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "저장된 로그인으로 Bailian CLI(bl)를 실행합니다. Pulse는 그 자격 증명을 읽거나 저장하지 않습니다.";
 "Uses the login the Bailian CLI already saved." = "Bailian CLI가 이미 저장해 둔 로그인을 씁니다.";
 /* Open Design */
-"Open Design login" = "Open Design 로그인";
-"Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt." = "Open Design이 ~/.amr에 저장한 로그인을 읽어 open-design.ai에만 보냅니다. 키체인 확인 창은 표시되지 않습니다.";
-"Uses the login Open Design already saved on this Mac." = "Open Design이 이 Mac에 이미 저장해 둔 로그인을 씁니다.";
+"Reads your open-design.ai sign-in from a browser when you press Read, or else the login the Open Design app saved in ~/.amr. Either is sent only to open-design.ai." = "읽기를 누르면 브라우저에서 open-design.ai 로그인을 읽고, 없으면 Open Design 앱이 ~/.amr에 저장한 로그인을 읽습니다. 어느 쪽이든 open-design.ai에만 보냅니다.";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "Hermes Agent가 ~/.hermes에 저장한 Nous Portal 로그인을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";
 "Hermes Agent's login" = "Hermes Agent 로그인";

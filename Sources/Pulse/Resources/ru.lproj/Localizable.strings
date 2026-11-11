@@ -839,9 +839,7 @@
 "Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "Запускает Bailian CLI (bl) с сохранённым в нём входом. Pulse не читает и не хранит его учётные данные.";
 "Uses the login the Bailian CLI already saved." = "Использует вход, уже сохранённый Bailian CLI.";
 /* Open Design */
-"Open Design login" = "Вход Open Design";
-"Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt." = "Читает данные входа, которые Open Design сохранил в ~/.amr, и отправляет их только на open-design.ai. Доступ к связке ключей не запрашивается.";
-"Uses the login Open Design already saved on this Mac." = "Использует вход, уже сохранённый Open Design на этом Mac.";
+"Reads your open-design.ai sign-in from a browser when you press Read, or else the login the Open Design app saved in ~/.amr. Either is sent only to open-design.ai." = "По нажатию «Считать» берёт вход на open-design.ai из браузера, а иначе — вход, сохранённый приложением Open Design в ~/.amr. И то и другое отправляется только на open-design.ai.";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "Читает данные входа в Nous Portal, которые Hermes Agent сохранил в ~/.hermes. Доступ к связке ключей не запрашивается.";
 "Hermes Agent's login" = "Вход через Hermes Agent";

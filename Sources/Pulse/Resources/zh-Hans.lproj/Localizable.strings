@@ -839,9 +839,7 @@
 "Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "运行百炼 CLI（bl），沿用它已保存的登录。Pulse 不会读取或保存其中的凭据。";
 "Uses the login the Bailian CLI already saved." = "使用百炼 CLI 已保存的登录。";
 /* Open Design */
-"Open Design login" = "Open Design 登录";
-"Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt." = "读取 Open Design 保存在 ~/.amr 里的登录信息，只发送给 open-design.ai。无需钥匙串授权。";
-"Uses the login Open Design already saved on this Mac." = "使用 Open Design 已在这台 Mac 上保存的登录。";
+"Reads your open-design.ai sign-in from a browser when you press Read, or else the login the Open Design app saved in ~/.amr. Either is sent only to open-design.ai." = "按下「读取」时从浏览器读取你在 open-design.ai 的登录，否则读取 Open Design 应用保存在 ~/.amr 里的登录。两者都只发送给 open-design.ai。";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "读取 Hermes Agent 保存在 ~/.hermes 里的 Nous Portal 登录信息。无需钥匙串授权。";
 "Hermes Agent's login" = "Hermes Agent 的登录信息";

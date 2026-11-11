@@ -3,48 +3,61 @@ import Foundation
 
 /// Open Design (open-design.ai), OpenDesign Go included: the plan's credit
 /// windows — five hours and seven days on Go, seven days on Plus, Pro and
-/// Max — the plan's tier, and the wallet balance.
+/// Max — the plan's tier, and the wallet balance when a route states it.
 ///
-/// Read with the login Open Design's own runtime (`vela`, "AMR") saved in
-/// `~/.amr/config.json`, under its `prod` profile: the control key and the API
-/// address beside it. Only read, never written; nothing else in the file is
-/// kept. The key is sent only to an `https` address on `open-design.ai`.
+/// Two ways in, the first that is there:
 ///
-/// - `GET /api/v1/workspaces` — the workspaces the login can see. The
-///   personal one is read: the owner's default, else the first personal one.
-/// - The plan's windows, from the first of these that has any:
-///   `billing/coding-plan-usage` (what the open-design.ai console's usage
-///   panel reads), `billing/funding-check` (what the desktop daemon reads),
-///   each `{ tier, windows: [{ policyId, durationSeconds, usedCredits,
-///   remainingCredits, limitCredits, resetsAt }] }` — the second inside
-///   `codingPlan`, with `balanceUsd` beside it — and last `billing/snapshot`
-///   (`billing.planId`, `wallet.balanceUsd`, `designPlanWindows` with `kind`
-///   `5h` or `7d`). All under `/api/v1/workspaces/<id>/`, with the workspace
-///   also named in `x-vela-workspace-id`, as the console sends it.
+/// - **The console's browser session**, read from a browser signed in at
+///   open-design.ai and kept to its better-auth cookies
+///   (`__Secure-better-auth.session_token`, which must be there, and the rest
+///   of that prefix). Sent as a `Cookie` header to `amr-api.open-design.ai`,
+///   as the console sends it. This is the route for a Go subscriber who only
+///   uses the API key and never installed the app.
+/// - **The desktop app's login**, saved by Open Design's runtime (`vela`,
+///   "AMR") in `~/.amr/config.json` under its `prod` profile: the control key
+///   and the API address beside it. Only read, never written. The key is sent
+///   only to an `https` address on `open-design.ai`.
+///
+/// Then, all under `/api/v1/`:
+///
+/// - `GET workspaces` — the workspaces the login can see. The personal one is
+///   read: the owner's default, else the first personal one.
+/// - The plan's windows, from the first route that has any, each with the
+///   workspace also named in `x-vela-workspace-id`. With the session:
+///   `billing/coding-plan-usage` (what the console's usage panel reads), then
+///   `billing/snapshot`. With the app's login: `billing/funding-check` (what
+///   the desktop daemon reads), then those two. `coding-plan-usage` is
+///   `{ eligible, tier, windows: [{ policyId, durationSeconds, usedCredits,
+///   remainingCredits, limitCredits, resetsAt }] }`; `funding-check` holds
+///   the same under `codingPlan`, beside `balanceUsd`; `snapshot` is
+///   `billing.planId`, `wallet.balanceUsd` and `designPlanWindows`.
+///   A 401 or 403 from one billing route only rules that route out: the
+///   workspace read already showed the login is good, and other projects
+///   report `snapshot` answering 403 since October 2026.
 ///
 /// **An OpenDesign Go API key cannot read any of this.** Open Design's API
-/// takes the account login — the control key, or the console's browser
-/// session — for account and billing reads, and turns away the keys made for
-/// model calls, so there is no key field.
+/// takes the account login for account and billing reads and turns away the
+/// keys made for model calls — its own design notes say so, and CodexBar and
+/// the DSH plugins found the same — so there is no key field.
 ///
-/// The shapes are second-hand — taken from Open Design's own code (the
-/// `WorkspaceBillingPreflight` and `WorkspaceBillingSnapshot` contracts, the
-/// daemon's billing and workspace directory reads, and the console's
-/// published bundle), not from a captured reply — and the fixtures in the
-/// tests say so.
+/// The shapes are second-hand — taken from Open Design's own code (contracts,
+/// the daemon's reads, the console's published bundle) and from other
+/// projects that read it (CodexBar's OpenDesign plugin, `dsh-opendesign-go`,
+/// `dsh-opendesign-corouter`), not from a reply captured here — and the
+/// fixtures in the tests say so.
 extension ProviderProfile {
     static let openDesign = ProviderProfile(
         displayName: "Open Design",
         iconResource: "opendesign",
-        credential: .localLogin,
+        credential: .sessionCookie(
+            host: "open-design.ai",
+            cookies: ["__Secure-better-auth.session_token", "__Secure-better-auth.*"]
+        ),
         accessDescription: {
-            .localized("Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt.")
-        },
-        soleRoute: {
-            (.localized("Open Design login"), .localized("Uses the login Open Design already saved on this Mac."))
+            .localized("Reads your open-design.ai sign-in from a browser when you press Read, or else the login the Open Design app saved in ~/.amr. Either is sent only to open-design.ai.")
         },
         setupSlug: "open-design",
-        discoveryPaths: [".amr"],
+        discoveryPaths: [".amr", "/Applications/Open Design.app"],
         fetch: { await OpenDesignUsageService.fetch($0) }
     )
 }
@@ -59,16 +72,86 @@ enum OpenDesignUsageService {
         let api: URL
     }
 
+    /// Who is asking, and how that goes on a request.
+    enum Credential: Equatable {
+        /// The console's cookies, as a `Cookie` header.
+        case session(String)
+        /// The desktop app's control key.
+        case app(Login)
+
+        var api: URL {
+            switch self {
+            case .session: defaultAPI
+            case .app(let login): login.api
+            }
+        }
+
+        /// What a refusal of the workspace read means for this credential.
+        var refused: ProviderUsage.Unavailability {
+            switch self {
+            case .session: .sessionExpired
+            case .app: .localLoginExpired
+            }
+        }
+
+        /// The billing routes to try, in order.
+        var routes: [String] {
+            switch self {
+            case .session: ["coding-plan-usage", "snapshot"]
+            case .app: ["funding-check", "coding-plan-usage", "snapshot"]
+            }
+        }
+
+        func request(_ url: URL, workspace: String? = nil) -> URLRequest {
+            var request: URLRequest
+            switch self {
+            case .session(let cookies):
+                request = URLRequest(url: url)
+                request.setValue(cookies, forHTTPHeaderField: "Cookie")
+                request.setValue("application/json", forHTTPHeaderField: "Accept")
+                // The console's origin, which the API's CORS rule names.
+                request.setValue("https://open-design.ai", forHTTPHeaderField: "Origin")
+                request.setValue("https://open-design.ai/cloud/dashboard", forHTTPHeaderField: "Referer")
+                request.timeoutInterval = 15
+            case .app(let login):
+                request = ProfileHTTP.bearer(url, token: login.controlKey)
+            }
+            if let workspace { request.setValue(workspace, forHTTPHeaderField: "x-vela-workspace-id") }
+            return request
+        }
+    }
+
     static func fetch(
         _ context: ProfileContext,
         home: URL = URL(fileURLWithPath: NSHomeDirectory()),
         session: URLSession? = nil
     ) async -> ProviderUsage {
-        guard let login = savedLogin(home: home) else { return context.unavailable(.localLoginMissing) }
+        // The browser session first: it was read on purpose, and it is the
+        // only way in without the app. A refused session falls back to the
+        // app's login when there is one.
+        let cookies = context.trimmedCredential.flatMap {
+            ProviderProfile.keep($0, cookies: ["__Secure-better-auth.session_token", "__Secure-better-auth.*"])
+        }
+        let saved = savedLogin(home: home)
+        if let cookies {
+            let usage = await read(with: .session(cookies), context: context, session: session)
+            if case .unavailable(.sessionExpired) = usage.state, let saved {
+                return await read(with: .app(saved), context: context, session: session)
+            }
+            return usage
+        }
+        if let saved { return await read(with: .app(saved), context: context, session: session) }
+        return context.unavailable(.sessionMissing)
+    }
 
+    static func read(
+        with credential: Credential,
+        context: ProfileContext,
+        session: URLSession?
+    ) async -> ProviderUsage {
         let workspaces = await ProfileHTTP.data(
-            for: ProfileHTTP.bearer(login.api.appending(path: "api/v1/workspaces"), token: login.controlKey),
-            refused: .localLoginExpired,
+            for: credential.request(credential.api.appending(path: "api/v1/workspaces")),
+            refused: credential.refused,
             session: session
         )
         let workspaceID: String
@@ -79,18 +162,16 @@ enum OpenDesignUsageService {
             workspaceID = id
         }
 
-        // The Coding Plan first: it is what the plan is enforced by. A login
-        // turned away is turned away everywhere, so that is final; any other
-        // failure, or an answer with no window, falls to the next route. A
-        // reading with figures but no window is kept in case none has one.
+        // A reading with figures but no window is kept in case no route has
+        // one. A route that turns the login away is only that route's answer.
         var fallback: ProviderUsage?
         var lastReason: ProviderUsage.Unavailability = .noLimitsReported
-        for route in ["coding-plan-usage", "funding-check", "snapshot"] {
-            var request = ProfileHTTP.bearer(billingURL(login, workspaceID, route), token: login.controlKey)
-            request.setValue(workspaceID, forHTTPHeaderField: "x-vela-workspace-id")
-            switch await ProfileHTTP.data(for: request, refused: .localLoginExpired, session: session) {
-            case .failure(.localLoginExpired):
-                return context.unavailable(.localLoginExpired)
+        var refusals = 0
+        for route in credential.routes {
+            let request = credential.request(billingURL(credential.api, workspaceID, route), workspace: workspaceID)
+            switch await ProfileHTTP.data(for: request, refused: credential.refused, session: session) {
+            case .failure(credential.refused):
+                refusals += 1
             case .failure(let reason):
                 lastReason = reason
             case .success(let data):
@@ -102,16 +183,17 @@ enum OpenDesignUsageService {
                 fallback = fallback ?? usage
             }
         }
-        return fallback ?? context.unavailable(lastReason)
+        if let fallback { return fallback }
+        // Every billing route refused a login the workspace read accepted:
+        // this account is not one billing will answer for.
+        return context.unavailable(refusals == credential.routes.count ? .noPlan : lastReason)
     }
 
-    static func billingURL(_ login: Login, _ workspaceID: String, _ name: String) -> URL {
-        var url = login.api.appending(path: "api/v1/workspaces")
+    static func billingURL(_ api: URL, _ workspaceID: String, _ name: String) -> URL {
+        api.appending(path: "api/v1/workspaces")
             .appending(path: workspaceID)
             .appending(path: "billing")
             .appending(path: name)
-        url.append(queryItems: [URLQueryItem(name: "workspaceId", value: workspaceID)])
-        return url
     }
 
     /// The `prod` profile's control key and API address. A login still in
