@@ -7,6 +7,34 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.13.0
+
+**中文**
+
+**新功能**
+
+- **扩展可以使用自己的图标。** 在扩展的 `pulse-extension.json` 中用 `icon` 指定扩展文件夹内的 PNG，圆环、卡片、设置和菜单栏都会按原色显示它。感谢 [@Jiar](https://github.com/qunqin24/Pulse/pull/109) 贡献。
+- **支持从 ego lite 浏览器读取登录信息。** 在服务商设置的「从浏览器读取」中可以选择 ego lite，Devin 和其他通过浏览器登录的服务商都能使用。感谢 [@RoacherM](https://github.com/qunqin24/Pulse/pull/108) 贡献。
+- **设置项前显示图标。** 设置窗口中的设置项和操作按钮前都有一个小图标，便于快速找到。
+
+**改进与修复**
+
+- **关于页新增 Star 和爱发电入口。** 在「设置 → 关于」中可以打开 GitHub 页面点 Star，或在爱发电支持 Pulse。
+- **使用两周后提示一次 Star。** 设置窗口顶部会显示一次请求 Star 的横幅，之后不再出现。
+
+**English**
+
+**New**
+
+- **Extensions can use their own icon.** Name a PNG in the extension's folder with `icon` in its `pulse-extension.json`, and the ring, card, settings and menu bar show it in its own colours. Thanks to [@Jiar](https://github.com/qunqin24/Pulse/pull/109) for the contribution.
+- **Sign-in sessions can be read from ego lite.** Choose ego lite under Read from browser in a provider's settings; it works for Devin and for every provider that signs in through a browser. Thanks to [@RoacherM](https://github.com/qunqin24/Pulse/pull/108) for the contribution.
+- **Settings rows have icons.** Every setting and action in the settings window has a small icon before it, so it is easier to find.
+
+**Changed and fixed**
+
+- **About links to GitHub stars and Afdian.** Settings → About can open the GitHub page to star Pulse, or Afdian to support it.
+- **A one-time star request after two weeks.** A banner at the top of the settings window asks for a star once and does not come back.
+
 ## 1.12.8
 
 **中文**
