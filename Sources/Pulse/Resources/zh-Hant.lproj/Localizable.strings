@@ -838,6 +838,10 @@
 "Bailian CLI" = "百鍊 CLI";
 "Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "執行百鍊 CLI（bl），沿用它已儲存的登入。Pulse 不會讀取或儲存其中的憑證。";
 "Uses the login the Bailian CLI already saved." = "使用百鍊 CLI 儲存的登入資訊。";
+/* Open Design */
+"Open Design login" = "Open Design 登入";
+"Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt." = "讀取 Open Design 儲存在 ~/.amr 中的登入資訊，只傳送給 open-design.ai。不會出現鑰匙圈提示。";
+"Uses the login Open Design already saved on this Mac." = "使用 Open Design 已在這台 Mac 上儲存的登入資訊。";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "讀取 Hermes Agent 儲存在 ~/.hermes 中的 Nous Portal 登入資訊。不會出現鑰匙圈提示。";
 "Hermes Agent's login" = "Hermes Agent 的登入資訊";

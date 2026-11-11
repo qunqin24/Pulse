@@ -1,6 +1,6 @@
 # Providers
 
-Pulse tracks **seventy-seven** built-in quota providers: twenty-four written case by case and fifty-three described by a `ProviderProfile` ([Adding a provider](#adding-a-provider), [Profiled providers](#profiled-providers)). There is no Pulse backend or account; each provider is read by whatever route its product offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that exists only while an editor is open.
+Pulse tracks **seventy-eight** built-in quota providers: twenty-four written case by case and fifty-four described by a `ProviderProfile` ([Adding a provider](#adding-a-provider), [Profiled providers](#profiled-providers)). There is no Pulse backend or account; each provider is read by whatever route its product offers — often an undocumented account endpoint the product itself calls, sometimes a documented usage path, sometimes a local helper that exists only while an editor is open.
 
 This directory owns routes, credentials, cookies, extra logins and their failure lessons. Service code is authoritative; historical measurements are labelled; live-account checks are claimed only where the provider page explicitly records them. Not here: extensions (one more case, `.pulseExtension`, left out of `Provider.builtIn` — [`../extensions.md`](../extensions.md)); token spend readers ([`../token-spend.md`](../token-spend.md), [`../token-spend-sources.md`](../token-spend-sources.md)) — do not add one to this directory; Ollama's setup and page parser ([`../ollama-cloud.md`](../ollama-cloud.md)).
 
@@ -53,7 +53,7 @@ Accounts the stored rail does not mention are appended **in name order** (`AppSe
 
 ## Profiled providers
 
-Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page here (reply shape, what it leaves out and why) and a user setup page under the same slug in [`../setup/`](../setup/). Except for DimAgent, these shapes are **second-hand**, read from CodexBar's providers and tests (MIT), not from a live account; each page says so. DimAgent's shape was observed from its own CLI; its tests use anonymized replacement figures.
+Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page here (reply shape, what it leaves out and why) and a user setup page under the same slug in [`../setup/`](../setup/). Except for DimAgent, these shapes are **second-hand**, read from CodexBar's providers and tests (MIT), not from a live account; each page says so. DimAgent's shape was observed from its own CLI; its tests use anonymized replacement figures. Open Design's is second-hand too, but read from Open Design's own open-source client rather than CodexBar.
 
 | `Provider` | Ring name (notes page) | Credential | Money balance |
 |---|---|---|---|
@@ -110,6 +110,7 @@ Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page he
 | `.replicate` | [Replicate](replicate.md) | browser session | yes |
 | `.typeSafe` | [TypeSafe](typesafe.md) | browser session | yes |
 | `.vercelAIGateway` | [Vercel AI Gateway](vercel-ai-gateway.md) | pasted key | yes |
+| `.openDesign` | [Open Design](open-design.md) | Open Design's own login on this Mac (`~/.amr`) | yes |
 
 Left out, and why:
 

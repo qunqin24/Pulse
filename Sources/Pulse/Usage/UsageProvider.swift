@@ -86,6 +86,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     case replicate
     case typeSafe
     case vercelAIGateway
+    case openDesign
     /// **Not one provider: every program in the extensions folder.** Each
     /// extension is an account of this one — `AccountKey(.pulseExtension,
     /// slot: <the extension's id>)` — so the rail, the cache, the settings

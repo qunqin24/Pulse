@@ -11,7 +11,7 @@ Topic docs, at the top of this folder. Subfolders are under [Folders](#folders).
 | Doc | Owns |
 |---|---|
 | [features.md](features.md) | Every feature in full, the long form of the README's list (English) |
-| [supported-services.md](supported-services.md) | The 77 providers and how each is read, and the Token spend sources, as the README used to list them (English) |
+| [supported-services.md](supported-services.md) | The 78 providers and how each is read, and the Token spend sources, as the README used to list them (English) |
 | [architecture.md](architecture.md) | App shell, settings state, first-run / offer-once, login item, defaults domain |
 | [networking.md](networking.md) | System/manual proxy boundary, URLSession coverage, helper environment, Sparkle exception |
 | [refresh-and-data.md](refresh-and-data.md) | Refresh loop, cache, connection diagnostics and server replies, activity, ledger, forecast, estimate, currency, chart hover |

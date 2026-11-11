@@ -60,6 +60,7 @@ extension Provider {
         case .replicate: .replicate
         case .typeSafe: .typeSafe
         case .vercelAIGateway: .vercelAIGateway
+        case .openDesign: .openDesign
         default: nil
         }
     }

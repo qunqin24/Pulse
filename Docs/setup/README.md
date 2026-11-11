@@ -50,6 +50,7 @@ One page per provider: where its key or login comes from, and where it goes in P
 - [Notion AI](notion-ai.md)
 - [Nous Portal](nous-portal.md)
 - [Ollama Cloud](ollama-cloud.md)
+- [Open Design](open-design.md)
 - [OpenAI API](openai-api.md)
 - [OpenCode Go](opencode-go.md)
 - [Perplexity](perplexity.md)
