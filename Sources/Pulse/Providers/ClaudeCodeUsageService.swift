@@ -168,6 +168,13 @@ struct ClaudeCodeUsageService: Sendable {
                     // in for the next pass rather than paid for on this one.
                     let plan = await ClaudePlan.shared.cached(for: account)
                     await ClaudePlan.shared.refreshIfStale(for: account, token: token)
+                    // The week split by product, kept for Token spend's
+                    // all-products estimate. Only for the CLI's own login:
+                    // that is the account whose transcripts Token spend reads,
+                    // and an added account's split says nothing about them.
+                    if account == AccountKey(.claudeCode), let share = ClaudeProductShare.parse(root) {
+                        ClaudeProductShare.store(share)
+                    }
                     return .success(Self.parse(root, for: account, plan: plan))
                 case 401, 403:
                     return .needsFreshCredentials

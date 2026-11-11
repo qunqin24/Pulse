@@ -36,6 +36,18 @@ struct TokenSpendPane: View {
                 if settings.readsTokenSpend {
                     SettingsRowDivider()
                     SettingsRow(
+                        String.localized("Estimate all Claude products"),
+                        subtitle: String.localized("Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it.")
+                    ) {
+                        Toggle(String.localized("Estimate all Claude products"), isOn: Binding(
+                            get: { settings.estimatesAllClaudeProducts },
+                            set: { settings.estimatesAllClaudeProducts = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+                    SettingsRowDivider()
+                    SettingsRow(
                         String.localized("Usage recaps"),
                         subtitle: String.localized("Shareable cards for a day, a week, a month or a year, from this Mac's records."),
                         symbol: "rectangle.stack"
@@ -59,6 +71,7 @@ struct TokenSpendPane: View {
                     modelSummary: model.modelSpend,
                     noRecords: model.spendNoRecords,
                     hasReadLimitations: model.spendHasReadLimitations,
+                    claudeShare: settings.estimatesAllClaudeProducts ? ClaudeProductShare.stored() : nil,
                     span: Binding(
                         get: { settings.spendSpan },
                         set: { settings.spendSpan = $0 }

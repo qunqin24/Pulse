@@ -1,0 +1,19 @@
+{
+  "five_hour": { "utilization": 18.0, "resets_at": "2026-11-11T12:00:00.000000+00:00" },
+  "seven_day": { "utilization": 41.0, "resets_at": "2026-11-14T17:00:00.000000+00:00" },
+  "limits": [
+    { "kind": "session", "group": "session", "percent": 18, "severity": "normal", "resets_at": "2026-11-11T12:00:00+00:00", "scope": null, "is_active": true },
+    { "kind": "weekly_all", "group": "weekly", "percent": 41, "severity": "normal", "resets_at": "2026-11-14T17:00:00+00:00", "scope": null, "is_active": true }
+  ],
+  "seven_day_breakdown": {
+    "as_of": "2026-11-11T08:40:00+00:00",
+    "window_started_at": "2026-11-07T17:00:00+00:00",
+    "rows": [
+      { "key": "claude_code", "display_name": "Claude Code", "percent": 92 },
+      { "key": "chat", "display_name": "Chats", "percent": 0 },
+      { "key": "cowork", "display_name": "Cowork", "percent": 3 },
+      { "key": "duet", "display_name": "Claude Duet", "percent": 5 },
+      { "key": "other", "display_name": "Other", "percent": 0 }
+    ]
+  }
+}

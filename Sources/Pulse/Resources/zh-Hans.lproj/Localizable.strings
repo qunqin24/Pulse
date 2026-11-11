@@ -537,6 +537,11 @@
 "Usage records, estimated at models.dev API rates—not an actual bill." = "用量记录按 models.dev API 价格估算，非实际账单。";
 "API estimate" = "API 估算";
 "Partial estimate" = "部分估算";
+"Estimate all Claude products" = "估算全部 Claude 产品";
+"Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it." = "按 Anthropic 报告的本周用量中 Claude Code 所占比例，估算聊天、Cowork 等其他 Claude 产品的消耗。";
+"All Claude products" = "全部 Claude 产品";
+"Estimate" = "估算";
+"Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@." = "本机 Claude Code（%@）占本周 Claude 各产品用量的 %@（Anthropic 报告的比例）。比例读取于 %@。";
 "Estimate unavailable" = "无法估算";
 "%@ tokens unpriced" = "%@ token 未计价";
 "Excludes unpriced tokens." = "不含未计价 token。";

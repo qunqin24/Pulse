@@ -833,6 +833,14 @@ final class AppSettings {
         didSet { readsTokenSpendChanged(from: oldValue) }
     }
 
+    /// Whether Token spend shows the estimate for every Claude product
+    /// beside Claude Code's measured amount (`ClaudeProductShare`). On by
+    /// default: it appears only when Anthropic reports the split, and it is
+    /// labelled as an estimate. No onChange, for the same reason as above.
+    var estimatesAllClaudeProducts: Bool {
+        didSet { estimatesAllClaudeProductsChanged(from: oldValue) }
+    }
+
     // MARK: - Notifications (AppSettings+Notifications)
 
     /// Warn when a prepaid balance falls below this much, per account.
@@ -1018,6 +1026,7 @@ final class AppSettings {
         spendCustomDays: ClosedRange<Date>? = nil,
         spendActivityView: ActivityView = .default,
         readsTokenSpend: Bool = Default.readsTokenSpend,
+        estimatesAllClaudeProducts: Bool = Default.estimatesAllClaudeProducts,
         alertThreshold: AlertThreshold = .default,
         alertsOnReset: Bool = Default.alertsOnReset,
         alertsOnFailure: Bool = Default.alertsOnFailure,
@@ -1080,6 +1089,7 @@ final class AppSettings {
         self.spendCustomDays = spendCustomDays ?? Self.defaultSpendCustomDays()
         self.spendActivityView = spendActivityView
         self.readsTokenSpend = readsTokenSpend
+        self.estimatesAllClaudeProducts = estimatesAllClaudeProducts
         self.alertThreshold = alertThreshold
         self.alertsOnReset = alertsOnReset
         self.alertsOnFailure = alertsOnFailure
@@ -1198,6 +1208,7 @@ final class AppSettings {
             spendCustomDays: Self.storedSpendCustomDays(in: defaults),
             spendActivityView: Self.storedSpendActivityView(in: defaults),
             readsTokenSpend: Self.storedReadsTokenSpend(in: defaults),
+            estimatesAllClaudeProducts: Self.storedEstimatesAllClaudeProducts(in: defaults),
             alertThreshold: defaults.settingsIntChoice(Key.alertThreshold) ?? .default,
             alertsOnReset: defaults.settingsFlag(Key.alertsOnReset, default: Default.alertsOnReset),
             alertsOnFailure: defaults.settingsFlag(Key.alertsOnFailure, default: Default.alertsOnFailure),
