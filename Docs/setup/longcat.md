@@ -9,7 +9,7 @@ A LongCat account, and a browser (Safari, Chrome, Edge, Brave, Arc, Vivaldi, ego
 ## Steps
 
 1. Sign in at [longcat.chat](https://longcat.chat/platform/) and open the platform's usage page once.
-2. In Pulse: **Settings → LongCat**. Turn on **Show in panel**. Under **Read from browser**, pick the browser you signed in with (or leave it on **Automatic**) and click **Read**. Your Mac may ask to let Pulse use that browser's Keychain entry.
+2. In Pulse: **Settings → LongCat**. Turn on **Show in panel**. Under **Read from browser**, pick the browser you signed in with (or leave it on **Default browser**) and click **Read**. Your Mac may ask to let Pulse use that browser's Keychain entry.
 3. Within a few seconds the ring appears, and the account's pane lists the allowance and the fuel packs.
 
 ## If it doesn't work

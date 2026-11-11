@@ -9,7 +9,7 @@ A Qwen Cloud individual Token Plan, and a browser (Safari, Chrome, Edge, Brave, 
 ## Steps
 
 1. Sign in at [home.qwencloud.com](https://home.qwencloud.com/billing/subscription/token-plan-individual) and open the Token Plan page once.
-2. In Pulse: **Settings → Qwen Cloud**. Turn on **Show in panel**. Under **Read from browser**, pick the browser you signed in with (or leave it on **Automatic**) and click **Read**. Your Mac may ask to let Pulse use that browser's Keychain entry.
+2. In Pulse: **Settings → Qwen Cloud**. Turn on **Show in panel**. Under **Read from browser**, pick the browser you signed in with (or leave it on **Default browser**) and click **Read**. Your Mac may ask to let Pulse use that browser's Keychain entry.
 3. Within a few seconds the ring appears, and the account's pane lists the windows and when each resets.
 
 ## If it doesn't work

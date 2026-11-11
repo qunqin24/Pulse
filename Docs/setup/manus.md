@@ -10,7 +10,7 @@ A Manus account, signed in to a browser at manus.im.
 
 1. Sign in at [manus.im](https://manus.im) in your browser.
 2. In Pulse: **Settings → Manus**. Turn on **Show in panel**.
-3. Under **Read from browser**, pick the browser you signed in with (or leave it on Automatic) and click **Read**.
+3. Under **Read from browser**, pick the browser you signed in with (or leave it on Default browser) and click **Read**.
    - Chrome, Edge, Brave, Arc, Vivaldi and ego lite: macOS asks once for keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
    - Firefox: nothing extra.

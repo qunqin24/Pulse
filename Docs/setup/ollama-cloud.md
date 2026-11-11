@@ -11,7 +11,7 @@ An Ollama account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave,
 ## Steps
 
 1. Sign in at https://ollama.com in your browser.
-2. In Pulse, go to Settings → Ollama Cloud and turn on "Show in panel". Under "Read from browser", pick your browser (or leave it on Automatic — it starts with your Mac's default browser) and click "Read".
+2. In Pulse, go to Settings → Ollama Cloud and turn on "Show in panel". Under "Read from browser", pick your browser (or leave it on Default browser, which reads only your Mac's default browser) and click "Read".
    - Chrome, Edge, Brave, Arc, Vivaldi, and ego lite keep their cookies in the login keychain, so macOS will ask once for permission.
    - Safari needs Full Disk Access, granted to Pulse in System Settings → Privacy & Security, because its cookie file is otherwise off-limits.
    - Firefox needs nothing extra.

@@ -235,7 +235,7 @@ struct AccountConnectionGroup: View {
                                     credentials.sessionMessage = nil
                                 }
                             )) {
-                                Text(localized: "Automatic").tag(BrowserCookies.Browser?.none)
+                                Text(Self.defaultBrowserLabel(for: account.provider)).tag(BrowserCookies.Browser?.none)
 
                                 // Only what is actually installed. A browser
                                 // that isn't there is a choice that can only
@@ -369,31 +369,37 @@ struct AccountConnectionGroup: View {
         // A `localStorage` entry is not encrypted, so nothing is ever asked
         // for and the hint must not say it might be.
         guard provider.usesSessionCookie else {
-            if let chosen { return String.localized("Only \(chosen.name).") }
-            guard let first = ChromiumLocalStorage.present().first else {
-                return String.localized("Finds it in the browser you signed in with.")
+            guard let browser = chosen ?? defaultBrowser(for: provider) else {
+                return String.localized("Pulse can't read your default browser. Choose a browser from the list.")
             }
-            return String.localized("Starts with \(first.name).")
+            return String.localized("Only \(browser.name).")
         }
 
         // Named, it is the only one opened — the rest are not tried, so a
         // failure is reported rather than answered from a browser the user
         // never signed in to. That is the same bargain `UsageSource` makes.
-        if let chosen {
-            return chosen.promptsForKeychain
-                ? String.localized("Only \(chosen.name). It will ask for the keychain.")
-                : String.localized("Only \(chosen.name).")
+        // Default browser is one browser too: the rest are not tried.
+        guard let browser = chosen ?? defaultBrowser(for: provider) else {
+            return String.localized("Pulse can't read your default browser. Choose a browser from the list.")
         }
+        return browser.promptsForKeychain
+            ? String.localized("Only \(browser.name). It will ask for the keychain.")
+            : String.localized("Only \(browser.name).")
+    }
 
-        guard let first = BrowserCookies.present().first else {
-            return String.localized("Finds it in the browser you signed in with.")
-        }
+    /// This Mac's default browser, when Pulse can read this provider's
+    /// sign-in from it: any browser for a cookie, a Chromium one for Devin's
+    /// `localStorage`.
+    private static func defaultBrowser(for provider: Provider) -> BrowserCookies.Browser? {
+        BrowserCookies.defaultOnly(
+            among: provider.usesSessionCookie ? BrowserCookies.present() : ChromiumLocalStorage.present()
+        ).first
+    }
 
-        // "Starts with", not "looks in": if the session isn't there the rest
-        // are tried too, and a hint that promised one browser and then reported
-        // another reads as the app having ignored it.
-        return first.promptsForKeychain
-            ? String.localized("Starts with \(first.name). It will ask for the keychain.")
-            : String.localized("Starts with \(first.name).")
+    /// The first entry of the browser menu: "Default browser", with its name
+    /// when Pulse can read it.
+    private static func defaultBrowserLabel(for provider: Provider) -> String {
+        guard let browser = defaultBrowser(for: provider) else { return String.localized("Default browser") }
+        return String.localized("Default browser (\(browser.name))")
     }
 }

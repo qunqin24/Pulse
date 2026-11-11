@@ -9,7 +9,7 @@ A T3 Chat account, signed in to a browser (Safari, Firefox, Chrome, Edge, Brave,
 ## Steps
 
 1. Sign in at [t3.chat](https://t3.chat) in your browser.
-2. In Pulse: **Settings → T3 Chat**. Turn on **Show in panel**. Under **Read from browser**, pick your browser (or leave it on Automatic) and click **Read**.
+2. In Pulse: **Settings → T3 Chat**. Turn on **Show in panel**. Under **Read from browser**, pick your browser (or leave it on Default browser) and click **Read**.
    - Chrome, Edge, Brave, Arc, Vivaldi and ego lite keep their cookies in the login keychain, so macOS asks once for permission.
    - Safari needs Full Disk Access for Pulse in System Settings → Privacy & Security.
    - Firefox needs nothing extra.

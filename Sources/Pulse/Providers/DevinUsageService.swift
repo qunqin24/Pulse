@@ -501,7 +501,8 @@ struct DevinUsageService: Sendable {
     static func fromBrowser(
         _ browser: BrowserCookies.Browser? = nil
     ) -> (credential: Credential, browser: BrowserCookies.Browser)? {
-        let browsers = browser.map { [$0] } ?? ChromiumLocalStorage.present()
+        // Left on Default browser, that browser alone, as everywhere else.
+        let browsers = browser.map { [$0] } ?? BrowserCookies.defaultOnly(among: ChromiumLocalStorage.present())
 
         // Origin before browser, so a complete session in the second browser
         // beats half of one in the first: a site can leave a stale key behind

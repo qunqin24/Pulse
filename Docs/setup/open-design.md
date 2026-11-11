@@ -15,7 +15,7 @@ The OpenDesign Go API key itself can't be used: Open Design only shows usage to 
 
 1. Sign in at [open-design.ai](https://open-design.ai/cloud/dashboard) in your browser (or sign in to the Open Design app).
 2. In Pulse: **Settings → Open Design**. Turn on **Show in panel**.
-3. Under **Read from browser**, pick the browser you signed in with (or leave it on Automatic) and click **Read**. With the app signed in instead, skip this step.
+3. Under **Read from browser**, pick the browser you signed in with (or leave it on Default browser) and click **Read**. With the app signed in instead, skip this step.
    - Chrome, Edge, Brave, Arc, Vivaldi and ego lite: macOS asks once for keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
    - Firefox: nothing extra.

@@ -10,7 +10,7 @@ A Sakana AI account, signed in to a browser at console.sakana.ai.
 
 1. Sign in at [console.sakana.ai](https://console.sakana.ai) and open **Billing** once to check it shows your usage.
 2. In Pulse: **Settings → Sakana AI**. Turn on **Show in panel**.
-3. Under **Read from browser**, pick the browser you signed in with (or leave it on Automatic) and click **Read**.
+3. Under **Read from browser**, pick the browser you signed in with (or leave it on Default browser) and click **Read**.
    - Chrome, Edge, Brave, Arc, Vivaldi and ego lite: macOS asks once for Keychain permission.
    - Safari: give Pulse Full Disk Access first, in System Settings → Privacy & Security.
 4. Within a few seconds the ring appears, and the account's card lists the 5-hour and weekly limits, when each resets, your plan, and the balance.

@@ -11,7 +11,7 @@ A Windsurf account, signed in at [windsurf.com](https://windsurf.com) in Chrome,
 ## Steps
 
 1. Open [windsurf.com/profile](https://windsurf.com/profile) and make sure you're signed in.
-2. In Pulse: **Settings → Windsurf**. Turn on **Show in panel**. Under **Connection**, pick the browser you signed in with (or leave it on **Automatic**) and click **Read**.
+2. In Pulse: **Settings → Windsurf**. Turn on **Show in panel**. Under **Connection**, pick the browser you signed in with (or leave it on **Default browser**) and click **Read**.
 3. Within a few seconds the ring appears, and the account's pane lists the daily and weekly quota.
 
 ## If it doesn't work

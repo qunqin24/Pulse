@@ -192,6 +192,9 @@
 "Which limit the rail's ring tracks." = "레일의 링이 어느 한도를 따라갈지 정합니다.";
 "Highest usage" = "가장 많이 쓴 한도";
 "Automatic" = "자동";
+"Default browser" = "기본 브라우저";
+"Default browser (%@)" = "기본 브라우저(%@)";
+"Pulse can't read your default browser. Choose a browser from the list." = "Pulse가 기본 브라우저를 읽을 수 없습니다. 목록에서 브라우저를 선택하세요.";
 "Usage endpoint" = "사용량 API";
 "Provider tooling" = "공식 도구";
 "Use the endpoint when possible, the other route when not." = "가능하면 API를 쓰고, 안 되면 다른 경로를 씁니다.";

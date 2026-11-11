@@ -192,6 +192,9 @@
 "Which limit the rail's ring tracks." = "Which limit the rail's ring tracks.";
 "Highest usage" = "Highest usage";
 "Automatic" = "Automatic";
+"Default browser" = "Default browser";
+"Default browser (%@)" = "Default browser (%@)";
+"Pulse can't read your default browser. Choose a browser from the list." = "Pulse can't read your default browser. Choose a browser from the list.";
 "Usage endpoint" = "Usage endpoint";
 "Provider tooling" = "Provider tooling";
 "Use the endpoint when possible, the other route when not." = "Use the endpoint when possible, the other route when not.";

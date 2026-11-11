@@ -85,14 +85,17 @@ final class ProviderCredentialModel {
             return
         }
 
-        // Named, that one and no other. Left automatic, the default browser
-        // leads and the rest follow.
+        // Named, that one and no other. Left on Default browser, this Mac's
+        // default browser and no other.
         let chosen = settings.sessionBrowser(for: account).map { [$0] }
-        let browsers = chosen ?? BrowserCookies.present()
+        let browsers = chosen ?? BrowserCookies.defaultOnly(among: BrowserCookies.present())
+        let asked = chosen ?? BrowserCookies.preferred().map { [$0] } ?? []
 
         guard !browsers.isEmpty else {
-            sessionMessage = BrowserCookies.refusalMessage(BrowserCookies.refused(chosen ?? BrowserCookies.Browser.allCases))
-                ?? String.localized("No browser cookie store was found.")
+            sessionMessage = BrowserCookies.refusalMessage(BrowserCookies.refused(asked))
+                ?? (chosen == nil
+                    ? String.localized("Pulse can't read your default browser. Choose a browser from the list.")
+                    : String.localized("No browser cookie store was found."))
             return
         }
 
@@ -179,7 +182,7 @@ final class ProviderCredentialModel {
             // A store macOS kept shut is said as that, not as a missing
             // sign-in (issue #101).
             let refused = await Task.detached(priority: .userInitiated) {
-                BrowserCookies.refused(chosen ?? BrowserCookies.Browser.allCases)
+                BrowserCookies.refused(browsers)
             }.value
             if navigation.pane == .account(account), let message = BrowserCookies.refusalMessage(refused) {
                 sessionMessage = message
@@ -213,8 +216,11 @@ final class ProviderCredentialModel {
     /// each pass costs about forty milliseconds and is always current.
     private func readBrowserStorage(for account: AccountKey) {
         let chosen = settings.sessionBrowser(for: account)
-        guard !(chosen.map { [$0] } ?? ChromiumLocalStorage.present()).isEmpty else {
-            sessionMessage = String.localized("No Chromium browser was found.")
+        let browsers = chosen.map { [$0] } ?? BrowserCookies.defaultOnly(among: ChromiumLocalStorage.present())
+        guard !browsers.isEmpty else {
+            sessionMessage = chosen == nil
+                ? String.localized("Pulse can't read your default browser. Choose a browser from the list.")
+                : String.localized("No Chromium browser was found.")
             return
         }
 
@@ -225,7 +231,7 @@ final class ProviderCredentialModel {
                 let found = await Task.detached(priority: .userInitiated) {
                     ChromiumLocalStorage.find(
                         origin: origin,
-                        in: chosen.map { [$0] } ?? ChromiumLocalStorage.present(),
+                        in: browsers,
                         accept: { ProviderProfile.storageCredential(from: $0, keys: keys) != nil }
                     )
                 }.value

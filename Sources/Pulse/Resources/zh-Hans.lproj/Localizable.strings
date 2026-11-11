@@ -192,6 +192,9 @@
 "Which limit the rail's ring tracks." = "胶囊上的圆环对应哪一条限额。";
 "Highest usage" = "用量最高的一条";
 "Automatic" = "自动";
+"Default browser" = "默认浏览器";
+"Default browser (%@)" = "默认浏览器（%@）";
+"Pulse can't read your default browser. Choose a browser from the list." = "Pulse 读不了你的默认浏览器，请从列表中选择一个浏览器。";
 "Usage endpoint" = "用量接口";
 "Provider tooling" = "官方工具";
 "Use the endpoint when possible, the other route when not." = "优先用接口，取不到时改用另一种方式。";

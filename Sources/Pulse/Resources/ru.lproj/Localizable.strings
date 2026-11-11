@@ -192,6 +192,9 @@
 "Which limit the rail's ring tracks." = "Какой лимит отслеживает кольцо на ленте.";
 "Highest usage" = "Наибольший расход";
 "Automatic" = "Автоматически";
+"Default browser" = "Браузер по умолчанию";
+"Default browser (%@)" = "Браузер по умолчанию (%@)";
+"Pulse can't read your default browser. Choose a browser from the list." = "Pulse не может прочитать браузер по умолчанию. Выберите браузер из списка.";
 "Usage endpoint" = "API лимитов";
 "Provider tooling" = "Инструменты сервиса";
 "Use the endpoint when possible, the other route when not." = "По возможности API, иначе — другой способ.";

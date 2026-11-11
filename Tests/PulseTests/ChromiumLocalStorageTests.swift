@@ -557,6 +557,18 @@ struct ChromiumLocalStorageTests {
 
     // MARK: - The browser catalogue
 
+    @Test("Default browser offers this Mac's default and nothing else, and nothing when it can't be read")
+    func defaultBrowserOnly() {
+        #expect(BrowserCookies.defaultOnly(among: []).isEmpty)
+        let all = BrowserCookies.Browser.allCases
+        let chosen = BrowserCookies.defaultOnly(among: all)
+        #expect(chosen.count <= 1)
+        #expect(chosen == BrowserCookies.preferred().map { [$0] } ?? [])
+        if let only = chosen.first {
+            #expect(BrowserCookies.defaultOnly(among: all.filter { $0 != only }).isEmpty)
+        }
+    }
+
     @Test("ego lite is a Chromium store like any other, under its own names")
     func egoLiteIsCatalogued() throws {
         let browser = try #require(BrowserCookies.Browser(rawValue: "egoLite"))

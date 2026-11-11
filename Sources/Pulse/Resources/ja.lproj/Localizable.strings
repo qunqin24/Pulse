@@ -192,6 +192,9 @@
 "Which limit the rail's ring tracks." = "レールのリングがどの上限を追うか。";
 "Highest usage" = "最も使っている上限";
 "Automatic" = "自動";
+"Default browser" = "デフォルトのブラウザ";
+"Default browser (%@)" = "デフォルトのブラウザ（%@）";
+"Pulse can't read your default browser. Choose a browser from the list." = "Pulse はデフォルトのブラウザを読み取れません。一覧からブラウザを選んでください。";
 "Usage endpoint" = "使用量 API";
 "Provider tooling" = "公式ツール";
 "Use the endpoint when possible, the other route when not." = "まず API を使い、取れないときは別の経路にします。";

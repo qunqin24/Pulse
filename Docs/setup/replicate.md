@@ -10,7 +10,7 @@ A Replicate account, signed in at [replicate.com](https://replicate.com) in a br
 
 1. Sign in at [replicate.com](https://replicate.com) in Safari, Chrome, Firefox or another browser on this Mac.
 2. In Pulse: **Settings → Replicate**. Turn on **Show in panel**.
-3. Under **Connection**, next to **Read from browser**, pick the browser (or leave it on **Automatic**) and click **Read**. Chrome-family browsers may ask for Keychain access to their cookie store.
+3. Under **Connection**, next to **Read from browser**, pick the browser (or leave it on **Default browser**) and click **Read**. Chrome-family browsers may ask for Keychain access to their cookie store.
 4. Within a few seconds the account shows its credit balance.
 
 If you belong to an organization, Pulse reads whichever account Replicate's billing page opens on.

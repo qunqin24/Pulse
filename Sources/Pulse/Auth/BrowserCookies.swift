@@ -137,6 +137,15 @@ enum BrowserCookies {
         return [preferred] + installed.filter { $0 != preferred }
     }
 
+    /// What **Default browser** reads: this Mac's default browser, when it is
+    /// one of `candidates`, and nothing else. Not the default and then the
+    /// rest: each Chromium browser asks for the keychain on its own, and a
+    /// session found in a browser the reader did not mean is no help.
+    static func defaultOnly(among candidates: [Browser]) -> [Browser] {
+        guard let preferred = preferred(), candidates.contains(preferred) else { return [] }
+        return [preferred]
+    }
+
     /// The browsers whose cookies are on disk but macOS would not let Pulse
     /// open — Full Disk Access, or since macOS 26 the separate permission to
     /// read other apps' data, which an update of an ad-hoc signed app loses.
