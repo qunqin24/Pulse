@@ -57,7 +57,9 @@ struct ExtensionsSettingsView: View {
                             found.name,
                             subtitle: settings.isEnabled(found.account)
                                 ? String.localized("Shown in the panel")
-                                : String.localized("Off")
+                                : String.localized("Off"),
+                            icon: found.account.provider.iconResource,
+                            iconData: settings.pulseExtension(for: found.account)?.iconData
                         ) {
                             Button(String.localized("Settings…")) { open(found.account) }
                         }

@@ -150,7 +150,8 @@ struct PlacementPane: View {
 
                     SettingsRow(
                         settings.label(for: account),
-                        icon: account.provider.iconResource
+                        icon: account.provider.iconResource,
+                        iconData: settings.pulseExtension(for: account)?.iconData
                     ) {
                         HStack(spacing: 4) {
                             Button {
@@ -181,7 +182,8 @@ struct PlacementPane: View {
                         // width, which at 900pt is a slab. This is the two
                         // things being moved: the mark and the name.
                         HStack(spacing: 8) {
-                            LobeIconView(provider: account.provider, size: 15)
+                            LobeIconView(provider: account.provider, size: 15,
+                                         iconData: settings.pulseExtension(for: account)?.iconData)
                             Text(settings.label(for: account))
                                 .font(.system(size: 13))
                         }

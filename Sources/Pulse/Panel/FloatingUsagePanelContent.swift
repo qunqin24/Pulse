@@ -120,7 +120,8 @@ struct FloatingUsagePanelContent: View {
                                 store.usedElsewhere($0, account: selected.account)
                             }.map(\.id)),
                             pointerCenter: pointerCentre(for: index),
-                            maxHeight: placement.cardRoom
+                            maxHeight: placement.cardRoom,
+                            iconData: entries[index].iconData
                         )
                         .fixedSize()
                         .background(

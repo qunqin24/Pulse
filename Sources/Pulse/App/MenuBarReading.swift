@@ -156,6 +156,7 @@ extension MenuBarReading {
         remaining: Bool,
         style: MenuBarStyle,
         label: String?,
+        iconData: Data? = nil,
         on button: NSStatusBarButton
     ) {
         guard let reading else {
@@ -166,7 +167,7 @@ extension MenuBarReading {
             return
         }
 
-        let mark = markImage(for: reading.account.provider, size: 15)
+        let mark = markImage(for: reading.account.provider, size: 15, iconData: iconData)
         let tooltipFigure: String
         if let window = reading.window {
             tooltipFigure = remaining
@@ -245,14 +246,24 @@ extension MenuBarReading {
         return image
     }
 
-    /// A provider's mark at a menu's size. A copy: the store's image is shared,
-    /// and large.
+    /// Fits a mark inside the menu's square without resizing a cached image.
+    /// Bundled marks stay templates; extension artwork keeps its own colours.
     @MainActor
-    static func markImage(for provider: Provider, size: CGFloat) -> NSImage? {
-        let mark = (LobeIconStore.image(for: provider)?.copy() as? NSImage)
-            ?? NSImage(systemSymbolName: "chart.pie.fill", accessibilityDescription: nil)
-        mark?.size = NSSize(width: size, height: size)
-        mark?.isTemplate = true
+    static func markImage(for provider: Provider, size: CGFloat, iconData: Data? = nil) -> NSImage? {
+        guard let source = LobeIconStore.image(for: provider, iconData: iconData) else {
+            let fallback = NSImage(systemSymbolName: "chart.pie.fill", accessibilityDescription: nil)
+            fallback?.size = NSSize(width: size, height: size)
+            fallback?.isTemplate = true
+            return fallback
+        }
+        let mark = NSImage(size: NSSize(width: size, height: size), flipped: false) { rect in
+            let scale = min(rect.width / source.size.width, rect.height / source.size.height)
+            let fitted = NSSize(width: source.size.width * scale, height: source.size.height * scale)
+            source.draw(in: NSRect(x: rect.midX - fitted.width / 2, y: rect.midY - fitted.height / 2,
+                                   width: fitted.width, height: fitted.height))
+            return true
+        }
+        mark.isTemplate = source.isTemplate
         return mark
     }
 
@@ -287,7 +298,7 @@ extension MenuBarReading {
     }
 
     /// The mark and the ring side by side as one image. Not a template: the
-    /// ring may be red. The mark is drawn in `labelColor` to match.
+    /// ring may be red. Only template marks are tinted to `labelColor`.
     private static func combined(_ mark: NSImage?, _ ring: NSImage) -> NSImage {
         let gap: CGFloat = 4
         let markWidth = mark?.size.width ?? 0
@@ -296,8 +307,10 @@ extension MenuBarReading {
             if let mark {
                 let tinted = NSImage(size: mark.size, flipped: false) { markRect in
                     mark.draw(in: markRect)
-                    NSColor.labelColor.set()
-                    markRect.fill(using: .sourceAtop)
+                    if mark.isTemplate {
+                        NSColor.labelColor.set()
+                        markRect.fill(using: .sourceAtop)
+                    }
                     return true
                 }
                 tinted.draw(in: NSRect(origin: .zero, size: mark.size))
