@@ -207,7 +207,6 @@ Synthetic stores, fixed clocks and UTC calendars; not live-client validation. [t
 | `PromptCacheLapseTests` | Claude Code's cache lapses a tier after the last request (a tool result counts), not the answer's end; subagent lines are not the session. |
 | `CodexPromptCacheTests` | Codex's thirty-minute floor on GPT-5.6 and later, from the last request touching the cache; earlier models untimed. |
 | `ReplyTimingTests` | Speed and first-token wait: a reply copied into a resumed session counts once; five timed replies per model within a day required; implausible values not timed. |
-| `CodexSignalsTests` | Signs of a weaker model: reasoning on the 516, 1034, 1552 … lattice; model or effort changes mid-turn; Codex before 0.144 not judged; fork copies skipped. |
 
 ### Recap
 

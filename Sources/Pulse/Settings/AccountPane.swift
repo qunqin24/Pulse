@@ -127,12 +127,6 @@ struct AccountPane: View {
                     openTokenSpend: { navigation.open(.spend) }
                 )
             }
-
-            // Read from this Mac's sessions, like the history above: the
-            // signs belong to whatever Codex here ran, not to an account.
-            if provider == .codex, account.isPrimary, settings.isEnabled(account) {
-                CodexSignalsGroup()
-            }
         }
         .onChange(of: "\(account.id)|\(settings.isEnabled(account))", initial: true) { _, _ in
             flows.seed(for: account)
