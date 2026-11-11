@@ -92,9 +92,11 @@ SOFTWARE.
 
 ## Other marks
 
-`commandcode.svg`, `newapi.svg`, `sub2api.svg`, `v2ex.svg` and `extension.svg`
-in `Sources/Pulse/Resources` are not taken from Lobe Icons. `extension.svg` is
-Pulse's own.
+`commandcode.svg`, `newapi.svg`, `sub2api.svg`, `v2ex.svg`, `opendesign.svg` and
+`extension.svg` in `Sources/Pulse/Resources` are not taken from Lobe Icons.
+`extension.svg` is Pulse's own. `opendesign.svg` is the mark from Open Design's
+own `apps/web/public/agent-icons/amr.svg` ([nexu-io/open-design](https://github.com/nexu-io/open-design),
+Apache License 2.0), drawn in one colour without its dark tile.
 
 ## Agent Robot Avatar
 

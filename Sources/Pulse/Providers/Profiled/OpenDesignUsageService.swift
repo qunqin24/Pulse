@@ -32,7 +32,7 @@ import Foundation
 extension ProviderProfile {
     static let openDesign = ProviderProfile(
         displayName: "Open Design",
-        iconResource: "extension",
+        iconResource: "opendesign",
         credential: .localLogin,
         accessDescription: {
             .localized("Reads the login Open Design saved in ~/.amr and sends it only to open-design.ai. No Keychain prompt.")
