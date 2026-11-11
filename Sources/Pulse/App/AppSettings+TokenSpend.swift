@@ -13,10 +13,12 @@ extension AppSettings.Key {
     static let spendCustomDays = "settings.spendCustomDays"
     static let spendActivityView = "settings.spendActivityView"
     static let readsTokenSpend = "settings.readsTokenSpend"
+    static let estimatesAllClaudeProducts = "settings.estimatesAllClaudeProducts"
 }
 
 extension AppSettings.Default {
     static let readsTokenSpend = false
+    static let estimatesAllClaudeProducts = true
 }
 
 extension AppSettings {
@@ -43,6 +45,11 @@ extension AppSettings {
     func readsTokenSpendChanged(from old: Bool) {
         guard readsTokenSpend != old else { return }
         Self.storeReadsTokenSpend(readsTokenSpend, in: defaults)
+    }
+
+    func estimatesAllClaudeProductsChanged(from old: Bool) {
+        guard estimatesAllClaudeProducts != old else { return }
+        Self.storeEstimatesAllClaudeProducts(estimatesAllClaudeProducts, in: defaults)
     }
 
     /// The span last chosen, or `.week` when nothing is stored or what is
@@ -108,5 +115,13 @@ extension AppSettings {
 
     static func storeReadsTokenSpend(_ enabled: Bool, in defaults: UserDefaults) {
         defaults.set(enabled, forKey: Key.readsTokenSpend)
+    }
+
+    static func storedEstimatesAllClaudeProducts(in defaults: UserDefaults) -> Bool {
+        defaults.settingsFlag(Key.estimatesAllClaudeProducts, default: Default.estimatesAllClaudeProducts)
+    }
+
+    static func storeEstimatesAllClaudeProducts(_ enabled: Bool, in defaults: UserDefaults) {
+        defaults.set(enabled, forKey: Key.estimatesAllClaudeProducts)
     }
 }

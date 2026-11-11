@@ -48,6 +48,10 @@ struct TokenSpendView: View {
     /// decode. Shown as one short, generic sentence; the readers' own English
     /// diagnostics never reach the view.
     let hasReadLimitations: Bool
+    /// How Anthropic splits this week between Claude products, when it says,
+    /// and nil when it doesn't or the estimate is switched off. See
+    /// `claudeEstimate`.
+    var claudeShare: ClaudeProductShare? = nil
     @Binding var span: SpendSpan
     /// The first and last day `SpendSpan.custom` counts.
     @Binding var customDays: ClosedRange<Date>
@@ -154,6 +158,7 @@ struct TokenSpendView: View {
                     nothingForAgent(focus)
                 } else {
                     total(focused)
+                    claudeEstimate(focused)
                     activitySection
                     kinds(focused)
                     streaks(focused)
@@ -169,6 +174,7 @@ struct TokenSpendView: View {
                 empty
             } else {
                 total(summary)
+                claudeEstimate(summary)
                 activitySection
                 kinds(summary)
                 streaks(summary)
@@ -409,6 +415,70 @@ struct TokenSpendView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
+        }
+    }
+
+    // MARK: - Every Claude product
+
+    /// Claude Code's measured amount scaled up to every Claude product.
+    ///
+    /// **Only an estimate, and drawn as one.** The transcripts on this Mac are
+    /// Claude Code's; chats, Cowork and the other products the same plan pays
+    /// for leave nothing here. Anthropic reports how this week's usage splits
+    /// between them, so the measured amount divided by Claude Code's part is
+    /// the whole: $1,200 at 92% is about $1,304. The split is of the weekly
+    /// limit rather than of tokens, rounded to whole percentages, and from this
+    /// week whatever span is picked, which the caption says. Nothing is drawn
+    /// without a split, without a Claude Code row in it, or without a priced
+    /// Claude Code amount: no estimate is better than one divided by zero.
+    @ViewBuilder private func claudeEstimate(_ summary: SpendSummary) -> some View {
+        if let share = claudeShare,
+           let code = summary.agents.first(where: { $0.agent == .claudeCode }),
+           code.tokens > code.unpricedTokens,
+           let whole = share.estimatedTotal(fromClaudeCode: code.cost),
+           let fraction = share.claudeCodeFraction {
+            SettingsGroup(String.localized("All Claude products")) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .firstTextBaseline, spacing: 10) {
+                        Text(verbatim: "≈ \(SpendFormat.money(whole))")
+                            .font(.system(size: 22, weight: .semibold))
+                            .monospacedDigit()
+                        Text(localized: "Estimate")
+                            .font(.system(size: 11))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForEach(share.parts) { part in
+                        HStack(spacing: 10) {
+                            Text(verbatim: part.row.name)
+                                .font(.system(size: 12))
+                                .lineLimit(1)
+                                .frame(width: 110, alignment: .leading)
+                            ShareBar(share: part.fraction)
+                                .frame(height: 6)
+                            Text(verbatim: "\(Int(part.row.percent.rounded()))%")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                                .frame(width: 40, alignment: .trailing)
+                            Text(verbatim: SpendFormat.money(whole * part.fraction))
+                                .font(.system(size: 12))
+                                .monospacedDigit()
+                                .frame(width: 76, alignment: .trailing)
+                        }
+                    }
+
+                    Text(String.localized(
+                        "Claude Code on this Mac (\(SpendFormat.money(code.cost))) is \("\(Int((fraction * 100).rounded()))%") of this week's usage across Claude products, as Anthropic reports it. Split read \(SpendFormat.chartDate(share.observedAt))."
+                    ))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+            }
         }
     }
 

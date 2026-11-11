@@ -537,6 +537,11 @@
 "Usage records, estimated at models.dev API rates—not an actual bill." = "Оценка по записям о расходе и ценам API на models.dev — не реальный счёт.";
 "API estimate" = "Оценка по ценам API";
 "Partial estimate" = "Неполная оценка";
+"Estimate all Claude products" = "Оценка для всех продуктов Claude";
+"Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it." = "Добавляет оценку для чатов, Cowork и других продуктов Claude по доле Claude Code в использовании за эту неделю, которую сообщает Anthropic.";
+"All Claude products" = "Все продукты Claude";
+"Estimate" = "Оценка";
+"Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@." = "Claude Code на этом Mac (%@) составляет %@ использования продуктов Claude за эту неделю по данным Anthropic. Доли получены %@.";
 "Estimate unavailable" = "Оценка недоступна";
 "%@ tokens unpriced" = "Токенов без цены: %@";
 "Excludes unpriced tokens." = "Токены без цены не учтены.";

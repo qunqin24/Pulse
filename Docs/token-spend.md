@@ -308,6 +308,22 @@ PULSE_SPEND_BENCHMARK=1 PULSE_SPEND_BENCHMARK_LARGE=1 swift test --filter SpendR
 | 3,000 distinct project basenames (grouped naming) | 65.35 ms | 1.214 ms |
 | 2,097,360-byte unchanged ZCode heartbeat log | 12.65 ms | 0.066 ms |
 
+## Every Claude product, estimated
+
+Claude Code's transcripts are the only Claude records on this Mac. The same plan also pays for chats, Cowork and Anthropic's other products, which leave nothing here, so the Claude Code amount is the whole Claude bill only for someone who uses nothing else.
+
+The usage reply Claude Code's ring already reads (`api/oauth/usage`) carries `seven_day_breakdown.rows`, this week's usage split by product (`key`, `display_name`, `percent` 0–100). `ClaudeProductShare` reads it on the endpoint route, **for the CLI's own login only** (the account whose transcripts are counted), and keeps the last split in `UserDefaults` (`claude.productShare`). Below the headline, in the combined view and in Claude Code's own, an **All Claude products** group then shows
+
+$$\text{all products} \approx \frac{\text{Claude Code amount}}{\text{Claude Code's part of the week}}$$
+
+with one row per product (its reported percentage, a share bar and its part of the estimate) and a caption naming the measured amount, the share and the day the split was read. Settings → Token spend → **Estimate all Claude products** (`AppSettings.estimatesAllClaudeProducts`, key `settings.estimatesAllClaudeProducts`, on by default) turns it off.
+
+- **Labelled as an estimate, and drawn only from what was reported.** No split, no Claude Code row, a Claude Code share of zero, or no priced Claude Code amount: no group. A row without a key or a finite 0–100 percentage is skipped, not repaired.
+- **The parts are taken against their own sum**, not against 100: each row is rounded on its own, so they can add up to 99 or 101.
+- **What it is not.** The field is undocumented and can change. The percentages are shares of the weekly limit, not of tokens, so the estimate assumes the other products cost about what Claude Code does for the same part of the limit. The split is this week's whatever span is picked. Claude Code sessions in the cloud or on another Mac count in Anthropic's share but leave no transcript here, so the estimate runs low for someone who uses them.
+
+Tests: `ClaudeProductShareTests` (parsing, odd rows, the division, rounding, the stored round trip and the setting's default).
+
 ## What the page will not say
 
 - **No tokens from a cost, and no estimate as usage** ([What the readers agree on](#what-the-readers-agree-on)). Dividing spend by a rate, or a request count by anything, is a number nobody measured. Cost-only stores are still watched and can be named as recognised without a token figure; an estimate's absence is not a zero.

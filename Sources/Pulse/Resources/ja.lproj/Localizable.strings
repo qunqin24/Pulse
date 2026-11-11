@@ -537,6 +537,11 @@
 "Usage records, estimated at models.dev API rates—not an actual bill." = "使用記録を models.dev の API 料金で概算したもので、実際の請求ではありません。";
 "API estimate" = "API 換算の概算";
 "Partial estimate" = "一部のみ概算";
+"Estimate all Claude products" = "すべての Claude 製品を概算";
+"Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it." = "Anthropic が報告する今週の使用量のうち Claude Code の割合から、チャットや Cowork など他の Claude 製品の分を概算します。";
+"All Claude products" = "すべての Claude 製品";
+"Estimate" = "概算";
+"Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@." = "この Mac の Claude Code（%@）は、Anthropic の報告では今週の Claude 製品全体の使用量の %@ です。割合の取得日：%@。";
 "Estimate unavailable" = "概算できません";
 "%@ tokens unpriced" = "%@ トークンが価格未設定";
 "Excludes unpriced tokens." = "価格未設定のトークンは含みません。";

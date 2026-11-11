@@ -29,7 +29,7 @@ Reasoning: a network stumble should not hide a perfectly good captured reading. 
 
 Pinned `.endpoint` / `.tooling` / `.desktopApp` disable the normal cross-source fallback. Cache reconciliation still runs afterwards where its rules allow.
 
-The usage endpoint is **not** a public documented usage API. It is what Claude Code itself calls and can change without notice. Parse the response’s `limits` array rather than the top-level `five_hour` / `seven_day` fields — only the array carries per-model `weekly_scoped` windows. `kind` maps the window (`session` is the 5-hour one); `scope.model.display_name` names the model.
+The usage endpoint is **not** a public documented usage API. It is what Claude Code itself calls and can change without notice. Parse the response’s `limits` array rather than the top-level `five_hour` / `seven_day` fields — only the array carries per-model `weekly_scoped` windows. `kind` maps the window (`session` is the 5-hour one); `scope.model.display_name` names the model. The same reply's `seven_day_breakdown.rows` (this week's split by product) draws no ring; for the CLI's own login it is kept for Token spend's all-products estimate ([token-spend.md](../token-spend.md#every-claude-product-estimated)).
 
 The saved CLI token expires in hours and **nothing here renews it**. An unusable token (401/403) or a missing one falls through as above. Added accounts never use these fallbacks.
 

@@ -537,6 +537,11 @@
 "Usage records, estimated at models.dev API rates—not an actual bill." = "사용 기록을 models.dev의 API 요금으로 추산한 값이며, 실제 청구서가 아닙니다.";
 "API estimate" = "API 기준 추산";
 "Partial estimate" = "일부만 추산";
+"Estimate all Claude products" = "모든 Claude 제품 추산";
+"Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it." = "Anthropic이 알려 주는 이번 주 사용량 중 Claude Code의 비율로 채팅, Cowork 등 다른 Claude 제품의 사용량을 추산합니다.";
+"All Claude products" = "모든 Claude 제품";
+"Estimate" = "추산";
+"Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@." = "이 Mac의 Claude Code(%@)는 Anthropic 기준 이번 주 Claude 제품 전체 사용량의 %@입니다. 비율 확인 날짜: %@.";
 "Estimate unavailable" = "추산할 수 없음";
 "%@ tokens unpriced" = "%@ 토큰은 가격 미정";
 "Excludes unpriced tokens." = "가격이 정해지지 않은 토큰은 제외합니다.";

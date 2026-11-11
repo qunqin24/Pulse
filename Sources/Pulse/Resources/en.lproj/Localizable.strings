@@ -537,6 +537,11 @@
 "Usage records, estimated at models.dev API rates—not an actual bill." = "Usage records, estimated at models.dev API rates—not an actual bill.";
 "API estimate" = "API estimate";
 "Partial estimate" = "Partial estimate";
+"Estimate all Claude products" = "Estimate all Claude products";
+"Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it." = "Adds an estimate for chats, Cowork and other Claude products, from Claude Code's share of this week's usage as Anthropic reports it.";
+"All Claude products" = "All Claude products";
+"Estimate" = "Estimate";
+"Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@." = "Claude Code on this Mac (%@) is %@ of this week's usage across Claude products, as Anthropic reports it. Split read %@.";
 "Estimate unavailable" = "Estimate unavailable";
 "%@ tokens unpriced" = "%@ tokens unpriced";
 "Excludes unpriced tokens." = "Excludes unpriced tokens.";
