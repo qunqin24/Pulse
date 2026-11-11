@@ -43,7 +43,7 @@ struct CodexSignalsGroup: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             SettingsGroup(String.localized("Signs of a weaker model")) {
-                SettingsRow(String.localized("Period")) {
+                SettingsRow(String.localized("Period"), symbol: "calendar") {
                     Picker(String.localized("Period"), selection: $span) {
                         ForEach(Span.allCases) { Text(verbatim: $0.title).tag($0) }
                     }

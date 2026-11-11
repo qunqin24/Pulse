@@ -15,7 +15,8 @@ struct ClaudeCodeStatusLineRow: View {
         Group {
             SettingsRow(
                 String.localized("Claude Code status line"),
-                subtitle: String.localized("A backup for when the saved login expires. Your own status line keeps working.")
+                subtitle: String.localized("A backup for when the saved login expires. Your own status line keeps working."),
+                symbol: "terminal"
             ) {
                 Button(
                     repairs.isHookInstalled

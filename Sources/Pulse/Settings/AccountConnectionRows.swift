@@ -21,7 +21,8 @@ struct QoderSiteRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Site"),
-            subtitle: String.localized("Where you signed in. Changing it clears the saved session.")
+            subtitle: String.localized("Where you signed in. Changing it clears the saved session."),
+            symbol: "globe.asia.australia"
         ) {
             Picker("", selection: Binding(
                 get: { settings.qoderSite },
@@ -55,7 +56,8 @@ struct MiniMaxSiteRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Site"),
-            subtitle: String.localized("Where your key is from. Each site keeps its own key.")
+            subtitle: String.localized("Where your key is from. Each site keeps its own key."),
+            symbol: "globe.asia.australia"
         ) {
             Picker("", selection: Binding(
                 get: { settings.minimaxSite },
@@ -87,7 +89,8 @@ struct StepFunSiteRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Site"),
-            subtitle: String.localized("Where you signed in. Changing it clears the saved session.")
+            subtitle: String.localized("Where you signed in. Changing it clears the saved session."),
+            symbol: "globe.asia.australia"
         ) {
             Picker("", selection: Binding(
                 get: { settings.stepFunSite },
@@ -125,7 +128,8 @@ struct ServerAddressRow: View {
             String.localized("Server address"),
             subtitle: fields.serverAddressInvalid
                 ? String.localized("That address can't be used. It needs https://, unless the server is on your own network.")
-                : String.localized("Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else.")
+                : String.localized("Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else."),
+            symbol: "server.rack"
         ) {
             HStack(spacing: 8) {
                 TextField("", text: $fields.serverAddress)
@@ -155,7 +159,8 @@ struct BalanceBasisRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Ring measures"),
-            subtitle: Self.balanceBasisSubtitle(settings.balanceBasis(for: account))
+            subtitle: Self.balanceBasisSubtitle(settings.balanceBasis(for: account)),
+            symbol: "ruler"
         ) {
             Picker("", selection: Binding(
                 get: { settings.balanceBasis(for: account) },
@@ -194,7 +199,8 @@ struct BalanceBudgetRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Full tank"),
-            subtitle: String.localized("What you call a full balance. The ring measures against it.")
+            subtitle: String.localized("What you call a full balance. The ring measures against it."),
+            symbol: "fuelpump"
         ) {
             HStack(spacing: 8) {
                 TextField("", text: $fields.balanceBudgetText)
@@ -217,7 +223,8 @@ struct LowBalanceRow: View {
     var body: some View {
         SettingsRow(
             String.localized("Warn below"),
-            subtitle: String.localized("Notify once when the balance falls under this. Blank for never.")
+            subtitle: String.localized("Notify once when the balance falls under this. Blank for never."),
+            symbol: "bell"
         ) {
             HStack(spacing: 8) {
                 TextField("", text: $fields.lowBalance)

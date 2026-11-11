@@ -51,7 +51,8 @@ struct AccountConnectionGroup: View {
             if account.isPrimary, account.provider.hasSourceChoice {
                 SettingsRow(
                     String.localized("Read usage from"),
-                    subtitle: source.detail(for: account.provider)
+                    subtitle: source.detail(for: account.provider),
+                    symbol: "point.3.connected.trianglepath.dotted"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.source(for: account) },
@@ -84,7 +85,8 @@ struct AccountConnectionGroup: View {
                     subtitle: signIn.githubError
                         ?? (credentials.savedKey.isEmpty
                             ? String.localized("Opens GitHub's own page. Pulse asks to read your profile, nothing else.")
-                            : String.localized("Signed in. Pulse holds a read-only token for this Mac."))
+                            : String.localized("Signed in. Pulse holds a read-only token for this Mac.")),
+                    symbol: "person.crop.circle"
                 ) {
                     if signIn.githubTask != nil {
                         Button(String.localized("Cancel")) { signIn.endGitHubSignIn() }
@@ -102,7 +104,8 @@ struct AccountConnectionGroup: View {
 
                     SettingsRow(
                         String.localized("Code"),
-                        subtitle: String.localized("Copied — paste it on the page that opened.")
+                        subtitle: String.localized("Copied — paste it on the page that opened."),
+                        symbol: "number"
                     ) {
                         HStack(spacing: 10) {
                             Text(githubPrompt.userCode)
@@ -175,7 +178,8 @@ struct AccountConnectionGroup: View {
                             : account.provider == .devin
                                 ? String.localized("Token and organization")
                                 : String.localized("API key"),
-                    subtitle: Self.keySubtitle(for: account.provider, minimaxSite: settings.minimaxSite)
+                    subtitle: Self.keySubtitle(for: account.provider, minimaxSite: settings.minimaxSite),
+                    symbol: "key"
                 ) {
                     HStack(spacing: 8) {
                         Group {
@@ -220,7 +224,8 @@ struct AccountConnectionGroup: View {
                         // keychain, and being told a second before the dialog
                         // appears is the difference between a step and a scare.
                         subtitle: credentials.sessionMessage
-                            ?? Self.browserHint(settings.sessionBrowser(for: account), for: account.provider)
+                            ?? Self.browserHint(settings.sessionBrowser(for: account), for: account.provider),
+                        symbol: "globe"
                     ) {
                         HStack(spacing: 8) {
                             Picker("", selection: Binding(
@@ -264,7 +269,7 @@ struct AccountConnectionGroup: View {
                 // HTTP with the token Pulse holds. Stating the CLI's route
                 // there would name a credential this account never touches.
                 if account.isPrimary, let route = account.provider.soleRoute {
-                    SettingsRow(String.localized("Read usage from"), subtitle: route.note) {
+                    SettingsRow(String.localized("Read usage from"), subtitle: route.note, symbol: "point.3.connected.trianglepath.dotted") {
                         Text(route.name)
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)

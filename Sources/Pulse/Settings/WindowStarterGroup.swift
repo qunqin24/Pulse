@@ -18,7 +18,8 @@ struct WindowStarterGroup: View {
                 String.localized("Start a new window after each reset"),
                 subtitle: provider == .claudeCode
                     ? String.localized("When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved.")
-                    : String.localized("When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved.")
+                    : String.localized("When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved."),
+                symbol: "play.circle"
             ) {
                 Toggle("", isOn: Binding(
                     get: { settings.primesWindows(for: provider) },
@@ -35,7 +36,8 @@ struct WindowStarterGroup: View {
 
                 SettingsRow(
                     String.localized("Only between"),
-                    subtitle: String.localized("A reset outside these hours is started when they begin. Shared by Claude Code and Codex.")
+                    subtitle: String.localized("A reset outside these hours is started when they begin. Shared by Claude Code and Codex."),
+                    symbol: "clock"
                 ) {
                     HStack(spacing: 6) {
                         hourPicker(Binding(
@@ -52,7 +54,7 @@ struct WindowStarterGroup: View {
 
                 SettingsRowDivider()
 
-                SettingsRow(String.localized("Last started")) {
+                SettingsRow(String.localized("Last started"), symbol: "clock.arrow.circlepath") {
                     Text(verbatim: Self.primerStatus(settings.lastPrimerRun(for: provider)))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)

@@ -22,7 +22,8 @@ struct CurrencySettingsGroup: View {
         SettingsGroup(String.localized("Currency")) {
             SettingsRow(
                 String.localized("Show estimates in"),
-                subtitle: String.localized("Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives.")
+                subtitle: String.localized("Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives."),
+                symbol: "dollarsign.circle"
             ) {
                 Picker("", selection: Binding(
                     get: { settings.displayCurrency },
@@ -39,7 +40,7 @@ struct CurrencySettingsGroup: View {
             if currency != .usd {
                 SettingsRowDivider()
 
-                SettingsRow(String.localized("Exchange rate"), subtitle: rateSubtitle) {
+                SettingsRow(String.localized("Exchange rate"), subtitle: rateSubtitle, symbol: "banknote") {
                     HStack(spacing: 6) {
                         Text(verbatim: "1 USD =")
                             .foregroundStyle(.secondary)
@@ -55,7 +56,7 @@ struct CurrencySettingsGroup: View {
 
                 SettingsRowDivider()
 
-                SettingsRow(String.localized("Rate source")) {
+                SettingsRow(String.localized("Rate source"), symbol: "link") {
                     Link(destination: ExchangeRates.attribution) {
                         Text(verbatim: "Rates By Exchange Rate API")
                     }

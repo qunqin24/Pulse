@@ -16,19 +16,21 @@ struct DeveloperIntegrationsView: View {
             SettingsGroup(String.localized("Read cached usage")) {
                 SettingsRow(
                     "Pulse --json",
-                    subtitle: String.localized("Prints Pulse's saved readings, not the provider's original reply, without fetching or opening credentials.")
+                    subtitle: String.localized("Prints Pulse's saved readings, not the provider's original reply, without fetching or opening credentials."),
+                    symbol: "curlybraces"
                 ) {
                     Button(String.localized("Copy command")) { copy(Self.quote(executable) + " --json") }
                 }
                 SettingsRowDivider()
                 SettingsRow(
                     String.localized("Developer kit"),
-                    subtitle: String.localized("Raycast extension, tmux and shell status, and a sketchybar plugin.")
+                    subtitle: String.localized("Raycast extension, tmux and shell status, and a sketchybar plugin."),
+                    symbol: "square.stack.3d.up"
                 ) {
                     Button(String.localized("Export integration files…"), action: exportKit)
                 }
                 SettingsRowDivider()
-                SettingsRow(String.localized("Installation guide")) {
+                SettingsRow(String.localized("Installation guide"), symbol: "book") {
                     Link(destination: URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/integrations.md")!) {
                         Text(localized: "Open")
                     }
@@ -36,7 +38,7 @@ struct DeveloperIntegrationsView: View {
             }
 
             SettingsGroup(String.localized("Open an account")) {
-                SettingsRow(String.localized("Account")) {
+                SettingsRow(String.localized("Account"), symbol: "person.crop.circle") {
                     Picker(String.localized("Account"), selection: $selectedAccount) {
                         ForEach(settings.orderedAccounts) { account in
                             Text(settings.label(for: account)).tag(account)
@@ -48,14 +50,15 @@ struct DeveloperIntegrationsView: View {
                 SettingsRowDivider()
                 SettingsRow(
                     String.localized("Account link"),
-                    subtitle: String.localized("Opens this account's settings in the installed Pulse app.")
+                    subtitle: String.localized("Opens this account's settings in the installed Pulse app."),
+                    symbol: "link"
                 ) {
                     Button(String.localized("Copy link")) {
                         copy(PulseLink.account(selectedAccount).url.absoluteString)
                     }
                 }
                 SettingsRowDivider()
-                SettingsRow(String.localized("Open from terminal")) {
+                SettingsRow(String.localized("Open from terminal"), symbol: "terminal") {
                     Button(String.localized("Copy command")) {
                         copy("open " + Self.quote(PulseLink.account(selectedAccount).url.absoluteString))
                     }

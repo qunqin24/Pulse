@@ -15,7 +15,8 @@ struct AppearancePane: View {
             SettingsGroup {
                 SettingsRow(
                     String.localized("Size"),
-                    subtitle: String.localized("Size of the rail on screen.")
+                    subtitle: String.localized("Size of the rail on screen."),
+                    symbol: "textformat.size"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.panelSize },
@@ -35,7 +36,8 @@ struct AppearancePane: View {
 
                 SettingsRow(
                     String.localized("Spacing"),
-                    subtitle: String.localized("How much air there is between the rings.")
+                    subtitle: String.localized("How much air there is between the rings."),
+                    symbol: "arrow.left.and.right"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.railSpacing },
@@ -55,7 +57,8 @@ struct AppearancePane: View {
 
                 SettingsRow(
                     String.localized("Round ends"),
-                    subtitle: String.localized("The rail's ends and the card's tail follow the ring's own curve.")
+                    subtitle: String.localized("The rail's ends and the card's tail follow the ring's own curve."),
+                    symbol: "capsule"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.usesRoundEnds },
@@ -72,7 +75,8 @@ struct AppearancePane: View {
                 // follow it too.
                 SettingsRow(
                     String.localized("Progress bars"),
-                    subtitle: String.localized("How limit bars are drawn on the card and in the menu.")
+                    subtitle: String.localized("How limit bars are drawn on the card and in the menu."),
+                    symbol: "chart.bar"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.usageBarStyle },
@@ -94,7 +98,8 @@ struct AppearancePane: View {
                 // and a row that vanishes is one nobody finds again.
                 SettingsRow(
                     String.localized("Panel colour"),
-                    subtitle: String.localized("Light suits a bright screen. Not available with Liquid Glass.")
+                    subtitle: String.localized("Light suits a bright screen. Not available with Liquid Glass."),
+                    symbol: "paintpalette"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.usesLightPanel },
@@ -113,7 +118,8 @@ struct AppearancePane: View {
 
                 SettingsRow(
                     String.localized("Liquid Glass"),
-                    subtitle: glassSubtitle
+                    subtitle: glassSubtitle,
+                    symbol: "drop"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.usesGlass },
@@ -131,7 +137,8 @@ struct AppearancePane: View {
 
                     SettingsRow(
                         String.localized("Transparency"),
-                        subtitle: String.localized("Clearer to the right, and the text turns from white to black. Black text is hard to read over dark windows.")
+                        subtitle: String.localized("Clearer to the right, and the text turns from white to black. Black text is hard to read over dark windows."),
+                        symbol: "circle.lefthalf.filled"
                     ) {
                         Slider(
                             value: Binding(
@@ -150,7 +157,8 @@ struct AppearancePane: View {
 
                 SettingsRow(
                     String.localized("Ring activity animation"),
-                    subtitle: String.localized("The turning mark for a working CLI or a reading being fetched. Off leaves the ring still.")
+                    subtitle: String.localized("The turning mark for a working CLI or a reading being fetched. Off leaves the ring still."),
+                    symbol: "circle.dashed"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.animatesRingActivity },

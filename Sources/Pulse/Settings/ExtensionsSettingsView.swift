@@ -23,19 +23,21 @@ struct ExtensionsSettingsView: View {
             SettingsGroup(String.localized("Folder")) {
                 SettingsRow(
                     String.localized("Extensions folder"),
-                    subtitle: Self.displayPath(ExtensionCatalog.folder)
+                    subtitle: Self.displayPath(ExtensionCatalog.folder),
+                    symbol: "puzzlepiece.extension"
                 ) {
                     Button(String.localized("Show in Finder"), action: showFolder)
                 }
                 SettingsRowDivider()
                 SettingsRow(
                     String.localized("Look again"),
-                    subtitle: String.localized("Pulse reads this folder when it starts. After adding or changing an extension, look again.")
+                    subtitle: String.localized("Pulse reads this folder when it starts. After adding or changing an extension, look again."),
+                    symbol: "arrow.clockwise"
                 ) {
                     Button(String.localized("Look again")) { settings.rescanExtensions() }
                 }
                 SettingsRowDivider()
-                SettingsRow(String.localized("How to write an extension")) {
+                SettingsRow(String.localized("How to write an extension"), symbol: "book") {
                     Link(destination: Self.guideURL) {
                         Text(localized: "Open")
                     }
@@ -108,7 +110,8 @@ struct ExtensionProgramGroup: View {
         SettingsGroup(String.localized("Extension")) {
             SettingsRow(
                 String.localized("Program"),
-                subtitle: ExtensionsSettingsView.displayPath(pulseExtension.executable)
+                subtitle: ExtensionsSettingsView.displayPath(pulseExtension.executable),
+                symbol: "terminal"
             ) {
                 Button(String.localized("Show in Finder")) {
                     NSWorkspace.shared.activateFileViewerSelecting([pulseExtension.executable])
@@ -117,7 +120,8 @@ struct ExtensionProgramGroup: View {
             SettingsRowDivider()
             SettingsRow(
                 String.localized("Time limit"),
-                subtitle: String.localized("Stopped if it hasn't answered by then.")
+                subtitle: String.localized("Stopped if it hasn't answered by then."),
+                symbol: "timer"
             ) {
                 Text(localized: "\(String(Int(pulseExtension.timeout))) seconds")
                     .foregroundStyle(.secondary)
@@ -125,7 +129,8 @@ struct ExtensionProgramGroup: View {
             SettingsRowDivider()
             SettingsRow(
                 String.localized("Id"),
-                subtitle: String.localized("From its pulse-extension.json. Pulse keeps this extension's settings under it.")
+                subtitle: String.localized("From its pulse-extension.json. Pulse keeps this extension's settings under it."),
+                symbol: "number"
             ) {
                 Text(verbatim: pulseExtension.id)
                     .foregroundStyle(.secondary)

@@ -10,7 +10,8 @@ struct ExperimentalPane: View {
             SettingsGroup {
                 SettingsRow(
                     String.localized("Liquid docking"),
-                    subtitle: String.localized("Pulled off a screen edge, the rail stretches and parts like a drop; brought near one, it is drawn in. While dragged, it follows the pointer with a little give.")
+                    subtitle: String.localized("Pulled off a screen edge, the rail stretches and parts like a drop; brought near one, it is drawn in. While dragged, it follows the pointer with a little give."),
+                    symbol: "flask"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.liquidDocking },

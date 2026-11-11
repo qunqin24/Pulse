@@ -13,7 +13,8 @@ struct PlacementPane: View {
     private var positionRow: some View {
         SettingsRow(
             String.localized("Position"),
-            subtitle: String.localized("Drag it anywhere; near an edge it snaps on.")
+            subtitle: String.localized("Drag it anywhere; near an edge it snaps on."),
+            symbol: "arrow.up.and.down.and.arrow.left.and.right"
         ) {
             Picker("", selection: Binding(
                 get: { placement.dock },
@@ -37,7 +38,8 @@ struct PlacementPane: View {
             SettingsGroup {
                 SettingsRow(
                     String.localized("Show floating panel"),
-                    subtitle: String.localized("The usage rail at the edge of the screen.")
+                    subtitle: String.localized("The usage rail at the edge of the screen."),
+                    symbol: "eye"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.isPanelVisible },
@@ -51,7 +53,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Hide in full screen"),
-                    subtitle: String.localized("Keep the floating panel out of full-screen apps.")
+                    subtitle: String.localized("Keep the floating panel out of full-screen apps."),
+                    symbol: "arrow.up.left.and.arrow.down.right"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.hidesInFullScreen },
@@ -66,7 +69,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Hide from screenshots"),
-                    subtitle: String.localized("Screenshot tools that support it leave the floating panel out. Recordings and screen sharing may still show it.")
+                    subtitle: String.localized("Screenshot tools that support it leave the floating panel out. Recordings and screen sharing may still show it."),
+                    symbol: "camera.viewfinder"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.hidesFromScreenCapture },
@@ -81,7 +85,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Hide until pointed at"),
-                    subtitle: String.localized("Against a screen edge, the rail shrinks to a sliver until you point at it.")
+                    subtitle: String.localized("Against a screen edge, the rail shrinks to a sliver until you point at it."),
+                    symbol: "cursorarrow.rays"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.autoCollapse },
@@ -100,7 +105,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Snap to screen edges"),
-                    subtitle: String.localized("Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction.")
+                    subtitle: String.localized("Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction."),
+                    symbol: "arrow.right.to.line"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.snapsToEdges },
@@ -115,7 +121,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Follow the active display"),
-                    subtitle: String.localized("With more than one display, the rail moves to the one the pointer is on.")
+                    subtitle: String.localized("With more than one display, the rail moves to the one the pointer is on."),
+                    symbol: "display.2"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.followsActiveDisplay },
@@ -216,7 +223,8 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Reset order"),
-                    subtitle: String.localized("Back to the order Pulse ships with.")
+                    subtitle: String.localized("Back to the order Pulse ships with."),
+                    symbol: "arrow.counterclockwise"
                 ) {
                     Button(String.localized("Reset")) { settings.resetOrder() }
                         .disabled(!settings.hasCustomOrder)

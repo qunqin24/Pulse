@@ -8,7 +8,7 @@ struct AboutPane: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup {
-                SettingsRow(String.localized("Version"), subtitle: updateSubtitle) {
+                SettingsRow(String.localized("Version"), subtitle: updateSubtitle, symbol: "info.circle") {
                     if update.canCheck {
                         // Sparkle puts up its own window with whatever it
                         // finds, so this is the same button either way — there
@@ -32,7 +32,8 @@ struct AboutPane: View {
 
                     SettingsRow(
                         String.localized("Check automatically"),
-                        subtitle: String.localized("Every two hours. Updates are offered, never installed on their own.")
+                        subtitle: String.localized("Every two hours. Updates are offered, never installed on their own."),
+                        symbol: "arrow.triangle.2.circlepath"
                     ) {
                         Toggle("", isOn: Binding(
                             get: { update.checksAutomatically },
@@ -47,7 +48,8 @@ struct AboutPane: View {
 
                 SettingsRow(
                     String.localized("Usage data"),
-                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so.")
+                    subtitle: String.localized("Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so."),
+                    symbol: "gauge.with.dots.needle.50percent"
                 ) {
                     EmptyView()
                 }
@@ -59,7 +61,8 @@ struct AboutPane: View {
                 // and half of them will want to type it rather than click.
                 SettingsRow(
                     String.localized("Source code"),
-                    subtitle: "github.com/qunqin24/Pulse"
+                    subtitle: "github.com/qunqin24/Pulse",
+                    icon: "github"
                 ) {
                     Button(String.localized("Open")) {
                         NSWorkspace.shared.open(StarRequest.repository)
@@ -72,7 +75,8 @@ struct AboutPane: View {
                 // (`StarRequest`).
                 SettingsRow(
                     String.localized("Star on GitHub"),
-                    subtitle: String.localized("Stars help other people find Pulse.")
+                    subtitle: String.localized("Stars help other people find Pulse."),
+                    symbol: "star"
                 ) {
                     Button(String.localized("Open")) {
                         NSWorkspace.shared.open(StarRequest.repository)
@@ -85,7 +89,8 @@ struct AboutPane: View {
                 // where the button goes, and some will rather type it.
                 SettingsRow(
                     String.localized("Support Pulse on Afdian"),
-                    subtitle: "afdian.com/a/qunqin"
+                    subtitle: "afdian.com/a/qunqin",
+                    symbol: "heart"
                 ) {
                     Button(String.localized("Open")) {
                         NSWorkspace.shared.open(Self.afdian)
@@ -96,7 +101,8 @@ struct AboutPane: View {
             SettingsGroup(String.localized("Credits")) {
                 SettingsRow(
                     "Vinz (@hivinz_)",
-                    subtitle: String.localized("Panel design inspired by Vinz's work shared on X.")
+                    subtitle: String.localized("Panel design inspired by Vinz's work shared on X."),
+                    symbol: "paintbrush.pointed"
                 ) {
                     Button(String.localized("Open")) {
                         NSWorkspace.shared.open(
@@ -109,7 +115,8 @@ struct AboutPane: View {
 
                 SettingsRow(
                     "Lobe Icons",
-                    subtitle: String.localized("Provider marks from github.com/lobehub/lobe-icons.")
+                    subtitle: String.localized("Provider marks from github.com/lobehub/lobe-icons."),
+                    symbol: "square.grid.2x2"
                 ) {
                     EmptyView()
                 }
@@ -120,7 +127,8 @@ struct AboutPane: View {
                 // are CX ArtLab's original design, not Pulse's.
                 SettingsRow(
                     "Agent Robot Avatar",
-                    subtitle: String.localized("The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License.")
+                    subtitle: String.localized("The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License."),
+                    symbol: "theatermasks"
                 ) {
                     Button(String.localized("Open")) {
                         NSWorkspace.shared.open(URL(string: "https://github.com/CX-ArtLab/agent-robot-avatar")!)

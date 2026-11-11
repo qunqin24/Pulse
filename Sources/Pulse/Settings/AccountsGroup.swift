@@ -24,7 +24,8 @@ struct AccountsGroup: View {
                         account.isPrimary ? String.localized("Add another account") : String.localized("Sign in again…"),
                         // The one thing someone should know before they start:
                         // whose name is on the page that opens.
-                        subtitle: String.localized("Opens the provider's own sign-in page.")
+                        subtitle: String.localized("Opens the provider's own sign-in page."),
+                        symbol: account.isPrimary ? "plus.circle" : "person.crop.circle"
                     ) {
                         // One sign-in at a time, and its Cancel, code and
                         // error belong to the provider it was started for:
@@ -57,7 +58,8 @@ struct AccountsGroup: View {
                             // filled itself in is an instruction to undo.
                             subtitle: devicePrompt.prefilled
                                 ? String.localized("Already on the page. Sign in there first if asked, then approve it.")
-                                : String.localized("Copied. Sign in there first if asked, then paste it.")
+                                : String.localized("Copied. Sign in there first if asked, then paste it."),
+                            symbol: "number"
                         ) {
                             HStack(spacing: 10) {
                                 Text(devicePrompt.userCode)
@@ -75,12 +77,12 @@ struct AccountsGroup: View {
 
                     if let signInError = signIn.signInError, signInError.provider == account.provider {
                         SettingsRowDivider()
-                        SettingsRow(String.localized("Sign-in"), subtitle: signInError.message) { EmptyView() }
+                        SettingsRow(String.localized("Sign-in"), subtitle: signInError.message, symbol: "exclamationmark.triangle") { EmptyView() }
                     }
                 }
                 if !account.isPrimary {
                     SettingsRowDivider()
-                    SettingsRow(String.localized("Name")) {
+                    SettingsRow(String.localized("Name"), symbol: "tag") {
                         TextField("", text: Binding(
                             get: { settings.label(for: account) },
                             set: { settings.rename(account, to: $0) }
@@ -93,7 +95,8 @@ struct AccountsGroup: View {
 
                     SettingsRow(
                         String.localized("Remove account"),
-                        subtitle: String.localized("Forgets its login and takes it off the rail.")
+                        subtitle: String.localized("Forgets its login and takes it off the rail."),
+                        symbol: "trash"
                     ) {
                         Button(String.localized("Remove"), role: .destructive) {
                             AccountCredentialStore.set(nil, for: account)

@@ -25,7 +25,8 @@ struct DeepSeekConsoleGroup: View {
                     String.localized("Account usage"),
                     subtitle: message ?? (hasSession
                         ? String.localized("Kept. The usage history below and the detailed card read the whole account with it.")
-                        : Self.hint)
+                        : Self.hint),
+                    symbol: "globe"
                 ) {
                     HStack(spacing: 8) {
                         if isReading { ProgressView().controlSize(.small) }

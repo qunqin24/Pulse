@@ -15,7 +15,8 @@ struct NotificationsPane: View {
             SettingsGroup {
                 SettingsRow(
                     String.localized("Warn at"),
-                    subtitle: alertsSubtitle
+                    subtitle: alertsSubtitle,
+                    symbol: "exclamationmark.triangle"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.alertThreshold },
@@ -41,7 +42,8 @@ struct NotificationsPane: View {
 
                 SettingsRow(
                     String.localized("When a limit comes back"),
-                    subtitle: String.localized("Only for one you were warned about.")
+                    subtitle: String.localized("Only for one you were warned about."),
+                    symbol: "checkmark.circle"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.alertsOnReset },
@@ -65,7 +67,8 @@ struct NotificationsPane: View {
 
                 SettingsRow(
                     String.localized("When a reading stops arriving"),
-                    subtitle: String.localized("After several failed checks in a row, once per outage.")
+                    subtitle: String.localized("After several failed checks in a row, once per outage."),
+                    symbol: "wifi.exclamationmark"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.alertsOnFailure },
@@ -87,7 +90,8 @@ struct NotificationsPane: View {
 
                 SettingsRow(
                     String.localized("When a service is down"),
-                    subtitle: String.localized("From each provider's own status page, for the providers you have switched on and only about what their accounts run on.")
+                    subtitle: String.localized("From each provider's own status page, for the providers you have switched on and only about what their accounts run on."),
+                    symbol: "exclamationmark.icloud"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.alertsOnOutage },
@@ -112,7 +116,8 @@ struct NotificationsPane: View {
 
                 SettingsRow(
                     String.localized("When a recap is ready"),
-                    subtitle: String.localized("Last month's recap, at the start of the month. Needs Token spend reading.")
+                    subtitle: String.localized("Last month's recap, at the start of the month. Needs Token spend reading."),
+                    symbol: "calendar"
                 ) {
                     // The request and the first check follow from the setting
                     // itself (`AppSettings.onRecapAlertChange`).
@@ -132,7 +137,8 @@ struct NotificationsPane: View {
             SettingsGroup {
                 SettingsRow(
                     String.localized("Test notification"),
-                    subtitle: testSubtitle
+                    subtitle: testSubtitle,
+                    symbol: "bell"
                 ) {
                     Button(String.localized("Send")) {
                         isSendingTest = true

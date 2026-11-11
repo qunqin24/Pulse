@@ -12,7 +12,7 @@ struct AccountPanelGroup: View {
 
     var body: some View {
         SettingsGroup(String.localized("Panel")) {
-            SettingsRow(String.localized("Show in panel")) {
+            SettingsRow(String.localized("Show in panel"), symbol: "eye") {
                 Toggle("", isOn: Binding(
                     get: { settings.isEnabled(account) },
                     set: { settings.setEnabled($0, for: account) }
@@ -57,7 +57,8 @@ struct AccountPanelGroup: View {
 
                 SettingsRow(
                     String.localized("Reset credits on the card"),
-                    subtitle: String.localized("How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh.")
+                    subtitle: String.localized("How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh."),
+                    symbol: "arrow.counterclockwise.circle"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.showsCodexResetCredits },
@@ -78,7 +79,8 @@ struct AccountPanelGroup: View {
 
                 SettingsRow(
                     String.localized("Show each part of the credits"),
-                    subtitle: String.localized("Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone.")
+                    subtitle: String.localized("Plan credits, a top-up pack and dedicated credits are spent separately. The total can look ample while one of them is nearly gone."),
+                    symbol: "chart.pie"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.qoderShowsParts },
@@ -93,7 +95,8 @@ struct AccountPanelGroup: View {
                 // On the card only: the rail keeps its percentages.
                 SettingsRow(
                     String.localized("Show credit amounts"),
-                    subtitle: String.localized("Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages.")
+                    subtitle: String.localized("Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages."),
+                    symbol: "number"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.qoderShowsAmounts },
@@ -112,7 +115,8 @@ struct AccountPanelGroup: View {
             // own statistics do not.
             SettingsRow(
                 String.localized("Detailed card"),
-                subtitle: Self.detailedCardSubtitle(account.isPrimary ? provider.cardHistory : nil)
+                subtitle: Self.detailedCardSubtitle(account.isPrimary ? provider.cardHistory : nil),
+                symbol: "list.bullet.rectangle"
             ) {
                 Toggle("", isOn: Binding(
                     get: { settings.showsDetailedCard(for: account) },
@@ -132,7 +136,8 @@ struct AccountPanelGroup: View {
                 // it reads as unavailable, not as the state you are in.
                 subtitle: settings.ringTint(for: account) == nil
                     ? String.localized("Coloured by how much is left.")
-                    : String.localized("A colour of your own, whatever the usage.")
+                    : String.localized("A colour of your own, whatever the usage."),
+                symbol: "paintpalette"
             ) {
                 Picker("", selection: Binding(
                     get: { settings.ringTint(for: account) != nil },
@@ -158,7 +163,8 @@ struct AccountPanelGroup: View {
 
                 SettingsRow(
                     String.localized("Colour"),
-                    subtitle: chosen.hexString
+                    subtitle: chosen.hexString,
+                    symbol: "eyedropper"
                 ) {
                     ColorPicker(
                         "",
@@ -180,7 +186,8 @@ struct AccountPanelGroup: View {
             // CX ArtLab's, and the switch is where somebody first meets it.
             SettingsRow(
                 String.localized("Robot in the ring"),
-                subtitle: String.localized("Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab.")
+                subtitle: String.localized("Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab."),
+                symbol: "theatermasks"
             ) {
                 Toggle("", isOn: Binding(
                     get: { settings.showsRobot(for: account) },
@@ -206,7 +213,8 @@ struct AccountPanelGroup: View {
             String.localized("Robot colour"),
             subtitle: settings.robotColour(for: account) == nil
                 ? String.localized("The provider's own colour. Where it has none, one that differs from neighbouring robots.")
-                : String.localized("A colour of your own. The ring keeps its colour.")
+                : String.localized("A colour of your own. The ring keeps its colour."),
+            symbol: "paintpalette"
         ) {
             Picker("", selection: Binding(
                 get: { settings.robotColour(for: account) != nil },
@@ -229,7 +237,7 @@ struct AccountPanelGroup: View {
         if let chosen = settings.robotColour(for: account) {
             SettingsRowDivider()
 
-            SettingsRow(String.localized("Colour"), subtitle: chosen.hexString) {
+            SettingsRow(String.localized("Colour"), subtitle: chosen.hexString, symbol: "eyedropper") {
                 ColorPicker(
                     "",
                     selection: Binding(
@@ -246,7 +254,8 @@ struct AccountPanelGroup: View {
 
         SettingsRow(
             String.localized("Robot personality"),
-            subtitle: Self.personalitySubtitle(settings.robotPersonality(for: account))
+            subtitle: Self.personalitySubtitle(settings.robotPersonality(for: account)),
+            symbol: "face.smiling"
         ) {
             Picker("", selection: Binding(
                 get: { settings.robotPersonality(for: account) },
@@ -266,7 +275,8 @@ struct AccountPanelGroup: View {
 
         SettingsRow(
             String.localized("Robot shape"),
-            subtitle: String.localized("The outline of the robot's head.")
+            subtitle: String.localized("The outline of the robot's head."),
+            symbol: "square.on.circle"
         ) {
             Picker("", selection: Binding(
                 get: { settings.robotShape(for: account) },
@@ -307,7 +317,8 @@ struct AccountPanelGroup: View {
 
         return SettingsRow(
             String.localized("Ring shows"),
-            subtitle: String.localized("Which limit the rail's ring tracks.")
+            subtitle: String.localized("Which limit the rail's ring tracks."),
+            symbol: "circle.dashed"
         ) {
             Picker("", selection: Binding(
                 get: {
@@ -337,7 +348,8 @@ struct AccountPanelGroup: View {
     private func splitRow(for account: AccountKey) -> some View {
         SettingsRow(
             String.localized("A ring for each model group"),
-            subtitle: String.localized("Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them.")
+            subtitle: String.localized("Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them."),
+            symbol: "circle.grid.2x1"
         ) {
             Toggle("", isOn: Binding(
                 get: { settings.isSplit(account) },
@@ -357,7 +369,8 @@ struct AccountPanelGroup: View {
             String.localized("Ring for \(group)"),
             subtitle: shows
                 ? String.localized("Shown on the panel.")
-                : String.localized("Not shown on the panel.")
+                : String.localized("Not shown on the panel."),
+            symbol: "circle.dashed"
         ) {
             Toggle("", isOn: Binding(
                 get: { shows },

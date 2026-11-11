@@ -91,7 +91,8 @@ struct TokenSpendView: View {
             SettingsGroup(String.localized("Span")) {
                 SettingsRow(
                     String.localized("Counting"),
-                    subtitle: String.localized("Read from local records and exports, priced at models.dev's published rates.")
+                    subtitle: String.localized("Read from local records and exports, priced at models.dev's published rates."),
+                    symbol: "calendar"
                 ) {
                     HStack(spacing: 8) {
                         Picker("", selection: $span) {
@@ -116,7 +117,7 @@ struct TokenSpendView: View {
 
                 if span == .custom {
                     SettingsRowDivider()
-                    SettingsRow(String.localized("Dates")) {
+                    SettingsRow(String.localized("Dates"), symbol: "calendar.badge.clock") {
                         customDatePickers
                     }
                 }

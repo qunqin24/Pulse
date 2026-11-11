@@ -26,7 +26,8 @@ struct OpenCodeConsoleGroup: View {
                     String.localized("Account request log"),
                     subtitle: [message ?? (hasSession
                         ? String.localized("Kept. The detailed card reads every request on the account with it.")
-                        : Self.hint), cardHint].compactMap { $0 }.joined(separator: " ")
+                        : Self.hint), cardHint].compactMap { $0 }.joined(separator: " "),
+                    symbol: "globe"
                 ) {
                     HStack(spacing: 8) {
                         if isReading { ProgressView().controlSize(.small) }

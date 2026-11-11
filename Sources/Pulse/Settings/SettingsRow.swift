@@ -56,6 +56,10 @@ struct SettingsRow<Control: View>: View {
     /// The account the row stands for, drawn with its own mark — an
     /// extension's icon included. Takes the place of `icon`.
     let account: AccountKey?
+    /// An SF Symbol before the title, for a row that stands for no product:
+    /// About's version, updates and links. Drawn in the same 15pt column as
+    /// a mark, so titles line up whichever a row has.
+    let symbol: String?
     let controlBelow: Bool
     @ViewBuilder let control: Control
 
@@ -64,6 +68,7 @@ struct SettingsRow<Control: View>: View {
         subtitle: String? = nil,
         icon: String? = nil,
         account: AccountKey? = nil,
+        symbol: String? = nil,
         controlBelow: Bool = false,
         @ViewBuilder control: () -> Control
     ) {
@@ -71,6 +76,7 @@ struct SettingsRow<Control: View>: View {
         self.subtitle = subtitle
         self.icon = icon
         self.account = account
+        self.symbol = symbol
         self.controlBelow = controlBelow
         self.control = control()
     }
@@ -102,6 +108,14 @@ struct SettingsRow<Control: View>: View {
                 LobeIconView(account: account, size: 15)
             } else if let icon {
                 LobeIconView(resource: icon, size: 15)
+            } else if let symbol {
+                // Outline, always: a dark appearance otherwise picked the
+                // filled variant for some symbols and not others.
+                Image(systemName: symbol)
+                    .symbolVariant(.none)
+                    .font(.system(size: 13))
+                    .frame(width: 15, height: 15)
+                    .accessibilityHidden(true)
             }
 
             VStack(alignment: .leading, spacing: 3) {

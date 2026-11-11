@@ -19,7 +19,8 @@ struct GeneralPane: View {
             SettingsGroup(String.localized("Application")) {
                 SettingsRow(
                     String.localized("Open at login"),
-                    subtitle: loginSubtitle
+                    subtitle: loginSubtitle,
+                    symbol: "power"
                 ) {
                     Toggle("", isOn: Binding(
                         get: {
@@ -39,7 +40,8 @@ struct GeneralPane: View {
 
                 SettingsRow(
                     String.localized("Show Dock icon while Settings or a recap is open"),
-                    subtitle: String.localized("So these windows can be found again with the Dock or ⌘-Tab; the icon goes when they close.")
+                    subtitle: String.localized("So these windows can be found again with the Dock or ⌘-Tab; the icon goes when they close."),
+                    symbol: "dock.rectangle"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.showsDockIconInSettings },
@@ -53,7 +55,8 @@ struct GeneralPane: View {
 
                 SettingsRow(
                     String.localized("Hide menu bar icon"),
-                    subtitle: String.localized("Remove Pulse from the menu bar; use the panel menu or shortcut to open settings.")
+                    subtitle: String.localized("Remove Pulse from the menu bar; use the panel menu or shortcut to open settings."),
+                    symbol: "menubar.rectangle"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.hidesMenuBarIcon },
@@ -84,7 +87,8 @@ struct GeneralPane: View {
                 // the icon would show, and says so.
                 SettingsRow(
                     String.localized("Show usage in the menu bar"),
-                    subtitle: String.localized("A ring's mark and figure beside the icon, red past the warning line.")
+                    subtitle: String.localized("A ring's mark and figure beside the icon, red past the warning line."),
+                    symbol: "percent"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.showsUsageInMenuBar },
@@ -102,7 +106,8 @@ struct GeneralPane: View {
 
                     SettingsRow(
                         String.localized("Menu bar shows"),
-                        subtitle: String.localized("An account switched off falls back to the fullest ring.")
+                        subtitle: String.localized("An account switched off falls back to the fullest ring."),
+                        symbol: "scope"
                     ) {
                         Picker("", selection: Binding(
                             // An account taken off the rail reads as the
@@ -125,7 +130,7 @@ struct GeneralPane: View {
 
                     SettingsRowDivider()
 
-                    SettingsRow(String.localized("Menu bar style")) {
+                    SettingsRow(String.localized("Menu bar style"), symbol: "paintbrush") {
                         Picker("", selection: Binding(
                             get: { settings.menuBarStyle },
                             set: { settings.menuBarStyle = $0 }
@@ -147,7 +152,8 @@ struct GeneralPane: View {
                 // alone. Greyed out with the icon hidden, like the figure.
                 SettingsRow(
                     String.localized("Usage panel in the menu"),
-                    subtitle: String.localized("Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend.")
+                    subtitle: String.localized("Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend."),
+                    symbol: "list.bullet.rectangle"
                 ) {
                     Toggle("", isOn: Binding(
                         get: { settings.showsMenuDashboard },
@@ -165,7 +171,8 @@ struct GeneralPane: View {
                     subtitle: shortcutSubtitle(
                         for: .openSettings,
                         when: String.localized("Reaches this window with the menu bar icon out of sight.")
-                    )
+                    ),
+                    symbol: "keyboard"
                 ) {
                     ShortcutField(shortcut: settings.openSettingsShortcut) { shortcut in
                         settings.openSettingsShortcut = shortcut
@@ -180,7 +187,8 @@ struct GeneralPane: View {
                     subtitle: shortcutSubtitle(
                         for: .togglePanel,
                         when: String.localized("Draws the usage rail, or takes it away.")
-                    )
+                    ),
+                    symbol: "keyboard"
                 ) {
                     ShortcutField(shortcut: settings.togglePanelShortcut) { shortcut in
                         settings.togglePanelShortcut = shortcut
@@ -192,7 +200,8 @@ struct GeneralPane: View {
             SettingsGroup(String.localized("Language")) {
                 SettingsRow(
                     String.localized("Interface language"),
-                    subtitle: String.localized("Takes effect right away.")
+                    subtitle: String.localized("Takes effect right away."),
+                    symbol: "globe"
                 ) {
                     Picker("", selection: Binding(
                         get: { settings.language },
