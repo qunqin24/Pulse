@@ -7,6 +7,36 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.14.0
+
+**中文**
+
+**新功能**
+
+- **支持 Open Design。** 新增 Open Design 服务商（含 OpenDesign Go），显示 5 小时和 7 天额度、套餐和余额；登录信息从浏览器或 Open Design 应用保存的登录中读取，在设置中开启。
+- **Antigravity 的圆环显示工作状态。** `agy` 或 Antigravity 应用正在处理任务时，Antigravity 的圆环中会出现旋转的白色弧线，与 Claude Code 和 Codex 相同。
+
+**改进与修复**
+
+- **Cursor 月度额度和 Grok Bot 显示时间外圈。** 服务商同时报告了周期的起止时间时，在「设置 → 圆环」中打开「距离重置的时间」即可看到这两个圆环的时间外圈。感谢 [@tyler4400](https://github.com/qunqin24/Pulse/issues/111) 提议。
+- **「从浏览器读取」的默认选项只读默认浏览器。** 第一个选项改为「默认浏览器（浏览器名称）」，不再逐个尝试所有浏览器，也不会因此多次请求钥匙串授权。
+- **移除 Codex 的提示缓存倒计时。** OpenAI 表示登录后的 Codex 会一直保留提示缓存，详细卡片和 Codex 设置页不再显示倒计时。
+- **移除 Codex 设置页的「降智迹象」。**
+
+**English**
+
+**New**
+
+- **Open Design is supported.** A new Open Design provider, OpenDesign Go included, shows the 5-hour and 7-day limits, the plan and the balance, reading the sign-in from a browser or from the one the Open Design app saved; turn it on in Settings.
+- **Antigravity's ring shows when it is working.** While `agy` or the Antigravity app is working on a task, a white arc turns inside Antigravity's ring, as it does for Claude Code and Codex.
+
+**Changed and fixed**
+
+- **Cursor's monthly pools and Grok Bot get the time arc.** When the provider reports both the start and the end of the period, turn on Time until reset in Settings → Rings to see the arc around these rings. Thanks to [@tyler4400](https://github.com/qunqin24/Pulse/issues/111) for the suggestion.
+- **Read from browser's first choice reads only the default browser.** The first choice is now "Default browser (its name)", which no longer tries every browser in turn or asks for Keychain access several times.
+- **Codex's prompt cache countdown is gone.** OpenAI says a signed-in Codex keeps its prompt cache, so the detailed card and Codex's settings pane no longer count it down.
+- **Codex's settings pane no longer shows Signs of a weaker model.**
+
 ## 1.13.0
 
 **中文**
