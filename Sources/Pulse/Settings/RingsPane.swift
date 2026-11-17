@@ -110,7 +110,7 @@ struct RingsPane: View {
             SettingsGroup(String.localized("Rings")) {
                 SettingsRow(
                     String.localized("Second limit inside the ring"),
-                    subtitle: String.localized("A thinner ring for the next-fullest limit, where a provider has one."),
+                    subtitle: String.localized("A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one."),
                     symbol: "circle.circle"
                 ) {
                     Toggle("", isOn: Binding(

@@ -484,7 +484,7 @@
 
 /* 内圈第二条限额 */
 "Second limit inside the ring" = "圆环内显示第二条限额";
-"A thinner ring for the next-fullest limit, where a provider has one." = "在内侧再画一圈较细的环，显示用得第二多的限额；仅当服务商提供多条限额时可用。";
+"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "在内侧紧贴着再画一圈同样粗的环，显示用得第二多的限额；仅当服务商提供多条限额时可用。";
 "That key works. The account has no Coding Plan running on it." = "密钥有效，但这个账号下没有正在生效的 Coding Plan。";
 
 /* 来自服务商官方统计的用量历史 */

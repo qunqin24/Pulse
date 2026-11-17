@@ -484,7 +484,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "링 안쪽에 두 번째 한도";
-"A thinner ring for the next-fullest limit, where a provider has one." = "안쪽에 가는 링을 그려 그다음으로 많이 쓴 한도를 보여 줍니다. 제공업체가 여러 한도를 보고할 때만 쓸 수 있습니다.";
+"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "안쪽에 같은 굵기의 링을 바짝 붙여 그려 그다음으로 많이 쓴 한도를 보여 줍니다. 제공업체가 여러 한도를 보고할 때만 쓸 수 있습니다.";
 "That key works. The account has no Coding Plan running on it." = "키는 유효합니다. 다만 이 계정에는 사용 중인 Coding Plan이 없습니다.";
 
 /* Usage history read from a provider's own statistics */

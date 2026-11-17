@@ -484,7 +484,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "リングの内側に 2 本目の上限";
-"A thinner ring for the next-fullest limit, where a provider has one." = "内側に細いリングを描き、次に使っている上限を示します。プロバイダが複数報告する場合のみ有効です。";
+"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "内側に同じ太さのリングを並べて描き、次に使っている上限を示します。プロバイダが複数報告する場合のみ有効です。";
 "That key works. The account has no Coding Plan running on it." = "キーは有効です。ただしこのアカウントには有効な Coding Plan がありません。";
 
 /* Usage history read from a provider's own statistics */

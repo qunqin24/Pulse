@@ -484,7 +484,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "圓環內顯示第二條額度";
-"A thinner ring for the next-fullest limit, where a provider has one." = "在內側再畫一圈較細的環，顯示用量第二高的額度；僅在服務商提供多條額度時可用。";
+"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "在內側緊貼著再畫一圈同樣粗的環，顯示用量第二高的額度；僅在服務商提供多條額度時可用。";
 "That key works. The account has no Coding Plan running on it." = "金鑰有效，但這個帳號下沒有正在生效的 Coding Plan。";
 
 /* Usage history read from a provider's own statistics */

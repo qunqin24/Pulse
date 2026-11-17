@@ -484,7 +484,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "Second limit inside the ring";
-"A thinner ring for the next-fullest limit, where a provider has one." = "A thinner ring for the next-fullest limit, where a provider has one.";
+"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one.";
 "That key works. The account has no Coding Plan running on it." = "That key works. The account has no Coding Plan running on it.";
 
 /* Usage history read from a provider's own statistics */
