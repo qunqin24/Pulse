@@ -1,0 +1,19 @@
+{
+  "weekly_all_percent": 45,
+  "weekly_all_resets_at": "2026-11-20T01:00:00+00:00",
+  "limits": [
+    { "kind": "session", "group": "session", "percent": 12, "severity": "normal", "resets_at": "2026-11-17T06:00:00+00:00", "scope": null, "is_active": true },
+    { "kind": "weekly_all", "group": "weekly", "percent": 45, "severity": "normal", "resets_at": "2026-11-20T01:00:00+00:00", "scope": null, "is_active": true }
+  ],
+  "seven_day_breakdown": {
+    "as_of": "2026-11-17T03:04:38+00:00",
+    "window_started_at": "2026-11-13T01:00:00+00:00",
+    "rows": [
+      { "display_name": "Claude Code", "percent": 94 },
+      { "display_name": "Chats", "percent": 0 },
+      { "display_name": "Cowork", "percent": 0 },
+      { "display_name": "Claude Duet", "percent": 6 },
+      { "display_name": "Other", "percent": 0 }
+    ]
+  }
+}

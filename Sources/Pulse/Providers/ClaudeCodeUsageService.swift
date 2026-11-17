@@ -440,7 +440,7 @@ struct ClaudeCodeUsageService: Sendable {
                 }
         }
 
-        return ProviderUsage(
+        var usage = ProviderUsage(
             account: account,
             windows: windows,
             observedAt: Date(),
@@ -448,6 +448,18 @@ struct ClaudeCodeUsageService: Sendable {
             plan: plan,
             creditBalance: nil
         )
+        usage.productShare = productShare(in: root)
+        return usage
+    }
+
+    /// The week's split by product, `seven_day_breakdown`, when the reply
+    /// carries one (`ProductShare`, #113).
+    static func productShare(in root: [String: Any]) -> ProductShare? {
+        guard
+            let breakdown = root["seven_day_breakdown"] as? [String: Any],
+            let rows = breakdown["rows"] as? [[String: Any]]
+        else { return nil }
+        return ProductShare(rows: rows, asOf: (breakdown["as_of"] as? String).flatMap(date(fromISO8601:)))
     }
 
     private static func window(fromLimit limit: [String: Any]) -> UsageWindow? {

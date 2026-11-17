@@ -1,15 +1,19 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import SwiftUI
 
-/// An account's Current usage card: when it was last read, and each limit's
-/// figure and reset.
+/// An account's Current usage card: when it was last read, each limit's
+/// figure and reset, and, where the provider reports one, how the week splits
+/// between its products.
 struct AccountLiveUsageGroup: View {
     let account: AccountKey
     let store: UsageStore
     let settings: AppSettings
+    /// A reading to draw instead of the store's, for a preview or a rendered
+    /// picture; the pane always reads its own.
+    var reading: ProviderUsage? = nil
 
     var body: some View {
-        let usage = store.usage(for: account)
+        let usage = reading ?? store.usage(for: account)
 
         return SettingsGroup(String.localized("Current usage")) {
             if !settings.isEnabled(account) {
@@ -76,6 +80,11 @@ struct AccountLiveUsageGroup: View {
                     }
                 }
 
+                if let share = Self.visibleShare(of: usage, at: Date()) {
+                    SettingsRowDivider()
+                    ProductShareRow(share: share)
+                }
+
                 if let plan = usage.plan {
                     SettingsRowDivider()
                     SettingsRow(String.localized("Plan")) {
@@ -97,6 +106,16 @@ struct AccountLiveUsageGroup: View {
         }
     }
 
+    /// The split, unless the week it describes is over: once the weekly limit
+    /// has reset, last week's shares beside this week's figure would describe
+    /// a different week.
+    nonisolated static func visibleShare(of usage: ProviderUsage, at now: Date) -> ProductShare? {
+        guard let share = usage.productShare else { return nil }
+        let week = usage.windows.first { $0.kind == .weekly && $0.scope == nil }
+        if let resets = week?.resetsAt, resets <= now { return nil }
+        return share
+    }
+
     private func resetText(_ window: UsageWindow) -> String? {
         // **The same rule as `UsageDetailCard.resetText`, and it has to be
         // stated in both places.** `windowSeconds` is sometimes a sort key
@@ -112,5 +131,36 @@ struct AccountLiveUsageGroup: View {
             Calendar.current.isDateInToday(resets) ? "jmm" : "MMMdjmm"
         )
         return String.localized("Resets \(formatter.string(from: resets))")
+    }
+}
+
+/// "Share of this week's usage", what it is, and one line per product. The
+/// figures are deliberately quieter than a limit's: they are shares of the
+/// week, not of an allowance, and the caption says so.
+private struct ProductShareRow: View {
+    let share: ProductShare
+
+    var body: some View {
+        SettingsRow(
+            String.localized("Share of this week's usage"),
+            subtitle: String.localized("As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit.")
+        ) {
+            VStack(alignment: .trailing, spacing: 2) {
+                ForEach(share.rows, id: \.name) { row in
+                    Text(verbatim: "\(row.name) \(Self.percent(row.percent))")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                }
+            }
+        }
+    }
+
+    /// Whole percentages, as the provider reports them; a share too small to
+    /// round to one is "<1%", never a 0% it did not report.
+    static func percent(_ value: Double) -> String {
+        let rounded = Int(value.rounded())
+        return rounded == 0 ? "<1%" : "\(rounded)%"
     }
 }

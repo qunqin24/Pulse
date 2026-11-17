@@ -55,6 +55,9 @@ actor UsageCache {
         /// An extension's figures beside its limits. Optional: entries written
         /// before this field existed have none.
         var metrics: [UsageMetric]?
+        /// The week's split by product. Optional: entries written before this
+        /// field existed have none.
+        var productShare: ProductShare?
         var origin: UsageRoute?
         /// The account and organization the provider said these figures belong
         /// to, where it said. Persisted so a failure after a relaunch still
@@ -245,6 +248,7 @@ actor UsageCache {
                 CreditAmountStored(amount: $0.amount, currency: $0.currency)
             },
             metrics: usage.metrics.isEmpty ? nil : usage.metrics,
+            productShare: usage.productShare,
             origin: usage.origin,
             scope: usage.sourceScope
         )
@@ -277,6 +281,7 @@ actor UsageCache {
             .init(amount: $0.amount, currency: $0.currency)
         }
         restored.metrics = stored.metrics ?? []
+        restored.productShare = stored.productShare
         restored.origin = stored.origin
         restored.sourceScope = stored.scope
         restored.isCached = true

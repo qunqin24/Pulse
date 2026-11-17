@@ -31,6 +31,8 @@ Pinned `.endpoint` / `.tooling` / `.desktopApp` disable the normal cross-source 
 
 The usage endpoint is **not** a public documented usage API. It is what Claude Code itself calls and can change without notice. Parse the response’s `limits` array rather than the top-level `five_hour` / `seven_day` fields — only the array carries per-model `weekly_scoped` windows. `kind` maps the window (`session` is the 5-hour one); `scope.model.display_name` names the model.
 
+**The week's split by product** (#113). The same reply carries `seven_day_breakdown`: `as_of`, `window_started_at` and `rows` of `display_name` and `percent`, one per product (Claude Code, Chats, Cowork, Claude Duet, Other). The rows are shares of the week's usage and add up to about 100 whatever the weekly figure is, so 94% beside a weekly limit at 45% is 94% of that 45%. `ClaudeCodeUsageService.productShare(in:)` keeps the products above zero, largest first, four at most (`ProductShare`), on `ProviderUsage.productShare`, saved with the cached reading. They are drawn **only** in the account's Current usage in Settings, as text with a caption saying what they are, and not once the weekly limit has reset; never on the rail, the card or in `--json`, where a bare percentage beside a ring reads as a limit. The status-line route carries no split, so a reading from it has none. Evidence: a reply the issue's author posted on 2026-11-17 (fixture `claude-usage-product-share.json`); the field is undocumented and optional.
+
 The saved CLI token expires in hours and **nothing here renews it**. An unusable token (401/403) or a missing one falls through as above. Added accounts never use these fallbacks.
 
 ## Plan name

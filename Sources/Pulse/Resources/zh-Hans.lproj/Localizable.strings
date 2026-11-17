@@ -164,6 +164,8 @@
 "Waiting for the next Claude Code response." = "等待 Claude Code 的下一次响应。";
 "Loading…" = "读取中…";
 "No reading" = "暂无数据";
+"Share of this week's usage" = "本周各产品用量占比";
+"As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit." = "Anthropic 报告的比例。各项合起来是本周的全部用量，不是额度的占比。";
 "Refreshing…" = "正在刷新…";
 "Refresh usage" = "刷新用量";
 "Activate to refresh usage." = "点击可刷新用量。";

@@ -164,6 +164,8 @@
 "Waiting for the next Claude Code response." = "Claude Code の次の応答を待っています。";
 "Loading…" = "読み込み中…";
 "No reading" = "データなし";
+"Share of this week's usage" = "今週の使用量の製品別内訳";
+"As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit." = "Anthropic が報告する割合です。合わせて今週の使用量全体になり、上限に対する割合ではありません。";
 "Refreshing…" = "更新中…";
 "Refresh usage" = "使用量を更新";
 "Activate to refresh usage." = "クリックすると使用量を更新します。";

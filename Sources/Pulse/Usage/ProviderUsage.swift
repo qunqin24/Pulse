@@ -826,6 +826,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
     /// (`UsageMetric`). Empty for every built-in provider. Drawn on the card
     /// under the limits; never the ring, and never a reading on their own.
     var metrics: [UsageMetric] = []
+    /// How the provider splits the week between its products, where it says
+    /// (`ProductShare`; Claude Code only). Shown in Settings with a caption,
+    /// never on the rail or the card.
+    var productShare: ProductShare?
 
     /// What the servers said during the check that produced this reading,
     /// for the connection diagnostics (`ResponseLog`). Only on a raw reading

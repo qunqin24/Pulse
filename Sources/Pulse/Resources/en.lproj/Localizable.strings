@@ -164,6 +164,8 @@
 "Waiting for the next Claude Code response." = "Waiting for the next Claude Code response.";
 "Loading…" = "Loading…";
 "No reading" = "No reading";
+"Share of this week's usage" = "Share of this week's usage";
+"As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit." = "As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit.";
 "Refreshing…" = "Refreshing…";
 "Refresh usage" = "Refresh usage";
 "Activate to refresh usage." = "Activate to refresh usage.";

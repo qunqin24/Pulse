@@ -164,6 +164,8 @@
 "Waiting for the next Claude Code response." = "Ожидание следующего ответа Claude Code.";
 "Loading…" = "Загрузка…";
 "No reading" = "Нет данных";
+"Share of this week's usage" = "Доли продуктов в использовании за неделю";
+"As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit." = "Так сообщает Anthropic. Вместе доли составляют всё использование за неделю; это не доли лимита.";
 "Refreshing…" = "Обновление…";
 "Refresh usage" = "Обновить данные";
 "Activate to refresh usage." = "Активируйте, чтобы обновить данные.";
