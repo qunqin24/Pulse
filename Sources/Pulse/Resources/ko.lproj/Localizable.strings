@@ -952,12 +952,6 @@
 "Last used %@" = "마지막 사용 %@";
 "The latest one's cache lapsed at %@." = "가장 최근 대화의 캐시는 %@에 만료되었습니다.";
 "Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "Claude Code 자체 기록에서 읽습니다. 각 응답에는 캐시를 1시간 또는 5분 중 어느 쪽으로 저장했는지 적혀 있고, 캐시는 마지막 요청 때부터 그만큼 유지됩니다. 이 시간은 앞선 내용이 바뀌지 않았을 때의 값입니다. 모델을 바꾸거나 도구를 바꾸거나 대화를 압축하면 새 캐시가 만들어집니다. 하위 에이전트는 자체 캐시를 쓰므로 여기에 표시하지 않습니다.";
-"At least %@ left" = "최소 %@ 남음";
-"May have lapsed" = "만료되었을 수 있음";
-"Read from Codex's own records: the model each request used, and when it was sent. On GPT-5.6 and later, OpenAI keeps a cache available for at least 30 minutes after it was last used, and may keep it longer — so this is the time it is guaranteed, not when it ends. Earlier models have no stated lifetime and are not listed. Under heavy traffic a request can still miss within this time." = "Codex 자체 기록에서 읽습니다. 각 요청에 사용된 모델과 보낸 시각입니다. OpenAI는 GPT-5.6 이후 모델에서 캐시를 마지막 사용 후 최소 30분 유지하며, 더 오래 유지할 수도 있다고 밝힙니다. 따라서 여기 표시되는 것은 보장된 시간이지 실제 만료 시각이 아닙니다. 그 이전 모델은 유지 시간이 공개되지 않아 표시하지 않습니다. 요청이 몰리면 이 시간 안에도 캐시가 적중하지 않을 수 있습니다.";
-"No conversation is within its guaranteed cache time" = "보장 시간 안에 캐시가 남은 대화가 없습니다";
-"Kept at least %@" = "최소 %@ 유지";
-"The latest one's guaranteed time ended at %@." = "가장 최근 대화의 보장 시간은 %@에 끝났습니다.";
 "Usage panel in the menu" = "메뉴에 사용량 패널 표시";
 "Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "메뉴 막대 아이콘을 열면 위쪽에 모든 계정의 개요와, 계정별 한도·요금제·비용 탭을 보여 줍니다.";
 "OpenCode console" = "OpenCode 콘솔";

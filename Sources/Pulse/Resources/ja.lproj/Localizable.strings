@@ -952,12 +952,6 @@
 "Last used %@" = "最終使用 %@";
 "The latest one's cache lapsed at %@." = "直近の会話のキャッシュは %@ に期限切れになりました。";
 "Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "Claude Code 自身の記録から読み取ります。各返信には、キャッシュを 1 時間と 5 分のどちらで保存したかが書かれており、キャッシュは最後にリクエストされた時点からその時間だけ保たれます。これは、それより前の内容が変わっていない場合の時間です。モデルの切り替え、ツールの変更、会話の圧縮を行うと、新しいキャッシュが作られます。サブエージェントは独自のキャッシュを持つため、ここには表示しません。";
-"At least %@ left" = "少なくとも残り %@";
-"May have lapsed" = "期限切れの可能性";
-"Read from Codex's own records: the model each request used, and when it was sent. On GPT-5.6 and later, OpenAI keeps a cache available for at least 30 minutes after it was last used, and may keep it longer — so this is the time it is guaranteed, not when it ends. Earlier models have no stated lifetime and are not listed. Under heavy traffic a request can still miss within this time." = "Codex 自身の記録から読み取ります。各リクエストで使われたモデルと送信時刻です。OpenAI は GPT-5.6 以降のモデルについて、キャッシュを最後に使われてから少なくとも 30 分保持し、それより長く保つ場合もあるとしています。そのため、ここに表示するのは保証されている時間で、実際の期限ではありません。それより前のモデルは保持時間が公表されていないため表示しません。リクエストが集中すると、この時間内でもキャッシュに当たらないことがあります。";
-"No conversation is within its guaranteed cache time" = "保証時間内のキャッシュがある会話はありません";
-"Kept at least %@" = "最低 %@ 保持";
-"The latest one's guaranteed time ended at %@." = "直近の会話の保証時間は %@ に終わりました。";
 "Usage panel in the menu" = "メニューに使用量パネルを表示";
 "Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "メニューバーのアイコンを開くと、上部に全アカウントの概要と、アカウントごとの上限・プラン・費用のタブを表示します。";
 "OpenCode console" = "OpenCode コンソール";

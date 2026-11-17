@@ -394,8 +394,6 @@ struct SpendDataQualityTests {
         let lapse = PromptCacheLapse(lastRequest: .now, lifetime: PromptCacheLapse.hour)
         #expect(PromptCacheSession(id: "a", title: nil, project: nil, lapse: lapse).displayName
             == String.localized("Untitled conversation"))
-        #expect(PromptCacheSession(id: "a", title: nil, isReview: true, project: nil, lapse: lapse).displayName
-            == String.localized("Codex review"))
     }
 
     @Test("The summary's session rows keep the review flag")

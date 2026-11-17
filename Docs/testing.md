@@ -206,7 +206,6 @@ Synthetic stores, fixed clocks and UTC calendars; not live-client validation. [t
 | `BudgetEstimateTests` | A limit's worth is in-window spend up to the reading over its percentage; too little use, an earlier reading or a lengthless window gives none. |
 | `CacheHitRateTests` | Cache reads over every input token; withheld where records cannot vouch for their split; per model, raw ids of one model on one line. |
 | `PromptCacheLapseTests` | Claude Code's cache lapses a tier after the last request (a tool result counts), not the answer's end; subagent lines are not the session. |
-| `CodexPromptCacheTests` | Codex's thirty-minute floor on GPT-5.6 and later, from the last request touching the cache; earlier models untimed. |
 | `ReplyTimingTests` | Speed and first-token wait: a reply copied into a resumed session counts once; five timed replies per model within a day required; implausible values not timed. |
 
 ### Recap

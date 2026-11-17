@@ -30,11 +30,6 @@ struct PromptCacheLapse: Equatable, Sendable {
     let lastRequest: Date
     /// The tier's length: an hour or five minutes.
     let lifetime: TimeInterval
-    /// Whether `lifetime` is a floor the provider guarantees rather than the
-    /// length it keeps a cache — OpenAI's "at least 30 minutes", after which
-    /// the cache may still be there. Said as "at least" wherever it is shown,
-    /// and its end as "may have lapsed", never "expired".
-    var isMinimum = false
 
     var expiresAt: Date { lastRequest.addingTimeInterval(lifetime) }
 
@@ -67,8 +62,6 @@ struct PromptCacheSession: Identifiable, Equatable, Sendable {
     let id: String
     /// A rename, or the opening prompt cut to a line.
     let title: String?
-    /// A session Codex ran to review another's action (`SessionLabel`).
-    var isReview = false
     /// The directory it ran in, by its last folder.
     let project: String?
     let lapse: PromptCacheLapse
@@ -94,7 +87,7 @@ struct PromptCacheReading: Equatable, Sendable {
 extension PromptCacheSession {
     /// What to call this conversation on a line of its own: a rename or the
     /// opening prompt, else the project it ran in, else "Untitled conversation".
-    var displayName: String { SessionLabel.text(title: title, isReview: isReview, project: project) }
+    var displayName: String { SessionLabel.text(title: title, isReview: false, project: project) }
 }
 
 enum ClaudePromptCache {
@@ -332,5 +325,26 @@ enum ClaudePromptCache {
             case hour = "ephemeral_1h_input_tokens"
             case fiveMinutes = "ephemeral_5m_input_tokens"
         }
+    }
+}
+
+extension PromptCacheReading {
+    /// The providers whose logs let a cache be timed: Claude Code alone, by
+    /// the tier each reply records.
+    ///
+    /// **Not Codex**, since 2026-11-17. Its log names each turn's model and
+    /// nothing about how long a cache is kept, so Pulse timed OpenAI's
+    /// documented API floor (thirty minutes on GPT-5.6 and later). OpenAI has
+    /// since said that a signed-in Codex keeps its cache for good, so that
+    /// floor counted down to an end most Codex users never reach, and the log
+    /// does not say which sign-in a session used. See
+    /// `Docs/ui/panel-geometry.md`.
+    static func supports(_ provider: Provider) -> Bool {
+        provider == .claudeCode
+    }
+
+    /// A read for a supported provider; `.none` for any other.
+    static func read(for provider: Provider) -> PromptCacheReading {
+        provider == .claudeCode ? ClaudePromptCache.read() : .none
     }
 }

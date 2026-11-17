@@ -952,12 +952,6 @@
 "Last used %@" = "最後使用 %@";
 "The latest one's cache lapsed at %@." = "最近一個對話的快取已在 %@ 過期。";
 "Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "資料來自 Claude Code 自己的紀錄。每次回覆都會註明快取保留 1 小時還是 5 分鐘，從最後一次用到它的請求算起。這是上下文沒變時的時長：換模型、改工具或壓縮對話，都會重新開始一份快取。子 Agent 有自己的快取，這裡不列出。";
-"At least %@ left" = "至少還剩 %@";
-"May have lapsed" = "可能已過期";
-"Read from Codex's own records: the model each request used, and when it was sent. On GPT-5.6 and later, OpenAI keeps a cache available for at least 30 minutes after it was last used, and may keep it longer — so this is the time it is guaranteed, not when it ends. Earlier models have no stated lifetime and are not listed. Under heavy traffic a request can still miss within this time." = "資料來自 Codex 自己的紀錄：每次請求用的模型和送出時間。OpenAI 保證 GPT-5.6 及之後的模型，快取在最後一次使用後至少保留 30 分鐘，實際可能更久，所以這裡顯示的是保底時間，不是確切的過期時間。更早的模型官方沒有提供時長，這裡不列出。請求很密集時，即使在這段時間內也可能沒有命中。";
-"No conversation is within its guaranteed cache time" = "目前沒有對話還在快取保底時間內";
-"Kept at least %@" = "至少保留 %@";
-"The latest one's guaranteed time ended at %@." = "最近一個對話的保底時間已在 %@ 結束。";
 "Usage panel in the menu" = "選單中顯示用量面板";
 "Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "點開選單列圖示時，頂部顯示所有帳號的概覽，每個帳號還有自己的分頁，列出額度、方案和花費。";
 "OpenCode console" = "OpenCode 控制台";
