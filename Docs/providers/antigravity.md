@@ -108,9 +108,9 @@ A picker, not a stated route: every provider with more than one route offers the
 
 ## Activity mark
 
-`supportsLocalActivity` is true. `agy` 1.5 (including the copy Gemini.app runs) and Antigravity.app keep one SQLite database per conversation in `~/.gemini/antigravity/conversations/`; older `agy` wrote `antigravity-cli/conversations`, and `antigravity-ide/conversations` is the editor's other spelling. All three are watched (`AgentActivity.roots`). A database counts as written when it or its `-wal` journal was, because the journal takes the writes until a checkpoint.
+`supportsLocalActivity` is true. `agy` keeps one SQLite database per conversation in `~/.gemini/antigravity-cli/conversations/` (measured with `agy` 1.5.0 on 2026-11-17); Antigravity.app keeps its own in `~/.gemini/antigravity/conversations/`, and `antigravity-ide/conversations` is the editor's other spelling. All three turn the one ring (`AgentActivity.roots`). Token spend keeps the first apart from the other two ([../token-spend-sources.md](../token-spend-sources.md)): the `agy` process Gemini.app runs in the background opens the app's folder, but a conversation started in a terminal is written to `antigravity-cli`. A database counts as written when it or its `-wal` journal was, because the journal takes the writes until a checkpoint.
 
-Only the newest row of `steps` is read (`step_type`, `status`; `AgentActivity.antigravityVerdict`). The numbers are `CortexStepStatus` and `CortexStepType` from the descriptor in `agy` 1.5; the progression was observed on 2026-11-17 with `agy -p` and an Antigravity.app conversation writing the same folder:
+Only the newest row of `steps` is read (`step_type`, `status`; `AgentActivity.antigravityVerdict`). The numbers are `CortexStepStatus` and `CortexStepType` from the descriptor in `agy` 1.5; the progression was observed on 2026-11-17 with an `agy -p` run and an Antigravity.app conversation:
 
 - **Pending, generating or queued** (1, 8, 11): the model is working. **Running** (2): a tool is, with the tool's longer grace.
 - **Done** (3) on a model response (`PLANNER_RESPONSE`, 15) ends the turn; every turn in the store ends on one. Done on any other step, a prompt or a tool, leaves the move with the model, which opened its next response about ten seconds after a tool finished.

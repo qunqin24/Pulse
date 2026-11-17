@@ -64,7 +64,7 @@ struct AntigravityActivityTests {
         #expect(state()?.isWorking == false)
     }
 
-    @Test("Older agy's folder counts, the journal's write counts, and unreadable files do not")
+    @Test("agy's folder counts beside the app's, the journal's write counts, and unreadable files do not")
     func rootsAndFiles() throws {
         let home = try EditorTestSupport.temporary("antigravity-roots")
         defer { try? FileManager.default.removeItem(at: home) }

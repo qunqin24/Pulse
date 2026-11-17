@@ -29,8 +29,8 @@ import SQLite3
 ///   a `user` message (a prompt, or tool results coming back) leaves the move
 ///   with the model, an `assistant` message holding `tool_use` hands it to a
 ///   tool, and one without ends the turn.
-/// - Antigravity's `agy` CLI and its desktop app keep one SQLite database per
-///   conversation, and every step in it carries a status: generating, running,
+/// - Antigravity's `agy` CLI and its desktop app each keep one SQLite
+///   database per conversation, in sibling folders, and every step in it carries a status: generating, running,
 ///   done. A turn always ends on a finished model response; any other finished
 ///   step leaves the move with the model.
 ///
@@ -420,8 +420,8 @@ enum AgentActivity {
 
     /// What one step says about the turn, from the `CortexStepStatus` and
     /// `CortexStepType` numbers in the descriptor `agy` 1.5 ships (names read
-    /// from the binary, the progression observed on 2026-11-17 with `agy` and
-    /// Antigravity.app writing the same store).
+    /// from the binary, the progression observed on 2026-11-17 with an `agy -p`
+    /// run and an Antigravity.app conversation).
     ///
     /// - **Pending, generating or queued** (1, 8, 11): the model is producing
     ///   the step. **Running** (2): a tool is.
@@ -574,9 +574,10 @@ enum AgentActivity {
         for provider: Provider,
         home: URL = URL(fileURLWithPath: NSHomeDirectory())
     ) -> [URL] {
-        // `agy` 1.5 and Antigravity.app share `antigravity`; older `agy`
-        // wrote `antigravity-cli`, and `antigravity-ide` is the editor's other
-        // spelling. Each folder is flat: one database per conversation.
+        // `agy` writes `antigravity-cli`; Antigravity.app writes `antigravity`,
+        // and `antigravity-ide` is the editor's other spelling. Each folder is
+        // flat: one database per conversation. The ring is the product's, so
+        // all three turn it.
         if provider == .antigravity {
             return ["antigravity", "antigravity-cli", "antigravity-ide"].map {
                 home.appending(path: ".gemini/\($0)/conversations", directoryHint: .isDirectory)
