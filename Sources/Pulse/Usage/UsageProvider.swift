@@ -348,8 +348,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
     var supportsLocalActivity: Bool {
         guard let written = handWritten else { return false }
         return switch written {
-        case .claudeCode, .codex, .kiro, .zai, .glmCoding, .commandCode: true
-        case .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
+        case .claudeCode, .codex, .kiro, .zai, .glmCoding, .commandCode, .antigravity: true
+        case .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .minimax, .copilot, .grok, .grokBot, .volcengine,
              .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: false

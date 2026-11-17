@@ -1,6 +1,7 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 import Observation
+import SQLite3
 
 /// Whether a supported local agent is working, read from the lifecycle records
 /// its CLI writes as it goes.
@@ -28,6 +29,10 @@ import Observation
 ///   a `user` message (a prompt, or tool results coming back) leaves the move
 ///   with the model, an `assistant` message holding `tool_use` hands it to a
 ///   tool, and one without ends the turn.
+/// - Antigravity's `agy` CLI and its desktop app keep one SQLite database per
+///   conversation, and every step in it carries a status: generating, running,
+///   done. A turn always ends on a finished model response; any other finished
+///   step leaves the move with the model.
 ///
 /// So only the tail of the newest transcripts is read, and the answer is exact
 /// rather than a guess with a timer attached.
@@ -90,6 +95,15 @@ enum AgentActivity {
         fileprivate mutating func read(_ file: ActivityFile, provider: Provider) -> Reading {
             if let saved = readings[file.url], saved.file == file, saved.provider == provider {
                 return saved.reading
+            }
+            if provider == .antigravity {
+                // A database, not a log: its newest step is the whole answer.
+                guard let verdict = antigravityVerdict(for: file.url) else {
+                    readings[file.url] = nil
+                    return Reading(lastWrite: file.modified, verdict: .unknown)
+                }
+                if !Task.isCancelled { readings[file.url] = (file, provider, Reading(lastWrite: file.modified, verdict: verdict)) }
+                return Reading(lastWrite: file.modified, verdict: verdict)
             }
             let isZcode = provider == .zai || provider == .glmCoding
             let lines = tail(of: file.url, limit: isZcode ? 2 * 1024 * 1024 : 128 * 1024)
@@ -154,6 +168,8 @@ enum AgentActivity {
                 case .finished:
                     continue
                 case .unknown:
+                    // A database that cannot be read is not a fresh log line.
+                    guard provider != .antigravity else { continue }
                     state.isWorking = now.timeIntervalSince(file.modified) <= unknownFormatWindow
                 }
                 if state.isWorking { break }
@@ -313,7 +329,8 @@ enum AgentActivity {
              .zai, .glmCoding, .minimax, .copilot, .grok, .grokBot,
              .volcengine, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension:
-                // None of these leaves transcripts Pulse reads, so nothing
+                // None of these leaves line records Pulse reads (Antigravity's
+                // are databases, read by `antigravityVerdict`), so nothing
                 // ever gets this far.
                 return .finished
             }
@@ -383,6 +400,50 @@ enum AgentActivity {
         return Reading(lastWrite: lastWrite, verdict: .finished)
     }
 
+    // MARK: - Antigravity
+
+    /// The newest step of one Antigravity conversation, or nil when the
+    /// database cannot be opened or has no `steps` table.
+    static func antigravityVerdict(for url: URL) -> Verdict? {
+        let step: (type: Int, status: Int)?? = AgentSQLite.read(at: url) { database in
+            var newest: (type: Int, status: Int)?
+            AgentSQLite.each(database, sql: "SELECT step_type, status FROM steps ORDER BY idx DESC LIMIT 1") { row in
+                newest = (Int(sqlite3_column_int64(row, 0)), Int(sqlite3_column_int64(row, 1)))
+            }
+            return newest
+        }
+        guard let opened = step else { return nil }
+        // An empty conversation has started no turn.
+        guard let newest = opened else { return .finished }
+        return antigravityVerdict(type: newest.type, status: newest.status)
+    }
+
+    /// What one step says about the turn, from the `CortexStepStatus` and
+    /// `CortexStepType` numbers in the descriptor `agy` 1.5 ships (names read
+    /// from the binary, the progression observed on 2026-11-17 with `agy` and
+    /// Antigravity.app writing the same store).
+    ///
+    /// - **Pending, generating or queued** (1, 8, 11): the model is producing
+    ///   the step. **Running** (2): a tool is.
+    /// - **Done** (3) on a model response (`PLANNER_RESPONSE`, 15) ends the
+    ///   turn: every turn in the store ends on one. Done on anything else, a
+    ///   prompt or a tool's step, leaves the next move with the model, which
+    ///   opened its next response about ten seconds after a tool finished.
+    /// - **Waiting** (9) is waiting for a person, which is not work; error,
+    ///   canceled, interrupted and the rest end the step without a successor
+    ///   that can be counted on (a denied tool in print mode ended the run).
+    ///
+    /// No stamp: the step's own time is in a protobuf blob, so the grace is
+    /// timed from the database's last write, which is when the step changed.
+    static func antigravityVerdict(type: Int, status: Int) -> Verdict {
+        switch status {
+        case 1, 8, 11: .working(.model, at: nil)
+        case 2: .working(.tool, at: nil)
+        case 3: type == 15 ? .finished : .working(.model, at: nil)
+        default: .finished
+        }
+    }
+
     /// Claude Code records an interrupted turn as a user message saying so,
     /// which is the only thing in the file that marks the difference between a
     /// turn the user stopped and one about to be answered.
@@ -449,34 +510,51 @@ enum AgentActivity {
     private static func transcripts(
         for provider: Provider, home: URL, now: Date
     ) -> (newest: ActivityFile?, recent: [ActivityFile]) {
-        guard let root = root(for: provider, home: home) else { return (nil, []) }
-
-        guard let walker = FileManager.default.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
-        ) else { return (nil, []) }
-
         var newest: ActivityFile?
         var recent: [ActivityFile] = []
-        for case let url as URL in walker {
-            guard !Task.isCancelled else { break }
-            guard
-                isActivityFile(url, provider: provider),
-                let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
-                let modified = values.contentModificationDate,
-                let size = values.fileSize, size > 0
-            else { continue }
 
-            let file = ActivityFile(url: url, modified: modified, size: size)
-            if newest == nil || modified > newest!.modified { newest = file }
-            if now.timeIntervalSince(modified) <= Wait.tool.grace { recent.append(file) }
+        for root in roots(for: provider, home: home) {
+            guard let walker = FileManager.default.enumerator(
+                at: root,
+                includingPropertiesForKeys: [.contentModificationDateKey, .fileSizeKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            ) else { continue }
+
+            for case let url as URL in walker {
+                guard !Task.isCancelled else { break }
+                guard
+                    isActivityFile(url, provider: provider),
+                    var (modified, size) = Self.written(url),
+                    size > 0
+                else { continue }
+
+                // A database in WAL mode takes its writes in the journal beside
+                // it until a checkpoint, so the pair is one file's history.
+                if provider == .antigravity, let journal = Self.written(URL(fileURLWithPath: url.path + "-wal")) {
+                    modified = max(modified, journal.modified)
+                    size += journal.size
+                }
+
+                let file = ActivityFile(url: url, modified: modified, size: size)
+                if newest == nil || modified > newest!.modified { newest = file }
+                if now.timeIntervalSince(modified) <= Wait.tool.grace { recent.append(file) }
+            }
         }
 
         return (newest, recent.sorted { $0.modified > $1.modified })
     }
 
+    private static func written(_ url: URL) -> (modified: Date, size: Int)? {
+        guard
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .fileSizeKey]),
+            let modified = values.contentModificationDate,
+            let size = values.fileSize
+        else { return nil }
+        return (modified, size)
+    }
+
     private static func isActivityFile(_ url: URL, provider: Provider) -> Bool {
+        if provider == .antigravity { return url.pathExtension == "db" }
         guard url.pathExtension == "jsonl" else { return false }
         // A session's checkpoints sit beside it in the same folder and say
         // nothing about a turn.
@@ -490,12 +568,26 @@ enum AgentActivity {
             || url.deletingLastPathComponent().lastPathComponent == "cli"
     }
 
-    /// Nil for an agent that leaves no transcripts, which is what keeps this
+    /// Empty for an agent that leaves no transcripts, which is what keeps this
     /// from walking a directory that was never going to exist.
-    static func root(
+    static func roots(
         for provider: Provider,
         home: URL = URL(fileURLWithPath: NSHomeDirectory())
-    ) -> URL? {
+    ) -> [URL] {
+        // `agy` 1.5 and Antigravity.app share `antigravity`; older `agy`
+        // wrote `antigravity-cli`, and `antigravity-ide` is the editor's other
+        // spelling. Each folder is flat: one database per conversation.
+        if provider == .antigravity {
+            return ["antigravity", "antigravity-cli", "antigravity-ide"].map {
+                home.appending(path: ".gemini/\($0)/conversations", directoryHint: .isDirectory)
+            }
+        }
+        return root(for: provider, home: home).map { [$0] } ?? []
+    }
+
+    /// Nil for an agent that leaves no line records, which is what keeps this
+    /// from walking a directory that was never going to exist.
+    private static func root(for provider: Provider, home: URL) -> URL? {
         // No profiled provider has a root here either.
         guard let written = provider.handWritten else { return nil }
         return switch written {

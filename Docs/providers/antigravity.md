@@ -4,7 +4,7 @@ Service: [`AntigravityUsageService.swift`](../../Sources/Pulse/Providers/Antigra
 
 Two routes, chosen in Settings → *Read usage from*: **Automatic** (the default) tries the editor's **language server** while Antigravity is open, then the **`agy` CLI** when the server produced no figures; **CLI** asks only `agy`; **Desktop app** asks only the language server. The route that answered is recorded as `languageServer` or `antigravityCLI`.
 
-The odd one out. Extra accounts are not supported. `keepsLocalTranscripts` is false: it is an editor, not a CLI, and leaves no session files Pulse can read. History, the money estimate, and the activity mark are left out rather than shown as zeroes.
+The odd one out. Extra accounts are not supported. `keepsLocalTranscripts` is false: it leaves no session files the history card can read, so history and the money estimate are left out rather than shown as zeroes. The activity mark is drawn from its conversation databases ([below](#activity-mark)).
 
 ## The language server
 
@@ -105,3 +105,15 @@ The plan carries a Gemini allowance and a separate one for Claude and GPT, repor
 ## Settings copy
 
 A picker, not a stated route: every provider with more than one route offers the choice (`hasSourceChoice`), so `Provider.soleRoute` is nil. Options are *Automatic* / *CLI* / *Desktop app* (`UsageSource.options(for:)`; *CLI* is `.tooling` titled by `title(for:)`). The subtitles: automatic “Reads Antigravity while it is open, and the agy CLI when it is not.”, CLI “Asks the agy CLI, using the login it already saved.”, desktop app “Asks the language server Antigravity runs while it is open.” Claude's desktop-route availability filter does not apply to it. `UsageRoute.soleRoute(for:)` is nil because the service records which route answered. The wording must not leak to other single-route providers. See [README.md](README.md).
+
+## Activity mark
+
+`supportsLocalActivity` is true. `agy` 1.5 (including the copy Gemini.app runs) and Antigravity.app keep one SQLite database per conversation in `~/.gemini/antigravity/conversations/`; older `agy` wrote `antigravity-cli/conversations`, and `antigravity-ide/conversations` is the editor's other spelling. All three are watched (`AgentActivity.roots`). A database counts as written when it or its `-wal` journal was, because the journal takes the writes until a checkpoint.
+
+Only the newest row of `steps` is read (`step_type`, `status`; `AgentActivity.antigravityVerdict`). The numbers are `CortexStepStatus` and `CortexStepType` from the descriptor in `agy` 1.5; the progression was observed on 2026-11-17 with `agy -p` and an Antigravity.app conversation writing the same folder:
+
+- **Pending, generating or queued** (1, 8, 11): the model is working. **Running** (2): a tool is, with the tool's longer grace.
+- **Done** (3) on a model response (`PLANNER_RESPONSE`, 15) ends the turn; every turn in the store ends on one. Done on any other step, a prompt or a tool, leaves the move with the model, which opened its next response about ten seconds after a tool finished.
+- **Waiting** (9) is waiting for a person and is not drawn. Error, canceled, interrupted and the rest end it too: a tool denied in print mode ended the run there.
+
+The step's own time is inside a protobuf blob, so the grace is timed from the database's last write. A database without a `steps` table is not work, however fresh. `AntigravityActivityTests`.
