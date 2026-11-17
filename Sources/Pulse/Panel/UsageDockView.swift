@@ -94,8 +94,12 @@ enum DockLayout {
     /// arc wants. So when this is on the mark moves inward and the disc gives
     /// up two points; the ring itself, the rail's width and the ring centres
     /// are all unchanged, so nothing outside this circle notices.
-    static var secondRingDiameter: CGFloat { 26 * PanelMetrics.scale }
-    static var secondRingLineWidth: CGFloat { 2.5 * PanelMetrics.scale }
+    ///
+    /// As thick as the first ring and 1pt inside it, so the two tracks read
+    /// as one band rather than as grooves of different widths.
+    static var secondRingDiameter: CGFloat { ringDiameter - (ringLineWidth + secondRingGap) * 2 }
+    static var secondRingLineWidth: CGFloat { ringLineWidth }
+    static var secondRingGap: CGFloat { 1 * PanelMetrics.scale }
 
     /// Reach of the two convex corners on the rail's inner side.
     ///

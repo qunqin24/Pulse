@@ -170,14 +170,17 @@ struct UsageRingView: View {
         diameter + lineWidth + (Self.clockGap + Self.clockLineWidth / 2) * 2 * PanelMetrics.scale
     }
 
-    /// The next-fullest limit, as a thinner ring inside the first.
+    /// The next-fullest limit, as a ring of the same weight just inside the
+    /// first.
     ///
     /// Same colour language, deliberately: two arcs measuring the same kind of
     /// thing must be read the same way, and a second hue would be a second
-    /// vocabulary for one idea. What tells them apart is size and weight — the
-    /// limit that matters most is the outer, thicker one, and stays where a
-    /// single ring has always been so nothing moves for somebody who leaves
-    /// this off.
+    /// vocabulary for one idea. What tells them apart is position — the limit
+    /// that matters most is the outer one, and stays where a single ring has
+    /// always been so nothing moves for somebody who leaves this off. Same
+    /// weight and a 1pt gap, so the two tracks read as one band: a thinner
+    /// inner ring with its own gap drew three or four grooves of different
+    /// widths on every ring, which the user found untidy (2026-11-17).
     @ViewBuilder
     private func secondRing(_ fraction: Double) -> some View {
         let used = min(max(fraction, 0), 1)
