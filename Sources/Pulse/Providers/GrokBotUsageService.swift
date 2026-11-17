@@ -206,10 +206,16 @@ struct GrokBotUsageService: Sendable {
     /// may divide by it. With either end missing the seven days stay a sort
     /// key: a reset is never `start + 7 days`, and a start is never inferred
     /// from a reset.
+    ///
+    /// **Only a span of about a week.** xAI calls the allowance weekly, and
+    /// what `currentPeriodStart` marks has only been seen beside no reset at
+    /// all. A span far from seven days means the two stamps do not bound the
+    /// same week — a billing month's start beside a weekly reset, say — and a
+    /// clock divided by it would be wrong, so it is not a length.
     static func measuredSeconds(from start: Date?, to end: Date?) -> Int? {
         guard let start, let end else { return nil }
         let seconds = end.timeIntervalSince(start)
-        guard seconds.isFinite, seconds >= 1 else { return nil }
+        guard seconds.isFinite, (6 * 86_400...8 * 86_400).contains(seconds) else { return nil }
         return Int(seconds.rounded())
     }
 

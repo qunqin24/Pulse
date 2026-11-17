@@ -116,4 +116,4 @@ Only the newest row of `steps` is read (`step_type`, `status`; `AgentActivity.an
 - **Done** (3) on a model response (`PLANNER_RESPONSE`, 15) ends the turn; every turn in the store ends on one. Done on any other step, a prompt or a tool, leaves the move with the model, which opened its next response about ten seconds after a tool finished.
 - **Waiting** (9) is waiting for a person and is not drawn. Error, canceled, interrupted and the rest end it too: a tool denied in print mode ended the run there.
 
-The step's own time is inside a protobuf blob, so the grace is timed from the database's last write. A database without a `steps` table is not work, however fresh. `AntigravityActivityTests`.
+The step's own time is inside a protobuf blob, so the grace is timed from the database's last write. A database without a `steps` table, or one that cannot be read at that moment (a WAL database with no journal beside it after `agy` exits, or one busy mid-recovery), is not work and is not cached: it is asked again on the next sample. `AntigravityActivityTests`.

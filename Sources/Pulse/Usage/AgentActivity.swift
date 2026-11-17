@@ -404,18 +404,33 @@ enum AgentActivity {
 
     /// The newest step of one Antigravity conversation, or nil when the
     /// database cannot be opened or has no `steps` table.
+    ///
+    /// Prepared and stepped here rather than through `AgentSQLite.each`, which
+    /// reads a failure as "no rows": a database caught mid-recovery
+    /// (`SQLITE_BUSY`) would then read as a finished turn and be cached so
+    /// until the next write, however long the tool running meanwhile. A
+    /// failure is nil, not cached, and asked again on the next sample.
     static func antigravityVerdict(for url: URL) -> Verdict? {
-        let step: (type: Int, status: Int)?? = AgentSQLite.read(at: url) { database in
-            var newest: (type: Int, status: Int)?
-            AgentSQLite.each(database, sql: "SELECT step_type, status FROM steps ORDER BY idx DESC LIMIT 1") { row in
-                newest = (Int(sqlite3_column_int64(row, 0)), Int(sqlite3_column_int64(row, 1)))
+        let read: Verdict?? = AgentSQLite.read(at: url) { database in
+            var statement: OpaquePointer?
+            guard sqlite3_prepare_v2(database, "SELECT step_type, status FROM steps ORDER BY idx DESC LIMIT 1",
+                                     -1, &statement, nil) == SQLITE_OK,
+                  let prepared = statement
+            else {
+                sqlite3_finalize(statement)
+                return nil
             }
-            return newest
+            defer { sqlite3_finalize(prepared) }
+            switch sqlite3_step(prepared) {
+            case SQLITE_ROW:
+                return antigravityVerdict(type: Int(sqlite3_column_int64(prepared, 0)),
+                                          status: Int(sqlite3_column_int64(prepared, 1)))
+            // An empty conversation has started no turn.
+            case SQLITE_DONE: return .finished
+            default: return nil
+            }
         }
-        guard let opened = step else { return nil }
-        // An empty conversation has started no turn.
-        guard let newest = opened else { return .finished }
-        return antigravityVerdict(type: newest.type, status: newest.status)
+        return read ?? nil
     }
 
     /// What one step says about the turn, from the `CortexStepStatus` and

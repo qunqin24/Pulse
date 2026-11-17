@@ -154,5 +154,12 @@ struct GrokBotParsingTests {
             start: "2026-01-08T00:00:00Z", reset: "2026-01-01T00:00:00Z"
         )))
         #expect(!backwards.reportsLength)
+
+        // A month's start beside a weekly reset does not bound the week.
+        let month = try #require(GrokBotUsageService.window(from: try Self.reply(
+            start: "2025-12-08T00:00:00Z", reset: "2026-01-08T00:00:00Z"
+        )))
+        #expect(!month.reportsLength)
+        #expect(month.windowSeconds == 7 * 86_400)
     }
 }
