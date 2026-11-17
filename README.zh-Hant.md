@@ -25,9 +25,11 @@
 </p>
 
 <p align="center">
-  <img src="Docs/images/demo.gif" height="400" alt="貼在螢幕邊緣的 Pulse 懸浮膠囊">
+  <img src="Docs/images/demo.gif" height="360" alt="貼在螢幕邊緣的 Pulse 懸浮膠囊">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.png" height="400" alt="指標移到圓環上，會打開一張卡片，列出每項額度與重置時間">
+  <img src="Docs/images/panel.png" height="360" alt="指標移到圓環上，會打開一張卡片，列出每項額度與重置時間">
+  &nbsp;&nbsp;
+  <img src="Docs/images/glass.webp" height="360" alt="Liquid Glass 效果下的同一個面板">
 </p>
 
 - **78 個服務，一眼看完**——Claude Code、Codex、Cursor、GitHub Copilot、Antigravity、Kiro、Grok、DeepSeek、Kimi Code 等等，每個都有自己的圓環。

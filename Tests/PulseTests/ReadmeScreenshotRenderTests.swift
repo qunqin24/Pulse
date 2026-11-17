@@ -9,11 +9,13 @@ import Testing
 ///
 ///     PULSE_README_SHOTS=/tmp/readme-shots swift test --filter ReadmeScreenshotRenderTests
 ///
-/// writes `<folder>/panel.png` (the side rail with Cursor's card open) and
-/// `<folder>/detailed-card.png` (Codex's compact and detailed cards side by
-/// side), in English on the dark panel at 2×. Copy them over
-/// `Docs/images/panel.png` and `Docs/images/detailed-card.png` after reading
-/// them. The figures are made up; dates follow the day the test runs.
+/// writes `<folder>/panel.png` (the side rail with Cursor's card open),
+/// `<folder>/glass.png` (the same on Liquid Glass, over a backdrop drawn here)
+/// and `<folder>/detailed-card.png` (Codex's compact and detailed cards side
+/// by side), in English at 2×. Copy them over the files of the same name in
+/// `Docs/images/` after reading them. The glass is drawn by the window server,
+/// so that one is a real window read back (`WindowCapture`) and needs
+/// macOS 26. The figures are made up; dates follow the day the test runs.
 /// Nothing here checks a pixel, and without the variable the test is skipped.
 @MainActor
 @Suite("README screenshots", .serialized)
@@ -28,6 +30,7 @@ struct ReadmeScreenshotRenderTests {
         defer { LocalizationSource.use(.system) }
 
         try write(panelShot(), to: folder.appendingPathComponent("panel.png"), scale: 2)
+        try WindowCapture.write(glassShot(), to: folder.appendingPathComponent("glass.png"))
         PanelMetrics.showDetailedCard(true)
         defer { PanelMetrics.showDetailedCard(false) }
         try writeSwiftUI(detailedShot(), to: folder.appendingPathComponent("detailed-card.png"), scale: 2)
@@ -105,9 +108,74 @@ struct ReadmeScreenshotRenderTests {
         .environment(\.colorScheme, .dark)
     }
 
+    // MARK: Glass
+
+    /// The panel shot on Liquid Glass at the default transparency, set as
+    /// `FloatingUsagePanelContent` sets it, over a backdrop for the glass to
+    /// bend: soft colour fields and a few hard edges, drawn here.
+    private func glassShot() -> some View {
+        let entries = railEntries
+        let cursor = entries[2]
+        let transparency = PanelGlass.defaultTransparency
+        let rail = DockLayout.size(for: entries.count, on: .vertical, docked: false)
+        let ringY = DockLayout.firstRingAlong(docked: false, on: .vertical)
+            + 2 * DockLayout.ringStep(on: .vertical, docked: false)
+        let cardHeight = measure(card(cursor.usage, pointer: 80, detailed: false, glass: true)).height
+        let pointer = cardHeight / 2
+        let cardSize = measure(card(cursor.usage, pointer: pointer, detailed: false, glass: true))
+
+        let marginX: CGFloat = 44
+        let marginY: CGFloat = 36
+        let width = marginX * 2 + cardSize.width + DetailCardLayout.horizontalGap + rail.width
+        let height = marginY * 2 + rail.height
+
+        return ZStack(alignment: .topLeading) {
+            Self.glassBackdrop
+            Group {
+                card(cursor.usage, pointer: pointer, detailed: false, glass: true)
+                    .offset(x: marginX, y: marginY + ringY - pointer)
+                UsageDockView(
+                    entries: entries,
+                    selectedSlot: cursor.slot.id,
+                    edge: .right,
+                    isDocked: false,
+                    usesGlass: true,
+                    onEnter: { _ in }
+                )
+                .fixedSize()
+                .offset(x: marginX + cardSize.width + DetailCardLayout.horizontalGap, y: marginY)
+            }
+            .foregroundStyle(PanelGlass.ink(transparency: transparency).map(AnyShapeStyle.init) ?? AnyShapeStyle(.primary))
+            .environment(\.colorScheme, PanelGlass.scheme(transparency: transparency))
+            .environment(\.glassTransparency, transparency)
+        }
+        .frame(width: width, height: height, alignment: .topLeading)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+    }
+
+    /// Warm and cool fields with a few crisp bands across them, so the glass
+    /// has colour to carry and edges to bend.
+    private static var glassBackdrop: some View {
+        ZStack {
+            LinearGradient(colors: [Color(red: 0.16, green: 0.20, blue: 0.52), Color(red: 0.47, green: 0.20, blue: 0.55)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            Circle().fill(Color(red: 1.0, green: 0.55, blue: 0.30)).frame(width: 360).blur(radius: 60).offset(x: 140, y: -170)
+            Circle().fill(Color(red: 0.20, green: 0.80, blue: 0.85)).frame(width: 300).blur(radius: 55).offset(x: -150, y: 40)
+            Circle().fill(Color(red: 0.95, green: 0.35, blue: 0.62)).frame(width: 320).blur(radius: 60).offset(x: 120, y: 250)
+            VStack(spacing: 34) {
+                ForEach(0..<9) { band in
+                    Capsule().fill(.white.opacity(band.isMultiple(of: 2) ? 0.22 : 0.10)).frame(height: 10)
+                        .rotationEffect(.degrees(-18))
+                }
+            }
+            .frame(width: 900)
+        }
+    }
+
     private func card(_ usage: ProviderUsage, pointer: CGFloat, detailed: Bool,
-                      spend: UsageDetailCard.Spend? = nil) -> some View {
-        UsageDetailCard(usage: usage, edge: .right, isDetailed: detailed, spend: spend, pointerCenter: pointer)
+                      spend: UsageDetailCard.Spend? = nil, glass: Bool = false) -> some View {
+        UsageDetailCard(usesGlass: glass, usage: usage, edge: .right, isDetailed: detailed, spend: spend,
+                        pointerCenter: pointer)
             .fixedSize()
             .foregroundStyle(.primary)
             .environment(\.colorScheme, .dark)

@@ -25,9 +25,11 @@
 </p>
 
 <p align="center">
-  <img src="Docs/images/demo.gif" height="400" alt="Pulse floating rail docked against the screen edge">
+  <img src="Docs/images/demo.gif" height="360" alt="Pulse floating rail docked against the screen edge">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.png" height="400" alt="Hovering a ring opens a card with every limit and its reset">
+  <img src="Docs/images/panel.png" height="360" alt="Hovering a ring opens a card with every limit and its reset">
+  &nbsp;&nbsp;
+  <img src="Docs/images/glass.webp" height="360" alt="The same panel on Liquid Glass">
 </p>
 
 - **Seventy-eight services at a glance** — Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code and many more, each as its own ring.

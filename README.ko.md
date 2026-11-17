@@ -25,9 +25,11 @@
 </p>
 
 <p align="center">
-  <img src="Docs/images/demo.gif" height="400" alt="화면 가장자리에 붙은 Pulse 플로팅 레일">
+  <img src="Docs/images/demo.gif" height="360" alt="화면 가장자리에 붙은 Pulse 플로팅 레일">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.png" height="400" alt="링에 포인터를 올리면 모든 한도와 초기화 시각을 담은 카드가 열립니다">
+  <img src="Docs/images/panel.png" height="360" alt="링에 포인터를 올리면 모든 한도와 초기화 시각을 담은 카드가 열립니다">
+  &nbsp;&nbsp;
+  <img src="Docs/images/glass.webp" height="360" alt="Liquid Glass로 표시한 같은 패널">
 </p>
 
 - **78개 서비스를 한눈에**——Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code 등, 서비스마다 링이 하나씩 있습니다.

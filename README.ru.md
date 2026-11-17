@@ -25,9 +25,11 @@
 </p>
 
 <p align="center">
-  <img src="Docs/images/demo.gif" height="400" alt="Плавающая лента Pulse, прикреплённая к краю экрана">
+  <img src="Docs/images/demo.gif" height="360" alt="Плавающая лента Pulse, прикреплённая к краю экрана">
   &nbsp;&nbsp;
-  <img src="Docs/images/panel.png" height="400" alt="При наведении на кольцо открывается карточка со всеми лимитами и временем их сброса">
+  <img src="Docs/images/panel.png" height="360" alt="При наведении на кольцо открывается карточка со всеми лимитами и временем их сброса">
+  &nbsp;&nbsp;
+  <img src="Docs/images/glass.webp" height="360" alt="Та же панель на Liquid Glass">
 </p>
 
 - **Семьдесят восемь сервисов на одной ленте** — Claude Code, Codex, Cursor, GitHub Copilot, Antigravity, Kiro, Grok, DeepSeek, Kimi Code и многие другие, у каждого своё кольцо.
