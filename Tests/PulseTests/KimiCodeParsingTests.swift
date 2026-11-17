@@ -167,4 +167,39 @@ struct KimiCodeParsingTests {
             try JSONDecoder().decode(KimiCodeUsageService.Reply.self, from: Data("not json at all".utf8))
         }
     }
+
+    // MARK: - The monthly allowances (#112)
+
+    /// A reporter's reply of 2026-11-17, as posted on #112: `usage` gone,
+    /// `usages` carrying the month for Kimi Code and for everything together.
+    @Test("The monthly allowances in usages follow the five-hour limit, Code before Total")
+    func monthlyUsages() throws {
+        let windows = KimiCodeUsageService.windows(from: try Self.reply("kimi-code-monthly"))
+
+        // `limit_5h` repeats `limits[0]` and is not read a second time.
+        #expect(windows.map(\.id) == ["limit.0.18000", "month.code", "month.total"])
+        #expect(windows.map(\.kind) == [.fiveHour, .monthly, .monthly])
+        #expect(windows.map(\.scope) == [nil, "Code", "Total"])
+
+        #expect(abs(windows[0].usedFraction - 0.28) < 0.000_001)
+        #expect(abs(windows[1].usedFraction - 0.7023) < 0.000_001)
+        #expect(abs(windows[2].usedFraction - 0.7723) < 0.000_001)
+
+        // The reply states a reset and no length: thirty days only sort.
+        #expect(windows[1...].allSatisfy { !$0.reportsLength && $0.windowSeconds == 30 * 86_400 })
+        #expect(windows[1].resetsAt == Self.dateComponents(2026, 11, 20, 0, 0))
+        #expect(windows[1...].allSatisfy { $0.elapsedFraction(at: Date()) == nil })
+    }
+
+    @Test("A monthly allowance without a ratio draws nothing, and a full one is exhausted")
+    func monthlyEdges() throws {
+        let reply = try JSONDecoder().decode(KimiCodeUsageService.Reply.self, from: Data(#"""
+        {"usages": {"limit_month_code": {"reset_time": "2026-11-20T00:00:00Z"},
+                    "limit_month_total": {"used_ratio": 1.0}}}
+        """#.utf8))
+        let windows = KimiCodeUsageService.windows(from: reply)
+        #expect(windows.map(\.id) == ["month.total"])
+        #expect(windows[0].isExhausted)
+        #expect(windows[0].resetsAt == nil)
+    }
 }

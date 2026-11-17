@@ -15,6 +15,11 @@ import Foundation
 ///   length, and the reset can land anywhere inside the week since the window
 ///   rolls, so the length is not inferable from it — it is named from what the
 ///   plan actually is.
+/// - `usages` — what replaced `usage` on accounts whose plan is counted by
+///   the month (#112, a reporter's reply of 2026-11-17): `limit_month_code`
+///   and `limit_month_total`, the second being Kimi and Kimi Code together,
+///   each a `used_ratio` from 0 to 1 and a `reset_time`, again with no length.
+///   `limit_5h` repeats the five-hour entry of `limits[]` and is not read.
 ///
 /// Every count arrives as a *string*, and `detail` reports what is left rather
 /// than what is spent, so both are converted here and everything downstream
@@ -92,8 +97,31 @@ struct KimiCodeUsageService: Sendable {
         struct Membership: Decodable { let level: String? }
         struct User: Decodable { let membership: Membership? }
 
+        /// One allowance in `usages`: how much is gone, 0...1, and when it
+        /// resets. Snake case, unlike the rest of the reply.
+        struct Ratio: Decodable {
+            let usedRatio: Double?
+            let resetTime: String?
+
+            enum CodingKeys: String, CodingKey {
+                case usedRatio = "used_ratio"
+                case resetTime = "reset_time"
+            }
+        }
+
+        struct Usages: Decodable {
+            let monthCode: Ratio?
+            let monthTotal: Ratio?
+
+            enum CodingKeys: String, CodingKey {
+                case monthCode = "limit_month_code"
+                case monthTotal = "limit_month_total"
+            }
+        }
+
         let user: User?
         let usage: Detail?
+        let usages: Usages?
         let limits: [Limit]?
     }
 
@@ -126,7 +154,37 @@ struct KimiCodeUsageService: Sendable {
             found.append(weekly)
         }
 
-        return found.sorted { $0.windowSeconds < $1.windowSeconds }
+        // The month, Kimi Code's own and everything together, under the
+        // names Kimi's usage page gives them. A month is 28 to 31 days and
+        // the reply states none, so thirty only sorts the rows.
+        if let code = monthly(reply.usages?.monthCode, id: "month.code", scope: "Code") {
+            found.append(code)
+        }
+        if let total = monthly(reply.usages?.monthTotal, id: "month.total", scope: "Total") {
+            found.append(total)
+        }
+
+        // Shortest first; windows of one length keep the order above, so the
+        // two monthly rows do not trade places between refreshes.
+        return found.enumerated()
+            .sorted { ($0.element.windowSeconds, $0.offset) < ($1.element.windowSeconds, $1.offset) }
+            .map(\.element)
+    }
+
+    /// One of the monthly allowances in `usages`, or nil without a finite
+    /// ratio: no figure is no row, never a month at 0%.
+    private static func monthly(_ ratio: Reply.Ratio?, id: String, scope: String) -> UsageWindow? {
+        guard let used = ratio?.usedRatio, used.isFinite else { return nil }
+        return UsageWindow(
+            id: id,
+            kind: .monthly,
+            scope: scope,
+            usedFraction: min(max(used, 0), 1),
+            windowSeconds: 30 * 86_400,
+            resetsAt: ratio?.resetTime.flatMap(Self.date(from:)),
+            reportsLength: false,
+            isExhausted: used >= 1
+        )
     }
 
     private static func window(
