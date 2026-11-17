@@ -27,9 +27,8 @@ struct GrokBotParsingTests {
         #expect(abs(window.usedFraction - 0.30) < 0.000_001)
         #expect(window.windowSeconds == 7 * 86_400)
         #expect(window.resetsAt == Date(timeIntervalSince1970: 1_767_830_400)) // 2026-01-08T00:00:00Z
-        // Seven days are a sort key here, never a divisor — the opposite of
-        // Grok's own weekly pool.
-        #expect(!window.reportsLength)
+        // Both ends stated, so their difference is a measured length (#111).
+        #expect(window.reportsLength)
         #expect(!window.isExhausted)
     }
 
@@ -103,5 +102,57 @@ struct GrokBotParsingTests {
         let window = try #require(GrokBotUsageService.window(from: try Self.reply("grok-bot-exhausted")))
         #expect(window.usedFraction == 1)
         #expect(window.isExhausted)
+    }
+
+    // MARK: - The period's stated length (#111)
+
+    private static func reply(start: String?, reset: String?) throws -> GrokBotUsageService.Reply {
+        var fields: [String: Any] = [
+            "usagePercent": 30,
+            "hasNonZeroIncludedLimit": true,
+            "includedLimitZero": false,
+            "usesPooledEnterpriseAllowance": false,
+        ]
+        if let start { fields["currentPeriodStart"] = start }
+        if let reset { fields["nextResetTimestampUtc"] = reset }
+        return try JSONDecoder().decode(
+            GrokBotUsageService.Reply.self, from: try JSONSerialization.data(withJSONObject: fields)
+        )
+    }
+
+    @Test("A start and a reset make the period's length, which the clock divides by")
+    func bothStampsGiveTheLength() throws {
+        let window = try #require(GrokBotUsageService.window(from: try Self.reply(
+            start: "2026-01-01T12:00:00Z", reset: "2026-01-08T00:00:00Z"
+        )))
+        // Six and a half days: the stamps' difference, not seven.
+        #expect(window.windowSeconds == 6 * 86_400 + 12 * 3_600)
+        #expect(window.reportsLength)
+        let halfway = Date(timeIntervalSince1970: 1_767_830_400 - 3 * 86_400 - 6 * 3_600)
+        let elapsed = try #require(window.elapsedFraction(at: halfway))
+        #expect(abs(elapsed - 0.5) < 0.000_001)
+    }
+
+    @Test("A reset without a start, or a start without a reset, draws no clock")
+    func oneStampIsNoLength() throws {
+        let resetOnly = try #require(GrokBotUsageService.window(from: try Self.reply(
+            start: nil, reset: "2026-01-08T00:00:00Z"
+        )))
+        #expect(resetOnly.windowSeconds == 7 * 86_400)
+        #expect(!resetOnly.reportsLength)
+        #expect(resetOnly.resetsAt != nil)
+        #expect(resetOnly.elapsedFraction(at: Date(timeIntervalSince1970: 1_767_600_000)) == nil)
+
+        let startOnly = try #require(GrokBotUsageService.window(from: try Self.reply(
+            start: "2026-01-01T00:00:00Z", reset: nil
+        )))
+        #expect(!startOnly.reportsLength)
+        // The reset is never start + 7 days.
+        #expect(startOnly.resetsAt == nil)
+
+        let backwards = try #require(GrokBotUsageService.window(from: try Self.reply(
+            start: "2026-01-08T00:00:00Z", reset: "2026-01-01T00:00:00Z"
+        )))
+        #expect(!backwards.reportsLength)
     }
 }

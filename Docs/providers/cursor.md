@@ -41,7 +41,7 @@ Spending past the first eats into the second. The first cut of this shipped a si
 
 **Enterprise accounts may report neither pair.** Their shared allowance arrives as `individualUsage.overall`, with `used`, `limit` and `remaining` in **cents**. When no model pools are reported, it becomes the same monthly money fallback and the balance; its amounts are converted to dollars for the card, which writes the currency symbol and two decimal places. Evidence: an Enterprise account on 2026-10-23 reported `used: 80`, `limit: 80000`, `remaining: 79920` (fixture `cursor-enterprise-overall.json`), which is `$0.80 / $800.00` used and `$799.20` left.
 
-Billing-cycle length is 28 to 31 days, stored as a flat 30 with `reportsLength: false`.
+Billing-cycle length is 28 to 31 days. **When the summary states both `billingCycleStart` and `billingCycleEnd`, their difference is the length** of the pools, the money fallback and extra spend (`reportsLength: true`, `CursorUsageService.cycleSeconds`; #111), so the window clock and the forecast use it. With either end missing, or an end not after its start, the windows keep a flat 30 days as a sort key (`reportsLength: false`); nothing is inferred from one end. Evidence that the summary carries the start is second-hand (other monitors read it there, and an Enterprise reply of 2026-10-23 had it); a monthly plan's `get-current-period-usage` is not called for it.
 
 ## Weekly plans
 

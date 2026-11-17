@@ -189,6 +189,9 @@ struct CursorUsageService: Sendable {
             let onDemand: Allowance?
         }
 
+        /// The cycle's first moment. With `billingCycleEnd` it makes the
+        /// cycle's real length (`cycleSeconds`); alone it says nothing.
+        let billingCycleStart: String?
         let billingCycleEnd: String?
         let membershipType: String?
         let individualUsage: Individual?
@@ -287,6 +290,10 @@ struct CursorUsageService: Sendable {
 
     static func windows(from reply: Reply) -> [UsageWindow] {
         let resets = reply.billingCycleEnd.flatMap(Self.date(from:))
+        let length = cycleSeconds(
+            from: reply.billingCycleStart.flatMap(Self.date(from:)),
+            to: resets
+        )
         // A team account reports the same shape under another name.
         let plan = reply.individualUsage?.plan ?? reply.teamUsage?.pooled
         let overall = reply.individualUsage?.overall
@@ -294,10 +301,12 @@ struct CursorUsageService: Sendable {
 
         // The two pools the plan includes, in the order and under the names
         // the account page gives them.
-        if let pool = pool(plan?.autoPercentUsed, id: "cursorModels", scope: "Cursor Models", resets: resets) {
+        if let pool = pool(plan?.autoPercentUsed, id: "cursorModels", scope: "Cursor Models",
+                           resets: resets, length: length) {
             found.append(pool)
         }
-        if let pool = pool(plan?.apiPercentUsed, id: "otherModels", scope: "Other Models", resets: resets) {
+        if let pool = pool(plan?.apiPercentUsed, id: "otherModels", scope: "Other Models",
+                           resets: resets, length: length) {
             found.append(pool)
         }
 
@@ -306,7 +315,8 @@ struct CursorUsageService: Sendable {
         // fallback, since on an account that *does* report pools this is a
         // different denominator and would read as a third, contradictory
         // limit — see the note on `money(_:)`.
-        if found.isEmpty, let window = money(plan ?? overall, id: "plan", kind: .monthly, resets: resets) {
+        if found.isEmpty, let window = money(plan ?? overall, id: "plan", kind: .monthly,
+                                             resets: resets, length: length) {
             found.append(window)
         }
 
@@ -317,12 +327,26 @@ struct CursorUsageService: Sendable {
             reply.individualUsage?.onDemand ?? reply.teamUsage?.onDemand,
             id: "onDemand",
             kind: .spend,
-            resets: resets
+            resets: resets,
+            length: length
         ) {
             found.append(window)
         }
 
         return found
+    }
+
+    /// The billing cycle's length when the summary states **both** ends, and
+    /// nil otherwise (#111).
+    ///
+    /// A cycle runs 28 to 31 days, so no fixed figure is its length; two
+    /// stamps Cursor reported are. With either end missing the windows keep
+    /// the flat thirty days as a sort key and nothing divides by them.
+    static func cycleSeconds(from start: Date?, to end: Date?) -> Int? {
+        guard let start, let end else { return nil }
+        let seconds = end.timeIntervalSince(start)
+        guard seconds.isFinite, seconds >= 1 else { return nil }
+        return Int(seconds.rounded())
     }
 
     /// One of the plan's two pools.
@@ -344,7 +368,8 @@ struct CursorUsageService: Sendable {
         _ percent: Double?,
         id: String,
         scope: String,
-        resets: Date?
+        resets: Date?,
+        length: Int?
     ) -> UsageWindow? {
         guard let percent else { return nil }
 
@@ -353,12 +378,12 @@ struct CursorUsageService: Sendable {
             kind: .monthly,
             scope: scope,
             usedFraction: min(max(percent / 100, 0), 1),
-            // A billing cycle, which runs 28 to 31 days. Thirty is what orders
-            // the rows; it is not a length Cursor reported, so it is not one to
-            // divide by either.
-            windowSeconds: 30 * 86_400,
+            // A billing cycle, which runs 28 to 31 days: its stated length
+            // when the summary gives both ends, and otherwise thirty, which
+            // only orders the rows and is not a length to divide by.
+            windowSeconds: length ?? 30 * 86_400,
             resetsAt: resets,
-            reportsLength: false,
+            reportsLength: length != nil,
             isExhausted: percent >= 100
         )
     }
@@ -375,7 +400,8 @@ struct CursorUsageService: Sendable {
         _ allowance: Reply.Allowance?,
         id: String,
         kind: UsageWindow.Kind,
-        resets: Date?
+        resets: Date?,
+        length: Int?
     ) -> UsageWindow? {
         guard
             let allowance,
@@ -390,12 +416,12 @@ struct CursorUsageService: Sendable {
             kind: kind,
             scope: nil,
             usedFraction: min(max(used / limit, 0), 1),
-            // The billing cycle. Only the reset stamp is ever displayed; this
-            // is what orders the two rows — and, being chosen rather than
-            // reported, is not something to divide by.
-            windowSeconds: 30 * 86_400,
+            // The billing cycle, as for the pools: its stated length when the
+            // summary gives both ends, otherwise thirty days that only order
+            // the rows.
+            windowSeconds: length ?? 30 * 86_400,
             resetsAt: resets,
-            reportsLength: false,
+            reportsLength: length != nil,
             isExhausted: used >= limit,
             amounts: .init(
                 used: used / 100,
