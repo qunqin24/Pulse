@@ -6,6 +6,36 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.14.0</title>
+            <pubDate>Tue, 17 Nov 2026 03:01:22 -0000</pubDate>
+            <sparkle:version>1.14.0</sparkle:version>
+            <sparkle:shortVersionString>1.14.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.14.0</link>
+            <description xml:lang="zh-Hans"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.14.0</h2><p><strong>新功能</strong></p><ul><li><strong>支持 Open Design。</strong> 新增 Open Design 服务商（含 OpenDesign Go），显示 5 小时和 7 天额度、套餐和余额；登录信息从浏览器或 Open Design 应用保存的登录中读取，在设置中开启。</li><li><strong>Antigravity 的圆环显示工作状态。</strong> <code>agy</code> 或 Antigravity 应用正在处理任务时，Antigravity 的圆环中会出现旋转的白色弧线，与 Claude Code 和 Codex 相同。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>Cursor 月度额度和 Grok Bot 显示时间外圈。</strong> 服务商同时报告了周期的起止时间时，在「设置 → 圆环」中打开「距离重置的时间」即可看到这两个圆环的时间外圈。感谢 <a href="https://github.com/qunqin24/Pulse/issues/111">@tyler4400</a> 提议。</li><li><strong>「从浏览器读取」的默认选项只读默认浏览器。</strong> 第一个选项改为「默认浏览器（浏览器名称）」，不再逐个尝试所有浏览器，也不会因此多次请求钥匙串授权。</li><li><strong>移除 Codex 的提示缓存倒计时。</strong> OpenAI 表示登录后的 Codex 会一直保留提示缓存，详细卡片和 Codex 设置页不再显示倒计时。</li><li><strong>移除 Codex 设置页的「降智迹象」。</strong></li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.14.0">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="zh-Hant"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.14.0</h2><p><strong>新功能</strong></p><ul><li><strong>支持 Open Design。</strong> 新增 Open Design 服务商（含 OpenDesign Go），显示 5 小时和 7 天额度、套餐和余额；登录信息从浏览器或 Open Design 应用保存的登录中读取，在设置中开启。</li><li><strong>Antigravity 的圆环显示工作状态。</strong> <code>agy</code> 或 Antigravity 应用正在处理任务时，Antigravity 的圆环中会出现旋转的白色弧线，与 Claude Code 和 Codex 相同。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>Cursor 月度额度和 Grok Bot 显示时间外圈。</strong> 服务商同时报告了周期的起止时间时，在「设置 → 圆环」中打开「距离重置的时间」即可看到这两个圆环的时间外圈。感谢 <a href="https://github.com/qunqin24/Pulse/issues/111">@tyler4400</a> 提议。</li><li><strong>「从浏览器读取」的默认选项只读默认浏览器。</strong> 第一个选项改为「默认浏览器（浏览器名称）」，不再逐个尝试所有浏览器，也不会因此多次请求钥匙串授权。</li><li><strong>移除 Codex 的提示缓存倒计时。</strong> OpenAI 表示登录后的 Codex 会一直保留提示缓存，详细卡片和 Codex 设置页不再显示倒计时。</li><li><strong>移除 Codex 设置页的「降智迹象」。</strong></li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.14.0">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="en"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.14.0</h2><p><strong>New</strong></p><ul><li><strong>Open Design is supported.</strong> A new Open Design provider, OpenDesign Go included, shows the 5-hour and 7-day limits, the plan and the balance, reading the sign-in from a browser or from the one the Open Design app saved; turn it on in Settings.</li><li><strong>Antigravity&#x27;s ring shows when it is working.</strong> While <code>agy</code> or the Antigravity app is working on a task, a white arc turns inside Antigravity&#x27;s ring, as it does for Claude Code and Codex.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>Cursor&#x27;s monthly pools and Grok Bot get the time arc.</strong> When the provider reports both the start and the end of the period, turn on Time until reset in Settings → Rings to see the arc around these rings. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/111">@tyler4400</a> for the suggestion.</li><li><strong>Read from browser&#x27;s first choice reads only the default browser.</strong> The first choice is now &quot;Default browser (its name)&quot;, which no longer tries every browser in turn or asks for Keychain access several times.</li><li><strong>Codex&#x27;s prompt cache countdown is gone.</strong> OpenAI says a signed-in Codex keeps its prompt cache, so the detailed card and Codex&#x27;s settings pane no longer count it down.</li><li><strong>Codex&#x27;s settings pane no longer shows Signs of a weaker model.</strong></li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.14.0">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.14.0/Pulse-1.14.0.zip"
+                       length="16408066"
+                       type="application/octet-stream"
+                       sparkle:edSignature="M0unTqmqcRWvvhcvdTk6SZYxtsZnniRT79s0onOHPVZa41a/pflsKKP2BAE+GKtT+aavaM1nIt9PMvwcCj5BBA==" />
+        </item>
+        <item>
             <title>1.13.0</title>
             <pubDate>Wed, 11 Nov 2026 03:07:19 -0000</pubDate>
             <sparkle:version>1.13.0</sparkle:version>
