@@ -103,13 +103,16 @@ struct CopilotUsageService: Sendable {
         let entitlement = number(snapshot["entitlement"]) ?? 0
         let unlimited = snapshot["unlimited"] as? Bool ?? false
 
-        // **A quota the plan does not include is left out, not drawn at 100%.**
-        // It comes back with `has_quota: false`, nothing issued, and
-        // `percent_remaining: 0` — which read literally is a full red ring for
-        // something the account never had. `has_quota` states it outright;
-        // the zero entitlement is checked too, since older replies omit it.
+        // A quota the plan does not include has `has_quota: false` and nothing
+        // issued. Some token-billed Business seats also say false for a quota
+        // they did issue: `credits_used` and `entitlement` both describe a
+        // spent allowance. Keep that one and drop only the no-quota
+        // placeholder, which would otherwise draw a red ring for something the
+        // account never had. Older replies omit the flag, so the checks below
+        // still carry that distinction.
         let hasQuota = snapshot["has_quota"] as? Bool
-        if hasQuota == false { return nil }
+        let creditsUsed = number(snapshot["credits_used"]) ?? 0
+        if hasQuota == false, entitlement <= 0, creditsUsed <= 0 { return nil }
 
         // Without that flag, an older reply is told apart by the *percentage*:
         // a lane the plan excludes reads 100% remaining with nothing issued,

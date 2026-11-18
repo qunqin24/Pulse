@@ -22,6 +22,11 @@ This is **not** a public documented Copilot quota API — the path name says int
 
 A quota the plan does not include arrives with `has_quota: false`, nothing issued, and `percent_remaining: 0` — which read literally is a full red ring for something the account never had. Drop it. Older replies omit the flag; then a 100% remaining lane with nothing issued is treated as a placeholder, while a lane you have **run out of** must not be dropped (that hides the alarm).
 
+Some token-billed Business seats also use `has_quota: false` for an issued
+allowance that has been spent: the snapshot still carries the issued
+`entitlement` and its `credits_used`. That is not a placeholder and must stay
+visible. Only a false flag with neither is dropped.
+
 Unlimited lanes are dropped: no share to show.
 
 **Spent is not the same as over the allowance.** A lane with overage permitted keeps working past its included share and is billed for it. Copilot’s own client treats exhausted as `used >= quota && !overageEnabled && !unlimited`. `overage_count` above zero means the opposite of blocked. Reading it as spent painted a red ring for someone who had deliberately paid to carry on. Current rule: exhausted when remaining is 0 **and** `overage_permitted` is not true.
