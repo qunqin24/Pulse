@@ -108,7 +108,8 @@ enum OpenCodeStore {
             let columns = Self.columns(handle, table)
             let id = columns.contains("id") ? "id" : "NULL"
             let updated = columns.contains("time_updated") ? "time_updated" : "NULL"
-            Self.each(handle, "SELECT \(id), session_id, data, \(role), \(updated) FROM \(table)", rows)
+            let filter = table == "session_message" ? " WHERE type = 'assistant'" : ""
+            Self.each(handle, "SELECT \(id), session_id, data, \(role), \(updated) FROM \(table)\(filter)", rows)
         }
 
         for message in Array(messages.values) + anonymous {

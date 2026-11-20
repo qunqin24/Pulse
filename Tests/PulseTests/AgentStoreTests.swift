@@ -252,6 +252,8 @@ struct AgentStoreTests {
                 #expect(sqlite3_exec(handle, "INSERT INTO session_message VALUES ('\(id)','\(session)','\(role)',\(time)'\(json)')", nil, nil, nil) == SQLITE_OK)
             }
         }
+        // V2 requires its type column; a JSON role cannot rescue a NULL type.
+        #expect(sqlite3_exec(handle, "INSERT INTO session_message (id, session_id, type, data) VALUES ('null-role','user',NULL,'\(openCodeMessage(999))')", nil, nil, nil) == SQLITE_OK)
         if let dropTable {
             #expect(sqlite3_exec(handle, "DROP TABLE \(dropTable)", nil, nil, nil) == SQLITE_OK)
         }
