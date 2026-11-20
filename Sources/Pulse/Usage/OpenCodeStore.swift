@@ -1,4 +1,5 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
+import CoreFoundation
 import Foundation
 import SQLite3
 
@@ -27,8 +28,9 @@ import SQLite3
 /// `message` ended 2026-09-19 and every request since was missing). A 2 row's
 /// role is the `type` column, not a `role` in `data`, and its model is
 /// `"model": { "id": "gpt-6.1-sol", "providerID": "openai" }` rather than
-/// `modelID`. Both tables are read — the new one first, then any old row the
-/// copy did not carry — and a message id is counted once. A store without the
+/// `modelID`. Both tables are read, and a message id is counted once from the
+/// latest readable row by `time_updated`. Ties or incomparable timestamps
+/// keep the new layout, including when its usage is zero. A store without the
 /// new tables (OpenCode 1, Kilo CLI) reads exactly as before.
 ///
 /// **Its own `cost` is ignored.** It is whatever OpenCode's own table said at
@@ -57,18 +59,14 @@ enum OpenCodeStore {
         var sessionSlots: [String: [String: (tokens: Int, cost: Double, unpriced: Int)]] = [:]
         let calendar = Calendar.current
 
-        var seen: Set<String> = []
+        var messages: [String: Message] = [:]
+        var anonymous: [Message] = []
         var lookup = ModelPriceLookup(prices)
         let rows: (OpaquePointer?) -> Void = { statement in
             guard
                 let sessionText = sqlite3_column_text(statement, 1),
                 let dataText = sqlite3_column_text(statement, 2)
             else { return }
-            // A row without an id (a store with no `id` column) cannot have
-            // been copied, so it is never a repeat.
-            if let idText = sqlite3_column_text(statement, 0),
-               !seen.insert(String(cString: idText)).inserted { return }
-
             let session = String(cString: sessionText)
             let json = Data(String(cString: dataText).utf8)
             guard
@@ -78,6 +76,7 @@ enum OpenCodeStore {
                 (sqlite3_column_text(statement, 3).map { String(cString: $0) } ?? root["role"] as? String) == "assistant",
                 let model = root["modelID"] as? String ?? (root["model"] as? [String: Any])?["id"] as? String,
                 let counts = root["tokens"] as? [String: Any],
+                Self.readableCounts(counts),
                 let at = Self.date(in: root)
             else { return }
 
@@ -90,8 +89,31 @@ enum OpenCodeStore {
                 // `message` rows are the ones old enough to have no total.
                 output: Self.output(counts, int: Self.int, totallessFolded: sqlite3_column_text(statement, 3) == nil)
             )
-            guard tally.total > 0 else { return }
+            let message = Message(session: session, model: model, at: at, tally: tally,
+                                  updated: Self.updated(statement))
+            // Validate before deduplication, but keep a readable zero: it can
+            // supersede an older positive count. Never select by token total.
+            if let idText = sqlite3_column_text(statement, 0) {
+                let id = String(cString: idText)
+                if let previous = messages[id] {
+                    guard let old = previous.updated, let new = message.updated, new > old else { return }
+                }
+                messages[id] = message
+            } else {
+                // Historical layouts without ids cannot be matched across tables.
+                anonymous.append(message)
+            }
+        }
+        for (table, role) in [("session_message", "type"), ("message", "NULL")] {
+            let columns = Self.columns(handle, table)
+            let id = columns.contains("id") ? "id" : "NULL"
+            let updated = columns.contains("time_updated") ? "time_updated" : "NULL"
+            Self.each(handle, "SELECT \(id), session_id, data, \(role), \(updated) FROM \(table)", rows)
+        }
 
+        for message in Array(messages.values) + anonymous {
+            let (session, model, at, tally) = (message.session, message.model, message.at, message.tally)
+            guard tally.total > 0 else { continue }
             let price = lookup.price(for: model, vendor: vendor)
             let cost = price.map { tally.cost(at: $0) } ?? 0
             let unpriced = price == nil ? tally.total : 0
@@ -115,9 +137,6 @@ enum OpenCodeStore {
                 perSession[session] = (tally, cost, unpriced, at, at)
             }
         }
-        Self.each(handle, "SELECT id, session_id, data, type FROM session_message WHERE type = 'assistant'", rows)
-        let hasIDs = Self.columns(handle, "message").contains("id")
-        Self.each(handle, "SELECT \(hasIDs ? "id" : "NULL"), session_id, data, NULL FROM message", rows)
 
         guard !buckets.isEmpty else { return .empty }
 
@@ -144,6 +163,38 @@ enum OpenCodeStore {
     }
 
     // MARK: - The tables
+
+    private struct Message {
+        var session: String
+        var model: String
+        var at: Date
+        var tally: TokenTally
+        var updated: Double?
+    }
+
+    /// Missing optional counters still mean zero, but malformed counters must
+    /// not turn an unreadable copy into a zero that hides valid usage.
+    private static func readableCounts(_ counts: [String: Any]) -> Bool {
+        let cache = counts["cache"] as? [String: Any] ?? [:]
+        if let value = counts["cache"], !(value is [String: Any]) { return false }
+        let values = [counts["input"], counts["output"], counts["reasoning"], cache["read"], cache["write"]]
+            .compactMap { $0 }
+        return !values.isEmpty && values.allSatisfy { value in
+            guard let number = value as? NSNumber, CFGetTypeID(number) != CFBooleanGetTypeID() else { return false }
+            let count = number.doubleValue
+            return count.isFinite && count >= 0 && count < Double(Int.max) && count.rounded(.down) == count
+        }
+    }
+
+    /// Both upstream layouts write epoch milliseconds here. Creation and
+    /// completion times describe the request, not the last database update.
+    /// Missing, nonnumeric and nonpositive values cannot establish recency.
+    private static func updated(_ statement: OpaquePointer?) -> Double? {
+        let type = sqlite3_column_type(statement, 4)
+        guard type == SQLITE_INTEGER || type == SQLITE_FLOAT else { return nil }
+        let value = sqlite3_column_double(statement, 4)
+        return value.isFinite && value > 0 ? value : nil
+    }
 
     private struct Session {
         var slug: String?

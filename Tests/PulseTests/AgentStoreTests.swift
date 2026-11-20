@@ -116,6 +116,148 @@ struct AgentStoreTests {
         #expect(ledger.sessions.first?.title == "Fix the ring")
     }
 
+    @Test("Mixed OpenCode stores select by update time, including zero usage", arguments: [
+        ("2000", "1000", 70, 0, 70),
+        ("2000", "1000", 70, 30, 70),
+        ("1000", "2000", 70, 30, 30),
+        ("1000", "2000", 70, 0, 0),
+        ("2000", "1000", 0, 30, 0),
+        ("2000", "2000", 70, 30, 30),
+        ("2000", "2000", 70, 0, 0),
+        ("NULL", "1000", 70, 30, 30),
+        ("2000", "NULL", 70, 30, 30),
+        ("NULL", "NULL", 70, 30, 30),
+        ("'invalid'", "1000", 70, 30, 30),
+        ("2000", "'invalid'", 70, 30, 30),
+        ("0", "1000", 70, 30, 30),
+        ("2000", "-1", 70, 30, 30),
+        ("2000.5", "2000", 70, 30, 70),
+    ])
+    func openCodeLatestCopy(v1Time: String, v2Time: String, v1: Int, v2: Int, expected: Int) throws {
+        let ledger = try Self.mixedOpenCode(v1Time: v1Time, v2Time: v2Time,
+                                           v1: Self.openCodeMessage(v1), v2: Self.openCodeMessage(v2, v2: true))
+        // The two unique rows remain, regardless of which duplicate wins.
+        #expect(ledger.days.reduce(0) { $0 + $1.tokens } == expected + 18)
+        let selected = ledger.sessions.first { $0.id.hasSuffix("#shared") }
+        #expect((selected?.tokens ?? 0) == expected)
+        #expect(abs((selected?.cost ?? 0) - Double(expected) / 1_000_000) < 1e-9)
+        // Session metadata retains its existing V2 precedence, independently
+        // of which message wins. Usage stays on time.created, not time_updated.
+        if expected > 0 {
+            #expect(selected?.title == "V2 title")
+            #expect(selected?.project?.path == "/synthetic/project")
+            #expect(selected?.start == Date(timeIntervalSince1970: 1_789_372_800))
+        }
+    }
+
+    @Test("Unreadable copies do not hide readable usage", arguments: [
+        "not json", "{}",
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000},"tokens":{}}"#,
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000},"tokens":{"input":"bad","output":0}}"#,
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000},"tokens":{"input":-1,"output":0}}"#,
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000},"tokens":{"input":true,"output":0}}"#,
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000}}"#,
+        #"{"role":"assistant","modelID":"priced","time":{"created":1789372800000},"tokens":"invalid"}"#,
+    ])
+    func openCodeInvalidCopy(invalid: String) throws {
+        for invalidV2 in [true, false] {
+            let ledger = try Self.mixedOpenCode(
+                v1Time: "2000", v2Time: "3000",
+                v1: invalidV2 ? Self.openCodeMessage(70) : invalid,
+                v2: invalidV2 ? invalid : Self.openCodeMessage(30, v2: true)
+            )
+            #expect(ledger.days.reduce(0) { $0 + $1.tokens } == (invalidV2 ? 70 : 30) + 18)
+        }
+    }
+
+    @Test("Legacy columns keep V2 precedence and id-less rows remain distinct", arguments: [0, 1, 2, 3])
+    func openCodeLegacyLayouts(layout: Int) throws {
+        let ledger = try Self.mixedOpenCode(v1Time: "2000", v2Time: "1000",
+                                           v1: Self.openCodeMessage(70), v2: Self.openCodeMessage(30, v2: true),
+                                           layout: layout)
+        #expect(ledger.days.reduce(0) { $0 + $1.tokens } == (layout == 3 ? 100 : 30) + 18)
+    }
+
+    @Test("Either OpenCode table can stand alone", arguments: ["message", "session_message"])
+    func openCodeSingleLayout(table: String) throws {
+        let ledger = try Self.mixedOpenCode(v1Time: "2000", v2Time: "1000",
+                                           v1: Self.openCodeMessage(70), v2: Self.openCodeMessage(30, v2: true),
+                                           dropTable: table)
+        #expect(ledger.days.reduce(0) { $0 + $1.tokens } == (table == "message" ? 41 : 77))
+    }
+
+    @Test("The selected copy supplies the model and creation-time bucket")
+    func openCodeSelectedAttribution() throws {
+        let newer = Self.openCodeMessage(70)
+            .replacingOccurrences(of: "priced", with: "unknown")
+            .replacingOccurrences(of: "1789372800000", with: "1789459200000")
+        let ledger = try Self.mixedOpenCode(v1Time: "2000", v2Time: "1000",
+                                           v1: newer, v2: Self.openCodeMessage(30, v2: true))
+        let session = try #require(ledger.sessions.first { $0.id.hasSuffix("#shared") })
+        #expect(session.tokens == 70)
+        #expect(session.unpricedTokens == 70)
+        #expect(session.cost == 0)
+        #expect(session.start == Date(timeIntervalSince1970: 1_789_459_200))
+        #expect(session.slots.reduce(0) { $0 + $1.tokens } == 70)
+    }
+
+    private static func openCodeMessage(_ input: Int, v2: Bool = false) -> String {
+        let model = v2 ? #""model":{"id":"priced","providerID":"openai"}"# : #""role":"assistant","modelID":"priced""#
+        return """
+        {\(model),"time":{"created":1789372800000},"tokens":{"input":\(input),"output":0,"reasoning":0,"cache":{"read":0,"write":0}}}
+        """
+    }
+
+    /// layout: 0 = neither update column, 1 = V1 lacks it, 2 = V2 lacks it,
+    /// 3 = V1 also lacks ids. All fixtures are synthetic and private to a test.
+    private static func mixedOpenCode(
+        v1Time: String, v2Time: String, v1: String, v2: String, layout: Int = 4, dropTable: String? = nil
+    ) throws -> UsageLedger {
+        let root = try temporary("opencode-recency")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appending(path: "opencode.db")
+        var handle: OpaquePointer?
+        #expect(sqlite3_open(file.path, &handle) == SQLITE_OK)
+        defer { sqlite3_close(handle) }
+        let v1ID = layout == 3 ? "" : "id TEXT,"
+        let v1Update = layout == 0 || layout == 1 || layout == 3 ? "" : "time_updated INTEGER,"
+        let v2Update = layout == 0 || layout == 2 || layout == 3 ? "" : "time_updated INTEGER,"
+        for sql in [
+            "CREATE TABLE message (\(v1ID) session_id TEXT, \(v1Update) data TEXT)",
+            "CREATE TABLE session_message (id TEXT, session_id TEXT, type TEXT, \(v2Update) data TEXT)",
+            "CREATE TABLE session (id TEXT, slug TEXT, title TEXT, directory TEXT)",
+            "CREATE TABLE session_v2 (id TEXT, slug TEXT, title TEXT, directory TEXT)",
+            "INSERT INTO session VALUES ('shared','old','V1 title','/synthetic/old')",
+            "INSERT INTO session_v2 VALUES ('shared','new','V2 title','/synthetic/project')",
+        ] {
+            #expect(sqlite3_exec(handle, sql, nil, nil, nil) == SQLITE_OK)
+        }
+        for (id, session, old, new) in [
+            ("duplicate", "shared", v1, v2),
+            ("v1-only", "one", openCodeMessage(7), ""),
+            ("v2-only", "two", "", openCodeMessage(11, v2: true)),
+            ("user", "user", #"{"role":"user","modelID":"priced","time":{"created":1789372800000},"tokens":{"input":999}}"#,
+             openCodeMessage(999, v2: true)),
+        ] {
+            if !old.isEmpty {
+                let identity = layout == 3 ? "" : "'\(id)',"
+                let time = v1Update.isEmpty ? "" : "\(v1Time),"
+                let json = old.replacingOccurrences(of: "'", with: "''")
+                #expect(sqlite3_exec(handle, "INSERT INTO message VALUES (\(identity)'\(session)',\(time)'\(json)')", nil, nil, nil) == SQLITE_OK)
+            }
+            if !new.isEmpty {
+                let time = v2Update.isEmpty ? "" : "\(v2Time),"
+                let role = id == "user" ? "user" : "assistant"
+                let json = new.replacingOccurrences(of: "'", with: "''")
+                #expect(sqlite3_exec(handle, "INSERT INTO session_message VALUES ('\(id)','\(session)','\(role)',\(time)'\(json)')", nil, nil, nil) == SQLITE_OK)
+            }
+        }
+        if let dropTable {
+            #expect(sqlite3_exec(handle, "DROP TABLE \(dropTable)", nil, nil, nil) == SQLITE_OK)
+        }
+        return OpenCodeStore.ledger(at: file, prices: prices)
+    }
+
     // MARK: - Grok Build
 
     @Test("A turn's usage is read per model, and the folder names the project")

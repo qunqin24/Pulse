@@ -21,6 +21,7 @@ enum AgentCache {
     /// 11: Grok Build counted its cached read and its reasoning twice (#91),
     /// and Antigravity's Pro rows went unpriced under a routing id (#90).
     /// 12: Antigravity's `gemini-3.8-flash-n` rows were unpriced (#90).
+    /// 14: OpenCode mixed layouts select the most recently updated copy.
     /// 13: Kimi's ledger also reads Kimi Code's store, and names its models.
     ///
     /// **A bump also tells `AgentArchive` the readers changed.** Its marks
@@ -29,7 +30,7 @@ enum AgentCache {
     /// archive itself: it is a file of its own, and this cache is what the
     /// first marks are taken from — a stable read a store has deleted from
     /// since.
-    static let version = 13
+    static let version = 14
 
     /// Whether the stores' real inputs, and the money behind their cost, are
     /// the same as when the ledger was kept.
