@@ -26,6 +26,15 @@ struct CopilotParsingTests {
         return Calendar(identifier: .gregorian).date(from: components)!
     }()
 
+    private static let decemberReset: Date = {
+        var components = DateComponents()
+        components.year = 2026
+        components.month = 12
+        components.day = 1
+        components.timeZone = TimeZone(identifier: "UTC")
+        return Calendar(identifier: .gregorian).date(from: components)!
+    }()
+
     // MARK: - The three quotas
 
     @Test("A normal reply becomes three quotas, in the order they matter, inverted from what is left")
@@ -62,6 +71,23 @@ struct CopilotParsingTests {
         #expect(windows.map(\.id) == ["copilot.chat"])
         #expect(windows[0].usedFraction == 1)
         #expect(windows[0].isExhausted)
+    }
+
+    /// A token-billed Business seat marks its unlimited chat and completions
+    /// lanes `unlimited: true`, then reports its issued premium allowance with
+    /// `has_quota: false` while also supplying `entitlement` and `credits_used`.
+    /// That false is not "the plan has none": it is the only quota left to
+    /// show, and an issued allowance already spent must stay visible.
+    @Test("A token-billed Business seat keeps its spent premium allowance")
+    func tokenBilledBusinessSeat() throws {
+        let root = try Self.root("copilot-business-token-billing")
+        let windows = CopilotUsageService.windows(from: root)
+
+        #expect(windows.map(\.id) == ["copilot.premium_interactions"])
+        #expect(windows[0].usedFraction == 1)
+        #expect(windows[0].isExhausted)
+        #expect(windows[0].resetsAt == Self.decemberReset)
+        #expect(CopilotUsageService.planName(root["copilot_plan"] as? String) == "Business")
     }
 
     /// **Spent is not the same as over the allowance.** A lane with overage
