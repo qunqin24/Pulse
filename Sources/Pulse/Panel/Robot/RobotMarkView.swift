@@ -29,6 +29,10 @@ struct RobotMarkView: View {
     /// panel. See `RobotInk.legible(onDark:)`.
     var inkIsChosen = false
     var figure: String = RobotFigures.automatic[0]
+    /// Drawn until the figure's first frame arrives — a moment while the
+    /// engine builds a figure it has not drawn before — and for good if the
+    /// engine cannot run, so the ring is never left empty.
+    var placeholder: AnyView = AnyView(EmptyView())
     /// Moves every figure's clock along by its own amount, so neighbouring
     /// figures do not breathe and blink in step. Seconds.
     var phase: TimeInterval = 0
@@ -69,6 +73,9 @@ struct RobotMarkView: View {
         Color.clear
             .frame(width: size, height: size)
             .overlay {
+                if frame == nil { placeholder }
+            }
+            .overlay {
                 Canvas { context, canvas in
                     guard let frame else { return }
                     context.clip(to: Path(ellipseIn: CGRect(origin: .zero, size: canvas)))
@@ -103,7 +110,13 @@ struct RobotMarkView: View {
             ), !Task.isCancelled {
                 frame = next
             }
-            if !isLive || reduceMotion { return }
+            if !isLive || reduceMotion {
+                // A still frame of a cheer or a nod has to give way to the
+                // mood's own once the gesture is over, or it stays.
+                guard let until = shown?.until, until > now else { return }
+                try? await Task.sleep(for: .seconds(until - now + 0.05))
+                continue
+            }
             try? await Task.sleep(for: .seconds(interval(at: now)))
         } while !Task.isCancelled
     }

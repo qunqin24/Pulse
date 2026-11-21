@@ -146,7 +146,8 @@ private struct ProductShareRow: View {
             subtitle: String.localized("As Anthropic reports it. Together the shares make up the whole week; they are not shares of the limit.")
         ) {
             VStack(alignment: .trailing, spacing: 2) {
-                ForEach(share.rows, id: \.name) { row in
+                // By position: nothing stops two products sharing a name.
+                ForEach(Array(share.rows.enumerated()), id: \.offset) { _, row in
                     Text(verbatim: "\(row.name) \(Self.percent(row.percent))")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)

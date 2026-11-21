@@ -22,7 +22,8 @@ import SwiftUI
 /// Mac; after that a frame is 0.1–2 ms. On the main thread eight robots would
 /// hold the panel still for seconds, so the context lives on a serial queue —
 /// JavaScriptCore is not to be entered from two threads at once — and a ring
-/// shows nothing for that first moment rather than stopping everything else.
+/// shows the provider's mark for that first moment rather than stopping
+/// everything else (`RobotMarkView.placeholder`).
 final class BotAvatarEngine: @unchecked Sendable {
     static let shared = BotAvatarEngine()
 
@@ -90,8 +91,13 @@ final class BotAvatarEngine: @unchecked Sendable {
             let gallery = try? String(contentsOf: galleryURL, encoding: .utf8),
             let context = JSContext()
         else { return }
+        // Once per message: a frame that throws throws again on every frame.
+        var logged: Set<String> = []
         context.exceptionHandler = { _, exception in
-            NSLog("Pulse: Open Bot Avatar failed: %@", exception?.toString() ?? "unknown")
+            let message = exception?.toString() ?? "unknown"
+            if logged.count < 50, logged.insert(message).inserted {
+                NSLog("Pulse: Open Bot Avatar failed: %@", message)
+            }
         }
         context.evaluateScript(script)
         context.evaluateScript(Self.glue)
