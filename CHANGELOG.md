@@ -7,6 +7,34 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.15.0
+
+**中文**
+
+**新功能**
+
+- **圆环中的小机器人换成 Open Bot Avatar 的形象。** 小机器人现在可以是杯子、幽灵、猫等 23 种形象之一，动作来自 Dominik Scholz 的 Open Bot Avatar；在账号设置的「小机器人形象」中选择，默认自动分配。原来的「性格」和「头型」选项已移除。
+- **Claude Code 设置页显示本周各产品用量占比。** 在 Claude Code 设置的「当前用量」中，列出 Anthropic 报告的 Claude Code 等各产品占本周用量的比例。感谢 [@Edfghdrtxxx](https://github.com/qunqin24/Pulse/issues/113) 提议。
+
+**改进与修复**
+
+- **显示 Kimi Code 的月度额度。** 按月计算额度的账号，现在除了 5 小时额度，还会显示 Code 和 Total 两个月度额度。感谢 [@YarGnawh](https://github.com/qunqin24/Pulse/issues/112) 报告。
+- **保留按 token 计费的 Copilot 席位已发放的高级请求额度。** 部分 Business 席位的回复把已发放的额度标为没有额度，这类额度现在会正常显示。感谢 [@lexleizou](https://github.com/qunqin24/Pulse/pull/114) 贡献。
+- **圆环内的第二圈与外圈一样粗。** 打开「圆环内显示第二条限额」后，内圈与外圈等粗并紧贴外圈。
+
+**English**
+
+**New**
+
+- **The robot in the ring is now drawn from Open Bot Avatar.** It can be one of 23 figures, such as a mug, a ghost or a cat, moving as Dominik Scholz's Open Bot Avatar does; choose one under Robot figure in an account's settings, or leave it on Automatic. The Robot personality and Robot shape options are gone.
+- **Claude Code's settings show this week's share of usage by product.** Under Current usage in Claude Code's settings, each product's share of the week, as Anthropic reports it, is listed. Thanks to [@Edfghdrtxxx](https://github.com/qunqin24/Pulse/issues/113) for the suggestion.
+
+**Changed and fixed**
+
+- **Kimi Code's monthly allowances are shown.** Accounts counted by the month show the monthly Code and Total allowances beside the five-hour limit. Thanks to [@YarGnawh](https://github.com/qunqin24/Pulse/issues/112) for reporting it.
+- **A token-billed Copilot seat keeps its issued premium allowance.** Some Business seats report an allowance they did issue as no quota; it is now shown. Thanks to [@lexleizou](https://github.com/qunqin24/Pulse/pull/114) for the contribution.
+- **The second ring inside a ring is as thick as the first.** With Second limit inside the ring on, the inner ring is the same weight and sits just inside the outer one.
+
 ## 1.14.0
 
 **中文**
