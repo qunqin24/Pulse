@@ -6,6 +6,36 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.15.0</title>
+            <pubDate>Sat, 21 Nov 2026 10:42:53 -0000</pubDate>
+            <sparkle:version>1.15.0</sparkle:version>
+            <sparkle:shortVersionString>1.15.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.15.0</link>
+            <description xml:lang="zh-Hans"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.15.0</h2><p><strong>新功能</strong></p><ul><li><strong>圆环中的小机器人换成 Open Bot Avatar 的形象。</strong> 小机器人现在可以是杯子、幽灵、猫等 23 种形象之一，动作来自 Dominik Scholz 的 Open Bot Avatar；在账号设置的「小机器人形象」中选择，默认自动分配。原来的「性格」和「头型」选项已移除。</li><li><strong>Claude Code 设置页显示本周各产品用量占比。</strong> 在 Claude Code 设置的「当前用量」中，列出 Anthropic 报告的 Claude Code 等各产品占本周用量的比例。感谢 <a href="https://github.com/qunqin24/Pulse/issues/113">@Edfghdrtxxx</a> 提议。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>显示 Kimi Code 的月度额度。</strong> 按月计算额度的账号，现在除了 5 小时额度，还会显示 Code 和 Total 两个月度额度。感谢 <a href="https://github.com/qunqin24/Pulse/issues/112">@YarGnawh</a> 报告。</li><li><strong>保留按 token 计费的 Copilot 席位已发放的高级请求额度。</strong> 部分 Business 席位的回复把已发放的额度标为没有额度，这类额度现在会正常显示。感谢 <a href="https://github.com/qunqin24/Pulse/pull/114">@lexleizou</a> 贡献。</li><li><strong>圆环内的第二圈与外圈一样粗。</strong> 打开「圆环内显示第二条限额」后，内圈与外圈等粗并紧贴外圈。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.15.0">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="zh-Hant"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.15.0</h2><p><strong>新功能</strong></p><ul><li><strong>圆环中的小机器人换成 Open Bot Avatar 的形象。</strong> 小机器人现在可以是杯子、幽灵、猫等 23 种形象之一，动作来自 Dominik Scholz 的 Open Bot Avatar；在账号设置的「小机器人形象」中选择，默认自动分配。原来的「性格」和「头型」选项已移除。</li><li><strong>Claude Code 设置页显示本周各产品用量占比。</strong> 在 Claude Code 设置的「当前用量」中，列出 Anthropic 报告的 Claude Code 等各产品占本周用量的比例。感谢 <a href="https://github.com/qunqin24/Pulse/issues/113">@Edfghdrtxxx</a> 提议。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>显示 Kimi Code 的月度额度。</strong> 按月计算额度的账号，现在除了 5 小时额度，还会显示 Code 和 Total 两个月度额度。感谢 <a href="https://github.com/qunqin24/Pulse/issues/112">@YarGnawh</a> 报告。</li><li><strong>保留按 token 计费的 Copilot 席位已发放的高级请求额度。</strong> 部分 Business 席位的回复把已发放的额度标为没有额度，这类额度现在会正常显示。感谢 <a href="https://github.com/qunqin24/Pulse/pull/114">@lexleizou</a> 贡献。</li><li><strong>圆环内的第二圈与外圈一样粗。</strong> 打开「圆环内显示第二条限额」后，内圈与外圈等粗并紧贴外圈。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.15.0">在 GitHub 上查看更新说明</a></p>]]></description>
+            <description xml:lang="en"><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.15.0</h2><p><strong>New</strong></p><ul><li><strong>The robot in the ring is now drawn from Open Bot Avatar.</strong> It can be one of 23 figures, such as a mug, a ghost or a cat, moving as Dominik Scholz&#x27;s Open Bot Avatar does; choose one under Robot figure in an account&#x27;s settings, or leave it on Automatic. The Robot personality and Robot shape options are gone.</li><li><strong>Claude Code&#x27;s settings show this week&#x27;s share of usage by product.</strong> Under Current usage in Claude Code&#x27;s settings, each product&#x27;s share of the week, as Anthropic reports it, is listed. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/113">@Edfghdrtxxx</a> for the suggestion.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>Kimi Code&#x27;s monthly allowances are shown.</strong> Accounts counted by the month show the monthly Code and Total allowances beside the five-hour limit. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/112">@YarGnawh</a> for reporting it.</li><li><strong>A token-billed Copilot seat keeps its issued premium allowance.</strong> Some Business seats report an allowance they did issue as no quota; it is now shown. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/114">@lexleizou</a> for the contribution.</li><li><strong>The second ring inside a ring is as thick as the first.</strong> With Second limit inside the ring on, the inner ring is the same weight and sits just inside the outer one.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.15.0">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.15.0/Pulse-1.15.0.zip"
+                       length="16525697"
+                       type="application/octet-stream"
+                       sparkle:edSignature="UxHplfP/Thpmf5ZZiDmN+FHlw/5TuklQMSmk9ltDGVD5IbegojsAigUr9W6iQ+DxVH3VmCufKnPU857f/GbpCQ==" />
+        </item>
+        <item>
             <title>1.14.0</title>
             <pubDate>Tue, 17 Nov 2026 03:01:22 -0000</pubDate>
             <sparkle:version>1.14.0</sparkle:version>

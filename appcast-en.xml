@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.15.0</title>
+            <pubDate>Sat, 21 Nov 2026 10:42:53 -0000</pubDate>
+            <sparkle:version>1.15.0</sparkle:version>
+            <sparkle:shortVersionString>1.15.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.15.0</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.15.0</h2><p><strong>New</strong></p><ul><li><strong>The robot in the ring is now drawn from Open Bot Avatar.</strong> It can be one of 23 figures, such as a mug, a ghost or a cat, moving as Dominik Scholz&#x27;s Open Bot Avatar does; choose one under Robot figure in an account&#x27;s settings, or leave it on Automatic. The Robot personality and Robot shape options are gone.</li><li><strong>Claude Code&#x27;s settings show this week&#x27;s share of usage by product.</strong> Under Current usage in Claude Code&#x27;s settings, each product&#x27;s share of the week, as Anthropic reports it, is listed. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/113">@Edfghdrtxxx</a> for the suggestion.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>Kimi Code&#x27;s monthly allowances are shown.</strong> Accounts counted by the month show the monthly Code and Total allowances beside the five-hour limit. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/112">@YarGnawh</a> for reporting it.</li><li><strong>A token-billed Copilot seat keeps its issued premium allowance.</strong> Some Business seats report an allowance they did issue as no quota; it is now shown. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/114">@lexleizou</a> for the contribution.</li><li><strong>The second ring inside a ring is as thick as the first.</strong> With Second limit inside the ring on, the inner ring is the same weight and sits just inside the outer one.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.15.0">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.15.0/Pulse-1.15.0.zip"
+                       length="16525697"
+                       type="application/octet-stream"
+                       sparkle:edSignature="UxHplfP/Thpmf5ZZiDmN+FHlw/5TuklQMSmk9ltDGVD5IbegojsAigUr9W6iQ+DxVH3VmCufKnPU857f/GbpCQ==" />
+        </item>
+        <item>
             <title>1.14.0</title>
             <pubDate>Tue, 17 Nov 2026 03:01:22 -0000</pubDate>
             <sparkle:version>1.14.0</sparkle:version>
