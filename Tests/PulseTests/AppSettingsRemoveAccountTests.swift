@@ -34,8 +34,7 @@ struct AppSettingsRemoveAccountTests {
             settings.detailedCards.remove(kept.id)
             settings.robotAccounts.remove(kept.id)
             settings.robotColours[kept.id] = nil
-            settings.robotPersonalities[kept.id] = nil
-            settings.robotShapes[kept.id] = nil
+            settings.robotFigures[kept.id] = nil
             settings.splitAccounts.remove(kept.id)
             settings.menuBarAccount = nil
         }
@@ -52,8 +51,7 @@ struct AppSettingsRemoveAccountTests {
             settings.setShowsDetailedCard(true, for: account)
             settings.setShowsRobot(true, for: account)
             settings.setRobotColour(.blue, for: account)
-            settings.setRobotPersonality(.lively, for: account)
-            settings.setRobotShape(.round, for: account)
+            settings.setRobotFigure("cat", for: account)
             settings.setSplit(true, for: account)
         }
 
@@ -78,8 +76,7 @@ struct AppSettingsRemoveAccountTests {
         #expect(!settings.detailedCards.contains(removed.id))
         #expect(!settings.robotAccounts.contains(removed.id))
         #expect(settings.robotColours[removed.id] == nil)
-        #expect(settings.robotPersonalities[removed.id] == nil)
-        #expect(settings.robotShapes[removed.id] == nil)
+        #expect(settings.robotFigures[removed.id] == nil)
         #expect(!settings.splitAccounts.contains(removed.id))
 
         // Reading them back through the account-scoped accessors agrees: every
@@ -107,7 +104,6 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.splitAccounts.contains(kept.id))
         #expect(settings.showsRobot(for: kept))
         #expect(settings.robotColour(for: kept) != nil)
-        #expect(settings.robotPersonality(for: kept) == .lively)
-        #expect(settings.robotShape(for: kept) == .round)
+        #expect(settings.robotFigure(for: kept) == "cat")
     }
 }

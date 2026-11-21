@@ -41,12 +41,13 @@ extension AppSettings.Key {
     static let autoCollapse = "settings.autoCollapse"
     static let splitAccounts = "settings.splitAccounts"
     static let shownModelGroups = "settings.shownModelGroups"
-    /// New with the CX ArtLab robot. The removed mark's `settings.botMarks`
-    /// is left alone and read by nothing (Docs/decisions/bot-mark-removed.md).
+    /// New with the CX ArtLab robot, and kept for Open Bot Avatar's figures.
+    /// The removed mark's `settings.botMarks` is left alone and read by
+    /// nothing (Docs/decisions/bot-mark-removed.md), as are the CX robot's
+    /// `settings.robotPersonalities` and `settings.robotShapes`.
     static let robotAccounts = "settings.robotAccounts"
     static let robotColours = "settings.robotColours"
-    static let robotPersonalities = "settings.robotPersonalities"
-    static let robotShapes = "settings.robotShapes"
+    static let robotFigures = "settings.robotFigures"
 }
 
 extension AppSettings.Default {
@@ -201,15 +202,9 @@ extension AppSettings {
         onLayoutChange?()
     }
 
-    func robotPersonalitiesChanged(from old: [String: String]) {
-        guard robotPersonalities != old else { return }
-        defaults.set(robotPersonalities, forKey: Key.robotPersonalities)
-        onLayoutChange?()
-    }
-
-    func robotShapesChanged(from old: [String: String]) {
-        guard robotShapes != old else { return }
-        defaults.set(robotShapes, forKey: Key.robotShapes)
+    func robotFiguresChanged(from old: [String: String]) {
+        guard robotFigures != old else { return }
+        defaults.set(robotFigures, forKey: Key.robotFigures)
         onLayoutChange?()
     }
 
@@ -278,22 +273,14 @@ extension AppSettings {
         robotColours[account.id] = hex
     }
 
-    /// The robot's personality, or nil for Automatic.
-    func robotPersonality(for account: AccountKey) -> RobotPersonality? {
-        robotPersonalities[account.id].flatMap(RobotPersonality.init(rawValue:))
+    /// The robot's figure, or nil for Automatic. A figure Pulse no longer
+    /// offers reads as Automatic rather than drawing nothing.
+    func robotFigure(for account: AccountKey) -> String? {
+        robotFigures[account.id].flatMap { RobotFigures.automatic.contains($0) ? $0 : nil }
     }
 
-    func setRobotPersonality(_ personality: RobotPersonality?, for account: AccountKey) {
-        robotPersonalities[account.id] = personality?.rawValue
-    }
-
-    func robotShape(for account: AccountKey) -> RobotShape {
-        robotShapes[account.id].flatMap(RobotShape.init(rawValue:)) ?? .standard
-    }
-
-    /// The standard shape is stored as nothing, like every other default.
-    func setRobotShape(_ shape: RobotShape, for account: AccountKey) {
-        robotShapes[account.id] = shape == .standard ? nil : shape.rawValue
+    func setRobotFigure(_ figure: String?, for account: AccountKey) {
+        robotFigures[account.id] = figure
     }
 
     /// Through `onLayoutChange`: the rings change and the rail with them,
@@ -398,7 +385,6 @@ extension AppSettings {
         detailedCards = Set(defaults.stringArray(forKey: Key.detailedCards) ?? [])
         robotAccounts = Set(defaults.stringArray(forKey: Key.robotAccounts) ?? [])
         robotColours = defaults.dictionary(forKey: Key.robotColours) as? [String: String] ?? [:]
-        robotPersonalities = defaults.dictionary(forKey: Key.robotPersonalities) as? [String: String] ?? [:]
-        robotShapes = defaults.dictionary(forKey: Key.robotShapes) as? [String: String] ?? [:]
+        robotFigures = defaults.dictionary(forKey: Key.robotFigures) as? [String: String] ?? [:]
     }
 }

@@ -182,11 +182,12 @@ struct AccountPanelGroup: View {
 
             SettingsRowDivider()
 
-            // Credited in the subtitle as well as in About: the character is
-            // CX ArtLab's, and the switch is where somebody first meets it.
+            // Credited in the subtitle as well as in About: the figures are
+            // Open Bot Avatar's, and the switch is where somebody first meets
+            // them.
             SettingsRow(
                 String.localized("Robot in the ring"),
-                subtitle: String.localized("Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab."),
+                subtitle: String.localized("Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz."),
                 symbol: "theatermasks"
             ) {
                 Toggle("", isOn: Binding(
@@ -253,56 +254,25 @@ struct AccountPanelGroup: View {
         SettingsRowDivider()
 
         SettingsRow(
-            String.localized("Robot personality"),
-            subtitle: Self.personalitySubtitle(settings.robotPersonality(for: account)),
+            String.localized("Robot figure"),
+            subtitle: settings.robotFigure(for: account) == nil
+                ? String.localized("Chosen so that neighbouring robots differ.")
+                : String.localized("The object the robot is drawn as. It shows the same states whichever it is."),
             symbol: "face.smiling"
         ) {
             Picker("", selection: Binding(
-                get: { settings.robotPersonality(for: account) },
-                set: { settings.setRobotPersonality($0, for: account) }
+                get: { settings.robotFigure(for: account) },
+                set: { settings.setRobotFigure($0, for: account) }
             )) {
-                Text(localized: "Automatic").tag(RobotPersonality?.none)
-                ForEach(RobotPersonality.allCases) { personality in
-                    Text(personality.title).tag(RobotPersonality?.some(personality))
+                Text(localized: "Automatic").tag(String?.none)
+                Divider()
+                ForEach(RobotFigures.automatic, id: \.self) { figure in
+                    Text(RobotFigures.title(figure)).tag(String?.some(figure))
                 }
             }
             .labelsHidden()
             .pickerStyle(.menu)
             .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
-        }
-
-        SettingsRowDivider()
-
-        SettingsRow(
-            String.localized("Robot shape"),
-            subtitle: String.localized("The outline of the robot's head."),
-            symbol: "square.on.circle"
-        ) {
-            Picker("", selection: Binding(
-                get: { settings.robotShape(for: account) },
-                set: { settings.setRobotShape($0, for: account) }
-            )) {
-                ForEach(RobotShape.allCases) { shape in
-                    Text(shape.title).tag(shape)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.menu)
-            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
-        }
-    }
-
-    /// What the personality does while idle, said for the one chosen.
-    static func personalitySubtitle(_ personality: RobotPersonality?) -> String {
-        switch personality {
-        case nil:
-            String.localized("Chosen so that neighbouring robots differ.")
-        case .calm:
-            String.localized("Glances and blinks slowly, and now and then looks slowly from side to side.")
-        case .curious:
-            String.localized("Glances about, and now and then narrows its eyes and looks up and down.")
-        case .lively:
-            String.localized("Glances quickly and often, and now and then opens its eyes wide.")
         }
     }
 

@@ -355,7 +355,7 @@ final class AppSettings {
         didSet { detailedCardsChanged(from: oldValue) }
     }
 
-    /// The accounts whose ring draws CX ArtLab's robot in place of the
+    /// The accounts whose ring draws an Open Bot Avatar figure in place of the
     /// provider's mark, by account id. Off for every account until chosen.
     ///
     /// Not a `PanelMetrics` entry: the robot takes the mark's place at the
@@ -369,15 +369,10 @@ final class AppSettings {
         didSet { robotColoursChanged(from: oldValue) }
     }
 
-    /// The robot's personality per account (`RobotPersonality`); absent is
-    /// Automatic.
-    var robotPersonalities: [String: String] = [:] {
-        didSet { robotPersonalitiesChanged(from: oldValue) }
-    }
-
-    /// The robot's head shape per account (`RobotShape`); absent is standard.
-    var robotShapes: [String: String] = [:] {
-        didSet { robotShapesChanged(from: oldValue) }
+    /// The robot's figure per account, an Open Bot Avatar id
+    /// (`RobotFigures`); absent is Automatic.
+    var robotFigures: [String: String] = [:] {
+        didSet { robotFiguresChanged(from: oldValue) }
     }
 
     /// Liquid Glass instead of flat black for the panel's surfaces.

@@ -80,7 +80,7 @@ struct UsageRingView: View {
     /// next person who forgets it is told.
     let secondFraction: Double?
     let secondIsSpent: Bool
-    /// CX ArtLab's robot in place of the provider's mark, or nil for the mark.
+    /// An Open Bot Avatar figure in place of the provider's mark, or nil for the mark.
     /// Per account, off by default (`AppSettings.robotAccounts`).
     var robot: RobotCue?
     /// False while the rail is collapsed, which stops the robot's timeline.
@@ -106,14 +106,14 @@ struct UsageRingView: View {
     /// drawn side by side and 1.0 was picked. The cost, accepted: a busy
     /// ring's activity arc and a second ring both pass close to the glyph.
     private static let iconScale: CGFloat = 1.0
-    /// The robot's share of the same disc: **wider than the disc**. Its
-    /// drawing carries the antenna and room to move above the head, so the
-    /// head needs the extra width to read as large as a logo. It may spread
-    /// into the band between the disc and the usage ring because a ring with
-    /// a robot draws no activity arc there. With a second ring that band is
-    /// taken, and its taller outline would touch the inner ring at the
-    /// logo's size, so it is drawn smaller there.
-    private var robotScale: CGFloat { secondFraction == nil ? 1.1 : 0.8 }
+    /// The figure's 0 0 100 100 box against the same disc: **wider than the
+    /// disc**. Open Bot Avatar keeps a figure within about 8…92 of its box
+    /// and leaves the rest for turning and hopping, so the box is drawn
+    /// larger for the figure to read as large as a logo. It may spread into
+    /// the band between the disc and the usage ring because a ring with a
+    /// figure draws no activity arc there. With a second ring that band is
+    /// taken, so it is drawn at the disc's size.
+    private var robotScale: CGFloat { secondFraction == nil ? 1.35 : 1.1 }
 
     private var centreDiameter: CGFloat {
         // The disc gives up two points a side to the second ring, which needs
@@ -314,11 +314,16 @@ struct UsageRingView: View {
                                         activity: animatesActivity),
                 gesture: robot.gesture,
                 size: centreDiameter * robotScale,
+                // Everything inside the ring, or inside the second ring when
+                // it is drawn: the figure's hops and ribbons pass behind it.
+                room: secondFraction == nil
+                    ? diameter - lineWidth * 2
+                    : DockLayout.secondRingDiameter - DockLayout.secondRingLineWidth * 2,
                 isLive: isLive,
                 ink: robot.ink,
                 inkIsChosen: robot.inkIsChosen,
-                personality: robot.personality,
-                shape: robot.shape
+                figure: robot.figure,
+                phase: robot.phase
             )
         } else {
             LobeIconView(

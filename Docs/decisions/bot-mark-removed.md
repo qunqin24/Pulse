@@ -1,6 +1,6 @@
 # The animated mark was replaced
 
-**Status:** in force since 2026-11-02, on the maintainer's instruction. **Replaced** the same day by CX ArtLab's robot (below).
+**Status:** in force since 2026-11-02, on the maintainer's instruction. **Replaced** the same day by CX ArtLab's robot (below), and on 2026-11-21 by Open Bot Avatar's figures (last section).
 
 Pulse 1.2.0 to 1.12.4 could draw an animated bot in a ring in place of the provider's logo ("Animated mark", off by default, per account). It was removed, with its settings, translations, tests and data.
 
@@ -21,3 +21,13 @@ Stored preferences from the old feature (`settings.botMarks`, `botPersonas`, `bo
 - **Specified from Pulse's facts, in the original's vocabulary.** Idle, working, refreshing, spent and no reading each pick one of the avatar's own actions; the two witnesses kept above drive its `success` and `affirm`. Nothing near a limit gets a face: the ring's colour says it.
 - **Colour, personality and shape** came back as options on 2026-11-02, at the maintainer's request, designed afresh from what the original offers: its `color` attribute, its idle actions (`bored`, `inspect`, `surprise`) and its `setHeadRoundness`. Nothing is invented beyond them. Automatic colour is each product's own brand colour, from a table Pulse compiled for this (`Provider.brandColour`), with Pulse's own wheel for black-and-white marks.
 - **New keys:** `settings.robotAccounts`, `robotColours`, `robotPersonalities`, `robotShapes`.
+
+## The second replacement (2026-11-21)
+
+**[Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar) by Dominik Scholz**, MIT-licensed, at the maintainer's request ([../ui/rings-and-surface.md](../ui/rings-and-surface.md#robot)).
+
+- **The same rules.** The figures are the author's and the gallery contributors' designs, contributed under the repository's MIT licence; they are credited on the switch and in About, and not presented as Pulse's.
+- **Run, not ported.** The package's own renderer runs in JavaScriptCore, so its motion is the original's and following it means replacing one file (`Scripts/vendor-open-bot-avatar.sh`). A port of about 5,000 lines of TypeScript was weighed and set aside for that reason.
+- **Specified from Pulse's facts, in the original's vocabulary.** Idle, working, refreshing, spent and no reading each pick one of its six states; a reset plays `done` and a finished turn its happy mood.
+- **Colour stays; personality and shape go.** The original has a colour option and a choice of figure, and neither personalities nor head roundness, so the figure picker replaces both. Their keys (`settings.robotPersonalities`, `robotShapes`) are left in place and read by nothing; the new one is `settings.robotFigures`.
+

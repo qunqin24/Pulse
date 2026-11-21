@@ -182,16 +182,14 @@ struct AppSettingsPersistenceTests {
         #expect(defaults.object(forKey: "settings.botMarks") == nil)
         settings.setRobotColour(Color(red: 1, green: 0, blue: 0), for: AccountKey(.codex))
         #expect(defaults.dictionary(forKey: "settings.robotColours") as? [String: String] == ["codex": "#FF0000"])
-        settings.setRobotPersonality(.calm, for: AccountKey(.codex))
-        #expect(defaults.dictionary(forKey: "settings.robotPersonalities") as? [String: String] == ["codex": "calm"])
-        settings.setRobotShape(.square, for: AccountKey(.codex))
-        #expect(defaults.dictionary(forKey: "settings.robotShapes") as? [String: String] == ["codex": "square"])
-        // Back to the defaults stores nothing.
-        settings.setRobotPersonality(nil, for: AccountKey(.codex))
-        settings.setRobotShape(.standard, for: AccountKey(.codex))
-        #expect(defaults.dictionary(forKey: "settings.robotPersonalities") as? [String: String] == [:])
-        #expect(defaults.dictionary(forKey: "settings.robotShapes") as? [String: String] == [:])
-        for old in ["settings.botPersonas", "settings.botColours", "settings.botShapes"] {
+        settings.setRobotFigure("ghost", for: AccountKey(.codex))
+        #expect(defaults.dictionary(forKey: "settings.robotFigures") as? [String: String] == ["codex": "ghost"])
+        // Back to Automatic stores nothing.
+        settings.setRobotFigure(nil, for: AccountKey(.codex))
+        #expect(defaults.dictionary(forKey: "settings.robotFigures") as? [String: String] == [:])
+        // The CX robot's choices and the removed mark's are never written.
+        for old in ["settings.botPersonas", "settings.botColours", "settings.botShapes",
+                    "settings.robotPersonalities", "settings.robotShapes"] {
             #expect(defaults.object(forKey: old) == nil)
         }
         settings.enabledAccounts = ["codex"]
@@ -278,8 +276,7 @@ struct AppSettingsPersistenceTests {
         first.detailedCards = ["codex"]
         first.robotAccounts = ["claudeCode"]
         first.robotColours = ["claudeCode": "#4A90E2"]
-        first.robotPersonalities = ["claudeCode": "lively"]
-        first.robotShapes = ["claudeCode": "round"]
+        first.robotFigures = ["claudeCode": "rocket"]
         first.primedProviders = ["codex"]
         first.primerHours = PrimerHours(start: 9, end: 17)
         first.recordPrimerRun(for: .codex, outcome: .sent, at: Date(timeIntervalSince1970: 100))
@@ -353,8 +350,7 @@ struct AppSettingsPersistenceTests {
         #expect(back.detailedCards == ["codex"])
         #expect(back.robotAccounts == ["claudeCode"])
         #expect(back.robotColours == ["claudeCode": "#4A90E2"])
-        #expect(back.robotPersonality(for: AccountKey(.claudeCode)) == .lively)
-        #expect(back.robotShape(for: AccountKey(.claudeCode)) == .round)
+        #expect(back.robotFigure(for: AccountKey(.claudeCode)) == "rocket")
         #expect(back.primedProviders == ["codex"])
         #expect(back.primerHours == PrimerHours(start: 9, end: 17))
         #expect(back.lastPrimerRun(for: .codex)?.outcome == .sent)

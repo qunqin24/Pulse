@@ -123,15 +123,16 @@ struct AboutPane: View {
 
                 SettingsRowDivider()
 
-                // A port, and said to be one: the character and its motion
-                // are CX ArtLab's original design, not Pulse's.
+                // The original's own renderer runs here, and said so: the
+                // figures and their motion are Dominik Scholz's design, not
+                // Pulse's.
                 SettingsRow(
-                    "Agent Robot Avatar",
-                    subtitle: String.localized("The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License."),
+                    "Open Bot Avatar",
+                    subtitle: String.localized("The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License."),
                     symbol: "theatermasks"
                 ) {
                     Button(String.localized("Open")) {
-                        NSWorkspace.shared.open(URL(string: "https://github.com/CX-ArtLab/agent-robot-avatar")!)
+                        NSWorkspace.shared.open(URL(string: "https://github.com/DominikScholz/open-bot-avatar")!)
                     }
                 }
             }

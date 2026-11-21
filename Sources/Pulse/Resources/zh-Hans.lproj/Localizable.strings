@@ -1232,27 +1232,39 @@
 "This is a test notification. Pulse's notifications look like this." = "这是一条测试通知。Pulse 的通知会以这种样式显示。";
 "Pulse has not been allowed to post notifications yet. Press Send again to be asked." = "Pulse 还没有获得发送通知的许可。再按一次「发送」会重新询问。";
 
-/* Robot in the ring (CX ArtLab Agent Robot Avatar) */
+/* Robot in the ring (Open Bot Avatar figures) */
 "Robot in the ring" = "圆环中显示小机器人";
-"Replaces the provider's mark and shows what this account is doing. The robot is Agent Robot Avatar by CX ArtLab." = "代替服务商图标，显示这个账号当前的状态。小机器人是 CX ArtLab 的 Agent Robot Avatar。";
-"The robot in the rings is ported from CX ArtLab's Agent Robot Avatar, an original character by CX ArtLab, under the MIT License." = "圆环中的小机器人移植自 CX ArtLab 的 Agent Robot Avatar，角色由 CX ArtLab 原创，以 MIT 许可证授权。";
 
 /* Robot colour, personality and shape */
 "Robot colour" = "小机器人颜色";
+"Robot figure" = "小机器人形象";
+"The object the robot is drawn as. It shows the same states whichever it is." = "选择小机器人的样子。无论哪种样子，表示的状态都相同。";
+"Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "代替服务商图标，显示这个账号当前的状态。小机器人的形象来自 Dominik Scholz 的 Open Bot Avatar。";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "圆环中小机器人的形象和动作来自 Dominik Scholz 的 Open Bot Avatar，直接运行其原版代码，以 MIT 许可证授权。";
+"Controller" = "游戏手柄";
+"Barbell" = "杠铃";
+"Mug" = "杯子";
+"Lightbulb" = "灯泡";
+"Speech bubble" = "对话气泡";
+"Sprout" = "嫩芽";
+"Watering can" = "洒水壶";
+"Book" = "书";
+"Brain" = "大脑";
+"Bull" = "公牛";
+"Bunny" = "兔子";
+"Camera" = "相机";
+"Cat" = "猫";
+"Egg" = "蛋";
+"Ghost" = "幽灵";
+"Magnifying glass" = "放大镜";
+"Paintbrush" = "画笔";
+"Palette" = "调色板";
+"Rocket" = "火箭";
+"Shield" = "盾牌";
+"Star" = "星星";
+"Witch's hat" = "巫师帽";
 "Chosen so that neighbouring robots differ." = "自动选择，相邻的小机器人各不相同。";
 "A colour of your own. The ring keeps its colour." = "使用你选择的颜色，圆环的颜色不受影响。";
-"Robot personality" = "小机器人性格";
-"Robot shape" = "小机器人外形";
-"The outline of the robot's head." = "小机器人头部的轮廓。";
-"Glances and blinks slowly, and now and then looks slowly from side to side." = "环顾和眨眼都较慢，偶尔缓缓地左右张望。";
-"Glances about, and now and then narrows its eyes and looks up and down." = "四处张望，偶尔眯起眼睛上下打量。";
-"Glances quickly and often, and now and then opens its eyes wide." = "张望得又快又频繁，偶尔睁大眼睛。";
-"Calm" = "沉稳";
-"Curious" = "好奇";
-"Lively" = "活泼";
-"Original" = "原版";
-"Squarer" = "更方";
-"Rounder" = "更圆";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "使用服务商自己的品牌色；没有品牌色的，选一个与相邻小机器人不同的颜色。";
 "A note from the developer" = "来自开发者的话";
 "Don't show again" = "不再显示";

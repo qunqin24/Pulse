@@ -98,25 +98,24 @@ SOFTWARE.
 own `apps/web/public/agent-icons/amr.svg` ([nexu-io/open-design](https://github.com/nexu-io/open-design),
 Apache License 2.0), drawn in one colour without its dark tile.
 
-## Agent Robot Avatar
+## Open Bot Avatar
 
-The robot Pulse can draw in a ring in place of a provider's mark is ported to
-Swift from [Agent Robot Avatar](https://github.com/CX-ArtLab/agent-robot-avatar)
-by CX ArtLab (v0.7.1, commit `7e637d1`): the head outline, the eye poses and
-lids, the antenna, the head-roundness variants, and the timing of its idle,
-bored, inspect, surprise, waiting, success, affirm, failure, sleep and wake
-actions. The files are in `Sources/Pulse/Panel/Robot`.
+The figures Pulse can draw in a ring in place of a provider's mark, and their
+motion, are [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar)
+by Dominik Scholz. `Sources/Pulse/Resources/open-bot-avatar.js` is the
+`open-bot-avatar` package (v0.3.0, its DOM-free build) bundled unchanged for
+JavaScriptCore, and `Sources/Pulse/Resources/open-bot-avatars.json` holds the
+figure definitions from the repository's `gallery/` (commit `5e64c08`); both are
+made by `Scripts/vendor-open-bot-avatar.sh`. Pulse runs the original's renderer
+and paints the frames it returns (`Sources/Pulse/Panel/Robot`).
 
-The Agent Robot Avatar character, including its robot appearance and visual
-identity, is an original design by CX ArtLab. Its licence covers the software;
-it does not transfer ownership of the Agent Robot Avatar name, character or
-visual identity, and Pulse does not present them as its own character or
-brand.
+The figures are Dominik Scholz's and the gallery's contributors' designs, not
+Pulse's, and Pulse does not present them as its own character or brand.
 
 ```text
 MIT License
 
-Copyright (c) 2026 CX ART Lab
+Copyright (c) 2026 Dominik Scholz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

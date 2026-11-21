@@ -46,6 +46,12 @@ struct RobotInk: Equatable {
 
     var color: Color { Color(.sRGB, red: red, green: green, blue: blue) }
 
+    /// `#rrggbb`, as Open Bot Avatar takes a colour.
+    var hexString: String {
+        func byte(_ value: Double) -> Int { Int((min(max(value, 0), 1) * 255).rounded()) }
+        return String(format: "#%02x%02x%02x", byte(red), byte(green), byte(blue))
+    }
+
     /// 0..<1 round the wheel.
     var hue: Double {
         let high = max(red, green, blue), low = min(red, green, blue), span = high - low
