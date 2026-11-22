@@ -108,7 +108,8 @@ struct FloatingUsagePanelContent: View {
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
                             showsForecast: settings.showsForecast,
-                            showsAmounts: selected.account.provider == .qoder && settings.qoderShowsAmounts,
+                            showsAmounts: selected.account.provider == .copilot
+                                || (selected.account.provider == .qoder && settings.qoderShowsAmounts),
                             resetCredits: selected.account == AccountKey(.codex) ? store.codexResetCredits : nil,
                             isDetailed: settings.showsDetailedCard(for: selected.account),
                             spend: showsSpend(for: selected.account)
