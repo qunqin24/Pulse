@@ -1,4 +1,5 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
+import CoreFoundation
 import Foundation
 
 /// GitHub Copilot's quotas, from the endpoint its own editor plugins use.
@@ -147,8 +148,24 @@ struct CopilotUsageService: Sendable {
             // the opposite of blocked: it is the count of what has already
             // been spent that way. Reading it as spent painted a red ring for
             // someone who had deliberately paid to carry on.
-            isExhausted: remaining <= 0 && !(snapshot["overage_permitted"] as? Bool ?? false)
+            isExhausted: remaining <= 0 && !(snapshot["overage_permitted"] as? Bool ?? false),
+            amounts: quotaAmounts(snapshot)
         )
+    }
+
+    /// The credit-consumption counter need not share a scale with the allowance.
+    /// Use the explicitly reported remainder, never the rounded percentage.
+    private static func quotaAmounts(_ snapshot: [String: Any]) -> UsageWindow.Amounts? {
+        func count(_ value: Any?) -> Double? {
+            if let boxed = value as? NSNumber, CFGetTypeID(boxed) == CFBooleanGetTypeID() {
+                return nil
+            }
+            return number(value)
+        }
+        guard let limit = count(snapshot["entitlement"]), limit > 0, limit < Double(Int.max),
+              let remaining = count(snapshot["quota_remaining"] ?? snapshot["remaining"]),
+              remaining >= 0, remaining <= limit else { return nil }
+        return .init(used: limit - remaining, remaining: remaining, limit: limit)
     }
 
     /// GitHub's internal plan names, tidied. Anything unfamiliar is passed

@@ -88,6 +88,34 @@ struct CopilotParsingTests {
         #expect(windows[0].isExhausted)
         #expect(windows[0].resetsAt == Self.decemberReset)
         #expect(CopilotUsageService.planName(root["copilot_plan"] as? String) == "Business")
+        #expect(windows[0].amounts == .init(used: 40_000, remaining: 0, limit: 40_000))
+    }
+
+    @Test("Numeric display uses the reported remainder, not credits_used or rounded percent")
+    func numericQuotaUsesReportedRemainder() throws {
+        let snapshot: [String: Any] = [
+            "entitlement": 200, "quota_remaining": 72.6, "remaining": 72,
+            "credits_used": 500, "percent_remaining": 36
+        ]
+        let windows = CopilotUsageService.windows(from: ["quota_snapshots": ["premium_interactions": snapshot]])
+        let amounts = try #require(windows.first?.amounts)
+        #expect(amounts.used == 200 - 72.6)
+        #expect(amounts.remaining == 72.6)
+        #expect(amounts.limit == 200)
+        #expect(windows.first?.usedFraction == 0.64)
+    }
+
+    @Test("Missing or invalid remainder preserves the percentage without inventing counts")
+    func invalidNumericQuotaKeepsPercentage() throws {
+        let base: [String: Any] = ["entitlement": 200, "credits_used": 80, "percent_remaining": 60]
+        for snapshot in [base, base.merging(["remaining": -1]) { _, new in new },
+                         base.merging(["remaining": 201]) { _, new in new },
+                         base.merging(["remaining": true]) { _, new in new }] {
+            let windows = CopilotUsageService.windows(from: ["quota_snapshots": ["premium_interactions": snapshot]])
+            let window = try #require(windows.first)
+            #expect(window.amounts == nil)
+            #expect(window.usedFraction == 0.40)
+        }
     }
 
     /// **Spent is not the same as over the allowance.** A lane with overage

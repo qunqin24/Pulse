@@ -27,6 +27,14 @@ allowance that has been spent: the snapshot still carries the issued
 `entitlement` and its `credits_used`. That is not a placeholder and must stay
 visible. Only a false flag with neither is dropped.
 
+When the detail card is set to show amounts, an issued quota with a valid
+absolute remainder also displays the used or remaining amount out of its total.
+The absolute remainder comes from `quota_remaining` when present, or `remaining`
+otherwise; used is the total minus that remainder. The internal fields are not
+a documented billing unit, so the card does not label them as GitHub AI Credits.
+`credits_used` is not used as a numerator because it can be on a different scale.
+Missing or invalid counts leave the existing percentage alone.
+
 Unlimited lanes are dropped: no share to show.
 
 **Spent is not the same as over the allowance.** A lane with overage permitted keeps working past its included share and is billed for it. Copilot’s own client treats exhausted as `used >= quota && !overageEnabled && !unlimited`. `overage_count` above zero means the opposite of blocked. Reading it as spent painted a red ring for someone who had deliberately paid to carry on. Current rule: exhausted when remaining is 0 **and** `overage_permitted` is not true.
