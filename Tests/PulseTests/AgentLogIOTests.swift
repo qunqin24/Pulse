@@ -204,4 +204,59 @@ struct AgentLogIOTests {
             #expect(blobs[1] == nil)
         }
     }
+
+    @Test("A WAL database its owner has closed still reads, and nothing is created beside it")
+    func closedWALDatabaseReads() throws {
+        let root = try Self.temporary("closed-wal")
+        defer { try? FileManager.default.removeItem(at: root) }
+        // A space and a `#` in the name: the immutable open goes through a URI.
+        let db = root.appending(path: "conversation #1.db")
+
+        var writer: OpaquePointer?
+        #expect(sqlite3_open(db.path, &writer) == SQLITE_OK)
+        for sql in [
+            "PRAGMA journal_mode=WAL",
+            "CREATE TABLE steps (idx INTEGER, step_type INTEGER)",
+            "INSERT INTO steps VALUES (1, 15)",
+            "INSERT INTO steps VALUES (2, 15)",
+        ] {
+            #expect(sqlite3_exec(writer, sql, nil, nil, nil) == SQLITE_OK)
+        }
+        // Apple's SQLite keeps `-wal` and `-shm` after the last close by
+        // default; Antigravity's does not. Turned off to behave like it.
+        var persist: Int32 = 0
+        #expect(sqlite3_file_control(writer, "main", SQLITE_FCNTL_PERSIST_WAL, &persist) == SQLITE_OK)
+        sqlite3_close(writer)
+
+        // Closing the last connection checkpoints and removes both files —
+        // the state a plain read-only open cannot read (#117).
+        let manager = FileManager.default
+        #expect(!manager.fileExists(atPath: db.path + "-wal"))
+        #expect(!manager.fileExists(atPath: db.path + "-shm"))
+        #expect(AgentSQLite.isClosedWAL(db))
+
+        let count = AgentSQLite.read(at: db) { database -> Int in
+            var rows = 0
+            AgentSQLite.each(database, sql: "SELECT idx FROM steps") { _ in rows += 1 }
+            return rows
+        }
+        #expect(count == 2)
+        #expect(!manager.fileExists(atPath: db.path + "-wal"))
+        #expect(!manager.fileExists(atPath: db.path + "-shm"))
+    }
+
+    @Test("A rollback-journal database is never opened as immutable")
+    func rollbackDatabaseIsNotImmutable() throws {
+        let root = try Self.temporary("rollback")
+        defer { try? FileManager.default.removeItem(at: root) }
+        let db = root.appending(path: "store.db")
+
+        var writer: OpaquePointer?
+        #expect(sqlite3_open(db.path, &writer) == SQLITE_OK)
+        #expect(sqlite3_exec(writer, "CREATE TABLE t (x)", nil, nil, nil) == SQLITE_OK)
+        sqlite3_close(writer)
+
+        #expect(!AgentSQLite.isClosedWAL(db))
+        #expect(!AgentSQLite.isClosedWAL(root.appending(path: "missing.db")))
+    }
 }

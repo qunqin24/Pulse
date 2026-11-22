@@ -10,6 +10,15 @@ import SQLite3
 /// database belongs to another application that may be running: Pulse reads
 /// its journal in place and leaves it exactly as it found it.
 ///
+/// **A closed WAL database is opened as immutable.** A read-only connection
+/// to a WAL-mode database needs its `-shm` file, and may not create one. While
+/// the owner has the database open, `-wal` and `-shm` exist and the ordinary
+/// open works. When the owner closes it, SQLite checkpoints the log into the
+/// `.db` and deletes both files, and every later read-only query fails with
+/// `SQLITE_CANTOPEN` (Antigravity's conversation stores, #117). With neither
+/// file present the `.db` holds every committed page, so `immutable=1` reads
+/// exactly what is there, still without writing or creating anything.
+///
 /// A database whose schema does not match — no table, no column, an older
 /// version — simply yields no rows. A failed `prepare` is an ordinary outcome
 /// here, not an error to surface, so a reader built against one shape stays
@@ -22,15 +31,41 @@ enum AgentSQLite {
     static func read<T>(at url: URL, _ body: (OpaquePointer) -> T) -> T? {
         guard !Task.isCancelled else { return nil }
         var handle: OpaquePointer?
-        guard
-            sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
-            let database = handle
-        else {
+        let opened = isClosedWAL(url)
+            ? sqlite3_open_v2(immutableURI(url), &handle, SQLITE_OPEN_READONLY | SQLITE_OPEN_URI, nil)
+            : sqlite3_open_v2(url.path, &handle, SQLITE_OPEN_READONLY, nil)
+        guard opened == SQLITE_OK, let database = handle else {
             sqlite3_close(handle)
             return nil
         }
         defer { sqlite3_close(database) }
         return body(database)
+    }
+
+    /// Whether `url` is a WAL-mode database with neither `-wal` nor `-shm`
+    /// beside it: one its owner has closed, which a read-only open cannot read.
+    ///
+    /// The mode comes from the file header (bytes 18 and 19 are 2 for WAL), so
+    /// a rollback-journal database is never opened as immutable: its writer
+    /// changes the `.db` in place, and an immutable read takes no lock. A
+    /// `-wal` left without its `-shm` may hold pages the `.db` lacks, so that
+    /// case keeps the ordinary open rather than reading stale pages.
+    static func isClosedWAL(_ url: URL) -> Bool {
+        let manager = FileManager.default
+        guard
+            !manager.fileExists(atPath: url.path + "-wal"),
+            !manager.fileExists(atPath: url.path + "-shm"),
+            let file = try? FileHandle(forReadingFrom: url)
+        else { return false }
+        defer { try? file.close() }
+        guard let header = try? file.read(upToCount: 20), header.count == 20 else { return false }
+        return header[18] == 2 && header[19] == 2
+    }
+
+    /// `url` as an SQLite URI that opens it immutable. The path is
+    /// percent-encoded, so a space, `?` or `#` in it stays part of the path.
+    private static func immutableURI(_ url: URL) -> String {
+        URL(fileURLWithPath: url.path).absoluteString + "?immutable=1"
     }
 
     /// Runs `sql` and calls `body` once per row.
