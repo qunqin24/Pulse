@@ -14,7 +14,7 @@ Three things are discovered and **none may be assumed**:
 
 1. The process — inside an app bundle, not on `PATH`, matched on the **bundle path** because `language_server` is Codeium’s binary and its other editors ship the same one.
 2. The port — started with `--https_server_port 0` (“take any free one”), so it differs every launch.
-3. A per-launch CSRF token from the command line, sent as `x-codeium-csrf-token`.
+3. A per-launch CSRF token, sent as `x-codeium-csrf-token`. Older builds pass it on the command line as `--csrf_token`. **Antigravity 2.34 passes it in the environment instead**, as `ANTIGRAVITY_SERVER_CSRF_TOKEN` (measured 2026-11-22 with Antigravity.app 2.34.0: no `--csrf_token` in argv, the variable present). When the flag is absent, the token is read from the process's `KERN_PROCARGS2` record (its arguments and environment, readable for the user's own processes); only that variable is taken. Without either, the process is skipped, which is what froze the ring at its last reading on 2.34 (#116).
 
 RPC: `exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary`, POST `{}`.
 

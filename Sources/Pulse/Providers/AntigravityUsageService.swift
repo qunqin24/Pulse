@@ -16,9 +16,11 @@ import Foundation
 /// - **the port**, because the server is started with `--https_server_port 0`,
 ///   meaning "take any free one" — it is a different port on every launch, so
 ///   anything hardcoded is wrong by the next restart;
-/// - **the CSRF token**, a per-launch UUID passed on the command line. Without
-///   it the server answers `unauthenticated`, and it is the reason this can
-///   only ever read the quota of the Antigravity running as this same user.
+/// - **the CSRF token**, a per-launch UUID passed on the command line, or
+///   since Antigravity 2.34 in the environment as
+///   `ANTIGRAVITY_SERVER_CSRF_TOKEN`. Without it the server answers
+///   `unauthenticated`, and it is the reason this can only ever read the
+///   quota of the Antigravity running as this same user.
 ///
 /// **More than one process can match, and most of them are the wrong one.**
 /// Antigravity IDE runs two language servers and only one answers; the other
@@ -211,15 +213,76 @@ struct AntigravityUsageService: Sendable {
                     // in it: the pid is still the first field, and the token is
                     // still whatever follows the flag.
                     let fields = line.split(separator: " ", omittingEmptySubsequences: true)
-                    guard
-                        let pid = fields.first.flatMap({ Int32($0) }),
-                        let flag = fields.firstIndex(of: "--csrf_token"),
-                        fields.index(after: flag) < fields.endIndex
-                    else { return nil }
+                    guard let pid = fields.first.flatMap({ Int32($0) }) else { return nil }
 
-                    return (pid, String(fields[fields.index(after: flag)]))
+                    if let flag = fields.firstIndex(of: "--csrf_token"),
+                       fields.index(after: flag) < fields.endIndex {
+                        return (pid, String(fields[fields.index(after: flag)]))
+                    }
+                    // Antigravity 2.34 stopped putting the token on the
+                    // command line and passes it in the environment (#116).
+                    guard
+                        let arguments = processArguments(of: pid),
+                        let token = environmentValue(environmentToken, inProcessArguments: arguments)
+                    else { return nil }
+                    return (pid, token)
                 }
         }
+    }
+
+    /// Where Antigravity 2.34 and later pass the CSRF token instead of
+    /// `--csrf_token`.
+    private static let environmentToken = "ANTIGRAVITY_SERVER_CSRF_TOKEN"
+
+    /// The process's `KERN_PROCARGS2` record: its arguments and the
+    /// environment it was started with. Readable only for this user's own
+    /// processes, which the language server is.
+    private static func processArguments(of pid: Int32) -> [UInt8]? {
+        var limit: Int32 = 0
+        var size = MemoryLayout<Int32>.size
+        var name: [Int32] = [CTL_KERN, KERN_ARGMAX]
+        guard sysctl(&name, 2, &limit, &size, nil, 0) == 0, limit > 0 else { return nil }
+
+        var buffer = [UInt8](repeating: 0, count: Int(limit))
+        size = buffer.count
+        name = [CTL_KERN, KERN_PROCARGS2, pid]
+        guard sysctl(&name, 3, &buffer, &size, nil, 0) == 0 else { return nil }
+        return Array(buffer.prefix(size))
+    }
+
+    /// The value of `name` in a `KERN_PROCARGS2` record, or nil when it is
+    /// absent or empty.
+    ///
+    /// The record is `argc`, the executable's path, NUL padding, `argc`
+    /// arguments, then the environment up to an empty string; every string is
+    /// NUL-terminated. Only the one variable is taken; the rest of the
+    /// environment is not kept.
+    static func environmentValue(_ name: String, inProcessArguments record: [UInt8]) -> String? {
+        guard record.count > 4 else { return nil }
+        let argc = record.withUnsafeBytes { Int($0.loadUnaligned(as: Int32.self)) }
+        var index = 4
+
+        func skipString() {
+            while index < record.count, record[index] != 0 { index += 1 }
+            index += 1
+        }
+
+        skipString()  // the executable's path
+        while index < record.count, record[index] == 0 { index += 1 }
+        for _ in 0..<max(argc, 0) where index < record.count { skipString() }
+
+        let prefix = Array((name + "=").utf8)
+        while index < record.count, record[index] != 0 {
+            let start = index
+            while index < record.count, record[index] != 0 { index += 1 }
+            let entry = record[start..<index]
+            if entry.starts(with: prefix) {
+                let value = String(decoding: entry.dropFirst(prefix.count), as: UTF8.self)
+                return value.isEmpty ? nil : value
+            }
+            index += 1
+        }
+        return nil
     }
 
     /// Every loopback port the process is listening on.

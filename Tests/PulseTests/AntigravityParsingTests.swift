@@ -112,4 +112,27 @@ struct AntigravityParsingTests {
         #expect(AntigravityUsageService.windows(from: try Self.decode("{}")).isEmpty)
         #expect(AntigravityUsageService.windows(from: try Self.decode(#"{"response":{"groups":[]}}"#)).isEmpty)
     }
+
+    /// A `KERN_PROCARGS2` record laid out as the kernel writes it.
+    private static func record(arguments: [String], environment: [String]) -> [UInt8] {
+        var bytes = withUnsafeBytes(of: Int32(arguments.count).littleEndian, Array.init)
+        bytes += Array("/Applications/Antigravity.app/Contents/Resources/bin/language_server".utf8) + [0, 0, 0]
+        for string in arguments + environment { bytes += Array(string.utf8) + [0] }
+        return bytes + [0] + Array("executable_path=/x".utf8) + [0]
+    }
+
+    @Test("Antigravity 2.34's token is found in the server's environment (#116)")
+    func tokenFromEnvironment() {
+        let record = Self.record(
+            arguments: ["language_server", "--standalone", "ANTIGRAVITY_SERVER_CSRF_TOKEN=not-this", "--enable_sidecars"],
+            environment: ["HOME=/Users/someone", "ANTIGRAVITY_SERVER_CSRF_TOKEN=abc-123", "PATH=/usr/bin"]
+        )
+        // An argument that looks like the variable is not the environment.
+        #expect(AntigravityUsageService.environmentValue("ANTIGRAVITY_SERVER_CSRF_TOKEN", inProcessArguments: record) == "abc-123")
+        #expect(AntigravityUsageService.environmentValue("ANTIGRAVITY_SERVER", inProcessArguments: record) == nil)
+
+        let empty = Self.record(arguments: ["language_server"], environment: ["ANTIGRAVITY_SERVER_CSRF_TOKEN="])
+        #expect(AntigravityUsageService.environmentValue("ANTIGRAVITY_SERVER_CSRF_TOKEN", inProcessArguments: empty) == nil)
+        #expect(AntigravityUsageService.environmentValue("ANTIGRAVITY_SERVER_CSRF_TOKEN", inProcessArguments: []) == nil)
+    }
 }
