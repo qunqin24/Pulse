@@ -47,6 +47,7 @@ struct AppSettingsPersistenceTests {
             ("settings.liquidDocking", \.liquidDocking, true),
             ("settings.showsCodexResetCredits", \.showsCodexResetCredits, true),
             ("settings.qoderShowsAmounts", \.qoderShowsAmounts, true),
+            ("settings.copilotShowsAmounts", \.copilotShowsAmounts, true),
             ("settings.usesGlass", \.usesGlass, true),
             ("settings.usesLightPanel", \.usesLightPanel, true),
             ("settings.autoCollapse", \.autoCollapse, false),

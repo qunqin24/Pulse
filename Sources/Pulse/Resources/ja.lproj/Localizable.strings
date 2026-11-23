@@ -680,6 +680,8 @@
 "Show each part of the credits" = "クレジットを内訳ごとに表示";
 "Show credit amounts" = "クレジット数を表示";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "カードの各行にクレジット数も表示します（例：5,843 / 6,000）。レールには引き続き割合を表示します。";
+"Show quota amounts" = "割り当て数を表示";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "カードの各行に数値も表示します（例：176 / 300）。レールには引き続き割合を表示します。";
 "No session" = "セッションがありません";
 "Read the session from your browser above to see the account's usage history." = "上でブラウザからセッションを読み込むと、アカウントの使用記録が表示されます。";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "エディタと CLI を含むアカウント全体の使用量です。使用は割引や無料枠を差し引く前のクレジット、差し引きは実際に差し引かれたクレジットです。";

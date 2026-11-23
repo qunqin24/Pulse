@@ -72,6 +72,25 @@ struct AccountPanelGroup: View {
                 }
             }
 
+            // Copilot's reported amounts beside the share (#118). Off by
+            // default, as Qoder's are; on the card only.
+            if account == AccountKey(.copilot) {
+                SettingsRowDivider()
+
+                SettingsRow(
+                    String.localized("Show quota amounts"),
+                    subtitle: String.localized("Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages."),
+                    symbol: "number"
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.copilotShowsAmounts },
+                        set: { settings.copilotShowsAmounts = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+            }
+
             // Qoder's three parts, each spent and lapsing on its own. Off
             // by default: they count the same credits as the total again.
             if account == AccountKey(.qoder) {

@@ -680,6 +680,8 @@
 "Show each part of the credits" = "分項顯示點數";
 "Show credit amounts" = "顯示點數數值";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "卡片上的每一列同時顯示點數，例如 5,843 / 6,000。膠囊上仍顯示百分比。";
+"Show quota amounts" = "顯示額度數值";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "卡片上的每一列同時顯示數值，例如 176 / 300。膠囊上仍顯示百分比。";
 "No session" = "沒有登入資訊";
 "Read the session from your browser above to see the account's usage history." = "在上方從瀏覽器讀取登入資訊後，就能看到帳號的用量記錄。";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "整個帳號的用量，編輯器和命令列都包括在內。大號數字是折扣和免費額度抵扣之前的點數，「消耗」是實際扣掉的點數。";

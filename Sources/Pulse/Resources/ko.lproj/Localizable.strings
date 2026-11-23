@@ -680,6 +680,8 @@
 "Show each part of the credits" = "크레딧을 항목별로 표시";
 "Show credit amounts" = "크레딧 수량 표시";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "카드의 각 줄에 크레딧 수량도 표시합니다(예: 5,843 / 6,000). 레일에는 계속 비율을 표시합니다.";
+"Show quota amounts" = "할당량 수치 표시";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "카드의 각 줄에 수치도 표시합니다(예: 176 / 300). 레일에는 계속 비율을 표시합니다.";
 "No session" = "세션 없음";
 "Read the session from your browser above to see the account's usage history." = "위에서 브라우저의 세션을 읽어 오면 계정의 사용 기록을 볼 수 있습니다.";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "에디터와 CLI를 포함한 계정 전체의 사용량입니다. 사용은 할인과 무료 한도를 적용하기 전의 크레딧, 차감은 실제로 빠진 크레딧입니다.";

@@ -680,6 +680,8 @@
 "Show each part of the credits" = "分项显示积分";
 "Show credit amounts" = "显示积分数值";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "卡片上的每一行同时显示积分数，例如 5,843 / 6,000。胶囊上仍显示百分比。";
+"Show quota amounts" = "显示额度数值";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "卡片上的每一行同时显示数值，例如 176 / 300。胶囊上仍显示百分比。";
 "No session" = "没有登录信息";
 "Read the session from your browser above to see the account's usage history." = "在上方从浏览器读取登录信息后，就能看到账号的用量记录。";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "整个账号的用量，编辑器和命令行都包括在内。大号数字是打折和免费额度抵扣之前的积分，「消耗」是实际扣掉的积分。";

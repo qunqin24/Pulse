@@ -680,6 +680,8 @@
 "Show each part of the credits" = "Show each part of the credits";
 "Show credit amounts" = "Show credit amounts";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages.";
+"Show quota amounts" = "Show quota amounts";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages.";
 "No session" = "No session";
 "Read the session from your browser above to see the account's usage history." = "Read the session from your browser above to see the account's usage history.";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted.";

@@ -680,6 +680,8 @@
 "Show each part of the credits" = "Показывать кредиты по частям";
 "Show credit amounts" = "Показывать число кредитов";
 "Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages." = "В каждой строке карточки также указано число кредитов, например 5 843 / 6 000. На ленте остаются проценты.";
+"Show quota amounts" = "Показывать объём квоты";
+"Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages." = "В каждой строке карточки также указано число, например 176 / 300. На ленте остаются проценты.";
 "No session" = "Нет сеанса";
 "Read the session from your browser above to see the account's usage history." = "Считайте сеанс из браузера выше, чтобы увидеть историю использования аккаунта.";
 "The whole account, editor and CLI alike. Used is before discounts and free allowances; charged is what was deducted." = "Весь аккаунт — и редактор, и CLI. «Израсходовано» — до скидок и бесплатных лимитов, «Списано» — то, что вычтено.";

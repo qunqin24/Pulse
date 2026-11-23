@@ -710,6 +710,14 @@ final class AppSettings {
         didSet { qoderShowsAmountsChanged(from: oldValue) }
     }
 
+    /// Whether Copilot's rows on the detailed card show the reported amount
+    /// beside the share (#118): "176 / 300", from the quota's own remainder.
+    /// Off by default, as Qoder's is: for some token-billed seats the unit is
+    /// undocumented. Display only, so it refetches nothing.
+    var copilotShowsAmounts = false {
+        didSet { copilotShowsAmountsChanged(from: oldValue) }
+    }
+
     /// Which StepFun site the saved session belongs to: `platform.stepfun.com`
     /// or `platform.stepfun.ai`, two sign-ins on two hosts. The same rules as
     /// `qoderSite`: it decides where cookies are read from and where the
@@ -973,6 +981,7 @@ final class AppSettings {
         qoderSite: QoderSite = Default.qoderSite,
         qoderShowsParts: Bool = false,
         qoderShowsAmounts: Bool = false,
+        copilotShowsAmounts: Bool = false,
         stepFunSite: StepFunSite = Default.stepFunSite,
         minimaxSite: MiniMaxSite = Default.minimaxSite,
         serverAddresses: [String: String] = [:],
@@ -1035,6 +1044,7 @@ final class AppSettings {
         self.qoderSite = qoderSite
         self.qoderShowsParts = qoderShowsParts
         self.qoderShowsAmounts = qoderShowsAmounts
+        self.copilotShowsAmounts = copilotShowsAmounts
         self.stepFunSite = stepFunSite
         self.minimaxSite = minimaxSite
         self.serverAddresses = serverAddresses
@@ -1145,6 +1155,7 @@ final class AppSettings {
             qoderSite: defaults.settingsChoice(Key.qoderSite) ?? Default.qoderSite,
             qoderShowsParts: defaults.bool(forKey: Key.qoderShowsParts),
             qoderShowsAmounts: defaults.bool(forKey: Key.qoderShowsAmounts),
+            copilotShowsAmounts: defaults.bool(forKey: Key.copilotShowsAmounts),
             stepFunSite: defaults.settingsChoice(Key.stepFunSite) ?? Default.stepFunSite,
             minimaxSite: defaults.settingsChoice(Key.minimaxSite) ?? Default.minimaxSite,
             serverAddresses: defaults.dictionary(forKey: Key.serverAddresses) as? [String: String] ?? [:],

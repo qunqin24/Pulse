@@ -202,6 +202,7 @@ Per-account choices about *one ring* live here rather than on the Panel panes ([
   - **Robot figure**: Automatic, then the 23 figures by their localized names (`RobotFigures.title`), in Automatic's order. The subtitle says Automatic picks so that neighbours differ, or, with one chosen, that every figure shows the same states.
 
   All three are cleared with the account (`removeAccount`), each in its own store (`robotAccounts`, `robotColours`, `robotFigures`); the defaults are stored as nothing.
+- **Show quota amounts**, Copilot only (`AppSettings.copilotShowsAmounts`, off by default): each row on the card also shows the reported amount, "176 / 300", the same way round as its percentage; the rail keeps its percentages ([../providers/copilot.md](../providers/copilot.md)). Off by default because some token-billed seats report it in an undocumented unit.
 - **Show credit amounts**, Qoder only (`AppSettings.qoderShowsAmounts`, off by default): each row on the card also shows its credits, "5,843 / 6,000", the same way round as its percentage; the rail keeps its percentages ([../providers/qoder.md](../providers/qoder.md#the-credits-themselves-issue-88)).
 
 ### Provider-specific groups
