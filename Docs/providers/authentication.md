@@ -12,7 +12,7 @@ This is not a catalogue of secrets. Client ids below are public (they ship in ev
 |---|---|---|
 | Pasted API key or Ollama session cookie | `keys.dat` (`APIKeyStore`) | Nobody. User pastes or re-reads the browser. |
 | Copilot GitHub token | `keys.dat` as well (`keepsOwnCredential`) | Sign in again. Device tokens here are not the CLI refresh path. |
-| Extra-account logins (Claude Code, Codex, Grok, Grok Bot) | `accounts.dat` (`AccountCredentialStore`) | `LiveUsageServices.fetchAdded` (`UsageServices.swift`) via `OAuthLogin.refresh` for the three OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. |
+| Extra-account logins (Claude Code, Codex, Grok, Grok Bot) and primary Grok Bot web login | `accounts.dat` (`AccountCredentialStore`) | `LiveUsageServices.fetchAdded` (`UsageServices.swift`) via `OAuthLogin.refresh` for the three OAuth providers. Grok Bot has **no** refresh endpoint in Cursor’s client. |
 
 Both files are AES-GCM boxes in Pulse’s Application Support folder, owner-only, key derived from this Mac rather than stored. `LocalSecrets` is shared so there is one copy of the crypto; a different derived key per purpose means a box from one store cannot be opened by the other.
 
@@ -20,7 +20,7 @@ A file that exists but will not decode is **not** empty. Treating it as empty me
 
 Pulse does **not** keep a Keychain item of its own for these. Chromium / Claude Desktop / Safari reads may *prompt* for someone else’s Safe Storage key; that is borrowing, not Pulse storing a secret there.
 
-**Do not say “only OpenCode Go holds a credential” or “Pulse never holds a credential”.** Primary Claude Code, Codex, Cursor, Grok, Grok Bot, and Antigravity borrow another tool’s login. Pulse *does* hold pasted keys, Ollama sessions, Copilot’s token, and every extra-account login.
+**Do not say “only OpenCode Go holds a credential” or “Pulse never holds a credential”.** Primary Claude Code, Codex, Cursor, Grok, fallback Grok Bot, and Antigravity borrow another tool’s login. Pulse *does* hold pasted keys, Ollama sessions, Copilot’s token, primary Grok Bot web logins, and every extra-account login.
 
 ## Why sign in at all, rather than copy the CLI
 
@@ -121,22 +121,22 @@ GitHub’s codes last fifteen minutes; polling patience is 900 seconds so Pulse 
 
 The token is stored in `keys.dat` (`keepsOwnCredential`), not `accounts.dat`.
 
-## Grok Bot extras — Cursor web login, not OAuth
+## Grok Bot — Cursor web login, not OAuth
 
-Cursor publishes no authorize/token pair for a third party. Calling this OAuth sets the wrong expectations.
+Cursor publishes no authorize/token pair for a third party. Calling this OAuth sets the wrong expectations. Used both for the primary account’s **Cursor account** sign-in in Settings (`AccountKey(.grokBot)`) and for extra Grok Bot accounts.
 
 1. Browser: `https://cursor.com/loginDeepControl?challenge=…&uuid=…&mode=login&redirectTarget=sand`.
 2. Poll: `https://api2.cursor.sh/auth/poll?uuid=…&verifier=…`. **404 means “not yet”, not “wrong address”.** Only a 403 carrying `error` ends the attempt.
 
 Proof key is PKCE’s algorithm. The verifier is 32 random bytes **base64url-encoded**; the challenge is the base64url of the SHA-256 of **that encoded string**, not of the raw bytes. Read out of `Grok Bot.app` (`Contents/Resources/app.asar`), not inferred.
 
-Tokens last about **sixty days** (measured from `exp` on one Mac). No refresh endpoint exists in Cursor’s client. When one ages out, `fetchAdded` reports `.signedOut` and the remedy is to sign in again.
+Tokens last about **sixty days** (measured from `exp` on one Mac). No refresh endpoint exists in Cursor’s client. When an added account’s token ages out, `fetchAdded` reports `.signedOut`; when the primary web login ages out, `GrokBotUsageService` reports `.signedOut` without falling back to the editor’s database, and the remedy is to sign in again.
 
 `OAuthLogin.Configuration.of(.grokBot)` is nil. `fetchAdded` still calls `OAuthLogin.refresh` when the token is no longer fresh; that fails closed into `.signedOut`, which is the honest path.
 
 **A renewal that fails is classified, not assumed signed out** (`LiveUsageServices.renewalFailure`). The token endpoint not answering is `.unreachable`, a 429 `.rateLimited`, a 5xx `.serverError`, an unreadable reply `.unreadableReply`; only a refusal (400/401/403, such as `invalid_grant`) or a provider with no renewal is `.signedOut`. Every failure used to be `.signedOut`, which takes no cached reading, so a dropped network cleared the ring and asked for a sign-in over a login that was still good. `OAuthLogin.post` throws `.unreachable` and `.rejected(status:detail:)` for this; the sign-in pane shows them with the same words as before. `RenewalFailureTests`.
 
-Pulse does **not** read `~/Library/Application Support/Grok Bot/sand-secrets.json`. That file was identified during investigation; the extra-account token Pulse obtained itself is what is stored.
+Pulse does **not** read `~/Library/Application Support/Grok Bot/sand-secrets.json`. That file was identified during investigation; the web-login token Pulse obtained itself is what is stored.
 
 ## Browser cookies
 

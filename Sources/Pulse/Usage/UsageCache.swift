@@ -170,7 +170,7 @@ actor UsageCache {
         // instead of asking to sign in.
         if case .unavailable(let reason) = fetched.state,
            [.apiKeyMissing, .ollamaSessionMissing, .qoderSessionMissing, .stepFunSessionMissing,
-            .xiaomiSessionMissing, .signedOut,
+            .xiaomiSessionMissing, .signedOut, .notSignedIn,
             .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused, .cursorKeyRefused,
             .serverAddressMissing, .serverAddressRefused,
             .sessionMissing, .localLoginMissing, .localAppMissing].contains(reason) {

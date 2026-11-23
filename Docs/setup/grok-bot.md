@@ -4,26 +4,30 @@ Pulse shows your weekly Grok Bot allowance — xAI's assistant sold through Curs
 
 ## What you need
 
-Grok Bot access through Cursor Pro, Cursor Pro+, Cursor Ultra, a Cursor Teams seat, or a linked SuperGrok/X Premium+ account — and Cursor signed in on this Mac (the editor, or the standalone Grok Bot app, both use the same Cursor login).
+Grok Bot access through Cursor Pro, Cursor Pro+, Cursor Ultra, a Cursor Teams seat, or a linked SuperGrok/X Premium+ account — either by signing in from Pulse's Settings in your browser (no Cursor installation required) or through the Cursor editor already signed in on this Mac.
+
+Pulse does **not** read credentials saved inside the standalone `Grok Bot.app` (`sand-secrets.json`). If you only use the standalone Grok Bot app and do not have the Cursor editor installed, use **Sign in…** in Settings.
 
 ## Steps
 
-1. Make sure you're signed in to Cursor on this Mac — open Cursor (or the Grok Bot app) and sign in if you haven't already.
-2. In Pulse, go to Settings → Grok Bot and turn on "Show in panel". There's nothing to paste: the "Read usage from" row says "Cursor's own login", because Pulse borrows the session Cursor already saved.
-3. Refresh Pulse (or wait for its next automatic check). A ring for Grok Bot fills in on the Pulse panel once Cursor's login is readable.
+1. In Pulse, go to Settings → Grok Bot and turn on "Show in panel".
+2. If you already use the Cursor editor on this Mac and are signed in there, Pulse reads Cursor's saved login automatically.
+3. Otherwise (for example, if Cursor isn't installed or you want to use a different Cursor account), click **Sign in…** next to **Cursor account** in Connection and finish signing in on Cursor's page in your browser. Pulse stores that login encrypted on this Mac for about 60 days before you'll need to sign in again; click **Sign out** to forget it and fall back to the Cursor editor's login.
+4. Refresh Pulse (or wait for its next automatic check). A ring for Grok Bot fills in on the Pulse panel.
 
 ### Adding another account
 
-If you have more than one Cursor account with Grok Bot, go to Settings → Grok Bot, and click "Add another account" in its Accounts group, then "Sign in…". Pulse opens Cursor's own sign-in page in your browser — sign in there. This login is kept separately from the one Cursor's app uses, and lasts about 60 days before you'll need to sign in again.
+If you have more than one Cursor account with Grok Bot, go to Settings → Grok Bot, and click "Add another account" in its Accounts group, then "Sign in…". Pulse opens Cursor's own sign-in page in your browser — sign in there. This login is kept separately from the primary account, and lasts about 60 days before you'll need to sign in again.
 
 ## If it doesn't work
 
 | Message Pulse shows | What to do |
 |---|---|
-| Sign in to Cursor to see usage. | Click "Open Cursor" and sign in there. |
-| Cursor's saved login was refused. Open Cursor to renew it. | Click "Open Cursor" and sign in again. |
+| Sign in from Settings to see usage. | Click **Sign in…** next to **Cursor account** in Settings → Grok Bot (or sign in to Cursor on this Mac). |
+| Sign in to this account again in Settings. | Click **Sign in again…** in Connection diagnostics (or, on the primary account, click **Sign out** then **Sign in…** next to **Cursor account**). |
+| Cursor's saved login was refused. Open Cursor to renew it. | Click **Open Cursor** and sign in again, or click **Sign in…** next to **Cursor account** in Settings to sign in via your browser instead. |
+| Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again. | Click **Retry** and allow Keychain access, or click **Sign in…** next to **Cursor account** in Settings. |
 | This Cursor plan doesn't include Grok Bot. | Your current Cursor/Grok plan doesn't include a Grok Bot allowance. |
-| Sign in to this account again in Settings. (added accounts) | Click "Sign in again…" next to that account. |
 | The service didn't respond. | Click Retry. |
 | Checking too often — easing off. | Click Retry after a minute. |
 | The service returned an error. | Click Retry. |
@@ -31,4 +35,4 @@ If you have more than one Cursor account with Grok Bot, go to Settings → Grok 
 
 ## What Pulse reads
 
-For your main account, Pulse reads the login Cursor's own app already stored on this Mac — nothing is pasted and nothing extra is saved. For added accounts, Pulse keeps the sign-in it obtained through Cursor's own login page, encrypted on this Mac.
+If you sign in next to **Cursor account** (or add an extra account), Pulse keeps the sign-in it obtained through Cursor's own login page encrypted on this Mac and uses that instead of the Cursor editor's files. Otherwise, Pulse reads the login Cursor's own editor already stored on this Mac — nothing is pasted, nothing extra is saved, and `Grok Bot.app`'s local storage is never opened.

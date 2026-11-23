@@ -25,7 +25,7 @@ Accounts the stored rail does not mention are appended **in name order** (`AppSe
 | `.minimax` | [MiniMax](minimax.md) | `minimax` | Pasted key, one per site (`minimax.io` / `minimaxi.com`) | no | pasted key | no | none |
 | `.copilot` | [GitHub Copilot](copilot.md) | `github` | GitHub device login; token in `keys.dat` | no | sign-in | no | none |
 | `.grok` | [Grok](grok.md) | `grok` | Borrow `~/.grok/auth.json`; Pulse OAuth for extras | yes | one, named (primary) | no | `~/.grok` exists |
-| `.grokBot` | [Grok Bot](grok-bot.md) | `xai` | Cursor cookie; Cursor web login for extras | yes | one, named (primary) | no | **standalone** `Grok Bot.app` only |
+| `.grokBot` | [Grok Bot](grok-bot.md) | `xai` | Cursor web login in Settings, else Cursor editor cookie; Cursor web login for extras | yes | `nil` (Connection **Cursor account** row on primary) | no | **standalone** `Grok Bot.app` only |
 | `.volcengine` | [Volcengine](volcengine.md) | `volcengine` | A pasted `AK:SK` pair, else `arkcli`'s own login (also the fallback when the keys' request is unreachable) | no | arkcli / signed endpoint | no | none — stays off until switched on |
 | `.commandCode` | [Command Code](command-code.md) | `commandcode` | Pasted key, else `~/.commandcode/auth.json` | no | pasted / found key | no | `~/.commandcode/auth.json` exists |
 | `.deepSeek` | [DeepSeek](deepseek.md) | `deepseek` | Pasted key; the console's sign-in from a Chromium browser's `localStorage` as a second credential (balance without a key, and the daily usage) | no | one, documented | no | none |
@@ -148,7 +148,7 @@ Some windows carry a length only so the row sorts: Kimi's rolling week, Cursor's
 
 ### Shared unavailability copy names no provider
 
-Shared `ProviderUsage.Unavailability` cases (`.apiKeyMissing`, `.apiKeyRefused`, `.signedOut`, `.unreachable`, …) stay generic; they once all said “Codex”, even for Claude Code. Provider-specific cases exist only where the *remedy* names a tool (`claudeLoginExpired`, `cursorSignInRequired`, `grokBotNotIncluded`, …); a Grok Bot primary may name Cursor, where its credential comes from. OpenCode Go uses `.apiKeyRefused`; there is no `.openCodeKeyRefused`.
+Shared `ProviderUsage.Unavailability` cases (`.apiKeyMissing`, `.apiKeyRefused`, `.signedOut`, `.unreachable`, …) stay generic; they once all said “Codex”, even for Claude Code. Provider-specific cases exist only where the *remedy* names a tool (`claudeLoginExpired`, `cursorSignInRequired`, `grokBotNotIncluded`, …); a Grok Bot primary may name Cursor when borrowing the editor's saved login (`.cursorLoginExpired`, `.cursorKeyRefused`), or report `.notSignedIn` / `.signedOut` for Settings web login. OpenCode Go uses `.apiKeyRefused`; there is no `.openCodeKeyRefused`.
 
 ### Disabled providers are not fetched
 
@@ -158,7 +158,7 @@ A switched-off provider is not on the refresh pass, and its Settings pane does n
 
 Chooser, legacy restoration, offer-once and empty rail: [`../architecture.md`](../architecture.md#provider-choice-before-monitoring). `ProviderDiscovery.swift` only checks that named files, directories or app bundles exist — it opens no database, key file, browser storage or Keychain — so OpenCode Go, mainland GLM and Command Code count as **detected even with empty or unreadable files**. Detection is a hint, never enables a ring; every provider starts unchecked in the chooser.
 
-`ProviderAccess.swift` writes the descriptions shown before selection and above a disabled provider's controls. Each names what will be read: Claude its CLI Keychain/file access and the desktop cookie-store grant; Codex its auth file and helper; Kiro its ACP helper (credentials stay in Kiro); Cursor and Grok Bot Cursor's local database; Grok its auth file; Devin Chromium web storage and the saved desktop plan (no Keychain prompt); Ollama, Xiaomi, Qoder and StepFun browser-session import, which can ask for browser Keychain access; key providers the entered key, plus local fallbacks for OpenCode, Zhipu and Command Code; Copilot its Settings login; Volcengine arkcli / access keys; Antigravity the local server, its connection token and the `agy` CLI.
+`ProviderAccess.swift` writes the descriptions shown before selection and above a disabled provider's controls. Each names what will be read: Claude its CLI Keychain/file access and the desktop cookie-store grant; Codex its auth file and helper; Kiro its ACP helper (credentials stay in Kiro); Cursor Cursor's local database; Grok Bot the Cursor login connected in Settings or Cursor's local database; Grok its auth file; Devin Chromium web storage and the saved desktop plan (no Keychain prompt); Ollama, Xiaomi, Qoder and StepFun browser-session import, which can ask for browser Keychain access; key providers the entered key, plus local fallbacks for OpenCode, Zhipu and Command Code; Copilot its Settings login; Volcengine arkcli / access keys; Antigravity the local server, its connection token and the `agy` CLI.
 
 ### Seeded state is not “Loading…”
 
@@ -172,7 +172,7 @@ Shared rules: [`../refresh-and-data.md`](../refresh-and-data.md#cache). Never pa
 
 - `usesAPIKey` — Settings draws a paste field. Profiled: any credential but `.localLogin`. Hand-written: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, Volcengine, Command Code, DeepSeek, Devin, Xiaomi Coding Plan, sub2api, New API, V2EX, Qoder, StepFun. Optional for Volcengine, Command Code and Devin (each has a route needing nothing pasted); Devin's holds `token org`, whitespace-separated, for readers without a Chromium browser ([devin.md](devin.md)). For Ollama, Xiaomi, Qoder and StepFun the value is a **session cookie** (`usesSessionCookie`), never labelled an API key.
 - `keepsOwnCredential` — something is stored in `keys.dat`: the paste providers **plus Copilot**. Reading `usesAPIKey` here once left a signed-in Copilot asking to sign in again: the token was saved and never loaded.
-- Extra-account OAuth and Cursor web logins live in `accounts.dat` ([authentication.md](authentication.md)).
+- Extra-account OAuth logins and Cursor web logins (primary and added Grok Bot) live in `accounts.dat` ([authentication.md](authentication.md)).
 
 Keys are read once per launch, not per refresh (`UsageStore.loadAPIKeys`).
 
@@ -181,7 +181,7 @@ Keys are read once per launch, not per refresh (`UsageStore.loadAPIKeys`).
 Claude Code, Codex, Volcengine, Devin and Antigravity have `hasSourceChoice`, for primary accounts only (added accounts use their endpoint credential). `.automatic` is the default and each service owns its fallback, including Volcengine's preference for configured keys ([volcengine.md](volcengine.md)). A pinned route *reports* its failure instead of answering from elsewhere. **Every provider with more than one route offers the choice**, automatic by default. Antigravity's are *Automatic* (language server, then CLI), *CLI* (`.tooling`, the `agy` CLI) and *Desktop app* (`.desktopApp`, the editor's language server); it has no endpoint, so `.endpoint` is not offered (`UsageSource.options(for:)`, `title(for:)`).
 
 - For Claude, `.desktopApp` is offered only on the **primary** Claude Code account; an added account must not be offered a route `fetchAdded` ignores. Likewise an added Grok account gets no CLI-login row: `fetchAdded` never touches `~/.grok/auth.json`.
-- `Provider.soleRoute` is an exhaustive switch (as a ternary it once made Grok's pane read “Antigravity's language server”); nil draws no row. For Grok Bot it names **Cursor's** login, whose bill it is.
+- `Provider.soleRoute` is an exhaustive switch (as a ternary it once made Grok's pane read “Antigravity's language server”); nil draws no row (Copilot and Grok Bot draw their own sign-in rows in `AccountConnectionGroup`).
 
 ### Diagnostic route checks and repair
 

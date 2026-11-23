@@ -439,19 +439,13 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         case .grok:
             (String.localized("Grok's own login"),
              String.localized("Uses the login Grok's CLI already saved."))
-        // The credential really is Cursor's: Grok Bot is billed against that
-        // account, so this names where the login comes from rather than the
-        // product it reports on.
-        case .grokBot:
-            (String.localized("Cursor's own login"),
-             String.localized("Grok Bot is billed to your Cursor account."))
         case .kiro:
             (String.localized("Kiro CLI ACP"),
              String.localized("Uses Kiro CLI's signed-in session without reading its credentials."))
-        // Either a choice of routes, or a key the user pastes: both are asked
-        // about elsewhere, so there is nothing here to state.
+        // Either a choice of routes, a key the user pastes, or a sign-in row
+        // drawn by `AccountConnectionGroup` (Copilot, Grok Bot).
         case .claudeCode, .codex, .antigravity, .openCodeGo, .kimiCode, .ollamaCloud,
-             .zai, .glmCoding, .minimax, .copilot, .volcengine,
+             .zai, .glmCoding, .minimax, .copilot, .grokBot, .volcengine,
              .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api, .newAPI, .v2ex, .qoder, .stepFun:
             nil
         // Stated on its own pane, which names the program instead.

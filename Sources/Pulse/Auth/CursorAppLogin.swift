@@ -30,7 +30,7 @@ import SQLite3
 enum CursorAppLogin {
     /// Everything a request needs, and nothing more — callers never see the
     /// token itself.
-    struct Session: Sendable {
+    struct Session: Equatable, Sendable {
         let cookie: String
     }
 

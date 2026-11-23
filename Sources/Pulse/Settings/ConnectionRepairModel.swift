@@ -44,7 +44,9 @@ final class ConnectionRepairModel {
         switch remedy {
         case .signIn:
             if account.provider == .copilot { signIn.startGitHubSignIn() }
-            else if !account.isPrimary { signIn.signIn(to: account.provider, replacing: account) }
+            else if !account.isPrimary || account.provider == .grokBot {
+                signIn.signIn(to: account.provider, replacing: account)
+            }
         case .editCredential:
             connectionFocusRequest += 1
         case .editAddress:

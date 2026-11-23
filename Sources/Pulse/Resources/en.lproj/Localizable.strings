@@ -326,7 +326,6 @@
 "Reads what Devin saved the last time it started." = "Reads what Devin saved the last time it started.";
 "Asks Devin for your quota, with the token you entered." = "Asks Devin for your quota, with the token you entered.";
 "A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac.";
-"Grok Bot is billed to your Cursor account." = "Grok Bot is billed to your Cursor account.";
 "Uses the login Cursor already saved." = "Uses the login Cursor already saved.";
 "Refresh" = "Refresh";
 "Pulse %@ is available" = "Pulse %@ is available";
@@ -402,6 +401,9 @@
 "GitHub account" = "GitHub account";
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Opens GitHub's own page. Pulse asks to read your profile, nothing else.";
 "Signed in. Pulse holds a read-only token for this Mac." = "Signed in. Pulse holds a read-only token for this Mac.";
+"Cursor account" = "Cursor account";
+"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page.";
+"Signed in. Pulse holds the token for this Mac." = "Signed in. Pulse holds the token for this Mac.";
 "The browser didn't come back." = "The browser didn't come back.";
 "Cancel" = "Cancel";
 "Code" = "Code";
@@ -647,6 +649,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access.";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Reads the login saved in Cursor's local database. No Keychain prompt.";
+"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "Uses the Cursor login you connect in Settings, or reads Cursor's local database.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Reads the login saved in ~/.grok/auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt.";

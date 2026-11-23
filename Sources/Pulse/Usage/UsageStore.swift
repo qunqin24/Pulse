@@ -566,6 +566,19 @@ final class UsageStore {
         }
     }
 
+    /// Clears any banked reading for `account` before refreshing it, used when
+    /// switching or signing out of a credential source so an older account's
+    /// figures cannot stand in while the new login is fetched.
+    func resetReading(for account: AccountKey) {
+        if settings.isEnabled(account) {
+            usage[account.id] = .unavailable(account, reason: .loading)
+        }
+        Task { [weak self, cache] in
+            await cache.forget(account)
+            self?.refresh(account)
+        }
+    }
+
     /// Re-fetches only the provider whose ring the user clicked.
     ///
     /// The automatic pass intentionally remains all-or-nothing so its two

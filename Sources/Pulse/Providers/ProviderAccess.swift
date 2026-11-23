@@ -15,8 +15,10 @@ extension Provider {
             .localized("Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials.")
         case .antigravity:
             .localized("Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access.")
-        case .cursor, .grokBot:
+        case .cursor:
             .localized("Reads the login saved in Cursor's local database. No Keychain prompt.")
+        case .grokBot:
+            .localized("Uses the Cursor login you connect in Settings, or reads Cursor's local database.")
         case .grok:
             .localized("Reads the login saved in ~/.grok/auth.json. No Keychain prompt.")
         case .openCodeGo:

@@ -162,4 +162,97 @@ struct GrokBotParsingTests {
         #expect(!month.reportsLength)
         #expect(month.windowSeconds == 7 * 86_400)
     }
+
+    // MARK: - Primary credential resolution
+
+    private static func jwt(expiry: TimeInterval) -> String {
+        func base64URL(_ text: String) -> String {
+            Data(text.utf8).base64EncodedString()
+                .replacingOccurrences(of: "+", with: "-")
+                .replacingOccurrences(of: "/", with: "_")
+                .replacingOccurrences(of: "=", with: "")
+        }
+        let header = base64URL(#"{"alg":"none"}"#)
+        let payload = base64URL(#"{"sub":"auth0|user_test","exp":\#(Int(expiry))}"#)
+        return "\(header).\(payload).sig"
+    }
+
+    private static func storedCredentials(token: String, expiresAt: Date = Date(timeIntervalSince1970: 4_102_444_800)) -> AccountCredentials {
+        AccountCredentials(
+            accessToken: token,
+            refreshToken: "refresh-test",
+            expiresAt: expiresAt,
+            accountName: nil,
+            accountID: nil
+        )
+    }
+
+    @Test("A stored Settings web login takes precedence over Cursor's database")
+    func storedWebLoginWinsWithoutAskingCursor() throws {
+        let token = Self.jwt(expiry: 4_102_444_800)
+        var askedCursor = false
+        let resolved = GrokBotUsageService.primarySession(
+            storedLogin: Self.storedCredentials(token: token),
+            cursorLogin: {
+                askedCursor = true
+                return .absent
+            }
+        )
+        let expected = try #require(CursorAppLogin.session(from: token))
+        #expect(resolved == .session(expected, usesStoredLogin: true))
+        #expect(!askedCursor)
+    }
+
+    @Test("An expired or unreadable stored web login fails closed without falling back to Cursor")
+    func invalidStoredWebLoginDoesNotFallBackToCursor() {
+        for badToken in [Self.jwt(expiry: 1), "not-a-jwt"] {
+            var askedCursor = false
+            let resolved = GrokBotUsageService.primarySession(
+                storedLogin: Self.storedCredentials(token: badToken),
+                cursorLogin: {
+                    askedCursor = true
+                    return .token(Self.jwt(expiry: 4_102_444_800))
+                }
+            )
+            #expect(resolved == .unavailable(.signedOut))
+            #expect(!askedCursor)
+        }
+    }
+
+    @Test("Without a stored web login, primary falls back to Cursor's saved token or reports specific absences")
+    func cursorFallbackResolution() async throws {
+        let validToken = Self.jwt(expiry: 4_102_444_800)
+        let validSession = try #require(CursorAppLogin.session(from: validToken))
+        #expect(
+            GrokBotUsageService.primarySession(storedLogin: nil, cursorLogin: { .token(validToken) })
+                == .session(validSession, usesStoredLogin: false)
+        )
+        #expect(
+            GrokBotUsageService.primarySession(storedLogin: nil, cursorLogin: { .absent })
+                == .unavailable(.notSignedIn)
+        )
+        #expect(
+            await GrokBotUsageService().fetch(storedLogin: nil, cursorLogin: { .absent }).state
+                == .unavailable(.notSignedIn)
+        )
+        #expect(
+            GrokBotUsageService.primarySession(storedLogin: nil, cursorLogin: { .keychainRefused })
+                == .unavailable(.cursorKeyRefused)
+        )
+        #expect(
+            GrokBotUsageService.primarySession(storedLogin: nil, cursorLogin: { .unreadable })
+                == .unavailable(.cursorLoginExpired)
+        )
+        #expect(
+            GrokBotUsageService.primarySession(storedLogin: nil, cursorLogin: { .token(Self.jwt(expiry: 1)) })
+                == .unavailable(.cursorLoginExpired)
+        )
+    }
+
+    @Test("Server refusal reason distinguishes Settings web login from Cursor's local login")
+    func serverRefusalReasonMatchesSource() {
+        #expect(GrokBotUsageService.refusedReason(usesStoredLogin: true) == .signedOut)
+        #expect(GrokBotUsageService.refusedReason(usesStoredLogin: false) == .cursorLoginExpired)
+        #expect(Provider.grokBot.soleRoute == nil)
+    }
 }

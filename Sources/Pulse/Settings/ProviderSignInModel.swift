@@ -25,10 +25,15 @@ final class ProviderSignInModel {
         self.credentialModel = credentials
     }
 
-    /// The provider a browser sign-in is currently open for, and what went
-    /// wrong with the last one.
+    /// The provider a browser sign-in is currently open for, which account row
+    /// started it (`nil` for "Add another account"), and what went wrong with
+    /// the last one.
     var signingIn: Provider?
-    var signInError: (provider: Provider, message: String)?
+    var signingInTarget: AccountKey?
+    var signInError: (provider: Provider, target: AccountKey?, message: String)?
+    /// Whether Pulse holds a `CursorWebLogin` session for the primary Grok Bot
+    /// account (`AccountKey(.grokBot)`).
+    private(set) var hasPrimaryGrokBotLogin = false
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     var devicePrompt: OAuthLogin.DevicePrompt?
@@ -47,11 +52,58 @@ final class ProviderSignInModel {
     /// diagnostics' own sign-in remedy back.
     var isBusy: Bool { signingIn != nil || githubTask != nil }
 
+    var isSigningInPrimaryGrokBot: Bool {
+        signingIn == .grokBot && signingInTarget == AccountKey(.grokBot)
+    }
+
+    var primaryGrokBotError: String? {
+        guard let signInError,
+              signInError.provider == .grokBot,
+              signInError.target == AccountKey(.grokBot)
+        else { return nil }
+        return signInError.message
+    }
+
+    func isSigningInAccountsRow(for account: AccountKey) -> Bool {
+        guard signingIn == account.provider else { return false }
+        return account.isPrimary ? signingInTarget == nil : signingInTarget == account
+    }
+
+    func accountsRowError(for account: AccountKey) -> String? {
+        guard let signInError, signInError.provider == account.provider else { return nil }
+        let matches = account.isPrimary ? signInError.target == nil : signInError.target == account
+        return matches ? signInError.message : nil
+    }
+
+    /// Reads whether the primary Grok Bot account holds a Pulse-managed login,
+    /// skipping storage altogether while the account is switched off.
+    func seed(for account: AccountKey) {
+        guard account == AccountKey(.grokBot) else { return }
+        guard settings.isEnabled(account) else {
+            hasPrimaryGrokBotLogin = false
+            return
+        }
+        hasPrimaryGrokBotLogin = AccountCredentialStore.credentials(for: account) != nil
+    }
+
+    /// Forgets the primary Grok Bot web login so Pulse falls back to Cursor's
+    /// local database or asks to sign in again.
+    func signOutOfPrimaryGrokBot() {
+        let primary = AccountKey(.grokBot)
+        guard AccountCredentialStore.set(nil, for: primary) else { return }
+        hasPrimaryGrokBotLogin = false
+        if signInError?.provider == .grokBot, signInError?.target == primary {
+            signInError = nil
+        }
+        store.resetReading(for: primary)
+    }
+
     /// The Cancel on an added account's sign-in.
     func cancelSignIn() {
         signInTask?.cancel()
         signInTask = nil
         signingIn = nil
+        signingInTarget = nil
         devicePrompt = nil
     }
 
@@ -120,6 +172,7 @@ final class ProviderSignInModel {
     /// Runs the browser sign-in, then keeps whatever came back.
     func signIn(to provider: Provider, replacing existing: AccountKey? = nil) {
         signingIn = provider
+        signingInTarget = existing
         signInError = nil
 
         signInTask = Task { [self] in
@@ -132,6 +185,7 @@ final class ProviderSignInModel {
                 // waiting for any more.
                 if !Task.isCancelled {
                     signingIn = nil
+                    signingInTarget = nil
                     devicePrompt = nil
                     signInTask = nil
                 }
@@ -170,18 +224,23 @@ final class ProviderSignInModel {
                 let added = existing ?? settings.addAccount(provider, label: Self.label(for: credentials, provider: provider, in: settings))
                 guard AccountCredentialStore.set(credentials, for: added) else {
                     if existing == nil { settings.removeAccount(added) }
-                    signInError = (provider, String.localized("Couldn't save the login on this Mac."))
+                    signInError = (provider, existing, String.localized("Couldn't save the login on this Mac."))
                     return
                 }
-                store.refresh(added)
+                if added == AccountKey(.grokBot) {
+                    hasPrimaryGrokBotLogin = true
+                    store.resetReading(for: added)
+                } else {
+                    store.refresh(added)
+                }
                 navigation.pane = .account(added)
             } catch let failure as OAuthLogin.Failure {
-                if !Task.isCancelled { signInError = (provider, failure.message) }
+                if !Task.isCancelled { signInError = (provider, existing, failure.message) }
             } catch is CancellationError {
                 // Cancelling is not a failure, and nothing about it belongs in
                 // a pane that may already be showing the next attempt.
             } catch {
-                if !Task.isCancelled { signInError = (provider, String.localized("Sign-in was cancelled.")) }
+                if !Task.isCancelled { signInError = (provider, existing, String.localized("Sign-in was cancelled.")) }
             }
         }
     }

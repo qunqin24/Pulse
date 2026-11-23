@@ -101,6 +101,8 @@ struct ConnectionDiagnosticTests {
             #expect(ConnectionRemedy.forReason(reason, account: AccountKey(provider)) != .signIn)
         }
         #expect(ConnectionRemedy.forReason(.awaitingResponse, account: AccountKey(.claudeCode)) == nil)
+        #expect(ConnectionRemedy.forReason(.notSignedIn, account: AccountKey(.grokBot)) == .signIn)
+        #expect(ConnectionRemedy.forReason(.signedOut, account: AccountKey(.grokBot)) == .signIn)
         #expect(ConnectionRemedy.forReason(.apiKeyRefused, account: AccountKey(.deepSeek)) == .editCredential)
         #expect(ConnectionRemedy.forReason(.claudeDesktopKeyRefused, account: AccountKey(.claudeCode)) == .retry)
         #expect(ConnectionRemedy.forReason(.cursorKeyRefused, account: AccountKey(.cursor)) == .retry)

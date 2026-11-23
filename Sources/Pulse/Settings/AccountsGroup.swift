@@ -31,7 +31,7 @@ struct AccountsGroup: View {
                         // error belong to the provider it was started for:
                         // a Codex device code shown on the Claude Code pane
                         // reads as Claude Code asking for it.
-                        if signIn.signingIn == account.provider {
+                        if signIn.isSigningInAccountsRow(for: account) {
                             Button(String.localized("Cancel")) { signIn.cancelSignIn() }
                         } else {
                             Button(String.localized("Sign in…")) {
@@ -44,7 +44,7 @@ struct AccountsGroup: View {
                     // While a device-code sign-in is waiting, the code is the
                     // whole interaction: it is typed on the provider's page,
                     // not here, and nothing comes back to this Mac.
-                    if let devicePrompt = signIn.devicePrompt, signIn.signingIn == account.provider {
+                    if let devicePrompt = signIn.devicePrompt, signIn.isSigningInAccountsRow(for: account) {
                         SettingsRowDivider()
                         SettingsRow(
                             String.localized("Code"),
@@ -75,9 +75,9 @@ struct AccountsGroup: View {
                         }
                     }
 
-                    if let signInError = signIn.signInError, signInError.provider == account.provider {
+                    if let message = signIn.accountsRowError(for: account) {
                         SettingsRowDivider()
-                        SettingsRow(String.localized("Sign-in"), subtitle: signInError.message, symbol: "exclamationmark.triangle") { EmptyView() }
+                        SettingsRow(String.localized("Sign-in"), subtitle: message, symbol: "exclamationmark.triangle") { EmptyView() }
                     }
                 }
                 if !account.isPrimary {
