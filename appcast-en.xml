@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.16.0</title>
+            <pubDate>Mon, 23 Nov 2026 07:00:20 -0000</pubDate>
+            <sparkle:version>1.16.0</sparkle:version>
+            <sparkle:shortVersionString>1.16.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.16.0</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.16.0</h2><p><strong>New</strong></p><ul><li><strong>Copilot&#x27;s card can show quota amounts.</strong> Turn on Show quota amounts in Copilot&#x27;s settings and each row on the card also shows the amount, such as 176 / 300; it is off by default. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/118">@lexleizou</a> for the contribution.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>Antigravity 2.34.0&#x27;s limits are shown again.</strong> After updating to Antigravity 2.34.0, the ring no longer stays on its last reading while settings say Antigravity is not open. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/116">@sanchezmartin093-code</a> and <a href="https://github.com/qunqin24/Pulse/issues/119">@waitzkin7</a> for reporting it.</li><li><strong>Token spend counts closed Antigravity conversations.</strong> Conversations Antigravity has closed are counted in Token spend and the activity mark. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/117">@sanchezmartin093-code</a> for reporting it.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.16.0">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.16.0/Pulse-1.16.0.zip"
+                       length="16531957"
+                       type="application/octet-stream"
+                       sparkle:edSignature="F4V/Mf9JdCewfHyLKIv2gEceHAtsSJ6wkbtx/Q9qYN8maC7XfaZ/787s+NNxOJ8zKrJOLcwRxI8lZ3NXMW2lAQ==" />
+        </item>
+        <item>
             <title>1.15.0</title>
             <pubDate>Sat, 21 Nov 2026 10:42:53 -0000</pubDate>
             <sparkle:version>1.15.0</sparkle:version>
