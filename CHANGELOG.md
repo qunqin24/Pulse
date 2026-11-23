@@ -7,6 +7,30 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.16.0
+
+**中文**
+
+**新功能**
+
+- **Copilot 卡片可以显示额度数值。** 在 Copilot 设置中打开「显示额度数值」后，卡片上的每一行同时显示数值，例如 176 / 300，默认关闭。感谢 [@lexleizou](https://github.com/qunqin24/Pulse/pull/118) 贡献。
+
+**改进与修复**
+
+- **Antigravity 2.34.0 的额度恢复显示。** 更新到 Antigravity 2.34.0 后，圆环停在旧读数、设置中提示未打开 Antigravity 的问题已修复。感谢 [@sanchezmartin093-code](https://github.com/qunqin24/Pulse/issues/116) 和 [@waitzkin7](https://github.com/qunqin24/Pulse/issues/119) 报告。
+- **Token 消耗计入已关闭的 Antigravity 对话。** Antigravity 关闭过的对话现在也会计入 Token 消耗和活动标记。感谢 [@sanchezmartin093-code](https://github.com/qunqin24/Pulse/issues/117) 报告。
+
+**English**
+
+**New**
+
+- **Copilot's card can show quota amounts.** Turn on Show quota amounts in Copilot's settings and each row on the card also shows the amount, such as 176 / 300; it is off by default. Thanks to [@lexleizou](https://github.com/qunqin24/Pulse/pull/118) for the contribution.
+
+**Changed and fixed**
+
+- **Antigravity 2.34.0's limits are shown again.** After updating to Antigravity 2.34.0, the ring no longer stays on its last reading while settings say Antigravity is not open. Thanks to [@sanchezmartin093-code](https://github.com/qunqin24/Pulse/issues/116) and [@waitzkin7](https://github.com/qunqin24/Pulse/issues/119) for reporting it.
+- **Token spend counts closed Antigravity conversations.** Conversations Antigravity has closed are counted in Token spend and the activity mark. Thanks to [@sanchezmartin093-code](https://github.com/qunqin24/Pulse/issues/117) for reporting it.
+
 ## 1.15.0
 
 **中文**
