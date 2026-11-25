@@ -90,7 +90,7 @@ struct ConnectionDiagnosticsView: View {
                 SettingsRowDivider()
                 DisclosureGroup(isExpanded: $showsReplies) {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text(localized: "Credentials are hidden. A reply can still show the account's email, plan or balance, so it is not in the shared diagnostics. Kept until the next check.")
+                        Text(localized: "Credentials are hidden. A reply can show an email or balance, so it stays out of shared diagnostics.")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

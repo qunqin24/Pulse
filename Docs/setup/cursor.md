@@ -20,7 +20,7 @@ Cursor does not support adding a second account in Pulse: usage always comes fro
 |---|---|
 | Sign in to Cursor to see usage. | Open Cursor and sign in, then click Retry. |
 | Cursor's saved login was refused. Open Cursor to renew it. | Open Cursor and use it for a moment — it renews its own login automatically — then click Retry. |
-| Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again. | Click Retry and approve the keychain prompt when macOS asks. Newer Cursor versions encrypt that login; Pulse needs the same key Cursor keeps in the keychain. |
+| Pulse needs keychain access for Cursor's saved login. Refresh to ask again. | Click Retry and approve the keychain prompt when macOS asks. Newer Cursor versions encrypt that login; Pulse needs the same key Cursor keeps in the keychain. |
 
 ## What Pulse reads
 

@@ -21,7 +21,7 @@ A Claude Pro or Max subscription, signed in to the Claude Code CLI (`claude`). T
 | Connect Claude Code in Settings to see usage. | Connect the status line (step 3), or just use Claude Code once so it has something to report. |
 | Sign in to Claude Code to see usage. / Claude Code's saved login expired. Use Claude Code, or connect the status line. | Run `claude auth login` in Terminal (or `/login` inside Claude Code), then click Retry. |
 | Sign in to the Claude desktop app to see usage. / The Claude desktop app's session was refused. Open it and sign in again. | Open the Claude desktop app and sign in there, then click Retry. |
-| Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again. | Click Retry and approve the keychain prompt when macOS asks. |
+| Pulse needs keychain access for the Claude desktop app's session. Refresh to ask again. | Click Retry and approve the keychain prompt when macOS asks. |
 | Sign in to this account again in Settings. (on an added account) | Open that account's Accounts section and click "Sign in again…". |
 
 ## What Pulse reads

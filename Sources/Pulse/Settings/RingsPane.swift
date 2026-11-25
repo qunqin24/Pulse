@@ -94,7 +94,7 @@ struct RingsPane: View {
 
                 SettingsRow(
                     String.localized("Forecast"),
-                    subtitle: String.localized("Whether each limit lasts its window, on the card."),
+                    subtitle: String.localized("Whether each limit runs out early, on the card."),
                     symbol: "chart.line.uptrend.xyaxis"
                 ) {
                     Toggle("", isOn: Binding(
@@ -110,7 +110,7 @@ struct RingsPane: View {
             SettingsGroup(String.localized("Rings")) {
                 SettingsRow(
                     String.localized("Second limit inside the ring"),
-                    subtitle: String.localized("A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one."),
+                    subtitle: String.localized("An inner ring for the next-fullest limit."),
                     symbol: "circle.circle"
                 ) {
                     Toggle("", isOn: Binding(
@@ -142,7 +142,7 @@ struct RingsPane: View {
 
                 SettingsRow(
                     String.localized("Time ring direction"),
-                    subtitle: String.localized("Choose whether the outer arc fills with elapsed time or empties with time remaining."),
+                    subtitle: String.localized("The outer arc fills with time elapsed or empties with time left."),
                     symbol: "arrow.left.arrow.right"
                 ) {
                     Picker("", selection: Binding(
@@ -163,7 +163,7 @@ struct RingsPane: View {
 
                 SettingsRow(
                     String.localized("Turn red at"),
-                    subtitle: String.localized("Where a ring stops being amber. A spent limit is red whatever this says."),
+                    subtitle: String.localized("Where a ring turns from amber to red. A spent limit is always red."),
                     symbol: "exclamationmark.triangle"
                 ) {
                     Picker(String.localized("Turn red at"), selection: Binding(
@@ -183,7 +183,7 @@ struct RingsPane: View {
 
                 SettingsRow(
                     String.localized("Alert colour when docked"),
-                    subtitle: String.localized("Off keeps the collapsed rail neutral even when a limit needs attention."),
+                    subtitle: String.localized("When off, the collapsed rail shows no alert colour."),
                     symbol: "paintpalette"
                 ) {
                     Toggle("", isOn: Binding(

@@ -108,7 +108,7 @@ The plan carries a Gemini allowance and a separate one for Claude and GPT, repor
 
 ## Settings copy
 
-A picker, not a stated route: every provider with more than one route offers the choice (`hasSourceChoice`), so `Provider.soleRoute` is nil. Options are *Automatic* / *CLI* / *Desktop app* (`UsageSource.options(for:)`; *CLI* is `.tooling` titled by `title(for:)`). The subtitles: automatic “Reads Antigravity while it is open, and the agy CLI when it is not.”, CLI “Asks the agy CLI, using the login it already saved.”, desktop app “Asks the language server Antigravity runs while it is open.” Claude's desktop-route availability filter does not apply to it. `UsageRoute.soleRoute(for:)` is nil because the service records which route answered. The wording must not leak to other single-route providers. See [README.md](README.md).
+A picker, not a stated route: every provider with more than one route offers the choice (`hasSourceChoice`), so `Provider.soleRoute` is nil. Options are *Automatic* / *CLI* / *Desktop app* (`UsageSource.options(for:)`; *CLI* is `.tooling` titled by `title(for:)`). The subtitles: automatic “Reads Antigravity while it is open, else the agy CLI.”, CLI “Asks the agy CLI, using the login it already saved.”, desktop app “Asks the language server Antigravity runs while it is open.” Claude's desktop-route availability filter does not apply to it. `UsageRoute.soleRoute(for:)` is nil because the service records which route answered. The wording must not leak to other single-route providers. See [README.md](README.md).
 
 ## Activity mark
 

@@ -152,7 +152,7 @@ struct GeneralPane: View {
                 // alone. Greyed out with the icon hidden, like the figure.
                 SettingsRow(
                     String.localized("Usage panel in the menu"),
-                    subtitle: String.localized("Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend."),
+                    subtitle: String.localized("The menu opens on an overview of every account, with a tab for each."),
                     symbol: "list.bullet.rectangle"
                 ) {
                     Toggle("", isOn: Binding(

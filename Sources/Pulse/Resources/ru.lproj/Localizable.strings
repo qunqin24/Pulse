@@ -85,14 +85,14 @@
 "Follow the active display" = "Переходить на активный дисплей";
 "With more than one display, the rail moves to the one the pointer is on." = "Если дисплеев несколько, лента переходит на тот, где находится указатель.";
 "Snap to screen edges" = "Прикреплять к краям экрана";
-"Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction." = "Если подвести ленту к краю экрана, она прикрепляется к нему и разворачивается вдоль него. Если выключено, перетаскивание только перемещает ленту, не меняя её направления.";
+"Near an edge, the rail docks and runs along it." = "У края экрана лента прикрепляется и разворачивается вдоль него.";
 "Left" = "Слева";
 "Top" = "Сверху";
 "Percentages across" = "Проценты в горизонтальной панели";
 "Turn red at" = "Порог красного";
-"Where a ring stops being amber. A spent limit is red whatever this says." = "С какого значения кольцо из жёлтого становится красным. Исчерпанный лимит всегда красный.";
+"Where a ring turns from amber to red. A spent limit is always red." = "С какого значения кольцо становится красным. Исчерпанный лимит всегда красный.";
 "Alert colour when docked" = "Цвет предупреждения у края";
-"Off keeps the collapsed rail neutral even when a limit needs attention." = "Если выключено, свёрнутая лента остаётся нейтральной, даже когда лимит требует внимания.";
+"When off, the collapsed rail shows no alert colour." = "Если выключено, свёрнутая лента не меняет цвет.";
 "Ring activity animation" = "Анимация активности на кольце";
 "The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "Вращающийся индикатор, когда работает CLI или загружаются данные. Если выключено, кольцо остаётся неподвижным.";
 "Percentages at the side" = "Проценты в боковой панели";
@@ -100,7 +100,7 @@
 "Time until reset" = "Время до сброса";
 "A second arc outside each ring, showing progress through the current window." = "Вторая дуга снаружи каждого кольца показывает, какая часть текущего периода прошла.";
 "Time ring direction" = "Направление кольца времени";
-"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "Внешняя дуга заполняется по мере прошедшего времени или убывает вместе с оставшимся.";
+"The outer arc fills with time elapsed or empties with time left." = "Внешняя дуга растёт с прошедшим временем или убывает с оставшимся.";
 "Elapsed" = "Прошло";
 "Remaining" = "Осталось";
 "Capsule" = "Капсула";
@@ -110,7 +110,7 @@
 "Figure above the ring" = "Значение над кольцом";
 "Show what's left" = "Показывать остаток";
 "Forecast" = "Прогноз";
-"Whether each limit lasts its window, on the card." = "Показывает на карточке, хватит ли каждого лимита до сброса.";
+"Whether each limit runs out early, on the card." = "Показывает на карточке, кончится ли лимит до сброса.";
 "Counts down instead of up, figure and ring together." = "Значение и кольцо показывают остаток, а не израсходованное.";
 "Swaps the two, wherever the panel is." = "Меняет местами значение и кольцо при любом положении панели.";
 "When the panel lies across: docked to the top or bottom, or free." = "Когда панель расположена горизонтально: у верхнего или нижнего края либо свободно.";
@@ -233,13 +233,13 @@
 "%@ available" = "Доступно: %@";
 "%@ tokens" = "Токенов: %@";
 "Tokens per day" = "Токены по дням";
-"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "Подсчитано по журналам %@ на этом Mac и оценено по ценам API, опубликованным на models.dev. Ваш тариф — подписка, поэтому это стоимость той же работы через API, а не сумма, которую с вас списали.";
+"From this Mac's %@ logs, priced at models.dev's API rates. You are on a subscription, so this is not a charge." = "По журналам %@ на этом Mac и ценам API с models.dev. У вас подписка, так что это не списанная сумма.";
 "No published price for %@, so those tokens are counted but not costed." = "Для %@ нет опубликованной цены: эти токены учтены, но их стоимость не оценена.";
 "Reading logs" = "Чтение журналов";
 "No history yet" = "Истории пока нет";
 "Nothing has been logged on this Mac yet, so there is no history to add up." = "На этом Mac ещё нет записей в журналах, поэтому подсчитывать нечего.";
 "Token spend reading is off" = "Параметр «Читать локальные записи о расходе» выключен";
-"This history comes from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "Эта история складывается из записей о расходе на этом Mac, а Pulse читает их, только когда включено «Читать локальные записи о расходе».";
+"From this Mac's usage records." = "По записям о расходе на этом Mac.";
 "Account total" = "Всего по аккаунту";
 
 /* Budget estimate */
@@ -248,7 +248,7 @@
 "Top model" = "Основная модель";
 "Estimated value" = "Оценочная стоимость";
 "%@ used so far" = "Уже использовано %@";
-"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. When the percentage rises while this Mac spends nothing, the account is being used elsewhere — another computer, or the website — and that window isn't estimated until it resets. If both are in use at once, the figure reads low. Windows with too little use to extrapolate from are left out." = "Это оценка, а не данные сервиса: расход этого Mac с начала каждого периода, делённый на процент использования, который сообщает сервис. Если процент растёт, а этот Mac ничего не тратит, аккаунт используется где-то ещё — на другом компьютере или на сайте, — и до сброса этот период не оценивается. Если аккаунт используется и здесь, и в другом месте одновременно, оценка занижена. Периоды, в которых расхода слишком мало для экстраполяции, не учитываются.";
+"An estimate: this Mac's spend this window, divided by the used percentage the provider reports. It reads low when the account is also used elsewhere; if the percentage rises while this Mac spends nothing, the window is no longer estimated. Windows with too little use are left out." = "Оценка: расход этого Mac за период, делённый на процент использования от сервиса. Если аккаунт используется и в другом месте, она занижена; если процент растёт, а этот Mac ничего не тратит, период больше не оценивается. Периоды с малым расходом не показаны.";
 "Also used somewhere this Mac's logs can't see" = "Расход есть и вне этого Mac";
 "Not estimated" = "Не оценивается";
 
@@ -303,10 +303,10 @@
 "Black" = "Чёрный";
 "Light" = "Светлый";
 "Transparency" = "Прозрачность";
-"Clearer to the right, and the text turns from white to black. Black text is hard to read over dark windows." = "Чем правее, тем прозрачнее, а текст переходит от белого к чёрному. Чёрный текст плохо виден поверх тёмных окон.";
+"Clearer to the right; the text turns black, which is hard to read over dark windows." = "Правее — прозрачнее, а текст темнеет до чёрного; на тёмных окнах его плохо видно.";
 "Open Antigravity to see its usage." = "Откройте Antigravity, чтобы видеть расход.";
 "Asks the language server Antigravity runs while it is open." = "Запрашивает языковой сервер, который работает, пока открыт Antigravity.";
-"Reads Antigravity while it is open, and the agy CLI when it is not." = "Пока Antigravity открыт, данные читаются из него, а когда закрыт — через CLI agy.";
+"Reads Antigravity while it is open, else the agy CLI." = "Пока Antigravity открыт, читает из него, иначе — через CLI agy.";
 "CLI" = "CLI";
 "Asks the agy CLI, using the login it already saved." = "Использует CLI agy и уже сохранённые в нём данные входа.";
 "The agy CLI isn't installed. Install it, or choose another source in Settings." = "CLI agy не установлен. Установите его или выберите другой источник в настройках.";
@@ -316,7 +316,7 @@
 "Sign in to Cursor to see usage." = "Войдите в Cursor, чтобы видеть расход.";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Сохранённый вход Cursor отклонён. Откройте Cursor, чтобы продлить его.";
 "Sign in to Grok to see usage." = "Войдите в Grok, чтобы видеть расход.";
-"Grok's saved login expired. Use Grok to renew it." = "Срок сохранённого входа Grok истёк. Воспользуйтесь Grok, чтобы продлить его.";
+"Grok's login expired. Use Grok to renew it." = "Вход Grok истёк. Воспользуйтесь Grok, чтобы продлить его.";
 "This Cursor plan doesn't include Grok Bot." = "Ваш тариф Cursor не включает Grok Bot.";
 "Reads your account's limits with the login Cursor saved." = "Читает лимиты аккаунта, используя данные входа из Cursor.";
 "Cursor's own login" = "Вход через Cursor";
@@ -325,7 +325,7 @@
 "Devin's own app" = "Приложение Devin";
 "Reads what Devin saved the last time it started." = "Читает данные, которые Devin сохранил при последнем запуске.";
 "Asks Devin for your quota, with the token you entered." = "Запрашивает квоту у Devin с помощью введённого токена.";
-"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "Bearer-токен с app.devin.ai, затем пробел и организация. Необязательно — Pulse может прочитать данные, сохранённые приложением Devin. Хранится в зашифрованном виде на этом Mac.";
+"A Bearer token from app.devin.ai, a space, then your organization. Optional: without it, Pulse reads Devin's app. Stored encrypted on this Mac." = "Bearer-токен с app.devin.ai, пробел и организация. Необязательно: Pulse может прочитать данные приложения Devin. Хранится в зашифрованном виде на этом Mac.";
 "Uses the login Cursor already saved." = "Использует данные входа, уже сохранённые в Cursor.";
 "Refresh" = "Обновить";
 "Pulse %@ is available" = "Доступна версия Pulse %@";
@@ -372,7 +372,7 @@
 "That key was refused. Check it in Settings." = "Ключ отклонён. Проверьте его в настройках.";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Срок сохранённого входа Claude Code истёк. Воспользуйтесь Claude Code или подключите строку состояния.";
 "Keep reading Claude Code's usage after its login expires?" = "Следить за расходом Claude Code, даже когда истечёт срок входа?";
-"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code сохраняет вход, который действует несколько часов, и продлить его может только сам Claude Code. Кроме того, Claude Code передаёт данные о лимитах команде, зарегистрированной для строки состояния. Если этой командой станет Pulse, данные будут поступать независимо от того, действует ли вход.\n\nБудет изменён файл ~/.claude/settings.json и строка состояния внизу сеансов Claude Code. Ваша текущая строка состояния продолжит работать, а подключение можно отменить в настройках.";
+"Claude Code's saved login lasts a few hours, and only Claude Code can renew it. Claude Code also sends your limits to the registered status line command; with Pulse as that command, usage stays current after the login expires.\n\nThis edits ~/.claude/settings.json and the status line at the bottom of your Claude Code sessions. Your existing status line keeps working, and you can disconnect in Settings." = "Сохранённый вход Claude Code действует несколько часов, и продлить его может только сам Claude Code. Claude Code также передаёт лимиты команде строки состояния; если этой командой станет Pulse, расход будет обновляться и после истечения входа.\n\nБудет изменён файл ~/.claude/settings.json и строка состояния внизу сеансов Claude Code. Текущая строка состояния продолжит работать, а подключение можно отменить в настройках.";
 "Not now" = "Не сейчас";
 "Order" = "Порядок";
 "Add an API key in Settings." = "Добавьте ключ API в настройках.";
@@ -399,10 +399,10 @@
 "Sign in…" = "Войти…";
 "Sign out" = "Выйти";
 "GitHub account" = "Аккаунт GitHub";
-"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Откроется страница GitHub. Pulse запросит только чтение профиля.";
+"Authorize on GitHub's page. Pulse asks only to read your profile." = "Авторизация на GitHub. Pulse запросит только чтение профиля.";
 "Signed in. Pulse holds a read-only token for this Mac." = "Вход выполнен. Pulse хранит на этом Mac токен только для чтения.";
 "Cursor account" = "Аккаунт Cursor";
-"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "Необязательно. Без этого Pulse читает вход, сохранённый редактором Cursor; войти через страницу Cursor можно и здесь.";
+"Optional. Without it, Pulse reads the Cursor editor's login." = "Необязательно. Без этого Pulse читает вход редактора Cursor.";
 "The saved login has expired or was refused. Sign in again." = "Сохранённый вход истёк или был отклонён. Войдите снова.";
 "Signed in. Pulse holds the token for this Mac." = "Вход выполнен. Pulse хранит токен на этом Mac.";
 "The browser didn't come back." = "Браузер не вернул ответ.";
@@ -446,8 +446,8 @@
 "Desktop app" = "Приложение для Mac";
 "Uses the session the Claude desktop app is signed in with." = "Использует сеанс, в котором выполнен вход в приложении Claude для Mac.";
 "Sign in to the Claude desktop app to see usage." = "Войдите в приложение Claude для Mac, чтобы видеть расход.";
-"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse нужен доступ к связке ключей, чтобы прочитать сеанс приложения Claude для Mac. Нажмите «Обновить», чтобы запрос появился снова.";
-"Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again." = "Pulse нужен доступ к связке ключей, чтобы прочитать сохранённый вход Cursor. Нажмите «Обновить», чтобы запрос появился снова.";
+"Pulse needs keychain access for the Claude desktop app's session. Refresh to ask again." = "Нужен доступ к связке ключей, чтобы прочитать сеанс приложения Claude для Mac. Нажмите «Обновить», чтобы запросить снова.";
+"Pulse needs keychain access for Cursor's saved login. Refresh to ask again." = "Нужен доступ к связке ключей, чтобы прочитать вход Cursor. Нажмите «Обновить», чтобы запросить снова.";
 "The Claude desktop app's session was refused. Open it and sign in again." = "Сеанс приложения Claude для Mac отклонён. Откройте приложение и войдите снова.";
 
 /* Notifications */
@@ -490,7 +490,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "Второй лимит внутри кольца";
-"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "Внутреннее кольцо той же толщины вплотную к первому — для второго по расходу лимита, если у сервиса он есть.";
+"An inner ring for the next-fullest limit." = "Внутреннее кольцо для второго по расходу лимита.";
 "That key works. The account has no Coding Plan running on it." = "Ключ действителен, но у аккаунта нет активного Coding Plan.";
 
 /* Usage history read from a provider's own statistics */
@@ -501,7 +501,7 @@
 
 /* Splitting one account's rail ring into one per model group */
 "A ring for each model group" = "Отдельное кольцо для каждой группы моделей";
-"Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them." = "Группы моделей Antigravity расходуют отдельные лимиты. Одно кольцо может показать только самую загруженную из них.";
+"One ring per model group." = "По кольцу на каждую группу моделей.";
 "Ring for %@" = "Кольцо для %@";
 "Shown on the panel." = "Показывается на панели.";
 "Not shown on the panel." = "Не показывается на панели.";
@@ -514,7 +514,7 @@
 "since top-up" = "с пополнения";
 "of your budget" = "от вашего бюджета";
 "Full tank" = "Полный баланс";
-"What you call a full balance. The ring measures against it." = "Сумма, которую вы считаете полным балансом. Кольцо показывает долю от неё.";
+"The balance the ring counts as full." = "Баланс, который кольцо считает полным.";
 "How much of the balance Pulse last saw you top up to is gone." = "Сколько израсходовано с последнего пополнения, замеченного Pulse.";
 "How much of the figure you set is gone." = "Сколько израсходовано от заданной вами суммы.";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "Можно получить на platform.deepseek.com. Хранится в зашифрованном виде на этом Mac.";
@@ -643,8 +643,8 @@
 "Choose services to monitor" = "Выберите сервисы для отслеживания";
 "Choose services to start monitoring…" = "Выбрать сервисы для отслеживания…";
 "New services detected" = "Найдены новые сервисы";
-"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "Выберите хотя бы один сервис. Pulse прочитает данные входа и проверит расход только после того, как вы нажмёте «Готово». Позже это можно изменить в настройках.";
-"This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place." = "Эта версия поддерживает ещё несколько сервисов, найденных на вашем Mac. Отметьте те, что хотите добавить, — прежний выбор сохранится.";
+"Choose at least one service. Pulse reads logins and usage only after you finish; you can change this later in Settings." = "Выберите хотя бы один сервис. Pulse прочитает вход и расход только после «Готово». Позже это можно изменить в настройках.";
+"This version supports more services found on your Mac. Choose any to add; your current choices stay." = "Эта версия поддерживает ещё несколько сервисов на вашем Mac. Отметьте нужные — прежний выбор сохранится.";
 "Detected on this Mac" = "Найден на этом Mac";
 "Select detected services" = "Выбрать найденные";
 "Done" = "Готово";
@@ -674,7 +674,7 @@
 "Server address" = "Адрес сервера";
 "Edit address" = "Изменить адрес";
 "Add the server address in Settings." = "Укажите адрес сервера в настройках.";
-"That address can't be used. It needs https://, unless the server is on your own network." = "Этот адрес не подходит. Нужен https://, если только сервер не находится в вашей сети.";
+"The address needs https://, unless the server is on your own network." = "Адрес должен начинаться с https://, если сервер не в вашей сети.";
 "Sends the key you enter only to the server address you enter. No Keychain prompt." = "Отправляет введённый ключ только на указанный вами адрес сервера. Доступ к связке ключей не запрашивается.";
 "A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "API-ключ группы с вашего сервера sub2api. Отправляется только на адрес выше. Хранится в зашифрованном виде на этом Mac.";
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "Personal Access Token с сайта v2ex.com. Хранится в зашифрованном виде на этом Mac.";
@@ -707,8 +707,8 @@
 "Reads your credits with your signed-in browser session." = "Узнаёт баланс кредитов через ваш сеанс в браузере.";
 "No Qoder session found. Sign in at %@ first." = "Сеанс Qoder не найден. Сначала войдите на %@.";
 "Site" = "Сайт";
-"Where you signed in. Changing it clears the saved session." = "Сайт, на котором выполнен вход. При смене сохранённый сеанс удаляется.";
-"Where your key is from. Each site keeps its own key." = "Сайт, на котором выдан ключ. Для каждого сайта хранится свой ключ.";
+"Where you signed in. Changing it clears the session." = "Сайт, на котором выполнен вход. При смене сеанс удаляется.";
+"Where your key is from. Each site has its own." = "Сайт, выдавший ключ. У каждого сайта свой ключ.";
 "Sign in to StepFun's platform in a browser to see usage." = "Войдите на платформу StepFun в браузере, чтобы видеть расход.";
 "StepFun's saved session expired. Sign in again in your browser." = "Сохранённый сеанс StepFun истёк. Войдите снова в браузере.";
 "No Step Plan on this StepFun account." = "У этого аккаунта StepFun нет Step Plan.";
@@ -716,7 +716,7 @@
 "No StepFun session found. Sign in at %@ first." = "Сеанс StepFun не найден. Сначала войдите на %@.";
 
 /* Extensions */
-"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "Расширение — это программа, которую вы добавляете сами; она сообщает расход одного аккаунта. Pulse показывает её вывод в виде кольца, запускает её только после включения и не передаёт ей никаких учётных данных.";
+"An extension is a program you add that reports one account's usage. Pulse draws its output as a ring, runs it only once you switch it on, and gives it no credentials." = "Расширение — программа, которую вы добавляете сами, чтобы сообщать расход одного аккаунта. Pulse рисует её вывод кольцом, запускает только после включения и не даёт ей учётных данных.";
 "Another extension already uses the id %@." = "ID «%@» уже занят другим расширением.";
 "Couldn't be used" = "Не удалось использовать";
 "Each extension is a folder of its own, holding pulse-extension.json and its program." = "Каждое расширение — отдельная папка с файлом pulse-extension.json и программой.";
@@ -726,7 +726,7 @@
 "Extensions folder" = "Папка расширений";
 "Folder" = "Папка";
 "Found" = "Найденные";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "Указан в pulse-extension.json. Под этим ID Pulse хранит настройки расширения.";
+"From pulse-extension.json. Pulse saves this extension's settings under it." = "Из pulse-extension.json. Под этим ID хранятся настройки.";
 "How to write an extension" = "Как написать расширение";
 "Id" = "ID";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID может состоять только из строчных латинских букв, цифр, точек, дефисов и подчёркиваний — не длиннее 64 символов.";
@@ -917,7 +917,7 @@
 "When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда лимит на 5 часов сбрасывается, Pulse отправляет «hi» модели Haiku через Claude Code, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
 "When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда сбрасывается лимит на 5 часов или недельный лимит, Pulse отправляет «hi» самой дешёвой модели через Codex, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
 "Only between" = "Только в часы";
-"A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "Если сброс приходится на другое время, новый период запускается, когда наступят эти часы. Общая настройка для Claude Code и Codex.";
+"Resets outside these hours wait until they begin. Shared by Claude Code and Codex." = "Сброс вне этих часов ждёт их начала. Общая настройка для Claude Code и Codex.";
 "Last started" = "Последний запуск";
 "Use at your own risk" = "Используйте на свой риск";
 "I understand the risk, turn it on" = "Я понимаю риск, включить";
@@ -962,16 +962,16 @@
 "%@ cache" = "кэш на %@";
 "Last used %@" = "последний запрос: %@";
 "The latest one's cache lapsed at %@." = "Кэш последнего чата истёк в %@.";
-"Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "Берётся из записей самого Claude Code: в каждом ответе указано, кэширован он на час или на пять минут, и кэш живёт столько же с момента последнего запроса, который его использовал. Это время верно, если предшествующая часть диалога не менялась: смена модели, изменение набора инструментов или сжатие контекста создают новый кэш. У субагентов свои кэши, здесь они не показаны.";
+"From Claude Code's records: a cache lasts an hour or five minutes from the last request that used it. Switching model, changing tools or compacting starts a new one. Subagents are not included." = "Из записей Claude Code: кэш живёт час или пять минут с последнего запроса, который его использовал. Смена модели или инструментов и сжатие контекста создают новый кэш. Субагенты не учитываются.";
 "Usage panel in the menu" = "Панель расхода в меню";
-"Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "Меню в строке меню открывается с обзора всех аккаунтов, а у каждого аккаунта есть вкладка с лимитами, тарифом и расходами.";
+"The menu opens on an overview of every account, with a tab for each." = "Меню открывается с обзора всех аккаунтов, у каждого — своя вкладка.";
 "OpenCode console" = "Консоль OpenCode";
 "Account request log" = "Журнал запросов аккаунта";
 "Kept. The detailed card reads every request on the account with it." = "Сеанс сохранён. С ним подробная карточка видит все запросы аккаунта.";
 "No OpenCode console session found. Sign in at opencode.ai first." = "Сеанс консоли OpenCode не найден. Сначала войдите на opencode.ai.";
 "Costs as %@ charged them, for the whole account." = "Суммы — фактические списания %@ по всему аккаунту.";
 "The console session has expired. Read it again in Settings." = "Сеанс консоли истёк. Считайте его снова в настройках.";
-"The request log OpenCode's console keeps for 30 days — every machine and every app on the account, and what each request cost — and the plan's limits, when no key is set or the key is turned away. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "Журнал запросов, который консоль OpenCode хранит 30 дней: все устройства и приложения аккаунта и стоимость каждого запроса. Если ключ не задан или отклонён, отсюда же берутся лимиты тарифа. Pulse хранит только cookie входа в консоль, в зашифрованном виде на этом Mac.";
+"OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "Журнал запросов консоли OpenCode за 30 дней: все устройства и приложения аккаунта и стоимость каждого запроса. Без ключа или при отказе ключа отсюда берутся и лимиты тарифа. Pulse хранит только cookie входа в консоль, в зашифрованном виде на этом Mac.";
 "Turn on Detailed card above to see the request log on the card." = "Включите параметр «Подробная карточка» выше, чтобы видеть журнал запросов на карточке.";
 "Read from %@ · workspace %@." = "Считано из %@ · рабочее пространство «%@».";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "Консоль отклонила этот сеанс. Войдите снова на opencode.ai и считайте сеанс ещё раз.";
@@ -983,7 +983,7 @@
 "DeepSeek console" = "Консоль DeepSeek";
 "Account usage" = "Расход аккаунта";
 "Kept. The usage history below and the detailed card read the whole account with it." = "Вход сохранён. С ним история расхода ниже и подробная карточка охватывают весь аккаунт.";
-"The usage DeepSeek's console keeps for the account — every key and every machine, day by day, and what was charged — and the balance, when no key is set or the key is turned away. Pulse keeps only the console's sign-in, encrypted on this Mac." = "Расход, который консоль DeepSeek хранит для аккаунта: все ключи и все устройства по дням и фактические списания. Если ключ не задан или отклонён, отсюда же берётся баланс. Pulse хранит только данные входа в консоль, в зашифрованном виде на этом Mac.";
+"DeepSeek's console usage for the account: every key and machine, by day, with what was charged. It also gives the balance when no key is set or the key is refused. Pulse keeps only the console's sign-in, encrypted on this Mac." = "Расход аккаунта из консоли DeepSeek: все ключи и устройства по дням и фактические списания. Без ключа или при отказе ключа отсюда берётся и баланс. Pulse хранит только данные входа в консоль, в зашифрованном виде на этом Mac.";
 "Reads Chrome, Edge, Brave, Arc and other Chromium browsers." = "Читает Chrome, Edge, Brave, Arc и другие браузеры на основе Chromium.";
 "No Chromium browser was found. Sign in at platform.deepseek.com in Chrome, Edge, Brave or Arc." = "Браузер на основе Chromium не найден. Войдите на platform.deepseek.com в Chrome, Edge, Brave или Arc.";
 "No DeepSeek console sign-in found. Sign in at platform.deepseek.com first." = "Вход в консоль DeepSeek не найден. Сначала войдите на platform.deepseek.com.";
@@ -999,7 +999,7 @@
 "Unrecognised status" = "Неизвестный статус";
 "Couldn't read the status page." = "Не удалось прочитать страницу статуса.";
 "Status page" = "Страница статуса";
-"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "По данным страницы статуса %@. Обновляется при открытии этой страницы и каждые пять минут, пока она открыта.";
+"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "По странице статуса %@: при открытии этой страницы и каждые пять минут.";
 "90 days ago" = "90 дней назад";
 "%@ days ago" = "%@ дн. назад";
 "Now" = "Сейчас";
@@ -1091,7 +1091,7 @@
 "Last month's recap, at the start of the month. Needs Token spend reading." = "Итоги прошлого месяца — в начале месяца. Нужно включить «Читать локальные записи о расходе».";
 "Your %@ recap is ready" = "Итоги за %@ готовы";
 "The recap needs Token spend" = "Для итогов нужен «Расход токенов»";
-"It is built from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "Итоги строятся по записям о расходе на этом Mac, а Pulse читает их, только когда включено «Читать локальные записи о расходе».";
+"Turn on Token spend reading to build it." = "Для итогов включите «Читать локальные записи о расходе».";
 "Open Token spend" = "Открыть «Расход токенов»";
 "The records could not be read." = "Не удалось прочитать записи.";
 "No records for %@" = "Нет записей за %@";
@@ -1177,7 +1177,7 @@
 // Currency (Settings → General)
 "Currency" = "Валюта";
 "Show estimates in" = "Валюта оценок";
-"Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives." = "Суммы, рассчитанные по ценам API, показываются в этой валюте: расход токенов, оценочная стоимость, история расхода и итоги. Баланс и списания, о которых сообщает сервис, остаются в его валюте.";
+"For amounts estimated from API prices. Balances a provider reports keep its currency." = "Для сумм, рассчитанных по ценам API. Баланс от сервиса остаётся в его валюте.";
 "Exchange rate" = "Курс";
 "Rate source" = "Источник курса";
 "Your rate is used. Clear the field to use the day's rate." = "Используется ваш курс. Очистите поле, чтобы вернуться к курсу дня.";
@@ -1195,7 +1195,7 @@
 "Server replies" = "Ответы сервера";
 "Copy replies" = "Скопировать ответы";
 "No reply" = "Нет ответа";
-"Credentials are hidden. A reply can still show the account's email, plan or balance, so it is not in the shared diagnostics. Kept until the next check." = "Учётные данные скрыты. В ответе всё же может быть почта аккаунта, тариф или баланс, поэтому он не входит в диагностику для отправки. Заменяется при следующей проверке.";
+"Credentials are hidden. A reply can show an email or balance, so it stays out of shared diagnostics." = "Учётные данные скрыты. В ответе может быть почта или баланс, поэтому он не входит в диагностику для отправки.";
 "%@ bytes, not text" = "%@ байт, не текст";
 
 // Service status: why a read failed
@@ -1232,7 +1232,7 @@
 "The plan price is the monthly price prorated by the days of this period." = "Цена тарифа пересчитана из месячной пропорционально дням этого периода.";
 "Experimental" = "Экспериментальные функции";
 "Liquid docking" = "Прикрепление каплей";
-"Pulled off a screen edge, the rail stretches and parts like a drop; brought near one, it is drawn in. While dragged, it follows the pointer with a little give." = "Если оттянуть ленту от края экрана, она вытягивается и отрывается, как капля; рядом с краем она притягивается к нему. При перетаскивании лента следует за указателем с небольшой задержкой.";
+"Parts from and snaps to edges like a drop, and lags a little while dragged." = "Отрывается и притягивается, как капля; при перетаскивании слегка отстаёт.";
 "These features are still being tuned and may change or be removed." = "Эти функции ещё дорабатываются и могут измениться или быть удалены.";
 "Test notification" = "Тестовое уведомление";
 "Send" = "Отправить";
@@ -1247,7 +1247,7 @@
 /* Robot colour, personality and shape */
 "Robot colour" = "Цвет робота";
 "Robot figure" = "Облик робота";
-"The object the robot is drawn as. It shows the same states whichever it is." = "Каким предметом нарисован робот. Состояния он показывает одинаково в любом облике.";
+"Every figure shows the same states." = "В любом облике состояния те же.";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "Заменяет логотип сервиса и показывает, что происходит с этим аккаунтом. Облики робота — Open Bot Avatar от Dominik Scholz.";
 "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "Облики робота в кольцах и их движения — Open Bot Avatar от Dominik Scholz; его исходный код запускается без изменений. Лицензия MIT.";
 "Controller" = "Геймпад";
@@ -1280,7 +1280,7 @@
 "Close" = "Закрыть";
 
 /* Star request: StarRequestBanner, AboutPane */
-"You have used Pulse for two weeks. If Pulse has been useful, a star on GitHub helps other people find it." = "Вы пользуетесь Pulse уже две недели. Если Pulse оказался полезен, поставьте ему звезду на GitHub: так о нём узнает больше людей.";
+"You have used Pulse for two weeks. If it has been useful, a star on GitHub helps others find it." = "Вы пользуетесь Pulse уже две недели. Если он полезен, поставьте звезду на GitHub — так о нём узнают другие.";
 "Star on GitHub" = "Поставить звезду на GitHub";
 "Support Pulse on Afdian" = "Поддержать Pulse на Afdian";
 "Stars help other people find Pulse." = "Звёзды помогают другим людям найти Pulse.";

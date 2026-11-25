@@ -389,7 +389,7 @@ struct AccountUsageCard: View {
                 // the one history here that is a bill rather than an estimate.
                 Text(localized: "From \(provider.displayName)'s request log for the whole account — every machine and every app that uses it — with what each request was charged. The log keeps 30 days.")
             } else {
-                Text(localized: "Counted from this Mac's \(provider.displayName) logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged.")
+                Text(localized: "From this Mac's \(provider.displayName) logs, priced at models.dev's API rates. You are on a subscription, so this is not a charge.")
             }
 
             if !ledger.unpricedModels.isEmpty, ledger.origin == .localTranscripts {

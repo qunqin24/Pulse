@@ -54,7 +54,7 @@ struct RecapWindowView: View {
             message(
                 symbol: "chart.bar",
                 title: String.localized("The recap needs Token spend"),
-                detail: String.localized("It is built from the usage records on this Mac, which Pulse reads only while Token spend reading is on."),
+                detail: String.localized("Turn on Token spend reading to build it."),
                 action: (String.localized("Open Token spend"), openTokenSpend)
             )
         case .loading:

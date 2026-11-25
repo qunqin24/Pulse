@@ -77,8 +77,8 @@ struct ProviderSetupView: View {
 
     private var explanation: String {
         isInitial
-            ? .localized("Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings.")
-            : .localized("This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place.")
+            ? .localized("Choose at least one service. Pulse reads logins and usage only after you finish; you can change this later in Settings.")
+            : .localized("This version supports more services found on your Mac. Choose any to add; your current choices stay.")
     }
 }
 

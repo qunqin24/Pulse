@@ -17,7 +17,7 @@ The proxy's address and the key it was started with (`PROXY_API_KEY`) — the sa
 | Pulse says | What to do |
 |---|---|
 | Add the server address in Settings. | Fill in "Server address" with your proxy's address. |
-| That address can't be used. It needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a server on your own machine or local network. |
+| The address needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a server on your own machine or local network. |
 | Add an API key in Settings. | Paste the proxy's key into "API key". |
 | That key was refused. Check it in Settings. | The key doesn't match the one the proxy was started with. |
 | The service didn't respond. / Checking too often — easing off. / The service returned an error. | A temporary network or server problem. Wait a moment and try again. |

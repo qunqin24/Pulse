@@ -29,7 +29,7 @@ struct PromptCacheSessionsGroup: View {
                 }
             }
 
-            Text(String.localized("Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed."))
+            Text(String.localized("From Claude Code's records: a cache lasts an hour or five minutes from the last request that used it. Switching model, changing tools or compacting starts a new one. Subagents are not included."))
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

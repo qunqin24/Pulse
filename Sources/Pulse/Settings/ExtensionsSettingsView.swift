@@ -16,7 +16,7 @@ struct ExtensionsSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
-            Text(localized: "An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials.")
+            Text(localized: "An extension is a program you add that reports one account's usage. Pulse draws its output as a ring, runs it only once you switch it on, and gives it no credentials.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -129,7 +129,7 @@ struct ExtensionProgramGroup: View {
             SettingsRowDivider()
             SettingsRow(
                 String.localized("Id"),
-                subtitle: String.localized("From its pulse-extension.json. Pulse keeps this extension's settings under it."),
+                subtitle: String.localized("From pulse-extension.json. Pulse saves this extension's settings under it."),
                 symbol: "number"
             ) {
                 Text(verbatim: pulseExtension.id)

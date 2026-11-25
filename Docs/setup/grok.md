@@ -22,7 +22,7 @@ If you use more than one Grok account, go to Settings → Grok, and click "Add a
 | Message Pulse shows | What to do |
 |---|---|
 | Sign in to Grok to see usage. | Pulse copies the command `grok` — run it in Terminal. If you're not signed in yet, it opens your browser to log in (or run `grok login` directly). |
-| Grok's saved login expired. Use Grok to renew it. | Run `grok` (or `grok login`) again in Terminal to refresh the CLI's session. |
+| Grok's login expired. Use Grok to renew it. | Run `grok` (or `grok login`) again in Terminal to refresh the CLI's session. |
 | Sign in to this account again in Settings. (added accounts) | Click "Sign in again…" next to that account. |
 | The service didn't respond. | Click Retry. |
 | Checking too often — easing off. | Click Retry after a minute. |

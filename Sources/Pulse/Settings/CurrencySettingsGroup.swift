@@ -22,7 +22,7 @@ struct CurrencySettingsGroup: View {
         SettingsGroup(String.localized("Currency")) {
             SettingsRow(
                 String.localized("Show estimates in"),
-                subtitle: String.localized("Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives."),
+                subtitle: String.localized("For amounts estimated from API prices. Balances a provider reports keep its currency."),
                 symbol: "dollarsign.circle"
             ) {
                 Picker("", selection: Binding(

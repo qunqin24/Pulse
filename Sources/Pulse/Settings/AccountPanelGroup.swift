@@ -276,7 +276,7 @@ struct AccountPanelGroup: View {
             String.localized("Robot figure"),
             subtitle: settings.robotFigure(for: account) == nil
                 ? String.localized("Chosen so that neighbouring robots differ.")
-                : String.localized("The object the robot is drawn as. It shows the same states whichever it is."),
+                : String.localized("Every figure shows the same states."),
             symbol: "face.smiling"
         ) {
             Picker("", selection: Binding(
@@ -337,7 +337,7 @@ struct AccountPanelGroup: View {
     private func splitRow(for account: AccountKey) -> some View {
         SettingsRow(
             String.localized("A ring for each model group"),
-            subtitle: String.localized("Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them."),
+            subtitle: String.localized("One ring per model group."),
             symbol: "circle.grid.2x1"
         ) {
             Toggle("", isOn: Binding(

@@ -23,7 +23,7 @@ struct AccountHistoryGroup: View {
             SettingsGroup(String.localized("Usage history")) {
                 SettingsRow(
                     String.localized("Token spend reading is off"),
-                    subtitle: String.localized("This history comes from the usage records on this Mac, which Pulse reads only while Token spend reading is on."),
+                    subtitle: String.localized("From this Mac's usage records."),
                     symbol: "arrow.up.right.square"
                 ) {
                     Button(String.localized("Open Token spend"), action: openTokenSpend)

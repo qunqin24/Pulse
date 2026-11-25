@@ -19,7 +19,7 @@ Access to a running New API deployment (its web address) and an `sk-` API key is
 | Message Pulse shows | What to do |
 |---|---|
 | Add the server address in Settings. | Fill in "Server address" with your deployment's URL. |
-| That address can't be used. It needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only if the server is on your own machine or local network. |
+| The address needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only if the server is on your own machine or local network. |
 | Add an API key in Settings. | Paste your `sk-` key into "API key". |
 | That key was refused. Check it in Settings. | The key is wrong, revoked, or for a different deployment. Get a fresh one from the console's Tokens page. |
 

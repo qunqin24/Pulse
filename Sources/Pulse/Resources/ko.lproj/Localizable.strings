@@ -79,20 +79,20 @@
 "Show floating panel" = "플로팅 패널 표시";
 "The usage rail at the edge of the screen." = "화면 가장자리에 사용량 레일을 표시합니다.";
 "Hide in full screen" = "전체 화면일 때 숨기기";
-"Keep the floating panel out of full-screen apps." = "다른 앱이 전체 화면일 때 자동으로 숨깁니다.";
+"Keep the floating panel out of full-screen apps." = "다른 앱이 전체 화면일 때 숨깁니다.";
 "Hide from screenshots" = "스크린샷에서 숨기기";
 "Screenshot tools that support it leave the floating panel out. Recordings and screen sharing may still show it." = "이 설정을 지원하는 스크린샷 도구에는 플로팅 패널이 찍히지 않습니다. 화면 기록과 화면 공유에서는 표시될 수 있습니다.";
 "Follow the active display" = "사용 중인 디스플레이 따라가기";
 "With more than one display, the rail moves to the one the pointer is on." = "디스플레이가 여러 대일 때, 포인터가 있는 쪽으로 레일이 옮겨 갑니다.";
 "Snap to screen edges" = "화면 가장자리에 붙이기";
-"Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction." = "화면 가장자리 가까이 끌어 오면 레일이 그 가장자리에 붙고, 가장자리를 따라 놓이도록 방향이 바뀝니다. 끄면 끌어도 위치만 바뀌고 방향은 그대로입니다.";
+"Near an edge, the rail docks and runs along it." = "가장자리에 가까이 끌면 붙어서 가장자리를 따라 놓입니다.";
 "Left" = "왼쪽";
 "Top" = "위";
 "Percentages across" = "가로일 때 백분율 표시";
 "Turn red at" = "빨간색으로 바뀌는 지점";
-"Where a ring stops being amber. A spent limit is red whatever this says." = "링이 노란색에서 빨간색으로 바뀌는 지점입니다. 다 쓴 한도는 이 설정과 상관없이 빨간색입니다.";
+"Where a ring turns from amber to red. A spent limit is always red." = "링이 노란색에서 빨간색으로 바뀌는 지점입니다. 다 쓴 한도는 항상 빨간색입니다.";
 "Alert colour when docked" = "가장자리에 붙였을 때 경고 색";
-"Off keeps the collapsed rail neutral even when a limit needs attention." = "꺼두면 한도에 주의가 필요해도 접힌 레일이 중립 색을 유지합니다.";
+"When off, the collapsed rail shows no alert colour." = "끄면 접힌 레일에 경고 색을 표시하지 않습니다.";
 "Ring activity animation" = "링 활동 애니메이션";
 "The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "CLI가 작동 중이거나 값을 가져오는 동안 나타나는 회전 표시입니다. 끄면 링이 움직이지 않습니다.";
 "Percentages at the side" = "옆에 백분율 표시";
@@ -100,7 +100,7 @@
 "Time until reset" = "초기화까지 남은 시간";
 "A second arc outside each ring, showing progress through the current window." = "각 링 바깥쪽에 현재 한도 주기의 시간 진행률을 표시합니다.";
 "Time ring direction" = "시간 링 방향";
-"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "바깥쪽 링을 경과 시간에 따라 채울지, 남은 시간에 따라 줄일지 선택합니다.";
+"The outer arc fills with time elapsed or empties with time left." = "바깥쪽 링이 경과 시간만큼 차거나 남은 시간만큼 줄어듭니다.";
 "Elapsed" = "경과";
 "Remaining" = "남음";
 "Capsule" = "캡슐";
@@ -110,7 +110,7 @@
 "Figure above the ring" = "수치를 링 위에";
 "Show what's left" = "남은 양 표시";
 "Forecast" = "소진 예측";
-"Whether each limit lasts its window, on the card." = "각 한도가 다음 초기화까지 버틸지 카드에 표시합니다.";
+"Whether each limit runs out early, on the card." = "한도가 미리 소진될지 카드에 표시합니다.";
 "Counts down instead of up, figure and ring together." = "수치와 링 모두 쓴 양이 아니라 남은 양을 보여 줍니다.";
 "Swaps the two, wherever the panel is." = "패널 위치와 상관없이 백분율을 링 위로 옮깁니다.";
 "When the panel lies across: docked to the top or bottom, or free." = "패널을 가로로 두었을 때 표시합니다: 위나 아래에 붙였거나 가로로 자유롭게 두었을 때.";
@@ -233,13 +233,13 @@
 "%@ available" = "%@장 사용 가능";
 "%@ tokens" = "%@ 토큰";
 "Tokens per day" = "하루 토큰 사용량";
-"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "이 Mac의 %@ 로그를 집계하고 models.dev에 공개된 API 요금으로 환산한 값입니다. 구독 요금제를 쓰고 있으므로, 같은 작업을 API로 했을 때의 비용이지 실제 청구액이 아닙니다.";
+"From this Mac's %@ logs, priced at models.dev's API rates. You are on a subscription, so this is not a charge." = "이 Mac의 %@ 로그를 models.dev의 API 요금으로 환산했습니다. 구독 요금제이므로 실제 청구액이 아닙니다.";
 "No published price for %@, so those tokens are counted but not costed." = "%@은(는) 공개된 가격이 없어, 해당 토큰은 세기만 하고 금액에는 넣지 않습니다.";
 "Reading logs" = "로그를 읽는 중";
 "No history yet" = "아직 기록이 없습니다";
 "Nothing has been logged on this Mac yet, so there is no history to add up." = "이 Mac에는 아직 로그가 없어 합산할 기록이 없습니다.";
 "Token spend reading is off" = "‘로컬 사용량 기록 읽기’가 꺼져 있습니다";
-"This history comes from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "이 기록은 이 Mac의 사용량 기록으로 집계합니다. Pulse는 ‘로컬 사용량 기록 읽기’가 켜져 있는 동안에만 기록을 읽습니다.";
+"From this Mac's usage records." = "이 Mac의 사용량 기록으로 집계합니다.";
 "Account total" = "계정 누적";
 
 /* Budget estimate */
@@ -248,7 +248,7 @@
 "Top model" = "가장 많이 쓴 모델";
 "Estimated value" = "사용분 추정 금액";
 "%@ used so far" = "이번 주기에 %@ 사용";
-"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. When the percentage rises while this Mac spends nothing, the account is being used elsewhere — another computer, or the website — and that window isn't estimated until it resets. If both are in use at once, the figure reads low. Windows with too little use to extrapolate from are left out." = "보고된 수치가 아니라 추정치입니다. 이 Mac에서 기간이 시작된 뒤 쓴 금액을 제공업체가 알려 주는 사용률로 나눈 값입니다. 사용률이 오르는데 이 Mac에서는 거의 쓰지 않았다면 다른 곳(다른 컴퓨터나 웹사이트)에서도 쓰고 있는 것이므로, 그 기간은 초기화될 때까지 추정하지 않습니다. 양쪽에서 동시에 쓰고 있으면 추정치가 낮게 나옵니다. 추정하기에 사용량이 너무 적은 한도는 표시하지 않습니다.";
+"An estimate: this Mac's spend this window, divided by the used percentage the provider reports. It reads low when the account is also used elsewhere; if the percentage rises while this Mac spends nothing, the window is no longer estimated. Windows with too little use are left out." = "추정치입니다. 이 Mac의 이번 기간 지출을 제공업체가 알려 주는 사용률로 나눈 값입니다. 다른 곳에서도 쓰면 낮게 나오고, 이 Mac에서 쓰지 않는데 사용률이 오르면 그 기간은 추정을 멈춥니다. 사용량이 너무 적은 기간은 표시하지 않습니다.";
 "Also used somewhere this Mac's logs can't see" = "이 Mac의 기록 밖에서도 사용되고 있습니다";
 "Not estimated" = "추정하지 않음";
 
@@ -303,10 +303,10 @@
 "Black" = "검은색";
 "Light" = "밝은 색";
 "Transparency" = "투명도";
-"Clearer to the right, and the text turns from white to black. Black text is hard to read over dark windows." = "오른쪽으로 갈수록 투명해지고, 글자는 흰색에서 검은색으로 바뀝니다. 검은 글자는 어두운 창 위에서 읽기 어렵습니다.";
+"Clearer to the right; the text turns black, which is hard to read over dark windows." = "오른쪽일수록 투명해지고 글자가 검게 바뀝니다. 검은 글자는 어두운 창 위에서 읽기 어렵습니다.";
 "Open Antigravity to see its usage." = "사용량을 보려면 Antigravity를 여십시오.";
 "Asks the language server Antigravity runs while it is open." = "Antigravity가 열려 있을 때 실행하는 언어 서버에 물어봅니다.";
-"Reads Antigravity while it is open, and the agy CLI when it is not." = "Antigravity가 열려 있으면 그곳에서, 열려 있지 않으면 agy CLI로 읽습니다.";
+"Reads Antigravity while it is open, else the agy CLI." = "Antigravity가 열려 있으면 그곳에서, 아니면 agy CLI로 읽습니다.";
 "CLI" = "CLI";
 "Asks the agy CLI, using the login it already saved." = "agy CLI를 호출하며, 이미 저장된 로그인을 씁니다.";
 "The agy CLI isn't installed. Install it, or choose another source in Settings." = "agy CLI가 설치되어 있지 않습니다. 설치하거나 설정에서 다른 사용량 출처를 선택하세요.";
@@ -316,7 +316,7 @@
 "Sign in to Cursor to see usage." = "사용량을 보려면 Cursor에 로그인하십시오.";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Cursor가 저장한 로그인이 거부되었습니다. Cursor를 열어 다시 로그인하십시오.";
 "Sign in to Grok to see usage." = "사용량을 보려면 Grok에 로그인하십시오.";
-"Grok's saved login expired. Use Grok to renew it." = "Grok이 저장한 로그인이 만료되었습니다. Grok을 한 번 사용해 갱신하십시오.";
+"Grok's login expired. Use Grok to renew it." = "Grok 로그인이 만료되었습니다. Grok을 한 번 쓰면 갱신됩니다.";
 "This Cursor plan doesn't include Grok Bot." = "현재 Cursor 요금제에는 Grok Bot이 포함되어 있지 않습니다.";
 "Reads your account's limits with the login Cursor saved." = "Cursor가 저장한 로그인으로 계정 한도를 읽습니다.";
 "Cursor's own login" = "Cursor 자체 로그인";
@@ -325,7 +325,7 @@
 "Devin's own app" = "Devin 자체 앱";
 "Reads what Devin saved the last time it started." = "Devin이 지난번 실행할 때 저장한 요금제 정보를 읽습니다.";
 "Asks Devin for your quota, with the token you entered." = "입력한 토큰으로 Devin에 잔여량을 물어봅니다.";
-"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "app.devin.ai의 Bearer 토큰, 공백 한 칸, 그다음 조직 이름 순입니다. 비워 두어도 되며, 그러면 Devin 앱이 저장한 내용을 Pulse가 읽습니다. 이 Mac에 암호화되어 저장됩니다.";
+"A Bearer token from app.devin.ai, a space, then your organization. Optional: without it, Pulse reads Devin's app. Stored encrypted on this Mac." = "app.devin.ai의 Bearer 토큰, 공백, 조직 이름 순입니다. 비워 두면 Devin 앱이 저장한 내용을 읽습니다. 이 Mac에 암호화되어 저장됩니다.";
 "Uses the login Cursor already saved." = "Cursor가 이미 저장해 둔 로그인을 씁니다.";
 "Refresh" = "새로 고치기";
 "Pulse %@ is available" = "Pulse %@을(를) 사용할 수 있습니다";
@@ -372,7 +372,7 @@
 "That key was refused. Check it in Settings." = "이 키가 거부되었습니다. 설정에서 확인하십시오.";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code가 저장한 로그인이 만료되었습니다. Claude Code를 쓰거나 상태 표시줄을 연결하십시오.";
 "Keep reading Claude Code's usage after its login expires?" = "로그인이 만료된 뒤에도 Claude Code의 사용량을 계속 읽어도 되겠습니까?";
-"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code가 저장하는 로그인은 몇 시간만 유효하며, 갱신할 수 있는 것은 Claude Code뿐입니다. 한편 Claude Code는 등록된 상태 표시줄 명령에 한도를 보고합니다. Pulse가 그 명령이 되면 로그인이 최신이든 아니든 계속 읽을 수 있습니다.\n\n이 작업은 ~/.claude/settings.json을 수정하고, Claude Code 세션 아래쪽의 상태 표시줄을 바꿉니다. 이미 쓰고 있는 상태 표시줄은 그대로 동작하며, 설정에서 언제든 연결을 해제할 수 있습니다.";
+"Claude Code's saved login lasts a few hours, and only Claude Code can renew it. Claude Code also sends your limits to the registered status line command; with Pulse as that command, usage stays current after the login expires.\n\nThis edits ~/.claude/settings.json and the status line at the bottom of your Claude Code sessions. Your existing status line keeps working, and you can disconnect in Settings." = "Claude Code가 저장하는 로그인은 몇 시간만 유효하며, Claude Code만 갱신할 수 있습니다. Claude Code는 등록된 상태 표시줄 명령에 한도를 보내므로, Pulse가 그 명령이 되면 로그인이 만료돼도 사용량을 계속 업데이트합니다.\n\n이 작업은 ~/.claude/settings.json과 Claude Code 세션 아래쪽의 상태 표시줄을 바꿉니다. 기존 상태 표시줄은 그대로 동작하며, 설정에서 언제든 연결을 해제할 수 있습니다.";
 "Not now" = "나중에";
 "Order" = "순서";
 "Add an API key in Settings." = "설정에서 API 키를 입력하십시오.";
@@ -395,14 +395,14 @@
 /* Accounts */
 "Accounts" = "계정";
 "Add another account" = "계정 추가";
-"Opens the provider's own sign-in page." = "제공업체 자체 로그인 페이지를 엽니다.";
+"Opens the provider's own sign-in page." = "제공업체 로그인 페이지를 엽니다.";
 "Sign in…" = "로그인…";
 "Sign out" = "로그아웃";
 "GitHub account" = "GitHub 계정";
-"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "GitHub 자체 페이지를 엽니다. Pulse가 요청하는 것은 프로필 읽기뿐입니다.";
+"Authorize on GitHub's page. Pulse asks only to read your profile." = "GitHub 페이지에서 승인합니다. 프로필 읽기 권한만 요청합니다.";
 "Signed in. Pulse holds a read-only token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 읽기 전용 토큰을 보관합니다.";
 "Cursor account" = "Cursor 계정";
-"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "선택 사항입니다. 여기서 로그인하지 않으면 Pulse는 Cursor 편집기가 저장한 로그인을 읽습니다. 여기서 Cursor 페이지를 통해 로그인할 수도 있습니다.";
+"Optional. Without it, Pulse reads the Cursor editor's login." = "선택 사항입니다. 로그인하지 않으면 Cursor 편집기의 로그인을 읽습니다.";
 "The saved login has expired or was refused. Sign in again." = "저장된 로그인이 만료되었거나 거부되었습니다. 다시 로그인하세요.";
 "Signed in. Pulse holds the token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 토큰을 보관합니다.";
 "The browser didn't come back." = "브라우저에서 돌아오지 않았습니다.";
@@ -446,8 +446,8 @@
 "Desktop app" = "데스크탑 앱";
 "Uses the session the Claude desktop app is signed in with." = "Claude 데스크탑 앱이 로그인한 세션을 씁니다.";
 "Sign in to the Claude desktop app to see usage." = "Claude 데스크탑 앱에 로그인하면 사용량이 표시됩니다.";
-"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Claude 데스크탑 앱의 세션을 읽으려면 키체인 권한이 필요합니다. 새로 고치면 다시 물어봅니다.";
-"Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again." = "Cursor에 저장된 로그인을 읽으려면 키체인 권한이 필요합니다. 새로 고치면 다시 물어봅니다.";
+"Pulse needs keychain access for the Claude desktop app's session. Refresh to ask again." = "Claude 데스크탑 앱 세션을 읽으려면 키체인 권한이 필요합니다. 새로 고치면 다시 묻습니다.";
+"Pulse needs keychain access for Cursor's saved login. Refresh to ask again." = "Cursor에 저장된 로그인을 읽으려면 키체인 권한이 필요합니다. 새로 고치면 다시 묻습니다.";
 "The Claude desktop app's session was refused. Open it and sign in again." = "Claude 데스크탑 앱의 세션이 거부되었습니다. 앱을 열고 다시 로그인하십시오.";
 
 /* Notifications */
@@ -490,7 +490,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "링 안쪽에 두 번째 한도";
-"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "안쪽에 같은 굵기의 링을 바짝 붙여 그려 그다음으로 많이 쓴 한도를 보여 줍니다. 제공업체가 여러 한도를 보고할 때만 쓸 수 있습니다.";
+"An inner ring for the next-fullest limit." = "안쪽 링에 두 번째로 많이 쓴 한도를 표시합니다.";
 "That key works. The account has no Coding Plan running on it." = "키는 유효합니다. 다만 이 계정에는 사용 중인 Coding Plan이 없습니다.";
 
 /* Usage history read from a provider's own statistics */
@@ -501,7 +501,7 @@
 
 /* Splitting one account's rail ring into one per model group */
 "A ring for each model group" = "모델 그룹마다 링 하나";
-"Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them." = "Antigravity의 모델 그룹은 각각 별도의 한도를 사용합니다. 링 하나로는 가장 많이 사용한 그룹만 표시할 수 있습니다.";
+"One ring per model group." = "모델 그룹마다 링을 하나씩 그립니다.";
 "Ring for %@" = "%@ 링";
 "Shown on the panel." = "패널에 표시합니다.";
 "Not shown on the panel." = "패널에 표시하지 않습니다.";
@@ -514,7 +514,7 @@
 "since top-up" = "마지막 충전 이후";
 "of your budget" = "예산 대비";
 "Full tank" = "가득 찬 기준";
-"What you call a full balance. The ring measures against it." = "얼마를 가득으로 볼지 정합니다. 링은 이 값을 기준으로 잽니다.";
+"The balance the ring counts as full." = "링이 가득 찬 것으로 보는 잔액입니다.";
 "How much of the balance Pulse last saw you top up to is gone." = "Pulse가 마지막으로 확인한 충전액에서 얼마나 썼는지 보여 줍니다.";
 "How much of the figure you set is gone." = "직접 정한 금액에서 얼마나 썼는지 보여 줍니다.";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "platform.deepseek.com에서 발급받습니다. 이 Mac에 암호화되어 저장됩니다.";
@@ -640,15 +640,15 @@
 "Enter a whole number from 1 to 65535." = "1에서 65535 사이의 정수를 입력하십시오.";
 
 /* 모니터링할 서비스 선택 */
-"Choose services to monitor" = "모니터링할 서비스 선택";
-"Choose services to start monitoring…" = "서비스를 선택해 모니터링 시작…";
-"New services detected" = "새로 지원하는 서비스 발견";
-"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "서비스를 하나 이상 선택하십시오. 완료를 누른 뒤에만 선택한 서비스의 로그인 정보를 읽고 사용량을 확인합니다. 나중에 설정에서 바꿀 수 있습니다.";
-"This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place." = "이 버전에서 새로 지원하는 서비스가 Mac에서 발견되었습니다. 추가할 서비스를 선택하십시오. 기존 선택은 유지됩니다.";
+"Choose services to monitor" = "모니터링할 제공업체 선택";
+"Choose services to start monitoring…" = "제공업체를 선택해 모니터링 시작…";
+"New services detected" = "새로 지원하는 제공업체 발견";
+"Choose at least one service. Pulse reads logins and usage only after you finish; you can change this later in Settings." = "제공업체를 하나 이상 선택하십시오. 완료를 누른 뒤에만 로그인 정보를 읽고 사용량을 확인합니다. 나중에 설정에서 바꿀 수 있습니다.";
+"This version supports more services found on your Mac. Choose any to add; your current choices stay." = "이 버전에서 새로 지원하는 제공업체가 Mac에서 발견되었습니다. 추가할 항목을 고르십시오. 기존 선택은 유지됩니다.";
 "Detected on this Mac" = "이 Mac에서 발견됨";
-"Select detected services" = "발견된 서비스 선택";
+"Select detected services" = "발견된 제공업체 선택";
 "Done" = "완료";
-"Enable a service in its settings to start monitoring." = "설정에서 서비스를 켜면 모니터링을 시작합니다.";
+"Enable a service in its settings to start monitoring." = "설정에서 제공업체를 켜면 모니터링합니다.";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "키체인 또는 인증 정보 파일에서 Claude Code의 로그인을 읽습니다. Claude 데스크탑의 쿠키 저장소를 포함해 키체인 접근 권한을 요청할 수 있습니다.";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json을 읽으며 저장된 로그인으로 codex app-server를 실행할 수 있습니다. Pulse는 키체인 접근 권한을 요청하지 않습니다.";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "실행 중인 편집기의 로컬 언어 서버에서 사용량과 연결 토큰을 읽거나, 저장된 로그인으로 agy CLI를 실행합니다. Pulse는 키체인 접근 권한을 요청하지 않습니다.";
@@ -674,7 +674,7 @@
 "Server address" = "서버 주소";
 "Edit address" = "주소 편집";
 "Add the server address in Settings." = "설정에서 서버 주소를 입력하십시오.";
-"That address can't be used. It needs https://, unless the server is on your own network." = "이 주소는 사용할 수 없습니다. 서버가 내 네트워크 안에 있는 경우가 아니면 https:// 가 필요합니다.";
+"The address needs https://, unless the server is on your own network." = "서버가 내 네트워크 안에 있지 않으면 주소는 https://로 시작해야 합니다.";
 "Sends the key you enter only to the server address you enter. No Keychain prompt." = "입력한 키를 입력한 서버 주소로만 보냅니다. 키체인 확인 창은 표시되지 않습니다.";
 "A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "사용 중인 sub2api의 그룹 API 키입니다. 위에 입력한 주소로만 전송됩니다. 이 Mac에 암호화되어 저장됩니다.";
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "v2ex.com에서 발급한 개인 액세스 토큰입니다. 이 Mac에 암호화되어 저장됩니다.";
@@ -707,8 +707,8 @@
 "Reads your credits with your signed-in browser session." = "로그인된 브라우저 세션으로 크레딧을 읽습니다.";
 "No Qoder session found. Sign in at %@ first." = "Qoder 세션을 찾지 못했습니다. 먼저 %@에 로그인하십시오.";
 "Site" = "사이트";
-"Where you signed in. Changing it clears the saved session." = "로그인한 사이트입니다. 바꾸면 저장된 세션이 지워집니다.";
-"Where your key is from. Each site keeps its own key." = "키를 발급받은 사이트입니다. 사이트마다 키가 따로 저장됩니다.";
+"Where you signed in. Changing it clears the session." = "로그인한 사이트입니다. 바꾸면 세션이 지워집니다.";
+"Where your key is from. Each site has its own." = "키를 발급받은 사이트입니다. 키는 사이트별로 저장됩니다.";
 "Sign in to StepFun's platform in a browser to see usage." = "브라우저에서 StepFun 플랫폼에 로그인하면 사용량이 표시됩니다.";
 "StepFun's saved session expired. Sign in again in your browser." = "저장된 StepFun 세션이 만료되었습니다. 브라우저에서 다시 로그인하십시오.";
 "No Step Plan on this StepFun account." = "이 StepFun 계정에는 Step Plan이 없습니다.";
@@ -716,7 +716,7 @@
 "No StepFun session found. Sign in at %@ first." = "StepFun 세션을 찾지 못했습니다. 먼저 %@에 로그인하십시오.";
 
 /* Extensions */
-"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "확장은 직접 추가하는 프로그램으로, 계정 하나의 사용량을 알려 줍니다. Pulse는 그 출력을 링으로 그립니다. 켜기 전에는 실행하지 않고, 인증 정보도 전혀 넘기지 않습니다.";
+"An extension is a program you add that reports one account's usage. Pulse draws its output as a ring, runs it only once you switch it on, and gives it no credentials." = "확장은 직접 추가하는 프로그램으로, 계정 하나의 사용량을 알려 줍니다. Pulse는 출력을 링으로 그리며, 켜기 전에는 실행하지 않고 인증 정보도 넘기지 않습니다.";
 "Another extension already uses the id %@." = "ID ‘%@’는 이미 다른 확장이 쓰고 있습니다.";
 "Couldn't be used" = "사용할 수 없음";
 "Each extension is a folder of its own, holding pulse-extension.json and its program." = "확장 하나에 폴더 하나이며, 그 안에 pulse-extension.json과 프로그램을 넣습니다.";
@@ -726,7 +726,7 @@
 "Extensions folder" = "확장 폴더";
 "Folder" = "폴더";
 "Found" = "찾은 확장";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "pulse-extension.json에 적힌 값입니다. Pulse는 이 확장의 설정을 이 ID로 저장합니다.";
+"From pulse-extension.json. Pulse saves this extension's settings under it." = "pulse-extension.json의 값입니다. 설정은 이 ID로 저장됩니다.";
 "How to write an extension" = "확장 만드는 방법";
 "Id" = "ID";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID에는 영문 소문자, 숫자, 마침표, 하이픈, 밑줄만 쓸 수 있으며 64자까지입니다.";
@@ -755,11 +755,11 @@
 
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "세션을 찾지 못했습니다. 먼저 %@에서 로그인하십시오.";
-"Nothing saved on this Mac yet. Open the service's app once, then retry." = "이 Mac에는 아직 저장된 정보가 없습니다. 해당 서비스의 앱을 한 번 연 뒤 다시 시도하십시오.";
+"Nothing saved on this Mac yet. Open the service's app once, then retry." = "이 Mac에 아직 저장된 정보가 없습니다. 해당 제공업체 앱을 한 번 연 뒤 다시 시도하십시오.";
 "Read a browser session in Settings." = "설정에서 브라우저 세션을 읽어 오십시오.";
-"Sign in with this service's own app or command-line tool first." = "먼저 해당 서비스의 앱이나 명령줄 도구로 로그인하십시오.";
+"Sign in with this service's own app or command-line tool first." = "먼저 해당 제공업체 앱이나 명령줄 도구로 로그인하십시오.";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "브라우저 세션이 만료되었습니다. 웹사이트에서 로그인한 뒤 설정에서 다시 읽어 오십시오.";
-"The saved login has expired. Sign in again with the service's own app or tool." = "저장된 로그인이 만료되었습니다. 해당 서비스의 앱이나 도구로 다시 로그인하십시오.";
+"The saved login has expired. Sign in again with the service's own app or tool." = "저장된 로그인이 만료되었습니다. 해당 제공업체 앱이나 도구로 다시 로그인하십시오.";
 "This account has no plan with usage limits." = "이 계정에는 사용량 한도가 있는 플랜이 없습니다.";
 
 /* ClinePass */
@@ -917,7 +917,7 @@
 "When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "5시간 한도가 초기화되면 Claude Code로 Haiku에 “hi”를 보내, 다음 창이 다음 메시지가 아니라 그때부터 계산되도록 합니다. 대화는 저장되지 않습니다.";
 "When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "5시간 또는 주간 한도가 초기화되면 Codex로 가장 저렴한 모델에 “hi”를 보내, 다음 창이 다음 메시지가 아니라 그때부터 계산되도록 합니다. 대화는 저장되지 않습니다.";
 "Only between" = "이 시간대에만";
-"A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "이 시간대 밖에서 초기화되면 시간대가 시작될 때 시작합니다. Claude Code와 Codex가 함께 씁니다.";
+"Resets outside these hours wait until they begin. Shared by Claude Code and Codex." = "시간대 밖에서 초기화되면 시작 시각까지 기다립니다. Claude Code와 Codex가 함께 씁니다.";
 "Last started" = "마지막 자동 시작";
 "Use at your own risk" = "본인 책임하에 사용하십시오";
 "I understand the risk, turn it on" = "위험을 이해하고 켜기";
@@ -962,16 +962,16 @@
 "%@ cache" = "%@ 캐시";
 "Last used %@" = "마지막 사용 %@";
 "The latest one's cache lapsed at %@." = "가장 최근 대화의 캐시는 %@에 만료되었습니다.";
-"Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "Claude Code 자체 기록에서 읽습니다. 각 응답에는 캐시를 1시간 또는 5분 중 어느 쪽으로 저장했는지 적혀 있고, 캐시는 마지막 요청 때부터 그만큼 유지됩니다. 이 시간은 앞선 내용이 바뀌지 않았을 때의 값입니다. 모델을 바꾸거나 도구를 바꾸거나 대화를 압축하면 새 캐시가 만들어집니다. 하위 에이전트는 자체 캐시를 쓰므로 여기에 표시하지 않습니다.";
+"From Claude Code's records: a cache lasts an hour or five minutes from the last request that used it. Switching model, changing tools or compacting starts a new one. Subagents are not included." = "Claude Code 기록에서 읽습니다. 캐시는 마지막 사용부터 1시간 또는 5분 유지됩니다. 모델이나 도구를 바꾸거나 대화를 압축하면 새로 만들어집니다. 하위 에이전트는 포함하지 않습니다.";
 "Usage panel in the menu" = "메뉴에 사용량 패널 표시";
-"Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "메뉴 막대 아이콘을 열면 위쪽에 모든 계정의 개요와, 계정별 한도·요금제·비용 탭을 보여 줍니다.";
+"The menu opens on an overview of every account, with a tab for each." = "메뉴에 모든 계정의 개요와 계정별 탭을 보여 줍니다.";
 "OpenCode console" = "OpenCode 콘솔";
 "Account request log" = "계정 요청 기록";
 "Kept. The detailed card reads every request on the account with it." = "저장됨. 자세한 카드가 이것으로 계정의 모든 요청을 읽습니다.";
 "No OpenCode console session found. Sign in at opencode.ai first." = "OpenCode 콘솔 세션을 찾지 못했습니다. 먼저 opencode.ai에 로그인하십시오.";
 "Costs as %@ charged them, for the whole account." = "금액은 %@가 실제로 청구한 것으로, 계정 전체 기준입니다.";
 "The console session has expired. Read it again in Settings." = "콘솔 세션이 만료되었습니다. 설정에서 다시 읽어 주십시오.";
-"The request log OpenCode's console keeps for 30 days — every machine and every app on the account, and what each request cost — and the plan's limits, when no key is set or the key is turned away. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode 콘솔이 30일 동안 보관하는 요청 기록입니다. 계정의 모든 기기와 모든 앱에서 보낸 요청과 각 요청의 비용이 들어 있습니다. 키가 없거나 거부되면 요금제 한도도 이것으로 읽습니다. Pulse는 콘솔 로그인 쿠키만 이 Mac에 암호화해 보관합니다.";
+"OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode 콘솔이 30일 동안 보관하는 요청 기록으로, 계정의 모든 기기와 앱의 요청과 비용이 들어 있습니다. 키가 없거나 거부되면 요금제 한도도 여기서 읽습니다. Pulse는 콘솔 로그인 쿠키만 이 Mac에 암호화해 보관합니다.";
 "Turn on Detailed card above to see the request log on the card." = "위의 ‘자세한 카드’를 켜면 카드에서 요청 기록을 볼 수 있습니다.";
 "Read from %@ · workspace %@." = "%@에서 읽음 · 워크스페이스 ‘%@’.";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "콘솔이 이 세션을 받아들이지 않았습니다. opencode.ai에 다시 로그인한 뒤 다시 읽어 주십시오.";
@@ -983,7 +983,7 @@
 "DeepSeek console" = "DeepSeek 콘솔";
 "Account usage" = "계정 사용량";
 "Kept. The usage history below and the detailed card read the whole account with it." = "저장됨. 아래 사용 기록과 자세한 카드가 이것으로 계정 전체를 읽습니다.";
-"The usage DeepSeek's console keeps for the account — every key and every machine, day by day, and what was charged — and the balance, when no key is set or the key is turned away. Pulse keeps only the console's sign-in, encrypted on this Mac." = "DeepSeek 콘솔이 기록하는 계정 사용량입니다. 모든 키와 모든 기기의 날짜별 사용량과 실제 청구액이 들어 있습니다. 키가 없거나 거부되면 잔액도 이것으로 읽습니다. Pulse는 콘솔 로그인 정보만 이 Mac에 암호화해 보관합니다.";
+"DeepSeek's console usage for the account: every key and machine, by day, with what was charged. It also gives the balance when no key is set or the key is refused. Pulse keeps only the console's sign-in, encrypted on this Mac." = "DeepSeek 콘솔이 기록하는 계정 사용량으로, 모든 키와 기기의 날짜별 사용량과 실제 청구액이 들어 있습니다. 키가 없거나 거부되면 잔액도 여기서 읽습니다. Pulse는 콘솔 로그인 정보만 이 Mac에 암호화해 보관합니다.";
 "Reads Chrome, Edge, Brave, Arc and other Chromium browsers." = "Chrome, Edge, Brave, Arc 등 Chromium 브라우저에서 읽습니다.";
 "No Chromium browser was found. Sign in at platform.deepseek.com in Chrome, Edge, Brave or Arc." = "Chromium 브라우저를 찾지 못했습니다. Chrome, Edge, Brave 또는 Arc에서 platform.deepseek.com에 로그인하십시오.";
 "No DeepSeek console sign-in found. Sign in at platform.deepseek.com first." = "DeepSeek 콘솔 로그인을 찾지 못했습니다. 먼저 platform.deepseek.com에 로그인하십시오.";
@@ -999,7 +999,7 @@
 "Unrecognised status" = "알 수 없는 상태";
 "Couldn't read the status page." = "상태 페이지를 읽지 못했습니다.";
 "Status page" = "상태 페이지";
-"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "%@이(가) 상태 페이지에 공개한 내용입니다. 이 페이지를 열 때 읽어 오고, 열려 있는 동안 5분마다 업데이트합니다.";
+"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "%@ 상태 페이지 기준으로, 이 페이지를 열 때와 열려 있는 동안 5분마다 읽어 옵니다.";
 "90 days ago" = "90일 전";
 "%@ days ago" = "%@일 전";
 "Now" = "지금";
@@ -1088,10 +1088,10 @@
 "Usage recaps" = "사용량 리포트";
 "Shareable cards for a day, a week, a month or a year, from this Mac's records." = "이 Mac의 기록으로 하루, 한 주, 한 달 또는 한 해의 공유용 카드를 만듭니다.";
 "When a recap is ready" = "리포트가 준비되었을 때";
-"Last month's recap, at the start of the month. Needs Token spend reading." = "매월 초에 지난달 리포트가 준비되었음을 알립니다. ‘로컬 사용량 기록 읽기’가 켜져 있어야 합니다.";
+"Last month's recap, at the start of the month. Needs Token spend reading." = "매월 초 지난달 리포트를 알립니다. ‘로컬 사용량 기록 읽기’를 켜야 합니다.";
 "Your %@ recap is ready" = "%@ 리포트가 준비되었습니다";
 "The recap needs Token spend" = "리포트에는 토큰 사용량이 필요합니다";
-"It is built from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "이 Mac의 사용량 기록으로 만듭니다. Pulse는 ‘로컬 사용량 기록 읽기’가 켜져 있는 동안에만 기록을 읽습니다.";
+"Turn on Token spend reading to build it." = "만들려면 ‘로컬 사용량 기록 읽기’를 켜십시오.";
 "Open Token spend" = "토큰 사용량 열기";
 "The records could not be read." = "기록을 읽지 못했습니다.";
 "No records for %@" = "%@의 기록이 없습니다";
@@ -1177,12 +1177,12 @@
 // Currency (Settings → General)
 "Currency" = "통화";
 "Show estimates in" = "추정 금액 통화";
-"Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives." = "API 가격으로 계산한 금액을 이 통화로 표시합니다(토큰 사용량, 사용분 추정 금액, 사용 기록, 리포트). 서비스가 직접 알려 주는 잔액과 청구 금액은 그 서비스의 통화로 표시합니다.";
+"For amounts estimated from API prices. Balances a provider reports keep its currency." = "API 가격으로 추정한 금액에 씁니다. 제공업체가 알려 주는 잔액은 원래 통화로 표시합니다.";
 "Exchange rate" = "환율";
 "Rate source" = "환율 출처";
 "Your rate is used. Clear the field to use the day's rate." = "직접 입력한 환율을 사용합니다. 칸을 비우면 당일 환율로 돌아갑니다.";
 "The day's rate, updated %@. Type a rate to use your own." = "당일 환율이며 %@에 업데이트되었습니다. 직접 환율을 입력할 수도 있습니다.";
-"No rate yet, so estimates stay in US dollars. Type a rate, or wait for the day's." = "아직 환율이 없어 추정 금액은 미국 달러로 표시됩니다. 환율을 입력하거나 당일 환율을 받아올 때까지 기다려 주세요.";
+"No rate yet, so estimates stay in US dollars. Type a rate, or wait for the day's." = "아직 환율이 없어 추정 금액을 미국 달러로 표시합니다. 환율을 입력하거나 당일 환율을 기다리십시오.";
 "US dollar" = "미국 달러";
 "Chinese yuan" = "중국 위안";
 "Hong Kong dollar" = "홍콩 달러";
@@ -1195,7 +1195,7 @@
 "Server replies" = "서버 원본 응답";
 "Copy replies" = "응답 복사";
 "No reply" = "응답 없음";
-"Credentials are hidden. A reply can still show the account's email, plan or balance, so it is not in the shared diagnostics. Kept until the next check." = "인증 정보는 가렸습니다. 응답에 계정의 이메일, 요금제, 잔액이 들어 있을 수 있어 공유용 진단 정보에는 넣지 않습니다. 다음 확인 때 바뀝니다.";
+"Credentials are hidden. A reply can show an email or balance, so it stays out of shared diagnostics." = "인증 정보는 가렸습니다. 응답에 이메일이나 잔액이 있을 수 있어 공유용 진단에는 넣지 않습니다.";
 "%@ bytes, not text" = "%@바이트, 텍스트 아님";
 
 // Service status: why a read failed
@@ -1232,7 +1232,7 @@
 "The plan price is the monthly price prorated by the days of this period." = "요금제 가격은 월 요금을 이 기간의 일수로 나눠 계산했습니다.";
 "Experimental" = "실험적 기능";
 "Liquid docking" = "물방울처럼 붙기";
-"Pulled off a screen edge, the rail stretches and parts like a drop; brought near one, it is drawn in. While dragged, it follows the pointer with a little give." = "화면 가장자리에서 떼어 내면 레일이 물방울처럼 늘어났다가 떨어지고, 가장자리 가까이 가져가면 끌려가 붙습니다. 끄는 동안 레일은 포인터를 조금 늦게 따라옵니다.";
+"Parts from and snaps to edges like a drop, and lags a little while dragged." = "물방울처럼 떨어지고 붙으며, 끌 때 조금 늦게 따라옵니다.";
 "These features are still being tuned and may change or be removed." = "이 기능들은 아직 조정 중이며, 앞으로 바뀌거나 없어질 수 있습니다.";
 "Test notification" = "테스트 알림";
 "Send" = "보내기";
@@ -1247,7 +1247,7 @@
 /* Robot colour, personality and shape */
 "Robot colour" = "로봇 색상";
 "Robot figure" = "로봇 모양";
-"The object the robot is drawn as. It shows the same states whichever it is." = "로봇의 모양을 고릅니다. 어떤 모양이든 보여 주는 상태는 같습니다.";
+"Every figure shows the same states." = "어떤 모양이든 보여 주는 상태는 같습니다.";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "제공업체 마크 대신 로봇이 이 계정의 상태를 보여 줍니다. 로봇 모양은 Dominik Scholz의 Open Bot Avatar입니다.";
 "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "링의 로봇 모양과 움직임은 Dominik Scholz의 Open Bot Avatar를 원래 코드 그대로 실행한 것이며, MIT 라이선스로 제공됩니다.";
 "Controller" = "게임 컨트롤러";
@@ -1280,7 +1280,7 @@
 "Close" = "닫기";
 
 /* Star request: StarRequestBanner, AboutPane */
-"You have used Pulse for two weeks. If Pulse has been useful, a star on GitHub helps other people find it." = "Pulse를 사용하신 지 2주가 되었습니다. Pulse가 도움이 되었다면 GitHub에서 Star를 눌러 주세요. 더 많은 사람이 Pulse를 알게 됩니다.";
+"You have used Pulse for two weeks. If it has been useful, a star on GitHub helps others find it." = "Pulse를 사용하신 지 2주가 되었습니다. 도움이 되었다면 GitHub에서 Star를 눌러 주세요. 더 많은 사람이 Pulse를 알게 됩니다.";
 "Star on GitHub" = "GitHub에서 Star 누르기";
 "Support Pulse on Afdian" = "Afdian에서 Pulse 후원하기";
 "Stars help other people find Pulse." = "Star는 더 많은 사람이 Pulse를 알게 되는 데 도움이 됩니다.";

@@ -269,7 +269,7 @@ enum StatusLineHook {
 
         let alert = NSAlert()
         alert.messageText = .localized("Keep reading Claude Code's usage after its login expires?")
-        alert.informativeText = .localized("Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings.")
+        alert.informativeText = .localized("Claude Code's saved login lasts a few hours, and only Claude Code can renew it. Claude Code also sends your limits to the registered status line command; with Pulse as that command, usage stays current after the login expires.\n\nThis edits ~/.claude/settings.json and the status line at the bottom of your Claude Code sessions. Your existing status line keeps working, and you can disconnect in Settings.")
         alert.addButton(withTitle: .localized("Connect"))
         alert.addButton(withTitle: .localized("Not now"))
 

@@ -101,7 +101,7 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
                 : .localized("Uses the key you entered.")
         }
         if self == .automatic, written == .antigravity {
-            return .localized("Reads Antigravity while it is open, and the agy CLI when it is not.")
+            return .localized("Reads Antigravity while it is open, else the agy CLI.")
         }
         return switch (self, written) {
         case (.automatic, _):

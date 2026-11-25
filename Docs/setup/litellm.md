@@ -17,7 +17,7 @@ The proxy's address and a virtual key on it. The key has to belong to a user or 
 | Pulse says | What to do |
 |---|---|
 | Add the server address in Settings. | Fill in **Server address** with the proxy's address. |
-| That address can't be used. It needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a proxy on this Mac or your local network. |
+| The address needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a proxy on this Mac or your local network. |
 | Add an API key in Settings. | Paste the virtual key. |
 | That key was refused. Check it in Settings. | The key is wrong, expired or for another proxy. Paste the one your client uses. |
 | The service didn't respond. / Checking too often — easing off. / The service returned an error. | A temporary network or server problem. Wait a moment and try again. |

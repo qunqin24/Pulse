@@ -90,7 +90,7 @@ struct AccountConnectionGroup: View {
                     String.localized("GitHub account"),
                     subtitle: signIn.githubError
                         ?? (credentials.savedKey.isEmpty
-                            ? String.localized("Opens GitHub's own page. Pulse asks to read your profile, nothing else.")
+                            ? String.localized("Authorize on GitHub's page. Pulse asks only to read your profile.")
                             : String.localized("Signed in. Pulse holds a read-only token for this Mac.")),
                     symbol: "person.crop.circle"
                 ) {
@@ -138,7 +138,7 @@ struct AccountConnectionGroup: View {
                             ? String.localized("The saved login has expired or was refused. Sign in again.")
                             : signIn.hasPrimaryGrokBotLogin
                             ? String.localized("Signed in. Pulse holds the token for this Mac.")
-                            : String.localized("Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here.")),
+                            : String.localized("Optional. Without it, Pulse reads the Cursor editor's login.")),
                     symbol: "person.crop.circle"
                 ) {
                     if signIn.isSigningInPrimaryGrokBot {
@@ -398,7 +398,7 @@ struct AccountConnectionGroup: View {
         // organisation and nothing on this Mac carries one. Optional, like
         // Volcengine's: without it Pulse reads the plan Devin's own app saved.
         case .devin:
-            .localized("A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac.")
+            .localized("A Bearer token from app.devin.ai, a space, then your organization. Optional: without it, Pulse reads Devin's app. Stored encrypted on this Mac.")
         default:
             .localized("Stored encrypted on this Mac.")
         }

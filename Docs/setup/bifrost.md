@@ -17,7 +17,7 @@ The gateway's address and a **virtual key** on it that has at least one budget. 
 | Pulse says | What to do |
 |---|---|
 | Add the server address in Settings. | Fill in "Server address" with your gateway's address. |
-| That address can't be used. It needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a server on your own machine or local network. |
+| The address needs https://, unless the server is on your own network. | Use an `https://` address, or `http://` only for a server on your own machine or local network. |
 | Add an API key in Settings. | Paste the virtual key into "API key". |
 | That key was refused. Check it in Settings. | The virtual key is wrong, inactive, or for a different gateway. |
 | The service didn't respond. / Checking too often — easing off. / The service returned an error. | A temporary network or server problem. Wait a moment and try again. |

@@ -105,7 +105,7 @@ struct PlacementPane: View {
 
                 SettingsRow(
                     String.localized("Snap to screen edges"),
-                    subtitle: String.localized("Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction."),
+                    subtitle: String.localized("Near an edge, the rail docks and runs along it."),
                     symbol: "arrow.right.to.line"
                 ) {
                     Toggle("", isOn: Binding(

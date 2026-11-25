@@ -36,7 +36,7 @@ struct WindowStarterGroup: View {
 
                 SettingsRow(
                     String.localized("Only between"),
-                    subtitle: String.localized("A reset outside these hours is started when they begin. Shared by Claude Code and Codex."),
+                    subtitle: String.localized("Resets outside these hours wait until they begin. Shared by Claude Code and Codex."),
                     symbol: "clock"
                 ) {
                     HStack(spacing: 6) {

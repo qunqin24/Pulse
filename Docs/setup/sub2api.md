@@ -19,7 +19,7 @@ Access to a running sub2api deployment (its web address) and an API key for a gr
 | Message Pulse shows | What to do |
 |---|---|
 | Add the server address in Settings. | Fill in "Server address" with your deployment's URL. |
-| That address can't be used. It needs https://, unless the server is on your own network. | Use an `https://` address, or an `http://` address only if the server is on your own machine or local network. |
+| The address needs https://, unless the server is on your own network. | Use an `https://` address, or an `http://` address only if the server is on your own machine or local network. |
 | Add an API key in Settings. | Paste the group key into "API key". |
 | That key was refused. Check it in Settings. | The key is wrong, revoked, or for a different deployment. Get a fresh one from the console and paste it in again. |
 

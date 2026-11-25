@@ -69,7 +69,7 @@
 "Skipped: the desktop account does not match." = "已略過：桌面版登入的帳號與此帳號不一致。";
 "Reading received" = "已收到讀數";
 "Older reading received" = "收到的是舊讀數";
-"Desktop app session" = "桌面版 App 的登入狀態";
+"Desktop app session" = "桌面版 App 的登入資訊";
 "Codex app server" = "Codex app server";
 "Local language server" = "本機語言伺服器";
 "Signed-in web page" = "已登入的網頁";
@@ -79,20 +79,20 @@
 "Show floating panel" = "顯示浮動面板";
 "The usage rail at the edge of the screen." = "在螢幕邊緣顯示用量膠囊。";
 "Hide in full screen" = "全螢幕時隱藏";
-"Keep the floating panel out of full-screen apps." = "其他 App 進入全螢幕時自動隱藏，避免遮擋。";
+"Keep the floating panel out of full-screen apps." = "其他 App 全螢幕時隱藏浮動面板。";
 "Hide from screenshots" = "截圖時隱藏";
 "Screenshot tools that support it leave the floating panel out. Recordings and screen sharing may still show it." = "支援此設定的截圖工具不會截到浮動面板；錄影和共享螢幕時仍可能顯示。";
 "Follow the active display" = "跟隨使用中的螢幕";
 "With more than one display, the rail moves to the one the pointer is on." = "有多台螢幕時，膠囊會移到指標所在的那一台。";
 "Snap to screen edges" = "自動貼齊螢幕邊緣";
-"Dragged near an edge, the rail docks to it and turns to run along it. When this is off, dragging only moves the rail and keeps its direction." = "拖到螢幕邊緣附近時，膠囊會貼齊該邊緣，並轉為沿邊緣排列。關閉後，拖移只改變位置，方向維持不變。";
+"Near an edge, the rail docks and runs along it." = "拖近邊緣時貼齊並沿邊排列。";
 "Left" = "左側";
 "Top" = "上方";
 "Percentages across" = "橫放時顯示百分比";
 "Turn red at" = "轉紅門檻";
-"Where a ring stops being amber. A spent limit is red whatever this says." = "圓環由黃轉紅的位置。已用盡的額度一律顯示紅色。";
+"Where a ring turns from amber to red. A spent limit is always red." = "圓環由黃轉紅的位置。用盡的額度總是紅色。";
 "Alert colour when docked" = "貼邊警報色";
-"Off keeps the collapsed rail neutral even when a limit needs attention." = "關閉後，收合的細欄一律維持中性色，即使額度需要留意。";
+"When off, the collapsed rail shows no alert colour." = "關閉後，收合的細條不顯示警報色。";
 "Ring activity animation" = "圓環旋轉動畫";
 "The turning mark for a working CLI or a reading being fetched. Off leaves the ring still." = "CLI 執行中或正在抓取新資料時，圓環上出現的旋轉標記。關閉後圓環保持靜止。";
 "Percentages at the side" = "側邊顯示百分比";
@@ -100,7 +100,7 @@
 "Time until reset" = "距離重設的時間";
 "A second arc outside each ring, showing progress through the current window." = "在圓環外側加一圈弧線，表示目前額度週期過去了多少時間。";
 "Time ring direction" = "時間圓環方向";
-"Choose whether the outer arc fills with elapsed time or empties with time remaining." = "選擇外圈依已經過時間逐漸填滿，或依剩餘時間逐漸縮短。";
+"The outer arc fills with time elapsed or empties with time left." = "外圈隨已過時間填滿，或隨剩餘時間縮短。";
 "Elapsed" = "已經過";
 "Remaining" = "剩餘";
 "Capsule" = "膠囊";
@@ -110,7 +110,7 @@
 "Figure above the ring" = "數字顯示在圓環上方";
 "Show what's left" = "顯示剩餘額度";
 "Forecast" = "用盡預測";
-"Whether each limit lasts its window, on the card." = "在卡片上預估每條額度能否用到下次重設。";
+"Whether each limit runs out early, on the card." = "在卡片上預估額度會不會提前用完。";
 "Counts down instead of up, figure and ring together." = "百分比與圓環都改成顯示剩餘量，而非已用量。";
 "Swaps the two, wherever the panel is." = "把百分比移到圓環上方，各種停靠位置都適用。";
 "When the panel lies across: docked to the top or bottom, or free." = "面板橫著放時顯示百分比：貼齊上方、下方，或橫向自由擺放。";
@@ -233,13 +233,13 @@
 "%@ available" = "可用 %@ 張";
 "%@ tokens" = "%@ tokens";
 "Tokens per day" = "每日 token 用量";
-"Counted from this Mac's %@ logs and priced at the published API rates from models.dev. Your plan is a subscription, so this is what the same work would cost through the API — not what you were charged." = "依本機的 %@ 紀錄統計，按 models.dev 公布的 API 價格換算。你用的是訂閱方案，這裡顯示的是同樣用量改走 API 要花的錢，並非實際扣款。";
+"From this Mac's %@ logs, priced at models.dev's API rates. You are on a subscription, so this is not a charge." = "依本機 %@ 紀錄，按 models.dev 的 API 價格換算。你是訂閱方案，這不是實際扣款。";
 "No published price for %@, so those tokens are counted but not costed." = "%@ 沒有公開價格，這部分 token 只計數、不計價。";
 "Reading logs" = "正在讀取紀錄";
 "No history yet" = "尚無紀錄";
 "Nothing has been logged on this Mac yet, so there is no history to add up." = "本機上還沒有紀錄，無從統計。";
 "Token spend reading is off" = "「讀取本機用量記錄」未開啟";
-"This history comes from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "這一節依據這台 Mac 上的用量記錄統計。只有開啟「讀取本機用量記錄」後，Pulse 才會讀取這些記錄。";
+"From this Mac's usage records." = "資料來自本機用量記錄。";
 "Account total" = "帳號累計";
 
 /* Budget estimate */
@@ -248,7 +248,7 @@
 "Top model" = "主力模型";
 "Estimated value" = "額度價值推算";
 "%@ used so far" = "本輪已用 %@";
-"An estimate, not a reported figure: what this Mac spent since each window opened, divided by the percentage the provider says is used. When the percentage rises while this Mac spends nothing, the account is being used elsewhere — another computer, or the website — and that window isn't estimated until it resets. If both are in use at once, the figure reads low. Windows with too little use to extrapolate from are left out." = "這是推算值，不是官方給出的數字：用這台 Mac 從週期開始至今的花費，除以官方給出的已用百分比。如果百分比在漲，這台 Mac 卻幾乎沒花錢，代表帳號還在別處使用（另一台電腦或網頁），這個週期就不再推算，直到重設。兩邊同時在用時，推算值會偏低。用量太少、無法推算的額度不會列出。";
+"An estimate: this Mac's spend this window, divided by the used percentage the provider reports. It reads low when the account is also used elsewhere; if the percentage rises while this Mac spends nothing, the window is no longer estimated. Windows with too little use are left out." = "推算值：本機本週期的花費除以服務商回報的已用百分比。帳號在別處也使用時會偏低；百分比上漲而本機沒有花費時，本週期停止推算。用量太少的不列出。";
 "Also used somewhere this Mac's logs can't see" = "另有這台 Mac 紀錄裡看不到的用量";
 "Not estimated" = "不推算";
 
@@ -303,10 +303,10 @@
 "Black" = "黑色";
 "Light" = "淺色";
 "Transparency" = "透明度";
-"Clearer to the right, and the text turns from white to black. Black text is hard to read over dark windows." = "越往右越透，文字也隨之從白色逐漸變黑。黑色文字在深色視窗上不易看清。";
+"Clearer to the right; the text turns black, which is hard to read over dark windows." = "越往右越透明，文字由白變黑；黑字在深色視窗上不易看清。";
 "Open Antigravity to see its usage." = "開啟 Antigravity 才讀得到它的用量。";
 "Asks the language server Antigravity runs while it is open." = "向 Antigravity 開啟時執行的語言伺服器讀取。";
-"Reads Antigravity while it is open, and the agy CLI when it is not." = "Antigravity 開啟時從它讀取，未開啟時透過 agy CLI讀取。";
+"Reads Antigravity while it is open, else the agy CLI." = "Antigravity 開啟時直接讀取，否則透過 agy CLI 讀取。";
 "CLI" = "CLI";
 "Asks the agy CLI, using the login it already saved." = "透過 agy CLI 讀取，沿用它已儲存的登入。";
 "The agy CLI isn't installed. Install it, or choose another source in Settings." = "未安裝 agy CLI。請安裝它，或在設定中選擇其他用量來源。";
@@ -316,7 +316,7 @@
 "Sign in to Cursor to see usage." = "在 Cursor 中登入後才讀得到用量。";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Cursor 儲存的登入被拒絕。請開啟 Cursor 重新登入。";
 "Sign in to Grok to see usage." = "登入 Grok 後才讀得到用量。";
-"Grok's saved login expired. Use Grok to renew it." = "Grok 儲存的登入已過期。請使用一次 Grok 讓它重新登入。";
+"Grok's login expired. Use Grok to renew it." = "Grok 的登入已過期，用一次 Grok 即可續期。";
 "This Cursor plan doesn't include Grok Bot." = "目前的 Cursor 方案不含 Grok Bot。";
 "Reads your account's limits with the login Cursor saved." = "使用 Cursor 儲存的登入資訊讀取帳號額度。";
 "Cursor's own login" = "Cursor 自己的登入";
@@ -325,7 +325,7 @@
 "Devin's own app" = "Devin 自己的應用程式";
 "Reads what Devin saved the last time it started." = "讀取 Devin 上次啟動時儲存的方案資訊。";
 "Asks Devin for your quota, with the token you entered." = "用你填入的 token 向 Devin 查詢額度。";
-"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "從 app.devin.ai 取得的 Bearer token，後面加一個空格，再填組織。可不填——此時 Pulse 會讀取 Devin 應用程式儲存的方案。加密儲存在本機。";
+"A Bearer token from app.devin.ai, a space, then your organization. Optional: without it, Pulse reads Devin's app. Stored encrypted on this Mac." = "從 app.devin.ai 取得 Bearer token，空格後填組織。可不填，Pulse 會讀取 Devin 應用程式儲存的方案。加密儲存在本機。";
 "Uses the login Cursor already saved." = "使用 Cursor 儲存的登入資訊。";
 "Refresh" = "重新整理";
 "Pulse %@ is available" = "Pulse %@ 可更新";
@@ -372,7 +372,7 @@
 "That key was refused. Check it in Settings." = "這個金鑰被拒絕，請在設定中檢查。";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code 儲存的登入已過期。請使用一次 Claude Code，或在設定中連接狀態列。";
 "Keep reading Claude Code's usage after its login expires?" = "登入過期後仍繼續讀取 Claude Code 的用量？";
-"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code 儲存的登入只有幾小時有效期，且只能由 Claude Code 續期。它還會把額度上報給註冊的狀態列命令——Pulse 可以擔任這個命令，此後無論登入是否有效，用量都能持續更新。\n\n此操作會修改 ~/.claude/settings.json，並改變 Claude Code 工作階段底部的狀態列。你已有的狀態列不受影響，隨時可以在設定中斷開連接。";
+"Claude Code's saved login lasts a few hours, and only Claude Code can renew it. Claude Code also sends your limits to the registered status line command; with Pulse as that command, usage stays current after the login expires.\n\nThis edits ~/.claude/settings.json and the status line at the bottom of your Claude Code sessions. Your existing status line keeps working, and you can disconnect in Settings." = "Claude Code 儲存的登入僅幾小時有效，且只有 Claude Code 能續期。Claude Code 也會把額度傳給已註冊的狀態列命令；Pulse 擔任該命令後，登入過期也能繼續更新用量。\n\n此操作會修改 ~/.claude/settings.json 和 Claude Code 工作階段底部的狀態列。已有的狀態列照常運作，可隨時在設定中斷開連接。";
 "Not now" = "以後再說";
 "Order" = "排序";
 "Add an API key in Settings." = "請在設定裡填入 API 金鑰。";
@@ -395,14 +395,14 @@
 /* Accounts */
 "Accounts" = "帳號";
 "Add another account" = "新增另一個帳號";
-"Opens the provider's own sign-in page." = "會開啟該服務商自己的登入頁面。";
+"Opens the provider's own sign-in page." = "開啟服務商的登入頁面。";
 "Sign in…" = "登入…";
 "Sign out" = "登出";
 "GitHub account" = "GitHub 帳號";
-"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "會開啟 GitHub 自己的頁面。Pulse 只要求讀取你的個人資料，不會要求其他權限。";
+"Authorize on GitHub's page. Pulse asks only to read your profile." = "在 GitHub 頁面授權，只讀取個人資料。";
 "Signed in. Pulse holds a read-only token for this Mac." = "已登入。Pulse 在本機保存了一個唯讀權杖。";
 "Cursor account" = "Cursor 帳號";
-"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "可選。不在這裡登入時，Pulse 讀取 Cursor 編輯器儲存的登入；也可以在這裡透過 Cursor 網頁登入。";
+"Optional. Without it, Pulse reads the Cursor editor's login." = "可選。不登入則讀取 Cursor 編輯器的登入。";
 "The saved login has expired or was refused. Sign in again." = "儲存的登入已過期或遭拒絕，請重新登入。";
 "Signed in. Pulse holds the token for this Mac." = "已登入。Pulse 在本機保存了權杖。";
 "The browser didn't come back." = "瀏覽器沒有傳回結果。";
@@ -424,7 +424,7 @@
 "Couldn't save the login on this Mac." = "無法在本機儲存登入資訊。";
 "Sign in to this account again in Settings." = "請在設定中重新登入這個帳號。";
 "Sign in from Settings to see usage." = "在設定中登入後就會看到用量。";
-"This provider can't be signed in to from Pulse." = "這個服務商無法從 Pulse 登入。";
+"This provider can't be signed in to from Pulse." = "該服務商無法從 Pulse 登入。";
 "Finish or close the sign-in already running, then try again." = "請先完成或關閉正在進行的登入，然後再試一次。";
 "Sign-in was cancelled." = "登入已取消。";
 "The browser didn't come back. If it showed an error, try again." = "瀏覽器沒有傳回結果。如果頁面顯示了錯誤，請再試一次。";
@@ -444,11 +444,11 @@
 
 /* The Claude desktop app as a usage route */
 "Desktop app" = "桌面版";
-"Uses the session the Claude desktop app is signed in with." = "使用 Claude 桌面版已登入的工作階段。";
+"Uses the session the Claude desktop app is signed in with." = "使用 Claude 桌面版的登入資訊。";
 "Sign in to the Claude desktop app to see usage." = "登入 Claude 桌面版後就會看到用量。";
-"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse 需要鑰匙圈權限才能讀取 Claude 桌面版的工作階段。按重新整理可以再問一次。";
-"Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again." = "Pulse 需要鑰匙圈權限才能讀取 Cursor 儲存的登入。按重新整理可以再問一次。";
-"The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面版的工作階段被拒絕。請開啟它重新登入。";
+"Pulse needs keychain access for the Claude desktop app's session. Refresh to ask again." = "讀取 Claude 桌面版的登入資訊需要鑰匙圈權限。按「重新整理」再次請求。";
+"Pulse needs keychain access for Cursor's saved login. Refresh to ask again." = "讀取 Cursor 儲存的登入需要鑰匙圈權限。按「重新整理」再次請求。";
+"The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面版的登入資訊被拒，請重新登入。";
 
 /* Notifications */
 "Notifications" = "通知";
@@ -490,7 +490,7 @@
 
 /* The second usage ring */
 "Second limit inside the ring" = "圓環內顯示第二條額度";
-"A ring just inside the first, as thick as it, for the next-fullest limit, where a provider has one." = "在內側緊貼著再畫一圈同樣粗的環，顯示用量第二高的額度；僅在服務商提供多條額度時可用。";
+"An inner ring for the next-fullest limit." = "內圈顯示用量第二高的額度。";
 "That key works. The account has no Coding Plan running on it." = "金鑰有效，但這個帳號下沒有正在生效的 Coding Plan。";
 
 /* Usage history read from a provider's own statistics */
@@ -501,7 +501,7 @@
 
 /* Splitting one account's rail ring into one per model group */
 "A ring for each model group" = "每個模型群組各一個圓環";
-"Antigravity's model groups draw on separate allowances. One ring can only follow the busiest of them." = "Antigravity 的各個模型分組分別使用獨立的額度，一個圓環只能顯示用量最高的那一組。";
+"One ring per model group." = "每個模型分組一個圓環。";
 "Ring for %@" = "%@ 的圓環";
 "Shown on the panel." = "顯示在面板上。";
 "Not shown on the panel." = "不在面板上顯示。";
@@ -514,7 +514,7 @@
 "since top-up" = "自上次儲值";
 "of your budget" = "佔你的預算";
 "Full tank" = "滿額基準";
-"What you call a full balance. The ring measures against it." = "你認為餘額多少算滿，圓環就以這個數為基準。";
+"The balance the ring counts as full." = "圓環以此餘額為滿額。";
 "How much of the balance Pulse last saw you top up to is gone." = "自 Pulse 上次看到你儲值以來，已經用掉多少。";
 "How much of the figure you set is gone." = "你設定的金額已經用掉多少。";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "在 platform.deepseek.com 取得。加密儲存在本機。";
@@ -614,7 +614,7 @@
 "Sign in to Xiaomi's platform in a browser to see usage." = "在瀏覽器登入小米開放平台後才能看到用量。";
 "Xiaomi's saved session expired. Sign in again in your browser." = "小米的登入資訊已過期，請在瀏覽器重新登入。";
 "No Coding Plan on this Xiaomi account." = "這個小米帳號上沒有 Coding Plan。";
-"Reads the console with your signed-in browser session." = "用你在瀏覽器裡的登入狀態讀取主控台。";
+"Reads the console with your signed-in browser session." = "用瀏覽器裡的登入資訊讀取主控台。";
 
 /* 網路代理 */
 "Network" = "網路";
@@ -640,15 +640,15 @@
 "Enter a whole number from 1 to 65535." = "請輸入 1 到 65535 之間的整數。";
 
 /* 服務選擇 */
-"Choose services to monitor" = "選擇要監控的服務";
-"Choose services to start monitoring…" = "選擇服務，開始監控…";
-"New services detected" = "找到新支援的服務";
-"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "請至少勾選一項服務。按「完成」後，Pulse 才會讀取所選服務的登入資訊並查詢用量。之後可以在設定中更改。";
-"This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place." = "此版本新增支援了在你的 Mac 上找到的更多服務。勾選想加入的服務即可，已有選擇會保留。";
+"Choose services to monitor" = "選擇要監控的服務商";
+"Choose services to start monitoring…" = "選擇服務商開始監控…";
+"New services detected" = "找到新支援的服務商";
+"Choose at least one service. Pulse reads logins and usage only after you finish; you can change this later in Settings." = "請至少勾選一個服務商。按「完成」後，Pulse 才讀取其登入資訊並查詢用量；之後可在設定中更改。";
+"This version supports more services found on your Mac. Choose any to add; your current choices stay." = "此版本支援在你的 Mac 上找到的更多服務商。勾選要加入的即可，原有選擇不變。";
 "Detected on this Mac" = "已在這部 Mac 上找到";
-"Select detected services" = "選擇已找到的服務";
+"Select detected services" = "選擇找到的服務商";
 "Done" = "完成";
-"Enable a service in its settings to start monitoring." = "在服務的設定頁中開啟，即可開始監控。";
+"Enable a service in its settings to start monitoring." = "在服務商的設定頁中開啟即可監控。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "讀取 Claude Code 存在鑰匙圈或憑證檔案中的登入資訊。可能要求鑰匙圈存取權限，其中包括 Claude 桌面版的 cookie 儲存空間。";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "讀取 ~/.codex/auth.json，也可能啟動 codex app-server 使用已儲存的登入。Pulse 不會要求鑰匙圈存取權限。";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "連線至執行中的編輯器，讀取本機語言伺服器的用量與連線權杖；或啟動 agy CLI，使用它已儲存的登入。Pulse 不會要求鑰匙圈存取權限。";
@@ -674,7 +674,7 @@
 "Server address" = "伺服器位址";
 "Edit address" = "編輯位址";
 "Add the server address in Settings." = "請在設定裡填入伺服器位址。";
-"That address can't be used. It needs https://, unless the server is on your own network." = "該位址無法使用。除自建網路中的伺服器外，位址需以 https:// 開頭。";
+"The address needs https://, unless the server is on your own network." = "位址需以 https:// 開頭，區域網路內的伺服器除外。";
 "Sends the key you enter only to the server address you enter. No Keychain prompt." = "僅把你輸入的金鑰傳送到你輸入的伺服器位址。不會出現鑰匙圈提示。";
 "A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "來自你的 sub2api 部署的群組 API 金鑰。僅傳送到上方的位址。加密儲存在本機。";
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "在 v2ex.com 產生的個人存取權杖。加密儲存在本機。";
@@ -704,19 +704,19 @@
 "Sign in to Qoder in a browser to see usage." = "在瀏覽器登入 Qoder 後才能看到用量。";
 "Qoder's saved session expired. Sign in again in your browser." = "Qoder 的登入資訊已過期，請在瀏覽器重新登入。";
 "This Qoder account has no credits." = "這個 Qoder 帳號上沒有點數。";
-"Reads your credits with your signed-in browser session." = "用你在瀏覽器裡的登入狀態讀取點數。";
+"Reads your credits with your signed-in browser session." = "用瀏覽器裡的登入資訊讀取點數。";
 "No Qoder session found. Sign in at %@ first." = "找不到 Qoder 的登入資訊，請先在 %@ 登入。";
 "Site" = "網站";
-"Where you signed in. Changing it clears the saved session." = "即你登入時使用的網站。更改後會清除已儲存的登入狀態。";
-"Where your key is from. Each site keeps its own key." = "即金鑰所屬的網站。兩個網站各自保存自己的金鑰。";
+"Where you signed in. Changing it clears the session." = "你登入的網站。更改後清除已儲存的登入資訊。";
+"Where your key is from. Each site has its own." = "金鑰所屬的網站，各網站的金鑰分開保存。";
 "Sign in to StepFun's platform in a browser to see usage." = "在瀏覽器裡登入階躍星辰開放平台後才能看到用量。";
 "StepFun's saved session expired. Sign in again in your browser." = "階躍星辰的登入資訊已過期，請在瀏覽器裡重新登入。";
 "No Step Plan on this StepFun account." = "這個階躍星辰帳號沒有訂閱 Step Plan。";
-"Reads your Step Plan with your signed-in browser session." = "用你在瀏覽器裡的登入狀態讀取 Step Plan。";
+"Reads your Step Plan with your signed-in browser session." = "用瀏覽器裡的登入資訊讀取 Step Plan。";
 "No StepFun session found. Sign in at %@ first." = "找不到階躍星辰的登入資訊，請先在 %@ 登入。";
 
 /* Extensions */
-"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "擴充功能是你自己加入的程式，用來回報某一個帳號的用量，Pulse 會把它輸出的資料畫成圓環。只有你開啟後 Pulse 才會執行它，也不會交給它任何登入憑證。";
+"An extension is a program you add that reports one account's usage. Pulse draws its output as a ring, runs it only once you switch it on, and gives it no credentials." = "擴充功能是你加入的程式，回報一個帳號的用量。Pulse 把其輸出畫成圓環，開啟後才執行，且不提供任何憑證。";
 "Another extension already uses the id %@." = "另一個擴充功能已經在用 ID「%@」。";
 "Couldn't be used" = "無法使用";
 "Each extension is a folder of its own, holding pulse-extension.json and its program." = "每個擴充功能各自一個資料夾，裡面放 pulse-extension.json 和它的程式。";
@@ -726,7 +726,7 @@
 "Extensions folder" = "擴充功能資料夾";
 "Folder" = "資料夾";
 "Found" = "已找到";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "來自它的 pulse-extension.json。Pulse 用這個 ID 儲存這個擴充功能的設定。";
+"From pulse-extension.json. Pulse saves this extension's settings under it." = "來自 pulse-extension.json。Pulse 按此 ID 儲存擴充功能的設定。";
 "How to write an extension" = "如何撰寫擴充功能";
 "Id" = "ID";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID 只能使用小寫字母、數字、句點、連字號和底線，最多 64 個字元。";
@@ -755,11 +755,11 @@
 
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "沒有找到登入資訊。請先在 %@ 登入。";
-"Nothing saved on this Mac yet. Open the service's app once, then retry." = "這台 Mac 上還沒有儲存任何資料。先開啟一次這個服務的 App，再重試。";
+"Nothing saved on this Mac yet. Open the service's app once, then retry." = "本機還沒有儲存任何資料。請先開啟一次該服務商的 App，再重試。";
 "Read a browser session in Settings." = "請在設定中從瀏覽器讀取登入資訊。";
-"Sign in with this service's own app or command-line tool first." = "請先用這個服務自己的 App 或命令列工具登入。";
+"Sign in with this service's own app or command-line tool first." = "請先用該服務商的 App 或命令列工具登入。";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "瀏覽器登入資訊已過期。請先在網站上登入，再到設定裡重新讀取。";
-"The saved login has expired. Sign in again with the service's own app or tool." = "儲存的登入已過期。請用這個服務自己的 App 或工具重新登入。";
+"The saved login has expired. Sign in again with the service's own app or tool." = "儲存的登入已過期。請用該服務商的 App 或工具重新登入。";
 "This account has no plan with usage limits." = "這個帳號沒有附用量額度的方案。";
 
 /* ClinePass */
@@ -917,7 +917,7 @@
 "When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小時額度重設後，透過 Claude Code 給 Haiku 發一句「hi」，讓下一個視窗從這時開始計時，而不是等到你下一次發訊息。不會儲存任何對話。";
 "When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小時或每週額度重設後，透過 Codex 給最便宜的模型發一句「hi」，讓下一個視窗從這時開始計時，而不是等到你下一次發訊息。不會儲存任何對話。";
 "Only between" = "僅在此時段";
-"A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "如果在這個時段之外重設，會等時段開始時再自動開始。Claude Code 與 Codex 共用。";
+"Resets outside these hours wait until they begin. Shared by Claude Code and Codex." = "時段外重設的，到時段開始再啟動。Claude Code 與 Codex 共用。";
 "Last started" = "上次自動開始";
 "Use at your own risk" = "請自行承擔風險";
 "I understand the risk, turn it on" = "我了解風險，開啟";
@@ -962,19 +962,19 @@
 "%@ cache" = "%@ 快取";
 "Last used %@" = "最後使用 %@";
 "The latest one's cache lapsed at %@." = "最近一個對話的快取已在 %@ 過期。";
-"Read from Claude Code's own records: each reply says whether it cached for an hour or five minutes, and a cache lasts that long from the last request that used it. That is the time if nothing before it has changed — switching model, changing tools or compacting starts a new cache. Subagents keep caches of their own and are not listed." = "資料來自 Claude Code 自己的紀錄。每次回覆都會註明快取保留 1 小時還是 5 分鐘，從最後一次用到它的請求算起。這是上下文沒變時的時長：換模型、改工具或壓縮對話，都會重新開始一份快取。子 Agent 有自己的快取，這裡不列出。";
+"From Claude Code's records: a cache lasts an hour or five minutes from the last request that used it. Switching model, changing tools or compacting starts a new one. Subagents are not included." = "來自 Claude Code 的紀錄：快取保留 1 小時或 5 分鐘，從最後一次使用算起。換模型、改工具或壓縮對話會重建快取。不含子 Agent。";
 "Usage panel in the menu" = "選單中顯示用量面板";
-"Opens the menu bar menu on an overview of every account, with a tab for each one's limits, plan and spend." = "點開選單列圖示時，頂部顯示所有帳號的概覽，每個帳號還有自己的分頁，列出額度、方案和花費。";
+"The menu opens on an overview of every account, with a tab for each." = "選單顯示所有帳號概覽，每個帳號一個分頁。";
 "OpenCode console" = "OpenCode 控制台";
 "Account request log" = "帳號請求紀錄";
 "Kept. The detailed card reads every request on the account with it." = "已儲存。詳細卡片會用它讀取帳號的每一次請求。";
-"No OpenCode console session found. Sign in at opencode.ai first." = "沒有找到 OpenCode 控制台的登入狀態。請先在 opencode.ai 登入。";
+"No OpenCode console session found. Sign in at opencode.ai first." = "找不到 OpenCode 控制台的登入資訊。請先在 opencode.ai 登入。";
 "Costs as %@ charged them, for the whole account." = "金額為 %@ 的實際計費，涵蓋整個帳號。";
 "The console session has expired. Read it again in Settings." = "控制台登入已失效，請到設定裡重新讀取。";
-"The request log OpenCode's console keeps for 30 days — every machine and every app on the account, and what each request cost — and the plan's limits, when no key is set or the key is turned away. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode 控制台保留 30 天的請求紀錄：帳號下所有裝置、所有應用程式的每一次請求，以及每次的花費。沒有設定金鑰、或金鑰被拒絕時，也會用它讀取方案額度。Pulse 只保存控制台的登入 Cookie，加密存放在這台 Mac 上。";
+"OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode 控制台保留 30 天的請求紀錄，涵蓋帳號下所有裝置和應用程式，含每次請求的花費；未設定金鑰或金鑰被拒時，也用它讀取方案額度。Pulse 只保存控制台的登入 Cookie，加密存放在本機。";
 "Turn on Detailed card above to see the request log on the card." = "在上方開啟「詳細卡片」，就能在卡片上看到請求紀錄。";
 "Read from %@ · workspace %@." = "已從 %@ 讀取 · 工作區「%@」。";
-"The console turned this session away. Sign in again at opencode.ai, then read it again." = "控制台拒絕了這個登入狀態。請在 opencode.ai 重新登入後再讀取。";
+"The console turned this session away. Sign in again at opencode.ai, then read it again." = "控制台拒絕了此登入資訊。請在 opencode.ai 重新登入後再讀取。";
 "Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "已從 %@ 讀取，但控制台沒有回應，下次重新整理時會再試。";
 "Reading the account's records…" = "正在讀取帳號紀錄…";
 "From %@'s request log for the whole account — every machine and every app that uses it — with what each request was charged. The log keeps 30 days." = "來自 %@ 的帳號請求紀錄，涵蓋所有裝置和所有使用它的應用程式，金額為每次請求的實際計費。紀錄保留 30 天。";
@@ -983,11 +983,11 @@
 "DeepSeek console" = "DeepSeek 控制台";
 "Account usage" = "帳號用量";
 "Kept. The usage history below and the detailed card read the whole account with it." = "已儲存。下方的用量紀錄和詳細卡片會用它讀取整個帳號。";
-"The usage DeepSeek's console keeps for the account — every key and every machine, day by day, and what was charged — and the balance, when no key is set or the key is turned away. Pulse keeps only the console's sign-in, encrypted on this Mac." = "DeepSeek 控制台記錄的帳號用量：涵蓋所有金鑰和所有裝置，按天統計，並附有實際計費。沒有設定金鑰，或金鑰被拒絕時，也會用它讀取餘額。Pulse 只保存控制台的登入資訊，加密存放在這台 Mac 上。";
+"DeepSeek's console usage for the account: every key and machine, by day, with what was charged. It also gives the balance when no key is set or the key is refused. Pulse keeps only the console's sign-in, encrypted on this Mac." = "DeepSeek 控制台按天記錄的帳號用量和實際計費，涵蓋所有金鑰和裝置；未設定金鑰或金鑰被拒時，也用它讀取餘額。Pulse 只保存控制台的登入資訊，加密存放在本機。";
 "Reads Chrome, Edge, Brave, Arc and other Chromium browsers." = "可從 Chrome、Edge、Brave、Arc 等 Chromium 瀏覽器讀取。";
 "No Chromium browser was found. Sign in at platform.deepseek.com in Chrome, Edge, Brave or Arc." = "沒有找到 Chromium 瀏覽器。請在 Chrome、Edge、Brave 或 Arc 中登入 platform.deepseek.com。";
-"No DeepSeek console sign-in found. Sign in at platform.deepseek.com first." = "沒有找到 DeepSeek 控制台的登入狀態。請先在 platform.deepseek.com 登入。";
-"The console turned this sign-in away. Sign in again at platform.deepseek.com, then read it again." = "控制台拒絕了這個登入狀態。請在 platform.deepseek.com 重新登入後再讀取。";
+"No DeepSeek console sign-in found. Sign in at platform.deepseek.com first." = "找不到 DeepSeek 控制台的登入資訊。請先在 platform.deepseek.com 登入。";
+"The console turned this sign-in away. Sign in again at platform.deepseek.com, then read it again." = "控制台拒絕了此登入資訊。請在 platform.deepseek.com 重新登入後再讀取。";
 
 "Period" = "時間範圍";
 "Service status" = "服務狀態";
@@ -999,7 +999,7 @@
 "Unrecognised status" = "無法辨識的狀態";
 "Couldn't read the status page." = "無法讀取狀態頁。";
 "Status page" = "狀態頁";
-"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "以 %@ 狀態頁公布的為準。開啟此頁時讀取一次，頁面保持開啟期間每 5 分鐘更新。";
+"As %@ reports it on its status page, read when this page opens and every five minutes while it stays open." = "以 %@ 狀態頁為準，開啟此頁時讀取，之後每 5 分鐘更新。";
 "90 days ago" = "90 天前";
 "%@ days ago" = "%@ 天前";
 "Now" = "現在";
@@ -1088,10 +1088,10 @@
 "Usage recaps" = "用量報告";
 "Shareable cards for a day, a week, a month or a year, from this Mac's records." = "用這台 Mac 的本機記錄，製作可以分享的日、週、月、年卡片。";
 "When a recap is ready" = "月報完成時";
-"Last month's recap, at the start of the month. Needs Token spend reading." = "每月月初提醒上個月的月報已完成。需要先開啟「讀取本機用量記錄」。";
+"Last month's recap, at the start of the month. Needs Token spend reading." = "每月月初提醒上月月報。需開啟「讀取本機用量記錄」。";
 "Your %@ recap is ready" = "%@ 的月報已完成";
 "The recap needs Token spend" = "月報需要先讀取本機用量記錄";
-"It is built from the usage records on this Mac, which Pulse reads only while Token spend reading is on." = "月報依據這台 Mac 上的用量記錄製作。只有開啟「讀取本機用量記錄」後，Pulse 才會讀取。";
+"Turn on Token spend reading to build it." = "月報需要開啟「讀取本機用量記錄」。";
 "Open Token spend" = "開啟 Token 消耗";
 "The records could not be read." = "無法讀取用量記錄。";
 "No records for %@" = "%@ 沒有用量記錄";
@@ -1177,12 +1177,12 @@
 // Currency (Settings → General)
 "Currency" = "貨幣";
 "Show estimates in" = "估算金額的貨幣";
-"Money worked out from API prices: Token spend, estimated value, usage history and the recap. Balances and charges a service reports stay in the currency it gives." = "依 API 價格算出的金額會換算成這種貨幣：Token 消耗、額度價值推算、用量紀錄與月報、年報。服務商自己回報的餘額和扣款仍以其提供的貨幣顯示。";
+"For amounts estimated from API prices. Balances a provider reports keep its currency." = "用於按 API 價格估算的金額。服務商回報的餘額維持原幣別。";
 "Exchange rate" = "匯率";
 "Rate source" = "匯率來源";
 "Your rate is used. Clear the field to use the day's rate." = "正在使用你填寫的匯率。清空即改用當日匯率。";
 "The day's rate, updated %@. Type a rate to use your own." = "當日匯率，更新於 %@。也可以填寫自己的匯率。";
-"No rate yet, so estimates stay in US dollars. Type a rate, or wait for the day's." = "尚無匯率，估算金額暫時仍以美元顯示。可以填寫匯率，或等待取得當日匯率。";
+"No rate yet, so estimates stay in US dollars. Type a rate, or wait for the day's." = "尚無匯率，估算金額暫以美元顯示。可填寫匯率，或等待當日匯率。";
 "US dollar" = "美元";
 "Chinese yuan" = "人民幣";
 "Hong Kong dollar" = "港幣";
@@ -1195,7 +1195,7 @@
 "Server replies" = "伺服器原始回應";
 "Copy replies" = "複製回應";
 "No reply" = "沒有回應";
-"Credentials are hidden. A reply can still show the account's email, plan or balance, so it is not in the shared diagnostics. Kept until the next check." = "憑證已隱藏。回應中仍可能有帳號的電子郵件、方案或餘額，因此不會放進可分享的診斷資訊。下次檢查時取代。";
+"Credentials are hidden. A reply can show an email or balance, so it stays out of shared diagnostics." = "憑證已隱藏。回覆可能含電子郵件或餘額，不放進可分享的診斷。";
 "%@ bytes, not text" = "%@ 位元組，不是文字";
 
 // Service status: why a read failed
@@ -1232,7 +1232,7 @@
 "The plan price is the monthly price prorated by the days of this period." = "訂閱價格按這段時間的天數從月費折算。";
 "Experimental" = "實驗性功能";
 "Liquid docking" = "水滴式貼齊";
-"Pulled off a screen edge, the rail stretches and parts like a drop; brought near one, it is drawn in. While dragged, it follows the pointer with a little give." = "從螢幕邊緣拉開時，膠囊會像水滴一樣被拉長，然後斷開；拖近邊緣時會被吸過去。拖移時，膠囊跟隨指標會稍有延遲。";
+"Parts from and snaps to edges like a drop, and lags a little while dragged." = "像水滴一樣拉開、吸附，拖移時略有延遲。";
 "These features are still being tuned and may change or be removed." = "這些功能仍在調整中，日後可能改變或移除。";
 "Test notification" = "測試通知";
 "Send" = "傳送";
@@ -1247,7 +1247,7 @@
 /* Robot colour, personality and shape */
 "Robot colour" = "小機器人顏色";
 "Robot figure" = "小機器人形象";
-"The object the robot is drawn as. It shows the same states whichever it is." = "選擇小機器人的樣子。無論哪種樣子，表示的狀態都相同。";
+"Every figure shows the same states." = "各形象表示的狀態相同。";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "取代服務商圖示顯示帳號狀態，形象來自 Dominik Scholz 的 Open Bot Avatar。";
 "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "圓環中小機器人的形象與動作來自 Dominik Scholz 的 Open Bot Avatar，直接執行其原版程式碼，以 MIT 授權條款授權。";
 "Controller" = "遊戲手把";
@@ -1280,7 +1280,7 @@
 "Close" = "關閉";
 
 /* Star request: StarRequestBanner, AboutPane */
-"You have used Pulse for two weeks. If Pulse has been useful, a star on GitHub helps other people find it." = "你已經使用 Pulse 兩週了。如果 Pulse 對你有幫助，歡迎在 GitHub 上按一個 Star，讓更多人發現這個專案。";
+"You have used Pulse for two weeks. If it has been useful, a star on GitHub helps others find it." = "你已使用 Pulse 兩週。如果覺得有用，歡迎在 GitHub 上按個 Star，幫助更多人找到 Pulse。";
 "Star on GitHub" = "在 GitHub 上按 Star";
 "Support Pulse on Afdian" = "在愛發電支持 Pulse";
 "Stars help other people find Pulse." = "Star 能讓更多人發現 Pulse。";
