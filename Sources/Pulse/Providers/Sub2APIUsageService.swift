@@ -43,6 +43,11 @@ struct Sub2APIUsageService: Sendable {
     /// and nothing to fall back to: every one of these is somebody else's
     /// server.
     let address: String?
+    /// Which of the gateway's accounts this reads: the first, or one added in
+    /// Settings with its own address and key (`Provider.addsAccountsByAddress`).
+    /// Every reading, failures included, carries it, so an added deployment's
+    /// answer is never filed under the first one's ring.
+    var account = AccountKey(.sub2api)
 
     /// Every reading is stamped with the deployment and key it came from, so a
     /// cached reading from another server or account never stands in for this
@@ -58,15 +63,15 @@ struct Sub2APIUsageService: Sendable {
 
     private func read() async -> ProviderUsage {
         guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) else {
-            return .unavailable(.sub2api, reason: .apiKeyMissing)
+            return .unavailable(account, reason: .apiKeyMissing)
         }
 
         let typed = (address ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else {
-            return .unavailable(.sub2api, reason: .serverAddressMissing)
+            return .unavailable(account, reason: .serverAddressMissing)
         }
         guard let endpoint = Self.usageURL(from: typed) else {
-            return .unavailable(.sub2api, reason: .serverAddressRefused)
+            return .unavailable(account, reason: .serverAddressRefused)
         }
 
         var request = URLRequest(url: endpoint)
@@ -75,35 +80,35 @@ struct Sub2APIUsageService: Sendable {
         request.timeoutInterval = 15
 
         guard let (data, response) = try? await NetworkSession.shared.recordedData(for: request) else {
-            return .unavailable(.sub2api, reason: .unreachable)
+            return .unavailable(account, reason: .unreachable)
         }
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(.sub2api, reason: .apiKeyRefused)
-        case 429: return .unavailable(.sub2api, reason: .rateLimited)
-        default: return .unavailable(.sub2api, reason: .serverError)
+        case 401, 403: return .unavailable(account, reason: .apiKeyRefused)
+        case 429: return .unavailable(account, reason: .rateLimited)
+        default: return .unavailable(account, reason: .serverError)
         }
 
         guard let reply = try? JSONDecoder().decode(Reply.self, from: data) else {
-            return .unavailable(.sub2api, reason: .unreadableReply)
+            return .unavailable(account, reason: .unreadableReply)
         }
 
         // The deployment's own word for a key it will not serve. It answers 200
         // and says so in the body, so this is not an HTTP status away.
         if reply.isValid == false {
-            return .unavailable(.sub2api, reason: .apiKeyRefused)
+            return .unavailable(account, reason: .apiKeyRefused)
         }
 
         let windows = Self.windows(from: reply)
         let wallet = Self.wallet(from: reply)
 
         guard !windows.isEmpty || wallet != nil else {
-            return .unavailable(.sub2api, reason: .noLimitsReported)
+            return .unavailable(account, reason: .noLimitsReported)
         }
 
         return ProviderUsage(
-            account: AccountKey(.sub2api),
+            account: account,
             windows: windows,
             observedAt: Date(),
             state: .live,

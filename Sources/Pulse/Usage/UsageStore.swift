@@ -579,6 +579,16 @@ final class UsageStore {
         }
     }
 
+    /// Drops everything shown and kept for an account that has been removed,
+    /// so `--json` and the next launch do not carry a reading for a ring that
+    /// no longer exists. Its slot is never reused, so this is tidying rather
+    /// than a guard against one account's figures standing in for another's.
+    func forgetRemoved(_ account: AccountKey) {
+        usage[account.id] = nil
+        diagnostics[account.id] = nil
+        Task { [cache] in await cache.forget(account) }
+    }
+
     /// Re-fetches only the provider whose ring the user clicked.
     ///
     /// The automatic pass intentionally remains all-or-nothing so its two

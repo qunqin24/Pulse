@@ -45,14 +45,15 @@ final class ProviderCredentialModel {
         let shown = account.provider
         revealsKey = false
         // Copilot has no key field, but its token lives in the same store
-        // and the pane needs to know whether there is one.
-        guard settings.isEnabled(account), account.isPrimary,
+        // and the pane needs to know whether there is one. A gateway's added
+        // account has a key of its own, kept under its slot.
+        guard settings.isEnabled(account), account.isPrimary || shown.addsAccountsByAddress,
               shown.usesAPIKey || shown == .copilot else {
             apiKey = ""
             savedKey = ""
             return
         }
-        apiKey = APIKeyStore.key(for: shown, slot: settings.keySlot(for: shown)) ?? ""
+        apiKey = APIKeyStore.key(for: shown, slot: settings.keySlot(for: account)) ?? ""
         savedKey = apiKey
     }
 
@@ -288,7 +289,7 @@ final class ProviderCredentialModel {
         sessionReadID = nil
         // Only call it saved if it was. Otherwise the Save button greys out
         // over a key that never reached disk.
-        guard APIKeyStore.setKey(apiKey, for: account.provider, slot: settings.keySlot(for: account.provider)) else { return }
+        guard APIKeyStore.setKey(apiKey, for: account.provider, slot: settings.keySlot(for: account)) else { return }
         savedKey = apiKey
         // The store keeps keys for the life of the launch, so it has to be
         // told; otherwise the key is saved and nothing uses it until restart.

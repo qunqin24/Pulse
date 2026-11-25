@@ -417,6 +417,9 @@
 "Name" = "名稱";
 "Remove account" = "移除帳號";
 "Forgets its login and takes it off the rail." = "清除它的登入資訊，並從膠囊中移除。";
+"Another gateway with its own address, key and name." = "再接一個閘道，位址、API 金鑰和名稱都分別填寫。";
+"Add" = "新增";
+"Forgets its address and key and takes it off the rail." = "清除它的位址和 API 金鑰，並從膠囊中移除。";
 "Remove" = "移除";
 "Couldn't save the login on this Mac." = "無法在本機儲存登入資訊。";
 "Sign in to this account again in Settings." = "請在設定中重新登入這個帳號。";

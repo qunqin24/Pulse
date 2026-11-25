@@ -62,6 +62,12 @@ final class LiveUsageServices: UsageServiceFactory {
             let service = settings.pulseExtension(for: account).map(ExtensionUsageService.init(pulseExtension:))
             return { await service?.fetch() ?? .unavailable(account, reason: .extensionMissing) }
         }
+        // A gateway's added account is read exactly as its first one is, with
+        // its own address and key, rather than by a login Pulse signed in to.
+        if provider.addsAccountsByAddress {
+            let key = account.isPrimary ? key : APIKeyStore.key(for: provider, slot: settings.keySlot(for: account))
+            return gatewayFetch(for: account, key: key)
+        }
         guard account.isPrimary else {
             let (claudeCode, codex, grok, grokBot) = (self.claudeCode, self.codex, self.grok, self.grokBot)
             return { await Self.fetchAdded(account, claudeCode: claudeCode, codex: codex, grok: grok, grokBot: grokBot) }
@@ -146,12 +152,8 @@ final class LiveUsageServices: UsageServiceFactory {
         case .xiaomiMiMo:
             let service = XiaomiMiMoUsageService(cookie: key)
             return { await service.fetch() }
-        case .sub2api:
-            let service = Sub2APIUsageService(enteredKey: key, address: settings.serverAddress(for: account))
-            return { await service.fetch() }
-        case .newAPI:
-            let service = NewAPIUsageService(enteredKey: key, address: settings.serverAddress(for: account))
-            return { await service.fetch() }
+        case .sub2api, .newAPI:
+            return gatewayFetch(for: account, key: key)
         case .v2ex:
             let service = V2EXUsageService(enteredKey: key)
             return { await service.fetch() }
@@ -166,6 +168,18 @@ final class LiveUsageServices: UsageServiceFactory {
         case .pulseExtension:
             return { .unavailable(account, reason: .extensionMissing) }
         }
+    }
+
+    /// A self-hosted gateway's request, for any of its accounts: the address
+    /// and key are the account's own, read here on the main actor.
+    private func gatewayFetch(for account: AccountKey, key: String?) -> UsageFetch {
+        let address = settings.serverAddress(for: account)
+        if account.provider == .newAPI {
+            let service = NewAPIUsageService(enteredKey: key, address: address, account: account)
+            return { await service.fetch() }
+        }
+        let service = Sub2APIUsageService(enteredKey: key, address: address, account: account)
+        return { await service.fetch() }
     }
 
     /// What a profiled provider's fetch is handed: the credential Pulse holds

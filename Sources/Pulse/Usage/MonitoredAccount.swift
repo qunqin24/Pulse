@@ -136,13 +136,16 @@ struct RailSlot: Hashable, Identifiable, Sendable {
 }
 
 /// An account beyond the first, which exists only because Pulse was signed in
-/// to it. The first account of every provider is implicit — it is whatever
-/// that tool already stored — so only these need remembering.
+/// to it, or because the user added another gateway deployment by hand
+/// (`Provider.addsAccountsByAddress`). The first account of every provider is
+/// implicit — it is whatever that tool already stored — so only these need
+/// remembering.
 struct ExtraAccount: Codable, Hashable, Identifiable, Sendable {
     let provider: Provider
     let slot: String
     /// What the user calls it. Seeded from whatever the provider says about
-    /// the account when it is added, and editable afterwards, because "Max"
+    /// the account when it is added (a gateway's says nothing, so it is
+    /// numbered), and editable afterwards, because "Max"
     /// and "Max" tell two subscriptions apart no better than nothing does.
     var label: String
 
@@ -153,10 +156,13 @@ struct ExtraAccount: Codable, Hashable, Identifiable, Sendable {
 extension Provider {
     /// Whether Pulse can watch more than one account of this provider.
     ///
-    /// Only the ones it can sign in to itself. The others are read from a
-    /// credential their own tool stored, and that store holds exactly one
-    /// login — so a second account of theirs is not something Pulse can be
-    /// shown, however the rest of the app is shaped.
+    /// Only the ones whose second account Pulse can hold itself. Most are read
+    /// from a credential their own tool stored, and that store holds exactly
+    /// one login — so a second account of theirs is not something Pulse can be
+    /// shown, however the rest of the app is shaped. Two kinds can: providers
+    /// Pulse signs in to itself, and the self-hosted gateways
+    /// (`addsAccountsByAddress`), where every account is an address and a key
+    /// the user types into Settings and no other tool's store is involved.
     var supportsMultipleAccounts: Bool {
         guard let written = handWritten else { return false }
         return switch written {
@@ -164,17 +170,30 @@ extension Provider {
         // than by OAuth — a second allowance is a second Cursor account. See
         // `CursorWebLogin`.
         case .claudeCode, .codex, .grok, .grokBot: true
+        // Somebody who uses relay gateways usually uses several (#125). Each
+        // added one is another deployment's address and key, typed in.
+        case .sub2api, .newAPI: true
         // **Cursor itself is not on this list, and that is not an oversight.**
         // The same sign-in would work, but Cursor's usage summary is read
         // from the editor's own stored login and a second account has no
         // editor behind it. Grok Bot needs nothing but the token.
         case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .copilot, .volcengine,
-             .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api, .newAPI,
+             .commandCode, .deepSeek, .devin, .xiaomiMiMo,
              .v2ex, .qoder, .stepFun: false
         // One account per extension, and each is its own: a second one of the
         // same program is a second folder, not a sign-in.
         case .pulseExtension: false
         }
     }
+
+    /// Whether an added account of this provider is **typed in rather than
+    /// signed in to**: its own server address, its own API key, its own name.
+    ///
+    /// The two self-hosted gateways. Their added accounts are read exactly as
+    /// the first one is — the same service, handed that account's address and
+    /// key — so they skip the sign-in path (`fetchAdded`) and the sign-in rows
+    /// in Settings. The key is kept in `APIKeyStore` under the account's slot
+    /// (`AppSettings.keySlot(for:)`), so the store's entry is the account id.
+    var addsAccountsByAddress: Bool { self == .sub2api || self == .newAPI }
 }

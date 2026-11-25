@@ -54,10 +54,15 @@ struct AccountPane: View {
                 )
                 .id(account)
 
-                AccountsGroup(
-                    account: account, settings: settings,
-                    signIn: flows.signIn, navigation: navigation
-                )
+                // A gateway's other accounts are typed in, not signed in to.
+                if provider.addsAccountsByAddress {
+                    GatewayAccountsGroup(account: account, store: store, settings: settings, navigation: navigation)
+                } else {
+                    AccountsGroup(
+                        account: account, settings: settings,
+                        signIn: flows.signIn, navigation: navigation
+                    )
+                }
 
                 AccountLiveUsageGroup(account: account, store: store, settings: settings)
 

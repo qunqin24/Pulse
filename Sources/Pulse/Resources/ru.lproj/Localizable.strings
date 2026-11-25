@@ -417,6 +417,9 @@
 "Name" = "Название";
 "Remove account" = "Удалить аккаунт";
 "Forgets its login and takes it off the rail." = "Удаляет данные входа и убирает аккаунт с ленты.";
+"Another gateway with its own address, key and name." = "Ещё один шлюз со своим адресом, ключом API и названием.";
+"Add" = "Добавить";
+"Forgets its address and key and takes it off the rail." = "Удаляет адрес и ключ API и убирает аккаунт с ленты.";
 "Remove" = "Удалить";
 "Couldn't save the login on this Mac." = "Не удалось сохранить данные входа на этом Mac.";
 "Sign in to this account again in Settings." = "Снова войдите в этот аккаунт в настройках.";

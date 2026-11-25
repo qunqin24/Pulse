@@ -71,7 +71,10 @@ final class AccountEntryFields {
         if account.provider == .xiaomiMiMo {
             return account.isPrimary && store.usage(for: account).creditRemaining != nil
         }
-        return account.isPrimary && account.provider.reportsSpendableBalance
+        // A gateway's added account is another deployment, with a wallet of
+        // its own.
+        return (account.isPrimary || account.provider.addsAccountsByAddress)
+            && account.provider.reportsSpendableBalance
     }
 
     /// Blank clears it, which puts the pane back to asking for an address

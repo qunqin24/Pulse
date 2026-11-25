@@ -31,8 +31,8 @@ Accounts the stored rail does not mention are appended **in name order** (`AppSe
 | `.deepSeek` | [DeepSeek](deepseek.md) | `deepseek` | Pasted key; the console's sign-in from a Chromium browser's `localStorage` as a second credential (balance without a key, and the daily usage) | no | one, documented | no | none |
 | `.devin` | [Devin](devin.md) | `devin` | Browser `localStorage` (no keychain); optional pasted `token org` | no | saved plan / endpoint | no | the app's `state.vscdb` exists |
 | `.xiaomiMiMo` | [Xiaomi Coding Plan](xiaomi-coding-plan.md) | `xiaomimimo` | Browser session for `platform.xiaomimimo.com`, or a pasted `Cookie:` header | no | one, named | no | none |
-| `.sub2api` | [sub2api](sub2api.md) | `sub2api` | Pasted group key, **plus an address the reader types** | no | one, documented | no | none — stays off until switched on |
-| `.newAPI` | [New API](newapi.md) | `newapi` | Pasted relay key, **plus an address the reader types** | no | one, documented | no | none — stays off until switched on |
+| `.sub2api` | [sub2api](sub2api.md) | `sub2api` | Pasted group key, **plus an address the reader types** | yes, typed in | one, documented | no | none — stays off until switched on |
+| `.newAPI` | [New API](newapi.md) | `newapi` | Pasted relay key, **plus an address the reader types** | yes, typed in | one, documented | no | none — stays off until switched on |
 | `.v2ex` | [V2EX](v2ex.md) | `v2ex` | Pasted Personal Access Token | no | one, documented | no | none — stays off until switched on |
 | `.qoder` | [Qoder](qoder.md) | `qoder` | Browser session for the chosen site (`qoder.com` / `qoder.com.cn`), or a pasted `Cookie:` header | no | one, the account page's own | no | `Application Support/Qoder` or `QoderCN`, or `Qoder.app` |
 | `.stepFun` | [StepFun](stepfun.md) | `stepfun` | Browser session for the chosen site (`platform.stepfun.com` / `platform.stepfun.ai`), or a pasted `Cookie:` header | no | one, the console's own | no | `~/.stepcode` (Step Code CLI) |
@@ -193,7 +193,9 @@ Claude's automatic route keeps an endpoint failure when a status-line capture an
 
 ### Extra accounts
 
-`supportsMultipleAccounts` is **Claude Code, Codex, Grok and Grok Bot**. Not Cursor: its usage is read from the editor's stored login, and a second account has no editor behind it (Grok Bot needs only the token). See [authentication.md](authentication.md), [`MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift).
+`supportsMultipleAccounts` is **Claude Code, Codex, Grok, Grok Bot, sub2api and New API**. Not Cursor: its usage is read from the editor's stored login, and a second account has no editor behind it (Grok Bot needs only the token). See [authentication.md](authentication.md), [`MonitoredAccount.swift`](../../Sources/Pulse/Usage/MonitoredAccount.swift).
+
+The first four are signed in to: Pulse holds each added account's login in `accounts.dat` and reads it through `fetchAdded`. **sub2api and New API are typed in** (`addsAccountsByAddress`, #125): an added account is another deployment, with its own address (`serverAddresses`, keyed by account id), its own key (`keys.dat` under the account's slot, so the entry is the account id — `AppSettings.keySlot(for:)`) and its own name, read by the same service as the first account. Settings adds one without opening any page; removing it deletes the key first and refuses to go on if that fails (`removeGatewayAccount`), then clears every per-account setting and the kept reading.
 
 A provider's first account id is its raw value, so stored preferences and cache files survive the upgrade; making an upgrade look like a fresh install has already cost a release.
 

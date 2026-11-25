@@ -343,7 +343,8 @@ struct AccountConnectionGroup: View {
     /// Whether the card has anything to put in it — the same
     /// four questions it asks, answered before the heading is drawn.
     private var hasConnectionControls: Bool {
-        guard account.isPrimary else { return false }
+        // A gateway's added account has an address and a key of its own.
+        guard account.isPrimary || account.provider.addsAccountsByAddress else { return false }
         if account.provider.hasSourceChoice { return true }
         if account.provider == .copilot || account.provider == .grokBot { return true }
         if account.provider.usesAPIKey { return true }

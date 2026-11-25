@@ -12,6 +12,7 @@ Access to a running New API deployment (its web address) and an `sk-` API key is
    <!-- unverified: exact wording confirmed from New API's own English UI strings (web/src/i18n/locales/en.json: "Tokens", "Create API token", "Click \"Generate\" to create a token"), but not checked against a live running console, and operators can customize branding. -->
 2. In Pulse, go to Settings → New API and turn on "Show in panel". Fill in "Server address" with your deployment's address — the same base URL your client uses, such as `https://gateway.example.com` — and click Save; Pulse assumes `https://` if you don't type a scheme, and only accepts plain `http://` for an address on your own network, such as `localhost`. Then paste your `sk-` key into "API key" and click Save.
 3. Success looks like a balance shown for New API on the Pulse panel. If your deployment reports its currency as a token count or a custom unit rather than a real currency, Pulse shows nothing rather than guessing — this is expected, not a failure.
+4. To add another relay, click "Add" next to "Add another account" in the New API pane's Accounts group. A new account opens with its own "Server address" and "API key" fields; fill them in as in step 2, and type a name for it under "Name" so you can tell the rings apart. "Remove account" on that pane deletes its address and key.
 
 ## If it doesn't work
 
@@ -24,4 +25,4 @@ Access to a running New API deployment (its web address) and an `sk-` API key is
 
 ## What Pulse reads
 
-Pulse sends your `sk-` key to `{your address}/v1/dashboard/billing/subscription` and `/v1/dashboard/billing/usage` on the deployment you typed (the same billing routes New API implements for OpenAI-client compatibility), plus a public, keyless status route that says what currency the deployment reports in. Nothing else is sent, and no model request is ever made through it. The address and key are kept encrypted on this Mac (`keys.dat`).
+Pulse sends your `sk-` key to `{your address}/v1/dashboard/billing/subscription` and `/v1/dashboard/billing/usage` on the deployment you typed (the same billing routes New API implements for OpenAI-client compatibility), plus a public, keyless status route that says what currency the deployment reports in. Nothing else is sent, and no model request is ever made through it. The key is kept encrypted on this Mac (`keys.dat`); the address is kept in Pulse's settings. Each added account has its own of both.

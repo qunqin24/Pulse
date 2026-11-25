@@ -417,6 +417,9 @@
 "Name" = "Name";
 "Remove account" = "Remove account";
 "Forgets its login and takes it off the rail." = "Forgets its login and takes it off the rail.";
+"Another gateway with its own address, key and name." = "Another gateway with its own address, key and name.";
+"Add" = "Add";
+"Forgets its address and key and takes it off the rail." = "Forgets its address and key and takes it off the rail.";
 "Remove" = "Remove";
 "Couldn't save the login on this Mac." = "Couldn't save the login on this Mac.";
 "Sign in to this account again in Settings." = "Sign in to this account again in Settings.";

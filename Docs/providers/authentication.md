@@ -32,10 +32,11 @@ Pulse’s extra-account login has its own refresh token and does not read or wri
 
 ## Extra accounts: who can have them
 
-[`Provider.supportsMultipleAccounts`](../../Sources/Pulse/Usage/MonitoredAccount.swift) is **`.claudeCode`, `.codex`, `.grok`, `.grokBot`**. Not two. Not Cursor.
+[`Provider.supportsMultipleAccounts`](../../Sources/Pulse/Usage/MonitoredAccount.swift) is **`.claudeCode`, `.codex`, `.grok`, `.grokBot`**, signed in to, plus **`.sub2api`, `.newAPI`**, typed in. Not Cursor.
 
 - Claude Code / Codex / Grok: `OAuthLogin` public CLI clients.
 - Grok Bot: **not OAuth** — [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift) (Cursor’s login page + poll).
+- sub2api / New API: **no sign-in at all** (`addsAccountsByAddress`). An added account is another deployment's address and key, typed into Settings; nothing goes to `accounts.dat` and `fetchAdded` never sees it. See [README.md](README.md#extra-accounts).
 - Cursor itself is omitted on purpose. See [cursor.md](cursor.md) and [grok-bot.md](grok-bot.md).
 
 `AccountKey` for the first account is the provider’s raw value (`claudeCode`, not `claudeCode#…`). Added accounts get a slot generated once and never reused, so removing one and adding another cannot inherit settings.

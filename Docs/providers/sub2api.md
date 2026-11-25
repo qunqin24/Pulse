@@ -90,8 +90,11 @@ A group key pasted into Settings, kept encrypted on this Mac by `APIKeyStore`. T
 
 The settings pane asks for the **address first and the key second**, because nothing can be sent anywhere until Pulse knows where.
 
+## More than one deployment or group
+
+People who use relays usually use several ([#125](https://github.com/qunqin24/Pulse/issues/125)), and sub2api issues one key per group. **Add another account** on the sub2api pane adds a ring with its own address, key and name (`addsAccountsByAddress`); nothing is signed in to. Each added account is read by this same service with its own address and key, and every reading is stamped with that account, so a failure on one deployment never lands on another's ring. The first account keeps the provider's own entries, so nothing an existing install stored moves. Storage and removal: [README.md](README.md#extra-accounts).
+
 ## Not carried
 
 - **`usage.today` / `usage.total`, `daily_usage[]`, `model_stats[]`.** Real data, and a spending history for this provider is a separate piece of work — `providesHistory` is false. Adding it would mean deciding what a gateway's `cost` means against its `actual_cost`, which is the operator's margin and not a fact about the reader's spending.
 - **`expires_at`.** There is no subscription-expiry row on the card for any provider yet.
-- **Multiple group keys.** `supportsMultipleAccounts` is false. sub2api issues one key per group and somebody on three groups wants three rings. The account machinery would carry it and the address is now per-account (`AppSettings.serverAddresses`), so the remaining work is the sign-in side; nobody has asked yet.

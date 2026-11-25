@@ -99,8 +99,11 @@ The relay's `sk-` key, pasted into Settings and kept encrypted on this Mac by `A
 
 **Not the logo in New API's own web UI.** That one (`web/src/assets/logo.tsx`) is the command-key glyph, which is exactly what Command Code's mark already is — two rings a reader could not tell apart, which is the one thing a rail of logos must not do. The icon here is the project's brand logo (`web/public/logo.png`) reduced to a monochrome outline: two crescents and the spark between them. A reduction, not a trace — the original is a cyan-to-pink gradient and none of that survives a template image.
 
+## More than one relay
+
+Somebody with keys on three relays wants three rings ([#125](https://github.com/qunqin24/Pulse/issues/125)). **Add another account** on the New API pane adds one with its own address, key and name (`addsAccountsByAddress`), read by this same service and stamped with that account. The first account keeps the provider's own entries. Storage and removal: [README.md](README.md#extra-accounts).
+
 ## Not carried
 
 - **`access_until`.** The key's expiry, 0 for none. There is no subscription-expiry row on the card for any provider yet.
 - **`/api/user/self`**, which carries the account's own quota, groups and top-up history. It needs the console's web session, not the relay key — the same wall [deepseek.md](deepseek.md) hit, and the reason `providesHistory` is false.
-- **Multiple keys.** `supportsMultipleAccounts` is false. Somebody with keys on three relays wants three rings; the account machinery and the per-account address would both carry it, but nobody has asked.

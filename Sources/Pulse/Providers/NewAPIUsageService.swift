@@ -70,6 +70,11 @@ struct NewAPIUsageService: Sendable {
     let enteredKey: String?
     /// The deployment's address, as the reader typed it.
     let address: String?
+    /// Which of the gateway's accounts this reads: the first, or one added in
+    /// Settings with its own address and key (`Provider.addsAccountsByAddress`).
+    /// Every reading, failures included, carries it, so an added deployment's
+    /// answer is never filed under the first one's ring.
+    var account = AccountKey(.newAPI)
 
     /// What New API substitutes for the amount when a key has
     /// `UnlimitedQuota` set — a literal in `controller/billing.go` rather than
@@ -95,19 +100,19 @@ struct NewAPIUsageService: Sendable {
 
     private func read() async -> ProviderUsage {
         guard let key = enteredKey.flatMap({ $0.isEmpty ? nil : $0 }) else {
-            return .unavailable(.newAPI, reason: .apiKeyMissing)
+            return .unavailable(account, reason: .apiKeyMissing)
         }
 
         let typed = (address ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !typed.isEmpty else {
-            return .unavailable(.newAPI, reason: .serverAddressMissing)
+            return .unavailable(account, reason: .serverAddressMissing)
         }
         guard
             let subscriptionURL = Self.url(from: typed, path: "/v1/dashboard/billing/subscription"),
             let usageURL = Self.url(from: typed, path: "/v1/dashboard/billing/usage"),
             let statusURL = Self.url(from: typed, path: "/api/status")
         else {
-            return .unavailable(.newAPI, reason: .serverAddressRefused)
+            return .unavailable(account, reason: .serverAddressRefused)
         }
 
         async let subscriptionReply = Self.get(Subscription.self, from: subscriptionURL, key: key)
@@ -120,16 +125,16 @@ struct NewAPIUsageService: Sendable {
         let (subscription, usage, status) = await (subscriptionReply, usageReply, statusReply)
 
         guard case .reply(let subscription) = subscription else {
-            return .unavailable(.newAPI, reason: subscription.failure ?? .unreadableReply)
+            return .unavailable(account, reason: subscription.failure ?? .unreadableReply)
         }
         // A key with no ceiling at all. A complete answer, not a fault — and
         // `remaining` computed against the sentinel would be a hundred million
         // of something.
         if Self.isUnlimited(subscription) {
-            return .unavailable(.newAPI, reason: .noLimitsReported)
+            return .unavailable(account, reason: .noLimitsReported)
         }
         guard case .reply(let usage) = usage else {
-            return .unavailable(.newAPI, reason: usage.failure ?? .unreadableReply)
+            return .unavailable(account, reason: usage.failure ?? .unreadableReply)
         }
 
         // A status route that did not answer leaves the unit unknown. That is
@@ -140,12 +145,12 @@ struct NewAPIUsageService: Sendable {
             let remaining = Self.remaining(subscription: subscription, usage: usage),
             let currency = Self.currency(of: status.reply)
         else {
-            return .unavailable(.newAPI, reason: .noLimitsReported)
+            return .unavailable(account, reason: .noLimitsReported)
         }
 
         let wallet = ProviderUsage.CreditAmount(amount: remaining, currency: currency)
         return ProviderUsage(
-            account: AccountKey(.newAPI),
+            account: account,
             // **None, ever.** See the note above: the only fraction available
             // means two different things depending on a setting the reply does
             // not carry.

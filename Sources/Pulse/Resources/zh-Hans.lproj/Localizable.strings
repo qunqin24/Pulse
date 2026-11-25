@@ -417,6 +417,9 @@
 "Name" = "名称";
 "Remove account" = "移除账号";
 "Forgets its login and takes it off the rail." = "清除它的登录信息，并从胶囊中移除。";
+"Another gateway with its own address, key and name." = "再接一个网关，地址、API key 和名称都单独填写。";
+"Add" = "添加";
+"Forgets its address and key and takes it off the rail." = "清除它的地址和 API key，并从胶囊中移除。";
 "Remove" = "移除";
 "Couldn't save the login on this Mac." = "无法在本机保存登录信息。";
 "Sign in to this account again in Settings." = "请在设置中重新登录这个账号。";

@@ -417,6 +417,9 @@
 "Name" = "名前";
 "Remove account" = "アカウントを削除";
 "Forgets its login and takes it off the rail." = "ログインを破棄し、レールからも外します。";
+"Another gateway with its own address, key and name." = "別のゲートウェイを追加します。アドレス、API キー、名前はそれぞれ個別に設定します。";
+"Add" = "追加";
+"Forgets its address and key and takes it off the rail." = "アドレスと API キーを破棄し、レールからも外します。";
 "Remove" = "削除";
 "Couldn't save the login on this Mac." = "この Mac にログインを保存できませんでした。";
 "Sign in to this account again in Settings." = "設定でこのアカウントにサインインし直してください。";
