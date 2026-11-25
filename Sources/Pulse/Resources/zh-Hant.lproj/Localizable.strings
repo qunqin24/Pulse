@@ -448,7 +448,7 @@
 "Sign in to the Claude desktop app to see usage." = "登入 Claude 桌面版後就會看到用量。";
 "Pulse needs keychain access for the Claude desktop app's session. Refresh to ask again." = "讀取 Claude 桌面版的登入資訊需要鑰匙圈權限。按「重新整理」再次請求。";
 "Pulse needs keychain access for Cursor's saved login. Refresh to ask again." = "讀取 Cursor 儲存的登入需要鑰匙圈權限。按「重新整理」再次請求。";
-"The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面版的登入資訊被拒，請重新登入。";
+"The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面版的登入資訊被拒，請開啟它重新登入。";
 
 /* Notifications */
 "Notifications" = "通知";
