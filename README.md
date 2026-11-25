@@ -71,6 +71,10 @@
 - **Used or left** — `75% used` or `25% left`, with an optional clock arc for how much of the window has passed.
 - **Live activity** — a turning dot while an agent is working, and an optional robot that reacts to each account, drawn as one of 23 figures from Dominik Scholz's Open Bot Avatar.
 
+<p align="center">
+  <img src="Docs/images/rings.png" width="620" alt="Rings on the dark rail: low and near-limit usage, remaining mode, window clock, second limit, working dot and robot figures">
+</p>
+
 ### Details when you point at a ring
 - **Every limit and its reset** on one card, in continuous or segmented bars.
 - **Detailed card** — the plan, when it was read, what each limit is worth, and recent usage from this Mac's records.
@@ -81,11 +85,19 @@
   <img src="Docs/images/detailed-card.png" width="620" alt="The same Codex card, compact and detailed">
 </p>
 
+<p align="center">
+  <img src="Docs/images/menu-bar.png" width="620" alt="Menu bar readings as a figure, a small ring and split limits, with the menu dashboard open (a mock-up of the bar)">
+</p>
+
 ### Stays out of the way
 - **Any edge** — left, right, top, beside the Dock, or anywhere at all; it folds to a sliver when idle.
 - **Notifications you choose** — a limit crossing a line, spent, reset, failing checks, a low balance, a provider outage.
 - **Six languages** — English, Simplified and Traditional Chinese, Japanese, Korean and Russian.
 - **Optional extras** — global shortcuts, following the active display, hiding from screenshots.
+
+<p align="center">
+  <img src="Docs/images/placement.png" width="620" alt="The rail docked across the top of a screen, and the sliver it folds to when idle">
+</p>
 
 ### Spend, status and the rest
 - **Token spend** — what 54 local clients have used, priced at public API rates, by day, model and agent, over any span you choose.
@@ -94,6 +106,14 @@
 - **Service status** — 44 providers' own status pages, and a notification when one reports an outage.
 - **Connection diagnostics** — where each figure came from, and the servers' own replies.
 - **For power users** — several accounts per provider, extensions for your own sources, `Pulse --json` for scripts.
+
+<p align="center">
+  <img src="Docs/images/recap.png" width="620" alt="Recap cards for a week, a month and a year">
+</p>
+
+<p align="center">
+  <img src="Docs/images/status-diagnostics.png" width="620" alt="Service status from a provider's own status page, and the connection diagnostics">
+</p>
 
 <p align="center">
   <img src="Docs/images/spend.webp" height="290" alt="Token spend: total, tokens by kind, and the daily pattern">

@@ -45,6 +45,10 @@ enum WindowCapture {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
+        // Closed below while its ordering-in animation may still be running:
+        // released with the window, that animation crashed the next picture.
+        window.isReleasedWhenClosed = false
+        window.animationBehavior = .none
         window.contentView = host
         window.setFrameOrigin(offscreen)
         window.orderFrontRegardless()

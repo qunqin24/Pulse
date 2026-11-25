@@ -14,6 +14,9 @@ import SwiftUI
 /// can't be read says so, rather than leaving rows to read as healthy.
 struct ServiceStatusGroup: View {
     let page: StatusPage
+    /// A reading to show without asking the page: the README's picture, drawn
+    /// from made-up rows. Nil in the app.
+    var sample: ServiceStatus?
 
     @State private var status: ServiceStatus?
     @State private var isReading = true
@@ -21,6 +24,13 @@ struct ServiceStatusGroup: View {
     @State private var failure: String?
     /// Bumped by Refresh, which reads again at once.
     @State private var refreshes = 0
+
+    init(page: StatusPage, sample: ServiceStatus? = nil) {
+        self.page = page
+        self.sample = sample
+        _status = State(initialValue: sample)
+        _isReading = State(initialValue: sample == nil)
+    }
 
     private struct Trigger: Hashable {
         let page: StatusPage
@@ -78,7 +88,7 @@ struct ServiceStatusGroup: View {
         // the rows with "couldn't read" and why, rather than leaving old ones
         // to pass for current.
         .task(id: Trigger(page: page, refreshes: refreshes)) {
-            while !Task.isCancelled {
+            while sample == nil, !Task.isCancelled {
                 isReading = true
                 let (read, replies) = await ResponseLog.capturing { await ServiceStatus.read(page) }
                 guard !Task.isCancelled else { return }
