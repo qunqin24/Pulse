@@ -219,6 +219,21 @@ struct GrokBotParsingTests {
         }
     }
 
+    @Test("A login store that will not open fails closed rather than reading the editor's login")
+    func unreadableStoreDoesNotFallBackToCursor() {
+        var askedCursor = false
+        let resolved = GrokBotUsageService.primarySession(
+            storedLogin: nil,
+            storeUnreadable: true,
+            cursorLogin: {
+                askedCursor = true
+                return .token(Self.jwt(expiry: 4_102_444_800))
+            }
+        )
+        #expect(resolved == .unavailable(.signedOut))
+        #expect(!askedCursor)
+    }
+
     @Test("Without a stored web login, primary falls back to Cursor's saved token or reports specific absences")
     func cursorFallbackResolution() async throws {
         let validToken = Self.jwt(expiry: 4_102_444_800)

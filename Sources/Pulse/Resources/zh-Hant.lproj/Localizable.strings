@@ -402,7 +402,8 @@
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "會開啟 GitHub 自己的頁面。Pulse 只要求讀取你的個人資料，不會要求其他權限。";
 "Signed in. Pulse holds a read-only token for this Mac." = "已登入。Pulse 在本機保存了一個唯讀權杖。";
 "Cursor account" = "Cursor 帳號";
-"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "可選——Pulse 可直接使用 Cursor 儲存的登入，也可透過 Cursor 網頁登入。";
+"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "可選。不在這裡登入時，Pulse 讀取 Cursor 編輯器儲存的登入；也可以在這裡透過 Cursor 網頁登入。";
+"The saved login has expired or was refused. Sign in again." = "儲存的登入已過期或遭拒絕，請重新登入。";
 "Signed in. Pulse holds the token for this Mac." = "已登入。Pulse 在本機保存了權杖。";
 "The browser didn't come back." = "瀏覽器沒有傳回結果。";
 "Cancel" = "取消";
@@ -649,7 +650,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "讀取 ~/.codex/auth.json，也可能啟動 codex app-server 使用已儲存的登入。Pulse 不會要求鑰匙圈存取權限。";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "連線至執行中的編輯器，讀取本機語言伺服器的用量與連線權杖；或啟動 agy CLI，使用它已儲存的登入。Pulse 不會要求鑰匙圈存取權限。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "讀取 Cursor 本機資料庫中儲存的登入資訊。不會出現鑰匙圈提示。";
-"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "使用你在設定中連結的 Cursor 登入，或讀取 Cursor 本機資料庫中儲存的登入資訊。";
+"Uses the Cursor account you sign in to in Settings, or the login the Cursor editor saved." = "使用你在設定中登入的 Cursor 帳號；沒有時讀取 Cursor 編輯器儲存的登入。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "讀取 ~/.grok/auth.json 中儲存的登入資訊。不會出現鑰匙圈提示。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "使用在設定中輸入的金鑰，或讀取 OpenCode 的 auth.json。不會出現鑰匙圈提示。";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "使用在設定中輸入的金鑰，或讀取本機儲存的 GLM 金鑰檔案。不會出現鑰匙圈提示。";

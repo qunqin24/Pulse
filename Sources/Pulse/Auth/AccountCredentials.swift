@@ -63,6 +63,19 @@ enum AccountCredentialStore {
         load()?[account.id]
     }
 
+    /// What is stored for one account, telling "nothing stored" apart from a
+    /// file that is there and cannot be read.
+    enum StoredLogin: Equatable, Sendable {
+        case none
+        case login(AccountCredentials)
+        case unreadable
+    }
+
+    static func storedLogin(for account: AccountKey) -> StoredLogin {
+        guard let all = load() else { return .unreadable }
+        return all[account.id].map(StoredLogin.login) ?? .none
+    }
+
     /// Every read-modify-write of the file, so a renewal's check and its write
     /// cannot have a removal land between them, whichever thread they run on.
     private static let lock = NSLock()

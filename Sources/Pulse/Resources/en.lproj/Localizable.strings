@@ -402,7 +402,8 @@
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Opens GitHub's own page. Pulse asks to read your profile, nothing else.";
 "Signed in. Pulse holds a read-only token for this Mac." = "Signed in. Pulse holds a read-only token for this Mac.";
 "Cursor account" = "Cursor account";
-"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page.";
+"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here.";
+"The saved login has expired or was refused. Sign in again." = "The saved login has expired or was refused. Sign in again.";
 "Signed in. Pulse holds the token for this Mac." = "Signed in. Pulse holds the token for this Mac.";
 "The browser didn't come back." = "The browser didn't come back.";
 "Cancel" = "Cancel";
@@ -649,7 +650,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access.";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Reads the login saved in Cursor's local database. No Keychain prompt.";
-"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "Uses the Cursor login you connect in Settings, or reads Cursor's local database.";
+"Uses the Cursor account you sign in to in Settings, or the login the Cursor editor saved." = "Uses the Cursor account you sign in to in Settings, or the login the Cursor editor saved.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Reads the login saved in ~/.grok/auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt.";

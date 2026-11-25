@@ -24,7 +24,7 @@ If you have more than one Cursor account with Grok Bot, go to Settings → Grok 
 | Message Pulse shows | What to do |
 |---|---|
 | Sign in from Settings to see usage. | Click **Sign in…** next to **Cursor account** in Settings → Grok Bot (or sign in to Cursor on this Mac). |
-| Sign in to this account again in Settings. | Click **Sign in again…** in Connection diagnostics (or, on the primary account, click **Sign out** then **Sign in…** next to **Cursor account**). |
+| Sign in to this account again in Settings. | Click **Sign in again…** in Connection diagnostics (or, on the primary account, **Sign in again…** next to **Cursor account**). |
 | Cursor's saved login was refused. Open Cursor to renew it. | Click **Open Cursor** and sign in again, or click **Sign in…** next to **Cursor account** in Settings to sign in via your browser instead. |
 | Pulse needs your keychain to read Cursor's saved login. Refresh to be asked again. | Click **Retry** and allow Keychain access, or click **Sign in…** next to **Cursor account** in Settings. |
 | This Cursor plan doesn't include Grok Bot. | Your current Cursor/Grok plan doesn't include a Grok Bot allowance. |

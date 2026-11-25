@@ -38,8 +38,13 @@ struct GrokBotUsageService: Sendable {
 
     static func primarySession(
         storedLogin: AccountCredentials?,
+        storeUnreadable: Bool = false,
         cursorLogin: () -> CursorAppLogin.Load = CursorAppLogin.load
     ) -> PrimarySession {
+        // Pulse's own store is there and will not open. It may hold a web
+        // login for a different Cursor account than the editor's, so falling
+        // back would read someone else's allowance under this name.
+        if storeUnreadable { return .unavailable(.signedOut) }
         if let storedLogin {
             guard let session = CursorAppLogin.session(from: storedLogin.accessToken) else {
                 return .unavailable(.signedOut)
@@ -81,9 +86,10 @@ struct GrokBotUsageService: Sendable {
 
     func fetch(
         storedLogin: AccountCredentials? = nil,
+        storeUnreadable: Bool = false,
         cursorLogin: () -> CursorAppLogin.Load = CursorAppLogin.load
     ) async -> ProviderUsage {
-        switch Self.primarySession(storedLogin: storedLogin, cursorLogin: cursorLogin) {
+        switch Self.primarySession(storedLogin: storedLogin, storeUnreadable: storeUnreadable, cursorLogin: cursorLogin) {
         case .session(let session, let usesStoredLogin):
             return await fetch(session: session, for: AccountKey(.grokBot), usesStoredLogin: usesStoredLogin)
         case .unavailable(let reason):

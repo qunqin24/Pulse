@@ -18,7 +18,7 @@ extension Provider {
         case .cursor:
             .localized("Reads the login saved in Cursor's local database. No Keychain prompt.")
         case .grokBot:
-            .localized("Uses the Cursor login you connect in Settings, or reads Cursor's local database.")
+            .localized("Uses the Cursor account you sign in to in Settings, or the login the Cursor editor saved.")
         case .grok:
             .localized("Reads the login saved in ~/.grok/auth.json. No Keychain prompt.")
         case .openCodeGo:

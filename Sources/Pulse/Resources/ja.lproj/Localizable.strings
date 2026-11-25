@@ -402,7 +402,8 @@
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "GitHub 自身のページを開きます。Pulse が求めるのはプロフィールの読み取りだけです。";
 "Signed in. Pulse holds a read-only token for this Mac." = "サインイン済みです。Pulse はこの Mac に読み取り専用のトークンを保持します。";
 "Cursor account" = "Cursor アカウント";
-"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "任意 — Cursor に保存されたログインを使うか、Cursor のページからサインインできます。";
+"Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here." = "任意です。ここでサインインしない場合、Pulse は Cursor エディタが保存したログインを読み取ります。ここから Cursor のページでサインインすることもできます。";
+"The saved login has expired or was refused. Sign in again." = "保存されたログインの有効期限が切れたか、拒否されました。もう一度サインインしてください。";
 "Signed in. Pulse holds the token for this Mac." = "サインイン済みです。Pulse はこの Mac にトークンを保持します。";
 "The browser didn't come back." = "ブラウザから戻ってきませんでした。";
 "Cancel" = "キャンセル";
@@ -649,7 +650,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json を読み取り、保存済みのログインで codex app-server を起動する場合があります。Pulse はキーチェーンへのアクセスを求めません。";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "起動中のエディタのローカル言語サーバから使用量と接続トークンを読み取るか、保存済みのログインで agy CLI を起動します。Pulse はキーチェーンへのアクセスを求めません。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Cursor のローカルデータベースに保存されたログインを読み取ります。キーチェーンの確認はありません。";
-"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "設定で連携した Cursor のログインを使うか、Cursor のローカルデータベースに保存されたログインを読み取ります。";
+"Uses the Cursor account you sign in to in Settings, or the login the Cursor editor saved." = "設定でサインインした Cursor アカウントを使います。ない場合は Cursor エディタが保存したログインを読み取ります。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "~/.grok/auth.json に保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "設定で入力したキーを使うか、OpenCode の auth.json を読み取ります。キーチェーンの確認はありません。";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "設定で入力したキーを使うか、保存済みの GLM キーファイルを読み取ります。キーチェーンの確認はありません。";

@@ -25,6 +25,12 @@ struct AccountConnectionGroup: View {
     @FocusState private var credentialFocused: Bool
     @FocusState private var addressFocused: Bool
 
+    /// Whether the latest reading says the stored login no longer works.
+    static func isSignedOut(_ usage: ProviderUsage?) -> Bool {
+        guard case .unavailable(.signedOut) = usage?.state else { return false }
+        return true
+    }
+
     @ViewBuilder
     var body: some View {
         if hasConnectionControls {
@@ -121,18 +127,32 @@ struct AccountConnectionGroup: View {
                     }
                 }
             } else if account.isPrimary, account.provider == .grokBot {
+                // A stored login that has expired or been refused is still
+                // stored: "Signed in" with only Sign out would leave no way
+                // forward on this row, so it offers a fresh sign-in too.
+                let loginLapsed = signIn.hasPrimaryGrokBotLogin && Self.isSignedOut(store.usage[account.id])
                 SettingsRow(
                     String.localized("Cursor account"),
                     subtitle: signIn.primaryGrokBotError
-                        ?? (signIn.hasPrimaryGrokBotLogin
+                        ?? (loginLapsed
+                            ? String.localized("The saved login has expired or was refused. Sign in again.")
+                            : signIn.hasPrimaryGrokBotLogin
                             ? String.localized("Signed in. Pulse holds the token for this Mac.")
-                            : String.localized("Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page.")),
+                            : String.localized("Optional. Without it, Pulse reads the login the Cursor editor saved; you can also sign in through Cursor's page here.")),
                     symbol: "person.crop.circle"
                 ) {
                     if signIn.isSigningInPrimaryGrokBot {
                         Button(String.localized("Cancel")) { signIn.cancelSignIn() }
                     } else if signIn.hasPrimaryGrokBotLogin {
-                        Button(String.localized("Sign out")) { signIn.signOutOfPrimaryGrokBot() }
+                        HStack(spacing: 8) {
+                            if loginLapsed {
+                                Button(String.localized("Sign in again…")) {
+                                    signIn.signIn(to: .grokBot, replacing: account)
+                                }
+                                .disabled(signIn.signingIn != nil)
+                            }
+                            Button(String.localized("Sign out")) { signIn.signOutOfPrimaryGrokBot() }
+                        }
                     } else {
                         Button(String.localized("Sign in…")) {
                             signIn.signIn(to: .grokBot, replacing: account)
