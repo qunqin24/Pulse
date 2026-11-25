@@ -103,9 +103,9 @@ Apache License 2.0), drawn in one colour without its dark tile.
 The figures Pulse can draw in a ring in place of a provider's mark, and their
 motion, are [Open Bot Avatar](https://github.com/DominikScholz/open-bot-avatar)
 by Dominik Scholz. `Sources/Pulse/Resources/open-bot-avatar.js` is the
-`open-bot-avatar` package (v0.3.0, its DOM-free build) bundled unchanged for
+`open-bot-avatar` package (v0.4.0, its DOM-free build) bundled unchanged for
 JavaScriptCore, and `Sources/Pulse/Resources/open-bot-avatars.json` holds the
-figure definitions from the repository's `gallery/` (commit `5e64c08`); both are
+figure definitions from the repository's `gallery/` (commit `323ce6a`); both are
 made by `Scripts/vendor-open-bot-avatar.sh`. Pulse runs the original's renderer
 and paints the frames it returns (`Sources/Pulse/Panel/Robot`).
 

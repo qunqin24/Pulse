@@ -16,7 +16,7 @@ struct RobotFigureRenderTests {
     @Test(.enabled(if: ProcessInfo.processInfo.environment["PULSE_ROBOT_PREVIEW"] != nil))
     func render() async throws {
         // Each figure's first frame builds its volume on the engine's queue,
-        // hundreds of milliseconds apiece; build them all before drawing.
+        // tens of milliseconds apiece; build them all before drawing.
         for figure in RobotFigures.automatic {
             _ = await BotAvatarEngine.shared.frame(key: "render-warm", figure: figure, state: .idle, happy: false,
                                                    time: 0, now: 0, reducedMotion: false, size: 27, colour: "#ffffff")

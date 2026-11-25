@@ -1,7 +1,7 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 //
 // Figures, motion and eyes by Open Bot Avatar
-// (https://github.com/DominikScholz/open-bot-avatar, v0.3.0),
+// (https://github.com/DominikScholz/open-bot-avatar, v0.4.0),
 // Copyright (c) 2026 Dominik Scholz, MIT License — see THIRD_PARTY_NOTICES.md.
 import SwiftUI
 

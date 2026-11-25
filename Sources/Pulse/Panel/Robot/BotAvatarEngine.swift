@@ -1,7 +1,7 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 //
 // Runs Open Bot Avatar (https://github.com/DominikScholz/open-bot-avatar,
-// v0.3.0), Copyright (c) 2026 Dominik Scholz, MIT License — see
+// v0.4.0), Copyright (c) 2026 Dominik Scholz, MIT License — see
 // THIRD_PARTY_NOTICES.md.
 import Foundation
 import JavaScriptCore
@@ -18,9 +18,9 @@ import SwiftUI
 /// data and matrices, back to front, and SwiftUI fills them.
 ///
 /// **Off the main thread, on one queue of its own.** The first frame of a
-/// figure builds its volume, 300–550 ms per figure measured on an M-series
-/// Mac; after that a frame is 0.1–2 ms. On the main thread eight robots would
-/// hold the panel still for seconds, so the context lives on a serial queue —
+/// figure builds its volume, 45–115 ms per figure with v0.4.0 measured on an
+/// M-series Mac; after that a frame is 0.1–2 ms. On the main thread eight robots would
+/// hold the panel still for half a second, so the context lives on a serial queue —
 /// JavaScriptCore is not to be entered from two threads at once — and a ring
 /// shows the provider's mark for that first moment rather than stopping
 /// everything else (`RobotMarkView.placeholder`).
