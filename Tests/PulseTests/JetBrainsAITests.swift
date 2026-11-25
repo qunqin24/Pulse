@@ -123,6 +123,28 @@ struct JetBrainsAITests {
         #expect(usage.state == .unavailable(.noLimitsReported))
     }
 
+    /// What WebStorm 2026.3 leaves behind, as the reporter of #122 described
+    /// it: the component is there, the quota is `Unknown`, the refill is
+    /// `Error`, and no figures. Shape from that description, not a copy.
+    @Test("An IDE that marked its quota unknown didn't save one", arguments: [
+        (#"{"type":"Unknown"}"#, #"{"type":"Error"}"#),
+        (#"{"type":"Unknown"}"#, nil),
+        (#"{"type":"Available"}"#, #"{"type":"Error"}"#),
+    ] as [(String, String?)])
+    func quotaUnsaved(quota: String, refill: String?) {
+        let usage = JetBrainsAIUsageService.reading(from: Self.xml(quota: quota, refill: refill), context: context)
+        #expect(usage.state == .unavailable(.localQuotaUnsaved))
+    }
+
+    @Test("A stated figure keeps no-limits, even beside an unknown type")
+    func statedFigureIsNotUnsaved() {
+        let usage = JetBrainsAIUsageService.reading(
+            from: Self.xml(quota: #"{"type":"Unknown","current":"5","maximum":"0"}"#, refill: #"{"type":"Error"}"#),
+            context: context
+        )
+        #expect(usage.state == .unavailable(.noLimitsReported))
+    }
+
     @Test("No IDE on this Mac has saved a quota")
     func noIDE() async throws {
         let home = try temporaryHome()

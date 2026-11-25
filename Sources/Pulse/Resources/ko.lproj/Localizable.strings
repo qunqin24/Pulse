@@ -756,6 +756,7 @@
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "세션을 찾지 못했습니다. 먼저 %@에서 로그인하십시오.";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "이 Mac에 아직 저장된 정보가 없습니다. 해당 제공업체 앱을 한 번 연 뒤 다시 시도하십시오.";
+"The app didn't save a quota Pulse can read on this Mac." = "앱이 이 Mac에 Pulse가 읽을 수 있는 할당량을 저장하지 않았습니다.";
 "Read a browser session in Settings." = "설정에서 브라우저 세션을 읽어 오십시오.";
 "Sign in with this service's own app or command-line tool first." = "먼저 해당 제공업체 앱이나 명령줄 도구로 로그인하십시오.";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "브라우저 세션이 만료되었습니다. 웹사이트에서 로그인한 뒤 설정에서 다시 읽어 오십시오.";

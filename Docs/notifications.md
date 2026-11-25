@@ -98,7 +98,7 @@ Requested 2026-10-04, after the status rows on the Codex, Claude Code and DeepSe
 
 - **Failure:** a credential that went bad, a request that did not get through.
 - **Answered** (clears the failure streak and the reported-outage mark): complete answers without numbers — `grokBotNotIncluded`, `noLimitsReported`, `zaiNoCodingPlan` (a working key with no plan).
-- **Neutral:** setup steps (`apiKeyMissing`, `notSignedIn`, `volcengineSignInRequired`), an app not running, and `systemProxyOff` (Pulse chose not to ask; [networking.md](networking.md#holding-back)). Ark CLI's generic sign-in response cannot tell never-configured from expired, so it is not evidence of an outage.
+- **Neutral:** setup steps (`apiKeyMissing`, `notSignedIn`, `volcengineSignInRequired`), an app not running, `localQuotaUnsaved` (an app's file that holds no figures), and `systemProxyOff` (Pulse chose not to ask; [networking.md](networking.md#holding-back)). Ark CLI's generic sign-in response cannot tell never-configured from expired, so it is not evidence of an outage.
 
 **Three failures, not one** — six minutes to an hour and a half at the 2–30 minute interval. These endpoints are undocumented; one dropped connection is not news. Reported once per outage: `reportedFailure` is cleared only by a working reading.
 

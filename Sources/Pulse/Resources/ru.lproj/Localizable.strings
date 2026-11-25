@@ -756,6 +756,7 @@
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "Сеанс не найден. Сначала войдите на %@.";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "На этом Mac пока ничего не сохранено. Откройте приложение сервиса хотя бы раз и повторите попытку.";
+"The app didn't save a quota Pulse can read on this Mac." = "Приложение не сохранило на этом Mac квоту, которую Pulse может прочитать.";
 "Read a browser session in Settings." = "Считайте сеанс браузера в настройках.";
 "Sign in with this service's own app or command-line tool first." = "Сначала войдите через приложение или утилиту командной строки этого сервиса.";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "Сеанс браузера истёк. Войдите на сайте, затем снова считайте сеанс в настройках.";

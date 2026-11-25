@@ -186,7 +186,7 @@ struct UsageCacheTests {
         for reason: ProviderUsage.Unavailability in [
             .apiKeyMissing, .ollamaSessionMissing, .signedOut, .notSignedIn,
             .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused, .cursorKeyRefused,
-            .sessionMissing, .localLoginMissing, .localAppMissing
+            .sessionMissing, .localLoginMissing, .localAppMissing, .localQuotaUnsaved
         ] {
             let out = await cache.reconciled(.unavailable(Self.account, reason: reason))
             #expect(out.state == .unavailable(reason), "\(reason) must not be hidden behind the cache")

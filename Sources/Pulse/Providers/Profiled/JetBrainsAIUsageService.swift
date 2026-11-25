@@ -93,11 +93,11 @@ enum JetBrainsAIUsageService {
         // quota; a file without it has nothing in it yet.
         guard let quota = option("quotaInfo") else { return context.unavailable(.localAppMissing) }
 
+        let refill = option("nextRefill")
         guard let used = number(quota["current"]), used >= 0,
               let maximum = number(quota["maximum"]), maximum > 0
-        else { return context.unavailable(.noLimitsReported) }
+        else { return context.unavailable(withoutFigures(quota: quota, refill: refill)) }
 
-        let refill = option("nextRefill")
         let tariff = refill?["tariff"] as? [String: Any]
         let stated = seconds(fromISODuration: (refill?["duration"] ?? tariff?["duration"]) as? String)
         let fraction = used / maximum
@@ -112,6 +112,18 @@ enum JetBrainsAIUsageService {
             isExhausted: fraction >= 1
         )
         return context.reading([window], at: now)
+    }
+
+    /// Why a quota with no usable figures has none. IDEs from 2026.3 on fetch
+    /// the quota online and keep it in memory (issue #122): the file stays,
+    /// with `quotaInfo.type` `Unknown` and `nextRefill.type` `Error`, and no
+    /// `current` or `maximum`. That is the IDE not saving a quota, not a quota
+    /// without a size, so it is not called `noLimitsReported`.
+    static func withoutFigures(quota: [String: Any], refill: [String: Any]?) -> ProviderUsage.Unavailability {
+        let stated = quota["current"] != nil || quota["maximum"] != nil
+        let unknown = (quota["type"] as? String)?.caseInsensitiveCompare("Unknown") == .orderedSame
+        let failed = (refill?["type"] as? String)?.caseInsensitiveCompare("Error") == .orderedSame
+        return !stated && (unknown || failed) ? .localQuotaUnsaved : .noLimitsReported
     }
 
     /// The IDE writes its figures as strings; a number is taken as well.

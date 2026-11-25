@@ -51,7 +51,7 @@ enum ConnectionRemedy: Equatable {
         // extension works is the nearest thing to a remedy Pulse has.
         case .extensionMissing, .extensionSignedOut: return .help
         case .sessionMissing, .sessionExpired: return .readBrowser
-        case .localLoginMissing, .localLoginExpired, .localAppMissing, .noPlan: return .help
+        case .localLoginMissing, .localLoginExpired, .localAppMissing, .localQuotaUnsaved, .noPlan: return .help
         case .codexNotInstalled, .kiroNotInstalled, .kiroVersionUnsupported,
              .volcengineCLIMissing, .antigravityCLIMissing, .antigravityCLIOutdated, .noLimitsReported,
              .grokBotNotIncluded, .zaiNoCodingPlan, .xiaomiNoCodingPlan, .qoderNoCredits,

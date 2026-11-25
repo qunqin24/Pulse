@@ -756,6 +756,7 @@
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "没有找到登录信息。请先在 %@ 登录。";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "本机还没有保存任何数据。请先打开一次该服务商的应用，再重试。";
+"The app didn't save a quota Pulse can read on this Mac." = "应用没有在本机保存可读的额度。";
 "Read a browser session in Settings." = "请在设置中从浏览器读取登录信息。";
 "Sign in with this service's own app or command-line tool first." = "请先用该服务商的应用或命令行工具登录。";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "浏览器登录信息已过期。请先在网站上登录，再到设置里重新读取。";

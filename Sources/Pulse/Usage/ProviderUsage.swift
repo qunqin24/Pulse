@@ -717,6 +717,10 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         case localLoginExpired
         /// It reads what its own app keeps on this Mac, and nothing is there.
         case localAppMissing
+        /// What its own app keeps on this Mac is there, but the app marked the
+        /// figures unknown or failed instead of writing them. Not a quota
+        /// without a size (`noLimitsReported`): nothing was stated at all.
+        case localQuotaUnsaved
         /// The service answered: this account has no plan with limits. An
         /// answer, not an outage.
         case noPlan
@@ -786,6 +790,7 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .localLoginMissing: .localized("Sign in with this service's own app or command-line tool first.")
             case .localLoginExpired: .localized("The saved login has expired. Sign in again with the service's own app or tool.")
             case .localAppMissing: .localized("Nothing saved on this Mac yet. Open the service's app once, then retry.")
+            case .localQuotaUnsaved: .localized("The app didn't save a quota Pulse can read on this Mac.")
             case .noPlan: .localized("This account has no plan with usage limits.")
             }
         }

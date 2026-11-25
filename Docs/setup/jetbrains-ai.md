@@ -19,6 +19,7 @@ The figure is as current as the IDE last left it: the IDE updates it while it ru
 | Pulse says | What to do |
 |---|---|
 | Nothing saved on this Mac yet. Open the service's app once, then retry. | No IDE has saved a quota yet. Open an IDE, use AI Assistant once, then refresh. |
+| The app didn't save a quota Pulse can read on this Mac. | The IDE keeps its settings file but no longer writes the quota into it. IDEs from version 2026.3 on fetch the quota online and keep it in memory, so Pulse can't read it yet. Older IDEs are not affected. |
 | No limits reported. | The IDE saved a quota without a size (a free or unlimited licence, for instance). There is nothing to draw a ring for. |
 | Couldn't read the reply. | The IDE's file isn't in the shape Pulse knows; an IDE update may have changed it. |
 

@@ -756,6 +756,7 @@
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "セッションが見つかりません。先に %@ でサインインしてください。";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "この Mac にはまだ何も保存されていません。そのプロバイダの App を一度開いて再試行してください。";
+"The app didn't save a quota Pulse can read on this Mac." = "App は Pulse が読み取れる利用枠をこの Mac に保存していません。";
 "Read a browser session in Settings." = "設定でブラウザのセッションを読み取ってください。";
 "Sign in with this service's own app or command-line tool first." = "先にそのプロバイダの App かコマンドラインツールでサインインしてください。";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "ブラウザのセッションの有効期限が切れました。Web サイトでサインインしてから、設定でもう一度読み取ってください。";

@@ -445,6 +445,9 @@ struct AlertMemory: Codable, Sendable, Equatable {
              .systemProxyOff,
              // Nothing set up yet, for a profiled provider.
              .sessionMissing, .localLoginMissing, .localAppMissing,
+             // The app's own file holds no figures: a fact about what it
+             // wrote, not about whether the service is up.
+             .localQuotaUnsaved,
              // An app that was never installed or never signed in, which is
              // the same standing as a CLI that is not there: true until
              // somebody does something, and not an outage to announce.

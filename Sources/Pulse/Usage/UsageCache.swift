@@ -173,7 +173,10 @@ actor UsageCache {
             .xiaomiSessionMissing, .signedOut, .notSignedIn,
             .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused, .cursorKeyRefused,
             .serverAddressMissing, .serverAddressRefused,
-            .sessionMissing, .localLoginMissing, .localAppMissing].contains(reason) {
+            .sessionMissing, .localLoginMissing, .localAppMissing,
+            // An IDE that stopped writing its quota would otherwise keep the
+            // last one it wrote on screen, stale, for good.
+            .localQuotaUnsaved].contains(reason) {
             return fetched
         }
 

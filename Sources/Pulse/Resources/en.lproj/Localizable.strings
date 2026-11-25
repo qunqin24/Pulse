@@ -756,6 +756,7 @@
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "No session found. Sign in at %@ first.";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "Nothing saved on this Mac yet. Open the service's app once, then retry.";
+"The app didn't save a quota Pulse can read on this Mac." = "The app didn't save a quota Pulse can read on this Mac.";
 "Read a browser session in Settings." = "Read a browser session in Settings.";
 "Sign in with this service's own app or command-line tool first." = "Sign in with this service's own app or command-line tool first.";
 "The browser session expired. Sign in on the website, then read it again in Settings." = "The browser session expired. Sign in on the website, then read it again in Settings.";
