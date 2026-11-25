@@ -350,9 +350,11 @@ actor ModelPrices {
         // Antigravity writes `gemini-3.8-flash-n`, `-control` and `-xpe` beside
         // `gemini-3.8-flash` for the same Flash, and Google publishes one rate
         // for it (#90). `-n` was seen in a real store; the other two are as
-        // reported on the issue. Only on a Gemini id, and only these three.
+        // reported on the issue. `gemini-4-argon-trial` is Antigravity's trial
+        // of Gemini 4 Argon, seen in its own stores; the API rate is Argon's.
+        // Only on a Gemini id, and only these four.
         if model.hasPrefix("gemini-") {
-            for tag in ["-n", "-control", "-xpe"] where model.hasSuffix(tag) {
+            for tag in ["-n", "-control", "-xpe", "-trial"] where model.hasSuffix(tag) {
                 candidates.append(String(model.dropLast(tag.count)))
             }
         }
