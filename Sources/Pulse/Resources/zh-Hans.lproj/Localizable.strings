@@ -1248,7 +1248,7 @@
 "Robot colour" = "小机器人颜色";
 "Robot figure" = "小机器人形象";
 "The object the robot is drawn as. It shows the same states whichever it is." = "选择小机器人的样子。无论哪种样子，表示的状态都相同。";
-"Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "代替服务商图标，显示这个账号当前的状态。小机器人的形象来自 Dominik Scholz 的 Open Bot Avatar。";
+"Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "代替服务商图标显示账号状态，形象来自 Dominik Scholz 的 Open Bot Avatar。";
 "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "圆环中小机器人的形象和动作来自 Dominik Scholz 的 Open Bot Avatar，直接运行其原版代码，以 MIT 许可证授权。";
 "Controller" = "游戏手柄";
 "Barbell" = "杠铃";
