@@ -326,7 +326,6 @@
 "Reads what Devin saved the last time it started." = "Читает данные, которые Devin сохранил при последнем запуске.";
 "Asks Devin for your quota, with the token you entered." = "Запрашивает квоту у Devin с помощью введённого токена.";
 "A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "Bearer-токен с app.devin.ai, затем пробел и организация. Необязательно — Pulse может прочитать данные, сохранённые приложением Devin. Хранится в зашифрованном виде на этом Mac.";
-"Grok Bot is billed to your Cursor account." = "Grok Bot оплачивается с вашего аккаунта Cursor.";
 "Uses the login Cursor already saved." = "Использует данные входа, уже сохранённые в Cursor.";
 "Refresh" = "Обновить";
 "Pulse %@ is available" = "Доступна версия Pulse %@";
@@ -402,6 +401,9 @@
 "GitHub account" = "Аккаунт GitHub";
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "Откроется страница GitHub. Pulse запросит только чтение профиля.";
 "Signed in. Pulse holds a read-only token for this Mac." = "Вход выполнен. Pulse хранит на этом Mac токен только для чтения.";
+"Cursor account" = "Аккаунт Cursor";
+"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "Необязательно — Pulse может использовать сохранённый вход Cursor или выполнить вход через страницу Cursor.";
+"Signed in. Pulse holds the token for this Mac." = "Вход выполнен. Pulse хранит токен на этом Mac.";
 "The browser didn't come back." = "Браузер не вернул ответ.";
 "Cancel" = "Отменить";
 "Code" = "Код";
@@ -647,6 +649,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Читает ~/.codex/auth.json и может запускать codex app-server с сохранённым входом. Pulse не запрашивает доступ к связке ключей.";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "Подключается к локальному языковому серверу запущенного редактора с помощью его токена или запускает CLI agy с сохранённым в нём входом. Pulse не запрашивает доступ к связке ключей.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Читает данные входа из локальной базы данных Cursor. Доступ к связке ключей не запрашивается.";
+"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "Использует аккаунт Cursor, подключённый в настройках, или читает данные входа из локальной базы данных Cursor.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Читает данные входа из ~/.grok/auth.json. Доступ к связке ключей не запрашивается.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает auth.json OpenCode. Доступ к связке ключей не запрашивается.";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "Использует ключ, введённый в настройках, или читает сохранённые файлы ключей GLM. Доступ к связке ключей не запрашивается.";

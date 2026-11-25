@@ -4,14 +4,17 @@ import Foundation
 /// Grok Bot's weekly allowance.
 ///
 /// **A ring of its own, though the credential is Cursor's.** Grok Bot is xAI's,
-/// sold through Cursor and billed against the Cursor account, so it is read
-/// with the login the Cursor editor already stored — `CursorAppLogin` makes the
-/// cookie, and nothing is held here. But it is not a share of Cursor's monthly
-/// bill the way the two model pools are: it is a separate weekly allowance
-/// under a name people know, so it gets its own place on the rail rather than
-/// a fourth row on somebody else's card. It was the fourth row first, and the
-/// question that came back was "where is Grok Bot" — asked while looking
-/// straight at the Grok pane, which is the *other* Grok.
+/// sold through Cursor and billed against the Cursor account. For the primary
+/// account, Pulse prefers a Cursor web sign-in saved in Settings
+/// (`AccountCredentialStore` via `CursorWebLogin`) so users without Cursor
+/// installed can still check usage; when none is saved, it falls back to the
+/// login the Cursor editor already stored (`CursorAppLogin` makes the cookie).
+/// It is not a share of Cursor's monthly bill the way the two model pools are:
+/// it is a separate weekly allowance under a name people know, so it gets its
+/// own place on the rail rather than a fourth row on somebody else's card. It
+/// was the fourth row first, and the question that came back was "where is
+/// Grok Bot" — asked while looking straight at the Grok pane, which is the
+/// *other* Grok.
 ///
 /// **And it is the other Grok.** `GrokUsageService` reads the weekly pool a
 /// SuperGrok plan spends across every xAI product; this reads an allowance that
@@ -25,6 +28,46 @@ struct GrokBotUsageService: Sendable {
     private static let endpoint =
         URL(string: "https://cursor.com/api/dashboard/get-sand-usage-status")!
 
+    /// How a primary Grok Bot fetch resolves its session: a web sign-in kept by
+    /// Pulse wins over the editor's database, and an expired or refused web
+    /// sign-in never silently falls back to the editor's login.
+    enum PrimarySession: Equatable, Sendable {
+        case session(CursorAppLogin.Session, usesStoredLogin: Bool)
+        case unavailable(ProviderUsage.Unavailability)
+    }
+
+    static func primarySession(
+        storedLogin: AccountCredentials?,
+        cursorLogin: () -> CursorAppLogin.Load = CursorAppLogin.load
+    ) -> PrimarySession {
+        if let storedLogin {
+            guard let session = CursorAppLogin.session(from: storedLogin.accessToken) else {
+                return .unavailable(.signedOut)
+            }
+            return .session(session, usesStoredLogin: true)
+        }
+
+        switch cursorLogin() {
+        case .token(let token):
+            guard let built = CursorAppLogin.session(from: token) else {
+                return .unavailable(.cursorLoginExpired)
+            }
+            return .session(built, usesStoredLogin: false)
+        case .keychainRefused:
+            return .unavailable(.cursorKeyRefused)
+        // A key that opens nothing even read afresh: what Cursor wrote is not
+        // something this can read, and opening Cursor rewrites it.
+        case .unreadable:
+            return .unavailable(.cursorLoginExpired)
+        case .absent:
+            return .unavailable(.notSignedIn)
+        }
+    }
+
+    static func refusedReason(usesStoredLogin: Bool) -> ProviderUsage.Unavailability {
+        usesStoredLogin ? .signedOut : .cursorLoginExpired
+    }
+
     /// An account Pulse signed in to itself, read with the token it holds for
     /// it rather than the one the editor stored. The request is otherwise the
     /// same: it is the same endpoint and the same kind of cookie, built from a
@@ -33,34 +76,26 @@ struct GrokBotUsageService: Sendable {
         guard let session = CursorAppLogin.session(from: token) else {
             return .unavailable(account, reason: .signedOut)
         }
-        return await fetch(session: session, for: account)
+        return await fetch(session: session, for: account, usesStoredLogin: true)
     }
 
-    func fetch() async -> ProviderUsage {
-        // The login is Cursor's, so the remedy names Cursor. That is not
-        // the wrong-provider trap the rest of `Unavailability` was fixed
-        // for — it is where this credential actually comes from, and
-        // sending someone to Grok Bot's own app would not produce one.
-        let session: CursorAppLogin.Session
-        switch CursorAppLogin.load() {
-        case .token(let token):
-            guard let built = CursorAppLogin.session(from: token) else {
-                return .unavailable(.grokBot, reason: .cursorLoginExpired)
-            }
-            session = built
-        case .keychainRefused:
-            return .unavailable(.grokBot, reason: .cursorKeyRefused)
-        // A key that opens nothing even read afresh: what Cursor wrote is not
-        // something this can read, and opening Cursor rewrites it.
-        case .unreadable:
-            return .unavailable(.grokBot, reason: .cursorLoginExpired)
-        case .absent:
-            return .unavailable(.grokBot, reason: .cursorSignInRequired)
+    func fetch(
+        storedLogin: AccountCredentials? = nil,
+        cursorLogin: () -> CursorAppLogin.Load = CursorAppLogin.load
+    ) async -> ProviderUsage {
+        switch Self.primarySession(storedLogin: storedLogin, cursorLogin: cursorLogin) {
+        case .session(let session, let usesStoredLogin):
+            return await fetch(session: session, for: AccountKey(.grokBot), usesStoredLogin: usesStoredLogin)
+        case .unavailable(let reason):
+            return .unavailable(.grokBot, reason: reason)
         }
-        return await fetch(session: session, for: AccountKey(.grokBot))
     }
 
-    private func fetch(session: CursorAppLogin.Session, for account: AccountKey) async -> ProviderUsage {
+    private func fetch(
+        session: CursorAppLogin.Session,
+        for account: AccountKey,
+        usesStoredLogin: Bool
+    ) async -> ProviderUsage {
         var request = URLRequest(url: Self.endpoint)
         request.httpMethod = "POST"
         request.setValue(session.cookie, forHTTPHeaderField: "Cookie")
@@ -89,7 +124,7 @@ struct GrokBotUsageService: Sendable {
 
         switch (response as? HTTPURLResponse)?.statusCode {
         case 200: break
-        case 401, 403: return .unavailable(account, reason: account.isPrimary ? .cursorLoginExpired : .signedOut)
+        case 401, 403: return .unavailable(account, reason: Self.refusedReason(usesStoredLogin: usesStoredLogin))
         case 429: return .unavailable(account, reason: .rateLimited)
         default: return .unavailable(account, reason: .serverError)
         }

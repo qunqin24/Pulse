@@ -120,6 +120,26 @@ struct AccountConnectionGroup: View {
                         }
                     }
                 }
+            } else if account.isPrimary, account.provider == .grokBot {
+                SettingsRow(
+                    String.localized("Cursor account"),
+                    subtitle: signIn.primaryGrokBotError
+                        ?? (signIn.hasPrimaryGrokBotLogin
+                            ? String.localized("Signed in. Pulse holds the token for this Mac.")
+                            : String.localized("Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page.")),
+                    symbol: "person.crop.circle"
+                ) {
+                    if signIn.isSigningInPrimaryGrokBot {
+                        Button(String.localized("Cancel")) { signIn.cancelSignIn() }
+                    } else if signIn.hasPrimaryGrokBotLogin {
+                        Button(String.localized("Sign out")) { signIn.signOutOfPrimaryGrokBot() }
+                    } else {
+                        Button(String.localized("Sign in…")) {
+                            signIn.signIn(to: .grokBot, replacing: account)
+                        }
+                        .disabled(signIn.signingIn != nil)
+                    }
+                }
             }
 
             // **Its own `if`, not the tail of that chain.** A provider can want
@@ -305,7 +325,7 @@ struct AccountConnectionGroup: View {
     private var hasConnectionControls: Bool {
         guard account.isPrimary else { return false }
         if account.provider.hasSourceChoice { return true }
-        if account.provider == .copilot { return true }
+        if account.provider == .copilot || account.provider == .grokBot { return true }
         if account.provider.usesAPIKey { return true }
         return account.isPrimary && account.provider.soleRoute != nil
     }

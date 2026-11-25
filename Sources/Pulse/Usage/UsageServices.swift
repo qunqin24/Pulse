@@ -118,7 +118,9 @@ final class LiveUsageServices: UsageServiceFactory {
             return { await grok.fetch() }
         case .grokBot:
             let grokBot = self.grokBot
-            return { await grokBot.fetch() }
+            return {
+                await grokBot.fetch(storedLogin: AccountCredentialStore.credentials(for: account))
+            }
         case .volcengine:
             let service = VolcengineUsageService(enteredKey: key)
             return { await service.fetch(source: source) }

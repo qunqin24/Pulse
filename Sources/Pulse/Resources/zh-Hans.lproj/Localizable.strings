@@ -326,7 +326,6 @@
 "Reads what Devin saved the last time it started." = "读取 Devin 上次启动时保存的套餐信息。";
 "Asks Devin for your quota, with the token you entered." = "用你填入的 token 向 Devin 查询额度。";
 "A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "在 app.devin.ai 获取 Bearer token，后面加一个空格再填组织。可不填，此时 Pulse 会读取 Devin 应用保存的套餐信息。加密保存在本机。";
-"Grok Bot is billed to your Cursor account." = "Grok Bot 的额度算在你的 Cursor 账号上。";
 "Uses the login Cursor already saved." = "用 Cursor 已保存的登录读取。";
 "Refresh" = "刷新";
 "Pulse %@ is available" = "Pulse %@ 可更新";
@@ -402,6 +401,9 @@
 "GitHub account" = "GitHub 账号";
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "会打开 GitHub 自己的页面。Pulse 只申请读取你的个人资料，不会要求其他权限。";
 "Signed in. Pulse holds a read-only token for this Mac." = "已登录。Pulse 在本机保存了一个只读令牌。";
+"Cursor account" = "Cursor 账号";
+"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "可选——Pulse 可直接使用 Cursor 保存的登录，也可通过 Cursor 网页登录。";
+"Signed in. Pulse holds the token for this Mac." = "已登录。Pulse 在本机保存了令牌。";
 "The browser didn't come back." = "浏览器没有返回结果。";
 "Cancel" = "取消";
 "Code" = "验证码";
@@ -647,6 +649,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "读取 ~/.codex/auth.json，也可能启动 codex app-server 使用它保存的登录。Pulse 不请求钥匙串授权。";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "连接运行中的编辑器，读取本机语言服务器的用量及连接令牌；或启动 agy CLI，使用它保存的登录。Pulse 不请求钥匙串授权。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "读取 Cursor 本地数据库里保存的登录信息。无需钥匙串授权。";
+"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "使用你在设置中连接的 Cursor 登录，或读取 Cursor 本地数据库里保存的登录信息。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "读取 ~/.grok/auth.json 里保存的登录信息。无需钥匙串授权。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "使用在设置里填入的 key，或读取 OpenCode 的 auth.json。无需钥匙串授权。";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "使用在设置里填入的 key，或读取本机保存的 GLM key 文件。无需钥匙串授权。";

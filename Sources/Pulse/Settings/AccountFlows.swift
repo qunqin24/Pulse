@@ -34,6 +34,7 @@ final class AccountFlows {
     /// The account pane opened, or its account or its switch changed.
     func seed(for account: AccountKey) {
         credentials.seed(for: account)
+        signIn.seed(for: account)
         fields.seed(for: account)
     }
 }

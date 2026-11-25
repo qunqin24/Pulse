@@ -326,7 +326,6 @@
 "Reads what Devin saved the last time it started." = "Devin이 지난번 실행할 때 저장한 요금제 정보를 읽습니다.";
 "Asks Devin for your quota, with the token you entered." = "입력한 토큰으로 Devin에 잔여량을 물어봅니다.";
 "A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "app.devin.ai의 Bearer 토큰, 공백 한 칸, 그다음 조직 이름 순입니다. 비워 두어도 되며, 그러면 Devin 앱이 저장한 내용을 Pulse가 읽습니다. 이 Mac에 암호화되어 저장됩니다.";
-"Grok Bot is billed to your Cursor account." = "Grok Bot 사용분은 Cursor 계정으로 청구됩니다.";
 "Uses the login Cursor already saved." = "Cursor가 이미 저장해 둔 로그인을 씁니다.";
 "Refresh" = "새로 고치기";
 "Pulse %@ is available" = "Pulse %@을(를) 사용할 수 있습니다";
@@ -402,6 +401,9 @@
 "GitHub account" = "GitHub 계정";
 "Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "GitHub 자체 페이지를 엽니다. Pulse가 요청하는 것은 프로필 읽기뿐입니다.";
 "Signed in. Pulse holds a read-only token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 읽기 전용 토큰을 보관합니다.";
+"Cursor account" = "Cursor 계정";
+"Optional — Pulse can use Cursor's saved login, or sign in through Cursor's page." = "선택 사항 — Cursor에 저장된 로그인을 사용하거나 Cursor 페이지에서 로그인할 수 있습니다.";
+"Signed in. Pulse holds the token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 토큰을 보관합니다.";
 "The browser didn't come back." = "브라우저에서 돌아오지 않았습니다.";
 "Cancel" = "취소";
 "Code" = "인증 코드";
@@ -647,6 +649,7 @@
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json을 읽으며 저장된 로그인으로 codex app-server를 실행할 수 있습니다. Pulse는 키체인 접근 권한을 요청하지 않습니다.";
 "Reads the running editor's local language server and connection token, or runs the agy CLI with its saved login. Pulse does not request Keychain access." = "실행 중인 편집기의 로컬 언어 서버에서 사용량과 연결 토큰을 읽거나, 저장된 로그인으로 agy CLI를 실행합니다. Pulse는 키체인 접근 권한을 요청하지 않습니다.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Cursor의 로컬 데이터베이스에 저장된 로그인을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";
+"Uses the Cursor login you connect in Settings, or reads Cursor's local database." = "설정에서 연결한 Cursor 로그인을 사용하거나 Cursor의 로컬 데이터베이스에 저장된 로그인을 읽습니다.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "~/.grok/auth.json에 저장된 로그인을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "설정에 입력한 키를 사용하거나 OpenCode의 auth.json을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "설정에 입력한 키를 사용하거나 저장된 GLM 키 파일을 읽습니다. 키체인 확인 창은 표시되지 않습니다.";

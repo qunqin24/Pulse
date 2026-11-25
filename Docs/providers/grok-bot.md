@@ -6,7 +6,7 @@ Service: [`GrokBotUsageService.swift`](../../Sources/Pulse/Providers/GrokBotUsag
 
 Grok Bot is xAI’s, sold through Cursor and billed against the **Cursor** account. It is not a share of Cursor’s monthly model pools, and it is not the SuperGrok weekly pool [grok.md](grok.md) reads. Two companies’ bills, one brand: they share no credential, no endpoint, and **no mark** (`grok.svg` vs `xai.svg`).
 
-Extra accounts are supported. `keepsLocalTranscripts` is false. `soleRoute` names Cursor’s login, because that is whose credential it is.
+Extra accounts are supported. `keepsLocalTranscripts` is false. `soleRoute` is `nil`: Settings draws a **Cursor account** sign-in row in Connection so the primary account works without Cursor installed.
 
 ## Why a ring of its own
 
@@ -16,7 +16,9 @@ Do **not** read Grok Bot from `~/.grok/auth.json` or `cli-chat-proxy.grok.com`. 
 
 ## Current route
 
-`POST https://cursor.com/api/dashboard/get-sand-usage-status` with the cookie `CursorAppLogin` already makes (or the same cookie shape built from an extra-account token). Body `{}`. Headers include `Origin: https://cursor.com` — an endpoint that checks origin refuses a request without one. Redirects refused (Cookie would otherwise follow to another host).
+For the primary account, `GrokBotUsageService.primarySession` checks `AccountCredentialStore` (`accounts.dat`, key `grokBot`) first. If Pulse holds a `CursorWebLogin` session there, it uses that token and does not touch Cursor’s editor database or Keychain; an expired or server-refused (401/403) stored web login reports `.signedOut` without silently falling back to the editor’s login. When no Pulse web login is stored, Pulse falls back to `CursorAppLogin.load()` (the login the Cursor editor saved): absent reports `.notSignedIn` (so users without Cursor installed are directed to **Sign in…** in Settings rather than told to open Cursor), Keychain denial reports `.cursorKeyRefused`, and an expired, unreadable, or server-refused editor token reports `.cursorLoginExpired`.
+
+`POST https://cursor.com/api/dashboard/get-sand-usage-status` with the cookie built from either token (`CursorAppLogin.session(from:)`). Body `{}`. Headers include `Origin: https://cursor.com` — an endpoint that checks origin refuses a request without one. Redirects refused (Cookie would otherwise follow to another host).
 
 Cursor’s protocol calls this product “Sand”. Not public API; can change without notice. Fields are decoded optionally so a shape change costs the reading rather than a crash.
 
@@ -45,11 +47,11 @@ Those three flags come back as **`.grokBotNotIncluded`, not `.noLimitsReported`*
 
 The reply prices the *upgrade* (“$500 of Grok Bot usage each week with Pro+”) and never what is left of this plan’s own allowance. `creditBalance` stays nil.
 
-## Extra accounts
+## Sign-in and extra accounts
 
-Not OAuth. [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift): login page + poll. PKCE hashes the **base64url-encoded** verifier string. Tokens ~60 days; no refresh endpoint in Cursor’s client. See [authentication.md](authentication.md).
+Not OAuth. [`CursorWebLogin`](../../Sources/Pulse/Auth/CursorWebLogin.swift): login page + poll, used for both the primary account’s **Cursor account** sign-in in Settings and added accounts. PKCE hashes the **base64url-encoded** verifier string. Tokens ~60 days; no refresh endpoint in Cursor’s client. See [authentication.md](authentication.md).
 
-Pulse does not read the standalone app’s `sand-secrets.json`.
+Pulse does not read or decrypt the standalone app’s `sand-secrets.json`: doing so would add another Keychain prompt and depend on `Grok Bot.app`’s private `safeStorage` format ([#120](https://github.com/qunqin24/Pulse/issues/120)).
 
 ## First run
 

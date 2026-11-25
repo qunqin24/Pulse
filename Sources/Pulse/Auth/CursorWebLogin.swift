@@ -3,8 +3,9 @@ import AppKit
 import CryptoKit
 import Foundation
 
-/// Signing Pulse in to a second Cursor account, which is what a second Grok
-/// Bot allowance is.
+/// Signing Pulse in to a Cursor account for Grok Bot — either the primary
+/// account in Settings (when no Cursor editor login is used) or an added
+/// subscription.
 ///
 /// **This is not OAuth, and calling it that would set the wrong expectations.**
 /// Cursor has no authorize/token pair for a third party to drive — it has a
