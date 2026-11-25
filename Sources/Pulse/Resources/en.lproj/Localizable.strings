@@ -1250,7 +1250,7 @@
 "Robot figure" = "Robot figure";
 "Every figure shows the same states." = "Every figure shows the same states.";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz.";
-"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License.";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer." = "The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer.";
 "Controller" = "Controller";
 "Barbell" = "Barbell";
 "Mug" = "Mug";
@@ -1279,7 +1279,6 @@
 "Material" = "Material";
 "Flat" = "Flat";
 "Fluffy" = "Fluffy";
-"Flat colour, or a coat of fur with bead eyes." = "Flat colour, or a coat of fur with bead eyes.";
 "A note from the developer" = "A note from the developer";
 "Don't show again" = "Don't show again";
 "Close" = "Close";

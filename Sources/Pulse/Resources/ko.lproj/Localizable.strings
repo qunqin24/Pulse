@@ -1250,7 +1250,7 @@
 "Robot figure" = "로봇 모양";
 "Every figure shows the same states." = "어떤 모양이든 보여 주는 상태는 같습니다.";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "제공업체 마크 대신 로봇이 이 계정의 상태를 보여 줍니다. 로봇 모양은 Dominik Scholz의 Open Bot Avatar입니다.";
-"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "링의 로봇 모양과 움직임은 Dominik Scholz의 Open Bot Avatar를 원래 코드 그대로 실행한 것이며, MIT 라이선스로 제공됩니다.";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer." = "링의 로봇 모양과 움직임은 Dominik Scholz의 Open Bot Avatar(MIT 라이선스)입니다. 원래 코드를 그대로 실행하며, 털은 Metal로 이식한 렌더러로 그립니다.";
 "Controller" = "게임 컨트롤러";
 "Barbell" = "바벨";
 "Mug" = "머그잔";
@@ -1279,7 +1279,6 @@
 "Material" = "재질";
 "Flat" = "단색";
 "Fluffy" = "털";
-"Flat colour, or a coat of fur with bead eyes." = "단색으로 칠할지, 구슬 같은 눈을 단 털로 덮을지 고릅니다.";
 "A note from the developer" = "개발자의 한마디";
 "Don't show again" = "다시 표시 안 함";
 "Close" = "닫기";

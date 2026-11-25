@@ -1250,7 +1250,7 @@
 "Robot figure" = "小機器人形象";
 "Every figure shows the same states." = "各形象表示的狀態相同。";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "取代服務商圖示顯示帳號狀態，形象來自 Dominik Scholz 的 Open Bot Avatar。";
-"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "圓環中小機器人的形象與動作來自 Dominik Scholz 的 Open Bot Avatar，直接執行其原版程式碼，以 MIT 授權條款授權。";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer." = "圓環中小機器人的形象與動作來自 Dominik Scholz 的 Open Bot Avatar，以 MIT 授權條款授權。原版程式碼直接執行，毛絨由移植到 Metal 的算繪器繪製。";
 "Controller" = "遊戲手把";
 "Barbell" = "槓鈴";
 "Mug" = "杯子";
@@ -1279,7 +1279,6 @@
 "Material" = "材質";
 "Flat" = "純色";
 "Fluffy" = "毛絨";
-"Flat colour, or a coat of fur with bead eyes." = "純色，或一身絨毛、眼睛像小珠子。";
 "A note from the developer" = "來自開發者的話";
 "Don't show again" = "不再顯示";
 "Close" = "關閉";

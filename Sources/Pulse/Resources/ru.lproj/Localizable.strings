@@ -1250,7 +1250,7 @@
 "Robot figure" = "Облик робота";
 "Every figure shows the same states." = "В любом облике состояния те же.";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "Заменяет логотип сервиса и показывает, что происходит с этим аккаунтом. Облики робота — Open Bot Avatar от Dominik Scholz.";
-"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "Облики робота в кольцах и их движения — Open Bot Avatar от Dominik Scholz; его исходный код запускается без изменений. Лицензия MIT.";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer." = "Облики робота в кольцах и их движения — Open Bot Avatar от Dominik Scholz (лицензия MIT). Его код запускается без изменений, а мех рисует перенесённый на Metal рендерер.";
 "Controller" = "Геймпад";
 "Barbell" = "Штанга";
 "Mug" = "Кружка";
@@ -1279,7 +1279,6 @@
 "Material" = "Материал";
 "Flat" = "Гладкий";
 "Fluffy" = "Пушистый";
-"Flat colour, or a coat of fur with bead eyes." = "Сплошной цвет или шерсть с глазами-бусинками.";
 "A note from the developer" = "Слово от разработчика";
 "Don't show again" = "Больше не показывать";
 "Close" = "Закрыть";

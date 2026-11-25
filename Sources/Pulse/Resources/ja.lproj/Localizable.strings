@@ -1250,7 +1250,7 @@
 "Robot figure" = "ロボットの姿";
 "Every figure shows the same states." = "どの姿でも表す状態は同じです。";
 "Replaces the provider's mark and shows what this account is doing. The figures are Open Bot Avatar by Dominik Scholz." = "プロバイダのマークの代わりに、このアカウントの状態をロボットで表示します。ロボットの姿は Dominik Scholz の Open Bot Avatar です。";
-"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License." = "リングのロボットの姿と動きは Dominik Scholz の Open Bot Avatar を、元のコードのまま動かしています。MIT ライセンスで提供されています。";
+"The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer." = "リングのロボットの姿と動きは Dominik Scholz の Open Bot Avatar（MIT ライセンス）です。元のコードをそのまま動かし、毛並みは Metal に移植したレンダラーで描いています。";
 "Controller" = "ゲームコントローラー";
 "Barbell" = "バーベル";
 "Mug" = "マグカップ";
@@ -1279,7 +1279,6 @@
 "Material" = "質感";
 "Flat" = "フラット";
 "Fluffy" = "ふわふわ";
-"Flat colour, or a coat of fur with bead eyes." = "単色で塗るか、ビーズのような目の毛並みにするかを選びます。";
 "A note from the developer" = "開発者からのひとこと";
 "Don't show again" = "今後表示しない";
 "Close" = "閉じる";

@@ -128,7 +128,7 @@ struct AboutPane: View {
                 // Pulse's.
                 SettingsRow(
                     "Open Bot Avatar",
-                    subtitle: String.localized("The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, run as it is, under the MIT License."),
+                    subtitle: String.localized("The robot figures in the rings and their motion are Open Bot Avatar by Dominik Scholz, under the MIT License. Its code runs as it is; the fur is drawn by a Metal port of its renderer."),
                     symbol: "theatermasks"
                 ) {
                     Button(String.localized("Open")) {

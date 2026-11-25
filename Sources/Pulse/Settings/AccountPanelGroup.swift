@@ -298,7 +298,6 @@ struct AccountPanelGroup: View {
 
         SettingsRow(
             String.localized("Material"),
-            subtitle: String.localized("Flat colour, or a coat of fur with bead eyes."),
             symbol: "circle.hexagongrid"
         ) {
             Picker("", selection: Binding(
