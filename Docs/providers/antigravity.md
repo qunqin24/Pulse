@@ -4,7 +4,7 @@ Service: [`AntigravityUsageService.swift`](../../Sources/Pulse/Providers/Antigra
 
 Two routes, chosen in Settings → *Read usage from*: **Automatic** (the default) tries the editor's **language server** while Antigravity is open, then the **`agy` CLI** when the server produced no figures; **CLI** asks only `agy`; **Desktop app** asks only the language server. The route that answered is recorded as `languageServer` or `antigravityCLI`.
 
-The odd one out. Extra accounts are not supported. `keepsLocalTranscripts` is false: it leaves no session files the history card can read, so history and the money estimate are left out rather than shown as zeroes. The activity mark is drawn from its conversation databases ([below](#activity-mark)).
+The odd one out. Extra accounts are not supported, and cannot be without breaking Antigravity's terms (see [below](#the-oauth-route-is-off-limits)). `keepsLocalTranscripts` is false: it leaves no session files the history card can read, so history and the money estimate are left out rather than shown as zeroes. The activity mark is drawn from its conversation databases ([below](#activity-mark)).
 
 ## The language server
 
@@ -89,6 +89,10 @@ Of the 306 methods the language server exposes, not one has “usage” or “cr
 So history, money estimate, and activity cannot be built from the language server — they need per-model token counts it does not give. They come instead from the conversation stores under `~/.gemini`, read by Token spend ([../token-spend-sources.md](../token-spend-sources.md)).
 
 `~/.gemini` was **not** on that list and should have been: it holds `antigravity/`, `antigravity-ide/` and a `jetski-standalone-oauth-token` of `{auth_method, token}`. That is the Google OAuth route CodexBar calls experimental, and its own notes say the OAuth payload can only prove model availability — an all-100% placeholder rather than real quota. Worth knowing before anyone spends a day on it. It carries no token counts either, so it changes nothing above.
+
+### The OAuth route is off limits
+
+Antigravity's terms (section 6, [antigravity.google/terms](https://antigravity.google/terms)) call using third-party software to access the service — their example is OpenClaw with Antigravity OAuth — a breach that may get the Antigravity and Gemini CLI accounts suspended or terminated. Since early 2026 Google's developer forum has carried many such suspensions (`403` "disabled … for violation of Terms of Service"), some of which also disabled the official `agy`. So Pulse never reads `jetski-standalone-oauth-token` and never calls Google's backend with it, whatever it would unlock; that is also why a second Antigravity account (#124) is not offered. The two routes Pulse does use stay on this Mac: the running app's own language server, and the official `agy` CLI asked for `/usage` with no model request. Neither touches the OAuth token, and no suspension tied to either was found (checked 2026-11-25).
 
 Antigravity also reports a monthly credit *allowance*, never a balance, which is why `creditBalance` stays nil: an allowance shown there would read as what is left.
 
