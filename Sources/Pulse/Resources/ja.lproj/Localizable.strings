@@ -1276,6 +1276,10 @@
 "Chosen so that neighbouring robots differ." = "隣り合うロボットが同じにならないように選ばれます。";
 "A colour of your own. The ring keeps its colour." = "選んだ色を使います。リングの色は変わりません。";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "プロバイダ自身のブランドカラーを使います。ない場合は、隣り合うロボットと異なる色を選びます。";
+"Material" = "質感";
+"Flat" = "フラット";
+"Fluffy" = "ふわふわ";
+"Flat colour, or a coat of fur with bead eyes." = "単色で塗るか、ビーズのような目の毛並みにするかを選びます。";
 "A note from the developer" = "開発者からのひとこと";
 "Don't show again" = "今後表示しない";
 "Close" = "閉じる";

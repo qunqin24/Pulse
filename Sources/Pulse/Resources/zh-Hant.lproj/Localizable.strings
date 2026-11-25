@@ -1276,6 +1276,10 @@
 "Chosen so that neighbouring robots differ." = "自動選擇，相鄰的小機器人各不相同。";
 "A colour of your own. The ring keeps its colour." = "使用你選擇的顏色，圓環的顏色不受影響。";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "使用服務商自己的品牌色；沒有品牌色的，選一個與相鄰小機器人不同的顏色。";
+"Material" = "材質";
+"Flat" = "純色";
+"Fluffy" = "毛絨";
+"Flat colour, or a coat of fur with bead eyes." = "純色，或一身絨毛、眼睛像小珠子。";
 "A note from the developer" = "來自開發者的話";
 "Don't show again" = "不再顯示";
 "Close" = "關閉";

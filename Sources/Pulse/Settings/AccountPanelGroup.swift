@@ -293,6 +293,26 @@ struct AccountPanelGroup: View {
             .pickerStyle(.menu)
             .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
         }
+
+        SettingsRowDivider()
+
+        SettingsRow(
+            String.localized("Material"),
+            subtitle: String.localized("Flat colour, or a coat of fur with bead eyes."),
+            symbol: "circle.hexagongrid"
+        ) {
+            Picker("", selection: Binding(
+                get: { settings.robotMaterial(for: account) },
+                set: { settings.setRobotMaterial($0, for: account) }
+            )) {
+                ForEach(RobotMaterial.allCases, id: \.self) { material in
+                    Text(material.title).tag(material)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+            .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+        }
     }
 
     /// Which of the provider's limits the rail's ring shows.

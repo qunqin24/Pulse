@@ -323,6 +323,7 @@ struct UsageRingView: View {
                 ink: robot.ink,
                 inkIsChosen: robot.inkIsChosen,
                 figure: robot.figure,
+                material: robot.material,
                 placeholder: AnyView(LobeIconView(provider: provider, account: account,
                                                   size: centreDiameter * Self.iconScale)),
                 phase: robot.phase

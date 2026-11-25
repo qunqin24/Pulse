@@ -109,6 +109,15 @@ figure definitions from the repository's `gallery/` (commit `323ce6a`); both are
 made by `Scripts/vendor-open-bot-avatar.sh`. Pulse runs the original's renderer
 and paints the frames it returns (`Sources/Pulse/Panel/Robot`).
 
+The fluffy material's renderer is derived from Open Bot Avatar's: the WebGL2
+shaders (`dist/dom/fluffy/shaders.js`) are ported to Metal Shading Language in
+`Sources/Pulse/Panel/Robot/Fluffy/FluffyShaders.swift`, and its draw passes,
+level of detail, fibre and root textures and eye-socket distance tiles
+(`renderer.js`, `socket.js`, `marks.js`, `dom/paint.js`) are ported to Swift in
+`FluffyRenderer.swift`, `FluffyTextures.swift`, `BotAvatarEngine.swift` and
+`BotAvatarFrame.swift`. The fur's mesh and dye are still the bundled package's
+own code. These ports are covered by the same licence.
+
 The figures are Dominik Scholz's and the gallery's contributors' designs, not
 Pulse's, and Pulse does not present them as its own character or brand.
 

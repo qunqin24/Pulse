@@ -111,6 +111,7 @@ struct FloatingUsagePanelView: View {
             robot: settings.showsRobot(for: account)
                 ? RobotCue(justReset: store.justReset(account),
                            justFinished: store.justFinishedWorking(account.provider),
+                           material: settings.robotMaterial(for: account),
                            phase: RobotCue.phase(for: account))
                 : nil
         )

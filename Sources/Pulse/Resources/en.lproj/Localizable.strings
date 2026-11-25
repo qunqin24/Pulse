@@ -1276,6 +1276,10 @@
 "Chosen so that neighbouring robots differ." = "Chosen so that neighbouring robots differ.";
 "A colour of your own. The ring keeps its colour." = "A colour of your own. The ring keeps its colour.";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "The provider's own colour. Where it has none, one that differs from neighbouring robots.";
+"Material" = "Material";
+"Flat" = "Flat";
+"Fluffy" = "Fluffy";
+"Flat colour, or a coat of fur with bead eyes." = "Flat colour, or a coat of fur with bead eyes.";
 "A note from the developer" = "A note from the developer";
 "Don't show again" = "Don't show again";
 "Close" = "Close";

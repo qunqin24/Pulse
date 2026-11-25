@@ -375,6 +375,12 @@ final class AppSettings {
         didSet { robotFiguresChanged(from: oldValue) }
     }
 
+    /// The robot's material per account (`RobotMaterial`'s raw value);
+    /// absent is Flat.
+    var robotMaterials: [String: String] = [:] {
+        didSet { robotMaterialsChanged(from: oldValue) }
+    }
+
     /// Liquid Glass instead of flat black for the panel's surfaces.
     ///
     /// Off by default because a solid surface is legible over anything, and

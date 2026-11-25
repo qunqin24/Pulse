@@ -188,6 +188,15 @@ struct AppSettingsPersistenceTests {
         // Back to Automatic stores nothing.
         settings.setRobotFigure(nil, for: AccountKey(.codex))
         #expect(defaults.dictionary(forKey: "settings.robotFigures") as? [String: String] == [:])
+        settings.setRobotMaterial(.fluffy, for: AccountKey(.codex))
+        #expect(defaults.dictionary(forKey: "settings.robotMaterials") as? [String: String] == ["codex": "fluffy"])
+        #expect(settings.robotMaterial(for: AccountKey(.codex)) == .fluffy)
+        // Flat, the default, stores nothing; a value Pulse does not know reads as Flat.
+        settings.setRobotMaterial(.flat, for: AccountKey(.codex))
+        #expect(defaults.dictionary(forKey: "settings.robotMaterials") as? [String: String] == [:])
+        settings.robotMaterials = ["codex": "velvet"]
+        #expect(settings.robotMaterial(for: AccountKey(.codex)) == .flat)
+        settings.robotMaterials = [:]
         // The CX robot's choices and the removed mark's are never written.
         for old in ["settings.botPersonas", "settings.botColours", "settings.botShapes",
                     "settings.robotPersonalities", "settings.robotShapes"] {
@@ -278,6 +287,7 @@ struct AppSettingsPersistenceTests {
         first.robotAccounts = ["claudeCode"]
         first.robotColours = ["claudeCode": "#4A90E2"]
         first.robotFigures = ["claudeCode": "rocket"]
+        first.robotMaterials = ["claudeCode": "fluffy"]
         first.primedProviders = ["codex"]
         first.primerHours = PrimerHours(start: 9, end: 17)
         first.recordPrimerRun(for: .codex, outcome: .sent, at: Date(timeIntervalSince1970: 100))
@@ -352,6 +362,7 @@ struct AppSettingsPersistenceTests {
         #expect(back.robotAccounts == ["claudeCode"])
         #expect(back.robotColours == ["claudeCode": "#4A90E2"])
         #expect(back.robotFigure(for: AccountKey(.claudeCode)) == "rocket")
+        #expect(back.robotMaterial(for: AccountKey(.claudeCode)) == .fluffy)
         #expect(back.primedProviders == ["codex"])
         #expect(back.primerHours == PrimerHours(start: 9, end: 17))
         #expect(back.lastPrimerRun(for: .codex)?.outcome == .sent)

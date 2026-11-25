@@ -29,6 +29,9 @@ struct RobotMarkView: View {
     /// panel. See `RobotInk.legible(onDark:)`.
     var inkIsChosen = false
     var figure: String = RobotFigures.automatic[0]
+    /// Flat, or Open Bot Avatar's fur, drawn with Metal (`FluffyRenderer`).
+    /// Where fur cannot be drawn the figure is drawn flat.
+    var material: RobotMaterial = .flat
     /// Drawn until the figure's first frame arrives — a moment while the
     /// engine builds a figure it has not drawn before — and for good if the
     /// engine cannot run, so the ring is never left empty.
@@ -39,6 +42,8 @@ struct RobotMarkView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
+    /// How much fur is drawn depends on the pixels it covers.
+    @Environment(\.displayScale) private var displayScale
     /// The figure's animator inside the engine, one per drawing.
     @State private var key = UUID().uuidString
     @State private var shown: (gesture: RobotGesture, until: TimeInterval)?
@@ -64,6 +69,8 @@ struct RobotMarkView: View {
         var still: Bool
         var size: CGFloat
         var colour: String
+        var material: RobotMaterial
+        var displayScale: CGFloat
         var gestureEnds: TimeInterval?
     }
 
@@ -87,8 +94,9 @@ struct RobotMarkView: View {
                 .allowsHitTesting(false)
             }
             .task(id: Inputs(figure: figure, mood: mood, live: isLive, still: reduceMotion, size: size,
-                             colour: colours.hex, gestureEnds: shown?.until)) {
-                await play(colour: colours.hex)
+                             colour: colours.hex, material: material, displayScale: displayScale,
+                             gestureEnds: shown?.until)) {
+                await play(colour: colours.hex, eyes: colours.eyesHex)
             }
             .onChange(of: gesture, initial: true) { _, new in
                 if let new { shown = (new, Date.timeIntervalSinceReferenceDate + new.duration) }
@@ -100,15 +108,23 @@ struct RobotMarkView: View {
     /// Asks for frames until the view goes or what it shows changes. One
     /// frame and no more while collapsed or under Reduce Motion: the original
     /// holds still then too.
-    private func play(colour: String) async {
+    private func play(colour: String, eyes: String) async {
         repeat {
             let now = Date.timeIntervalSinceReferenceDate
-            if let next = await BotAvatarEngine.shared.frame(
+            let next = await BotAvatarEngine.shared.frame(
                 key: key, figure: figure, state: state(at: now), happy: happy(at: now),
                 time: ProcessInfo.processInfo.systemUptime + phase, now: now,
-                reducedMotion: reduceMotion, size: size, colour: colour
-            ), !Task.isCancelled {
+                reducedMotion: reduceMotion, size: size, colour: colour,
+                material: material, eyes: eyes, pixelScale: displayScale
+            )
+            // A fluffy figure whose fur is still being built keeps what is
+            // shown — the provider's mark at first — rather than flashing flat.
+            if let next, !Task.isCancelled, !(next.isFluffyPending && frame == nil) {
                 frame = next
+            }
+            if next?.isFluffyPending == true {
+                try? await Task.sleep(for: .seconds(0.1))
+                continue
             }
             if !isLive || reduceMotion {
                 // A still frame of a cheer or a nod has to give way to the
@@ -135,11 +151,11 @@ struct RobotMarkView: View {
 
     /// The body in the robot's colour, legible on this panel; the eyes in
     /// near-black, or near-white on a body too dark for them.
-    private var colours: (body: Color, eyes: Color, hex: String) {
+    private var colours: (body: Color, eyes: Color, hex: String, eyesHex: String) {
         let ink = ink.map { inkIsChosen ? $0 : $0.legible(onDark: colorScheme == .dark) }
             ?? (colorScheme == .dark ? RobotInk(red: 0.92, green: 0.92, blue: 0.92) : RobotInk(red: 0.15, green: 0.15, blue: 0.15))
-        let eyes = ink.luminance < 0.18 ? Color(white: 0.94) : Color(red: 0x15 / 255, green: 0x15 / 255, blue: 0x15 / 255)
-        return (ink.color, eyes, ink.hexString)
+        let eyes = ink.luminance < 0.18 ? RobotInk(red: 0.94, green: 0.94, blue: 0.94) : RobotInk(rgb: 0x151515)
+        return (ink.color, eyes.color, ink.hexString, eyes.hexString)
     }
 }
 

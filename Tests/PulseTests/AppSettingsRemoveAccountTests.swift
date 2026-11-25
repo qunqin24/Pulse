@@ -35,6 +35,7 @@ struct AppSettingsRemoveAccountTests {
             settings.robotAccounts.remove(kept.id)
             settings.robotColours[kept.id] = nil
             settings.robotFigures[kept.id] = nil
+            settings.robotMaterials[kept.id] = nil
             settings.splitAccounts.remove(kept.id)
             settings.menuBarAccount = nil
         }
@@ -52,6 +53,7 @@ struct AppSettingsRemoveAccountTests {
             settings.setShowsRobot(true, for: account)
             settings.setRobotColour(.blue, for: account)
             settings.setRobotFigure("cat", for: account)
+            settings.setRobotMaterial(.fluffy, for: account)
             settings.setSplit(true, for: account)
         }
 
@@ -77,6 +79,7 @@ struct AppSettingsRemoveAccountTests {
         #expect(!settings.robotAccounts.contains(removed.id))
         #expect(settings.robotColours[removed.id] == nil)
         #expect(settings.robotFigures[removed.id] == nil)
+        #expect(settings.robotMaterials[removed.id] == nil)
         #expect(!settings.splitAccounts.contains(removed.id))
 
         // Reading them back through the account-scoped accessors agrees: every
@@ -91,6 +94,7 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.balanceBudget(for: removed) == nil)
         #expect(!settings.showsDetailedCard(for: removed))
         #expect(!settings.showsRobot(for: removed))
+        #expect(settings.robotMaterial(for: removed) == .flat)
 
         // A second account's own settings are untouched by the removal.
         #expect(settings.pinnedWindow(for: kept) == "weekly")
@@ -105,5 +109,6 @@ struct AppSettingsRemoveAccountTests {
         #expect(settings.showsRobot(for: kept))
         #expect(settings.robotColour(for: kept) != nil)
         #expect(settings.robotFigure(for: kept) == "cat")
+        #expect(settings.robotMaterial(for: kept) == .fluffy)
     }
 }

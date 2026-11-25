@@ -1276,6 +1276,10 @@
 "Chosen so that neighbouring robots differ." = "Подбирается так, чтобы соседние роботы различались.";
 "A colour of your own. The ring keeps its colour." = "Выбранный вами цвет. Цвет кольца не меняется.";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "Фирменный цвет сервиса. Если его нет — цвет, отличный от соседних роботов.";
+"Material" = "Материал";
+"Flat" = "Гладкий";
+"Fluffy" = "Пушистый";
+"Flat colour, or a coat of fur with bead eyes." = "Сплошной цвет или шерсть с глазами-бусинками.";
 "A note from the developer" = "Слово от разработчика";
 "Don't show again" = "Больше не показывать";
 "Close" = "Закрыть";

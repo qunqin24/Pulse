@@ -1276,6 +1276,10 @@
 "Chosen so that neighbouring robots differ." = "이웃한 로봇끼리 겹치지 않도록 정해집니다.";
 "A colour of your own. The ring keeps its colour." = "직접 고른 색상을 씁니다. 링 색상은 그대로입니다.";
 "The provider's own colour. Where it has none, one that differs from neighbouring robots." = "제공업체 고유의 브랜드 색상을 씁니다. 없으면 이웃한 로봇과 다른 색상을 고릅니다.";
+"Material" = "재질";
+"Flat" = "단색";
+"Fluffy" = "털";
+"Flat colour, or a coat of fur with bead eyes." = "단색으로 칠할지, 구슬 같은 눈을 단 털로 덮을지 고릅니다.";
 "A note from the developer" = "개발자의 한마디";
 "Don't show again" = "다시 표시 안 함";
 "Close" = "닫기";

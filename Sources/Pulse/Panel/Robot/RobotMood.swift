@@ -99,6 +99,8 @@ struct RobotCue: Equatable {
     var inkIsChosen = false
     /// Which of Open Bot Avatar's figures, by its id.
     var figure: String = RobotFigures.automatic[0]
+    /// Flat colour, or Open Bot Avatar's fur.
+    var material: RobotMaterial = .flat
     /// Seconds added to the figure's clock, from the account, so figures on
     /// one rail do not breathe and blink in step.
     var phase: TimeInterval = 0
@@ -111,6 +113,21 @@ struct RobotCue: Equatable {
 
     var gesture: RobotGesture? {
         RobotGesture.triggered(justReset: justReset, justFinished: justFinished)
+    }
+}
+
+/// What a figure is drawn in: flat colour, as the original draws by default,
+/// or its fluffy material — a coat of fur with the eyes set in as beads, and
+/// `thinking`'s dots and `blocked`'s mark as pompoms. Stored by its raw value.
+enum RobotMaterial: String, CaseIterable, Sendable {
+    case flat
+    case fluffy
+
+    var title: String {
+        switch self {
+        case .flat: String.localized("Flat")
+        case .fluffy: String.localized("Fluffy")
+        }
     }
 }
 
