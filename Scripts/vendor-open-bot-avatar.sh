@@ -2,15 +2,15 @@
 # Rebuilds Sources/Pulse/Resources/open-bot-avatar.js and open-bot-avatars.json
 # from Open Bot Avatar (https://github.com/DominikScholz/open-bot-avatar, MIT).
 #
-#   ./Scripts/vendor-open-bot-avatar.sh 0.3.0 5e64c08
+#   ./Scripts/vendor-open-bot-avatar.sh 0.4.0 323ce6a
 #
 # The first argument is the npm version of the engine, the second the commit of
 # the repository whose gallery/ is taken. Needs npm, npx and gh. Read the diff
 # before committing it: Docs/ui/rings-and-surface.md#robot says what Pulse
 # relies on.
 set -euo pipefail
-version="${1:?engine version, e.g. 0.3.0}"
-commit="${2:?gallery commit, e.g. 5e64c08}"
+version="${1:?engine version, e.g. 0.4.0}"
+commit="${2:?gallery commit, e.g. 323ce6a}"
 root="$(cd "$(dirname "$0")/.." && pwd)"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -23,6 +23,15 @@ export { liveFrame } from './pkg/package/dist/render.js';
 export { validateAvatar } from './pkg/package/dist/validate.js';
 export { createAnimator } from './pkg/package/dist/animator.js';
 export { examples } from './pkg/package/dist/examples.js';
+// The fluffy material: the mesh, its level of detail, the eye sockets'
+// regions, the dye ramp, and the WebGL shaders Pulse's Metal port follows
+// (Sources/Pulse/Panel/Robot/Fluffy; a test checks they are unchanged).
+export { preparedVolume } from './pkg/package/dist/render.js';
+export { buildMesh, halfDepth, rootsIn, ROOT_PASSES } from './pkg/package/dist/dom/fluffy/mesh.js';
+export { fluffyDetail } from './pkg/package/dist/dom/fluffy/renderer.js';
+export { socketRegion, socketKey, exposedHeight, SOCKET_PAD, SOCKET_TILE } from './pkg/package/dist/dom/fluffy/socket.js';
+export { dyeRamp, DYE_RAMP_SIZE, DYE_RAMP_RANGE } from './pkg/package/dist/dom/fluffy/dye.js';
+export { vertexShader, fragmentShader, PASS } from './pkg/package/dist/dom/fluffy/shaders.js';
 JS
 npx --yes esbuild@0.24.0 entry.js --bundle --format=iife --global-name=OpenBotAvatar \
     --target=safari16 --minify --legal-comments=none --outfile=bundle.js --log-level=warning
