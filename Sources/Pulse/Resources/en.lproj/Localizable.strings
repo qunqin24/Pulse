@@ -403,6 +403,8 @@
 "Signed in. Pulse holds a read-only token for this Mac." = "Signed in. Pulse holds a read-only token for this Mac.";
 "Cursor account" = "Cursor account";
 "Optional. Without it, Pulse reads the Cursor editor's login." = "Optional. Without it, Pulse reads the Cursor editor's login.";
+"JetBrains account" = "JetBrains account";
+"Optional. Without it, Pulse reads only the quota the IDE saved." = "Optional. Without it, Pulse reads only the quota the IDE saved.";
 "The saved login has expired or was refused. Sign in again." = "The saved login has expired or was refused. Sign in again.";
 "Signed in. Pulse holds the token for this Mac." = "Signed in. Pulse holds the token for this Mac.";
 "The browser didn't come back." = "The browser didn't come back.";
@@ -790,9 +792,9 @@
 "From platform.openai.com. Stored encrypted on this Mac." = "From platform.openai.com. Stored encrypted on this Mac.";
 
 /* JetBrains AI */
-"As current as the IDE last left it." = "As current as the IDE last left it.";
-"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere.";
-"The quota your JetBrains IDE saved" = "The quota your JetBrains IDE saved";
+"Without a sign-in, only the IDE's file is read." = "Without a sign-in, only the IDE's file is read.";
+"Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none." = "Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none.";
+"The IDE's saved quota, or JetBrains once signed in" = "The IDE's saved quota, or JetBrains once signed in";
 
 /* Warp */
 "From Warp's settings, under API Keys. Stored encrypted on this Mac." = "From Warp's settings, under API Keys. Stored encrypted on this Mac.";

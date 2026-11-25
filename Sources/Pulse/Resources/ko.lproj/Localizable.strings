@@ -403,6 +403,8 @@
 "Signed in. Pulse holds a read-only token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 읽기 전용 토큰을 보관합니다.";
 "Cursor account" = "Cursor 계정";
 "Optional. Without it, Pulse reads the Cursor editor's login." = "선택 사항입니다. 로그인하지 않으면 Cursor 편집기의 로그인을 읽습니다.";
+"JetBrains account" = "JetBrains 계정";
+"Optional. Without it, Pulse reads only the quota the IDE saved." = "선택 사항입니다. 로그인하지 않으면 IDE가 저장한 한도만 읽습니다.";
 "The saved login has expired or was refused. Sign in again." = "저장된 로그인이 만료되었거나 거부되었습니다. 다시 로그인하세요.";
 "Signed in. Pulse holds the token for this Mac." = "로그인되었습니다. Pulse는 이 Mac에 토큰을 보관합니다.";
 "The browser didn't come back." = "브라우저에서 돌아오지 않았습니다.";
@@ -790,9 +792,9 @@
 "From platform.openai.com. Stored encrypted on this Mac." = "platform.openai.com에서 발급받습니다. 이 Mac에 암호화되어 저장됩니다.";
 
 /* JetBrains AI */
-"As current as the IDE last left it." = "IDE가 마지막으로 기록한 시점의 정보입니다.";
-"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "JetBrains IDE가 이 Mac에 저장해 둔 AI Assistant 사용량 한도를 읽습니다. 어디로도 전송하지 않습니다.";
-"The quota your JetBrains IDE saved" = "JetBrains IDE가 저장한 사용량 한도";
+"Without a sign-in, only the IDE's file is read." = "로그인하지 않으면 IDE의 파일만 읽습니다.";
+"Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none." = "JetBrains IDE가 이 Mac에 저장한 AI 사용량 한도를 읽습니다. JetBrains 계정에 로그인하면 IDE가 저장하지 않았을 때 Pulse가 JetBrains에 조회합니다.";
+"The IDE's saved quota, or JetBrains once signed in" = "IDE가 저장한 한도, 로그인 후에는 JetBrains";
 
 /* Warp */
 "From Warp's settings, under API Keys. Stored encrypted on this Mac." = "Warp 설정의 API Keys에서 발급받습니다. 이 Mac에 암호화되어 저장됩니다.";

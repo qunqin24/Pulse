@@ -403,6 +403,8 @@
 "Signed in. Pulse holds a read-only token for this Mac." = "Вход выполнен. Pulse хранит на этом Mac токен только для чтения.";
 "Cursor account" = "Аккаунт Cursor";
 "Optional. Without it, Pulse reads the Cursor editor's login." = "Необязательно. Без этого Pulse читает вход редактора Cursor.";
+"JetBrains account" = "Аккаунт JetBrains";
+"Optional. Without it, Pulse reads only the quota the IDE saved." = "Необязательно. Без этого Pulse читает только квоту, сохранённую IDE.";
 "The saved login has expired or was refused. Sign in again." = "Сохранённый вход истёк или был отклонён. Войдите снова.";
 "Signed in. Pulse holds the token for this Mac." = "Вход выполнен. Pulse хранит токен на этом Mac.";
 "The browser didn't come back." = "Браузер не вернул ответ.";
@@ -790,9 +792,9 @@
 "From platform.openai.com. Stored encrypted on this Mac." = "Можно получить на platform.openai.com. Хранится в зашифрованном виде на этом Mac.";
 
 /* JetBrains AI */
-"As current as the IDE last left it." = "Данные актуальны на момент последнего сохранения в IDE.";
-"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "Читает квоту AI Assistant, которую JetBrains IDE сохраняет на этом Mac. Ничего никуда не отправляется.";
-"The quota your JetBrains IDE saved" = "Квота, сохранённая JetBrains IDE";
+"Without a sign-in, only the IDE's file is read." = "Без входа читается только файл IDE.";
+"Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none." = "Читает квоту AI, которую JetBrains IDE сохраняет на этом Mac. После входа в аккаунт JetBrains Pulse запрашивает её у JetBrains, если IDE её не сохранила.";
+"The IDE's saved quota, or JetBrains once signed in" = "Квота из IDE или, после входа, от JetBrains";
 
 /* Warp */
 "From Warp's settings, under API Keys. Stored encrypted on this Mac." = "Можно получить в настройках Warp, в разделе API Keys. Хранится в зашифрованном виде на этом Mac.";

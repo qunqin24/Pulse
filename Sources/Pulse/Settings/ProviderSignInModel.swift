@@ -31,9 +31,13 @@ final class ProviderSignInModel {
     var signingIn: Provider?
     var signingInTarget: AccountKey?
     var signInError: (provider: Provider, target: AccountKey?, message: String)?
-    /// Whether Pulse holds a `CursorWebLogin` session for the primary Grok Bot
-    /// account (`AccountKey(.grokBot)`).
-    private(set) var hasPrimaryGrokBotLogin = false
+    /// The providers whose **first** account Pulse can sign in to itself, from
+    /// a row in its Connection card: Grok Bot (a Cursor web login, in place of
+    /// the editor's) and JetBrains AI (a JetBrains account, for the quota the
+    /// IDE no longer saves). Kept under `AccountKey(provider)`.
+    nonisolated static let primarySignIns: Set<Provider> = [.grokBot, .jetBrainsAI]
+    /// Which of those hold a login Pulse signed in to.
+    private(set) var primaryLogins: Set<Provider> = []
     /// Shown while a device-code sign-in is waiting: the code the provider
     /// gave, and where to type it.
     var devicePrompt: OAuthLogin.DevicePrompt?
@@ -52,14 +56,16 @@ final class ProviderSignInModel {
     /// diagnostics' own sign-in remedy back.
     var isBusy: Bool { signingIn != nil || githubTask != nil }
 
-    var isSigningInPrimaryGrokBot: Bool {
-        signingIn == .grokBot && signingInTarget == AccountKey(.grokBot)
+    func hasPrimaryLogin(_ provider: Provider) -> Bool { primaryLogins.contains(provider) }
+
+    func isSigningInPrimary(_ provider: Provider) -> Bool {
+        signingIn == provider && signingInTarget == AccountKey(provider)
     }
 
-    var primaryGrokBotError: String? {
+    func primaryError(_ provider: Provider) -> String? {
         guard let signInError,
-              signInError.provider == .grokBot,
-              signInError.target == AccountKey(.grokBot)
+              signInError.provider == provider,
+              signInError.target == AccountKey(provider)
         else { return nil }
         return signInError.message
     }
@@ -75,24 +81,25 @@ final class ProviderSignInModel {
         return matches ? signInError.message : nil
     }
 
-    /// Reads whether the primary Grok Bot account holds a Pulse-managed login,
-    /// skipping storage altogether while the account is switched off.
+    /// Reads whether a primary account holds a Pulse-managed login, skipping
+    /// storage altogether while the account is switched off.
     func seed(for account: AccountKey) {
-        guard account == AccountKey(.grokBot) else { return }
-        guard settings.isEnabled(account) else {
-            hasPrimaryGrokBotLogin = false
+        let provider = account.provider
+        guard Self.primarySignIns.contains(provider), account == AccountKey(provider) else { return }
+        guard settings.isEnabled(account), AccountCredentialStore.credentials(for: account) != nil else {
+            primaryLogins.remove(provider)
             return
         }
-        hasPrimaryGrokBotLogin = AccountCredentialStore.credentials(for: account) != nil
+        primaryLogins.insert(provider)
     }
 
-    /// Forgets the primary Grok Bot web login so Pulse falls back to Cursor's
-    /// local database or asks to sign in again.
-    func signOutOfPrimaryGrokBot() {
-        let primary = AccountKey(.grokBot)
+    /// Forgets a primary account's login: Grok Bot falls back to Cursor's
+    /// local database, JetBrains AI to the IDE's file.
+    func signOutOfPrimary(_ provider: Provider) {
+        let primary = AccountKey(provider)
         guard AccountCredentialStore.set(nil, for: primary) else { return }
-        hasPrimaryGrokBotLogin = false
-        if signInError?.provider == .grokBot, signInError?.target == primary {
+        primaryLogins.remove(provider)
+        if signInError?.provider == provider, signInError?.target == primary {
             signInError = nil
         }
         store.resetReading(for: primary)
@@ -198,6 +205,9 @@ final class ProviderSignInModel {
                     // for afterwards. Nothing comes back to this Mac and there
                     // is no code to type, so this branch shows neither.
                     credentials = try await CursorWebLogin.signIn()
+                } else if provider == .jetBrainsAI {
+                    // The Junie CLI's browser sign-in, back to a loopback port.
+                    credentials = try await JetBrainsLogin.signIn()
                 } else if OAuthLogin.usesDeviceCode(provider) {
                     // A code shown on the provider's own page. No local
                     // port to collide with the CLI's sign-in, and nothing
@@ -227,8 +237,8 @@ final class ProviderSignInModel {
                     signInError = (provider, existing, String.localized("Couldn't save the login on this Mac."))
                     return
                 }
-                if added == AccountKey(.grokBot) {
-                    hasPrimaryGrokBotLogin = true
+                if Self.primarySignIns.contains(provider), added == AccountKey(provider) {
+                    primaryLogins.insert(provider)
                     store.resetReading(for: added)
                 } else {
                     store.refresh(added)

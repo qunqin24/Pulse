@@ -42,9 +42,9 @@ final class ConnectionRepairModel {
     func repair(_ remedy: ConnectionRemedy, for account: AccountKey) {
         messages[account.id] = nil
         switch remedy {
-        case .signIn:
+        case .signIn, .firstSignIn:
             if account.provider == .copilot { signIn.startGitHubSignIn() }
-            else if !account.isPrimary || account.provider == .grokBot {
+            else if !account.isPrimary || ProviderSignInModel.primarySignIns.contains(account.provider) {
                 signIn.signIn(to: account.provider, replacing: account)
             }
         case .editCredential:

@@ -287,6 +287,20 @@ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 ```
 
+## headroom
+
+JetBrains AI's sign-in and online quota route
+(`Sources/Pulse/Auth/JetBrainsLogin.swift`,
+`Sources/Pulse/Providers/Profiled/JetBrainsAIOnlineQuota.swift`) port the
+request sequence, parameters and reply handling of
+[rock3r/headroom](https://github.com/rock3r/headroom) at commit `9a2851d`
+(`core/auth/.../JetBrainsOAuth.kt`, `core/quota/.../JetBrainsAiQuotaReader.kt`,
+`core/quota/.../JetBrainsAccessOption.kt`), rewritten in Swift and changed:
+the grazie-lite fallback and the combined window are left out, and windows are
+mapped as Pulse maps the IDE's quota file. headroom is licensed under the
+Apache License, Version 2.0, the same licence as Pulse
+(<https://www.apache.org/licenses/LICENSE-2.0>); it ships no NOTICE file.
+
 ## Names and marks
 
 The names and marks of the services and tools shown in Pulse — among them

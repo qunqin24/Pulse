@@ -66,7 +66,7 @@ Each is one file under `Sources/Pulse/Providers/Profiled/`, with a notes page he
 | `.gemini` | [Gemini](gemini.md) | the tool's own login on this Mac | |
 | `.kiloCode` | [Kilo Code](kilo-code.md) | pasted key or the tool's own login | yes |
 | `.augment` | [Augment Code](augment.md) | browser session | |
-| `.jetBrainsAI` | [JetBrains AI](jetbrains-ai.md) | the tool's own login on this Mac | |
+| `.jetBrainsAI` | [JetBrains AI](jetbrains-ai.md) | the IDE's saved quota file; optionally a JetBrains account sign-in (Junie CLI client, `accounts.dat`) for the online quota | |
 | `.t3Chat` | [T3 Chat](t3-chat.md) | browser session | |
 | `.synthetic` | [Synthetic](synthetic.md) | pasted key | |
 | `.elevenLabs` | [ElevenLabs](elevenlabs.md) | pasted key | |
@@ -172,7 +172,7 @@ Shared rules: [`../refresh-and-data.md`](../refresh-and-data.md#cache). Never pa
 
 - `usesAPIKey` — Settings draws a paste field. Profiled: any credential but `.localLogin`. Hand-written: OpenCode Go, Kimi Code, Ollama Cloud, Z.ai, GLM Coding Plan, MiniMax, Volcengine, Command Code, DeepSeek, Devin, Xiaomi Coding Plan, sub2api, New API, V2EX, Qoder, StepFun. Optional for Volcengine, Command Code and Devin (each has a route needing nothing pasted); Devin's holds `token org`, whitespace-separated, for readers without a Chromium browser ([devin.md](devin.md)). For Ollama, Xiaomi, Qoder and StepFun the value is a **session cookie** (`usesSessionCookie`), never labelled an API key.
 - `keepsOwnCredential` — something is stored in `keys.dat`: the paste providers **plus Copilot**. Reading `usesAPIKey` here once left a signed-in Copilot asking to sign in again: the token was saved and never loaded.
-- Extra-account OAuth logins and Cursor web logins (primary and added Grok Bot) live in `accounts.dat` ([authentication.md](authentication.md)).
+- Extra-account OAuth logins, Cursor web logins (primary and added Grok Bot) and JetBrains AI's JetBrains account login live in `accounts.dat` ([authentication.md](authentication.md)).
 
 Keys are read once per launch, not per refresh (`UsageStore.loadAPIKeys`).
 
@@ -181,7 +181,7 @@ Keys are read once per launch, not per refresh (`UsageStore.loadAPIKeys`).
 Claude Code, Codex, Volcengine, Devin and Antigravity have `hasSourceChoice`, for primary accounts only (added accounts use their endpoint credential). `.automatic` is the default and each service owns its fallback, including Volcengine's preference for configured keys ([volcengine.md](volcengine.md)). A pinned route *reports* its failure instead of answering from elsewhere. **Every provider with more than one route offers the choice**, automatic by default. Antigravity's are *Automatic* (language server, then CLI), *CLI* (`.tooling`, the `agy` CLI) and *Desktop app* (`.desktopApp`, the editor's language server); it has no endpoint, so `.endpoint` is not offered (`UsageSource.options(for:)`, `title(for:)`).
 
 - For Claude, `.desktopApp` is offered only on the **primary** Claude Code account; an added account must not be offered a route `fetchAdded` ignores. Likewise an added Grok account gets no CLI-login row: `fetchAdded` never touches `~/.grok/auth.json`.
-- `Provider.soleRoute` is an exhaustive switch (as a ternary it once made Grok's pane read “Antigravity's language server”); nil draws no row (Copilot and Grok Bot draw their own sign-in rows in `AccountConnectionGroup`).
+- `Provider.soleRoute` is an exhaustive switch (as a ternary it once made Grok's pane read “Antigravity's language server”); nil draws no row (Copilot and Grok Bot draw their own sign-in rows in `AccountConnectionGroup`; JetBrains AI draws its **JetBrains account** sign-in row above its route row).
 
 ### Diagnostic route checks and repair
 

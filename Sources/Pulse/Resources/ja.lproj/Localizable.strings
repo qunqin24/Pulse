@@ -403,6 +403,8 @@
 "Signed in. Pulse holds a read-only token for this Mac." = "サインイン済みです。Pulse はこの Mac に読み取り専用のトークンを保持します。";
 "Cursor account" = "Cursor アカウント";
 "Optional. Without it, Pulse reads the Cursor editor's login." = "任意です。サインインしない場合は Cursor エディタのログインを読み取ります。";
+"JetBrains account" = "JetBrains アカウント";
+"Optional. Without it, Pulse reads only the quota the IDE saved." = "任意です。サインインしない場合は IDE が保存した利用枠だけを読み取ります。";
 "The saved login has expired or was refused. Sign in again." = "保存されたログインの有効期限が切れたか、拒否されました。もう一度サインインしてください。";
 "Signed in. Pulse holds the token for this Mac." = "サインイン済みです。Pulse はこの Mac にトークンを保持します。";
 "The browser didn't come back." = "ブラウザから戻ってきませんでした。";
@@ -790,9 +792,9 @@
 "From platform.openai.com. Stored encrypted on this Mac." = "platform.openai.com で取得します。この Mac に暗号化して保存されます。";
 
 /* JetBrains AI */
-"As current as the IDE last left it." = "IDE が最後に書き込んだ時点の内容です。";
-"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "JetBrains IDE がこの Mac に保存している AI Assistant の利用枠を読み取ります。どこにも送信しません。";
-"The quota your JetBrains IDE saved" = "JetBrains IDE が保存した利用枠";
+"Without a sign-in, only the IDE's file is read." = "サインインしない場合は IDE のファイルだけを読み取ります。";
+"Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none." = "JetBrains IDE がこの Mac に保存した AI の利用枠を読み取ります。JetBrains アカウントにサインインすると、IDE が保存していないときは Pulse が JetBrains に問い合わせます。";
+"The IDE's saved quota, or JetBrains once signed in" = "IDE が保存した利用枠、サインイン後は JetBrains";
 
 /* Warp */
 "From Warp's settings, under API Keys. Stored encrypted on this Mac." = "Warp の設定の「API Keys」で取得します。この Mac に暗号化して保存されます。";

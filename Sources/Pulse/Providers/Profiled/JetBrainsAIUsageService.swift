@@ -1,36 +1,39 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import Foundation
 
-/// JetBrains AI: the AI Assistant quota a JetBrains IDE keeps on this Mac.
+/// JetBrains AI: the AI Assistant quota, from the IDE's file on this Mac or,
+/// once signed in, from JetBrains.
 ///
-/// Nothing is asked of any server. Every JetBrains IDE with AI Assistant
-/// writes the quota it last heard from JetBrains into its own settings folder,
+/// **The file first.** Every JetBrains IDE with AI Assistant used to write
+/// the quota it last heard from JetBrains into its own settings folder,
 /// `~/Library/Application Support/JetBrains/<IDE><version>/options/
 /// AIAssistantQuotaManager2.xml` (Android Studio's under `Google/`), as two
 /// XML attributes holding JSON. Pulse reads the most recently written one and
 /// never writes to it. The shape is second-hand — taken from CodexBar's
 /// JetBrains provider and its tests, not from a file on this Mac — and the
-/// fixture in the tests says so.
+/// fixture in the tests says so. It is as fresh as the IDE left it.
 ///
-/// **As fresh as the IDE left it.** The file changes only while an IDE is
-/// running and talking to JetBrains; with every IDE closed the figure is the
-/// last one any of them saw. The pane says so rather than pretending to be
-/// live in a way it is not.
+/// **Then JetBrains, only when signed in.** IDEs from 2026.3 on keep the
+/// quota in memory and leave the file without figures (#122). When the file
+/// has no real quota and the user has signed in to a JetBrains account in
+/// Settings (`JetBrainsLogin`), the quota is asked of JetBrains with that
+/// login (`JetBrainsAIOnlineQuota`). Without a sign-in nothing is sent. The
+/// IDE's own login, the Keychain and IDE config files are never read.
 ///
-/// The quota is `current` of `maximum`, both stated. Its length is the refill
-/// tariff's `duration` when that is an ISO 8601 length (`PT720H`), and is not
-/// claimed when it isn't.
+/// The quota is `current` of `maximum`, both stated, by either route. Its
+/// length is the refill's stated length (`PT720H` in the file, `millis` in
+/// the reply), and is not claimed when there is none.
 extension ProviderProfile {
     static let jetBrainsAI = ProviderProfile(
         displayName: "JetBrains AI",
         iconResource: "extension",
         credential: .localLogin,
         accessDescription: {
-            .localized("Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere.")
+            .localized("Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none.")
         },
         soleRoute: {
-            (String.localized("The quota your JetBrains IDE saved"),
-             String.localized("As current as the IDE last left it."))
+            (String.localized("The IDE's saved quota, or JetBrains once signed in"),
+             String.localized("Without a sign-in, only the IDE's file is read."))
         },
         setupSlug: "jetbrains-ai",
         discoveryPaths: ["Library/Application Support/JetBrains"],
@@ -54,8 +57,43 @@ enum JetBrainsAIUsageService {
 
     static func fetch(
         _ context: ProfileContext,
-        home: URL = URL(fileURLWithPath: NSHomeDirectory())
+        home: URL = URL(fileURLWithPath: NSHomeDirectory()),
+        storedLogin: @Sendable () -> AccountCredentialStore.StoredLogin = {
+            AccountCredentialStore.storedLogin(for: JetBrainsLogin.account)
+        },
+        online: @Sendable (AccountCredentials, ProfileContext) async -> ProviderUsage = { login, context in
+            await JetBrainsAIOnlineQuota.usage(login: login, context: context)
+        }
     ) async -> ProviderUsage {
+        await choose(local: localReading(context, home: home), storedLogin: storedLogin(), context: context, online: online)
+    }
+
+    /// The route order, apart from the disk and the network.
+    ///
+    /// 1. The file, when it holds a real quota — older IDEs; nothing is sent.
+    /// 2. Otherwise, signed in: JetBrains.
+    /// 3. Otherwise the file's reason (`.localQuotaUnsaved`, `.localAppMissing`,
+    ///    …), whose remedy offers the sign-in.
+    ///
+    /// A login that is refused or has expired comes back from the online
+    /// route as `.signedOut` and is never answered from the file instead; a
+    /// store that will not open is `.signedOut` too, as Grok Bot's is.
+    static func choose(
+        local: ProviderUsage,
+        storedLogin: AccountCredentialStore.StoredLogin,
+        context: ProfileContext,
+        online: (AccountCredentials, ProfileContext) async -> ProviderUsage
+    ) async -> ProviderUsage {
+        if local.state == .live { return local }
+        switch storedLogin {
+        case .none: return local
+        case .unreadable: return context.unavailable(.signedOut)
+        case .login(let login): return await online(login, context)
+        }
+    }
+
+    /// What the IDE's file says, or why it says nothing.
+    static func localReading(_ context: ProfileContext, home: URL) -> ProviderUsage {
         guard let file = newestQuotaFile(home: home) else { return context.unavailable(.localAppMissing) }
         guard let data = try? Data(contentsOf: file) else { return context.unavailable(.unreadableReply) }
         return reading(from: data, context: context)

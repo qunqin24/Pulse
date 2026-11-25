@@ -18,13 +18,13 @@ All of it is in `Sources/Pulse/Settings`. `SettingsView.swift` is the shell only
 | `AccountPane.swift` | One account's pane: the cards in order, and the seed of the typed fields when the account or its switch changes. |
 | `AccountPanelGroup.swift` | Panel card: show in panel, ring window, split, Codex reset credits, detailed card (`detailedCardSubtitle`), ring colour, robot in the ring. |
 | `WindowStarterGroup.swift` | Claude Code / Codex window starter and its risk confirmation. |
-| `AccountConnectionGroup.swift`, `AccountConnectionRows.swift` | Connection card: route picker, Copilot sign-in, the primary Grok Bot account's **Cursor account** row (sign in, sign in again once the stored login is refused or expired, sign out), key field, browser read, and the single rows it draws (site, server address, balance basis, full tank, warn below). Scrolls and focuses itself when a remedy names a field. |
+| `AccountConnectionGroup.swift`, `AccountConnectionRows.swift` | Connection card: route picker, Copilot sign-in, the primary Grok Bot account's **Cursor account** row and JetBrains AI's **JetBrains account** row (one `primarySignInRow`: sign in, sign in again once the stored login is refused or expired, sign out; JetBrains AI's sits above its route row), key field, browser read, and the single rows it draws (site, server address, balance basis, full tank, warn below). Scrolls and focuses itself when a remedy names a field. |
 | `AccountsGroup.swift` | Another subscription of the same provider: sign in, rename, remove. |
 | `ClaudeCodeStatusLineRow.swift`, `AccountLiveUsageGroup.swift` | The status-line switch, and the Current usage card (with Claude Code's split of the week by product, as text under the limits: [../providers/claude-code.md](../providers/claude-code.md)). |
 | `AccountHistoryGroup.swift`, `EstimatedValueGroup.swift`, `AccountHistoryModel.swift` | Usage history, the money estimate, and the ledgers and read results behind them. |
 | `AccountFlows.swift` | Builds and wires the four models below. |
 | `ProviderCredentialModel.swift` | The key field, reveal, saved key; save, browser read (cookie or local storage), what the read said. |
-| `ProviderSignInModel.swift` | Added-account sign-in (browser or device code), the primary Grok Bot account's web sign-in, and Copilot's GitHub device flow, with their prompts, errors and cancellation; Cancel and errors belong to the row that started the sign-in (`signingInTarget`). Also `SettingsClipboard`. |
+| `ProviderSignInModel.swift` | Added-account sign-in (browser or device code), the primary Grok Bot and JetBrains AI accounts' own sign-ins (`primarySignIns`), and Copilot's GitHub device flow, with their prompts, errors and cancellation; Cancel and errors belong to the row that started the sign-in (`signingInTarget`). Also `SettingsClipboard`. |
 | `ConnectionRepairModel.swift` | What each diagnostics remedy does, the line it leaves, the scroll-and-focus requests, the status-line nudge. |
 | `AccountEntryFields.swift` | Server address, full-tank figure and warn-below figure, as text committed on Save; `hasBalanceRing` / `reportsBalance`. |
 

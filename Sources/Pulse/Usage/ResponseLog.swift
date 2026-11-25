@@ -149,7 +149,9 @@ enum ResponseLog {
                         found.append(String(pair[pair.index(after: equals)...]).trimmingCharacters(in: .whitespaces))
                     }
                 }
-            case let header where header.contains("key") || header.contains("token") || header.contains("secret"):
+            // `jwt` for JetBrains AI's `Grazie-Authenticate-JWT`.
+            case let header where header.contains("key") || header.contains("token") || header.contains("secret")
+                || header.contains("jwt"):
                 found.append(value)
             default:
                 break

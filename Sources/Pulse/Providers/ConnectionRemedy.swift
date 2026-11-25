@@ -4,6 +4,9 @@ import Foundation
 /// Actions for the credential or tool that this account actually uses.
 enum ConnectionRemedy: Equatable {
     case signIn
+    /// The same sign-in, offered where there has been none yet: JetBrains
+    /// AI's, when the IDE saved no quota and JetBrains can be asked instead.
+    case firstSignIn
     case editCredential
     /// The server address, for a provider whose address is the reader's own.
     /// Its own remedy rather than `editCredential`, which focuses the key
@@ -23,6 +26,8 @@ enum ConnectionRemedy: Equatable {
             .cursorLoginExpired, .cursorSignInRequired].contains(reason) {
             return .signIn
         }
+        // The IDE kept no quota; a JetBrains account sign-in reads it online.
+        if account.provider == .jetBrainsAI, reason == .localQuotaUnsaved { return .firstSignIn }
         switch reason {
         case .loading, .awaitingResponse: return nil
         case .notConnected: return .connectStatusLine
@@ -64,6 +69,7 @@ enum ConnectionRemedy: Equatable {
     var title: String {
         switch self {
         case .signIn: .localized("Sign in again…")
+        case .firstSignIn: .localized("Sign in…")
         case .editCredential: .localized("Edit credential")
         case .editAddress: .localized("Edit address")
         case .readBrowser: .localized("Read from browser")

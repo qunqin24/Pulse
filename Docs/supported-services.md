@@ -61,7 +61,7 @@ Ported by reading [CodexBar](https://github.com/steipete/CodexBar)'s providers. 
 | <img src="icons/huggingface.svg" width="24" height="24" alt=""> | **Hugging Face** | Pasted token, or the one `hf auth login` saved | ZeroGPU quota |
 | | **Hyper** | Pasted API key | Hypercredit balance |
 | <img src="icons/ibm.svg" width="24" height="24" alt=""> | **IBM Bob** | Pasted API key | Bobcoins used against team budgets |
-| | **JetBrains AI** | The quota file your JetBrains IDE saves; nothing is sent anywhere | AI Assistant quota; updates while an IDE is running |
+| | **JetBrains AI** | The quota file your JetBrains IDE saves; optionally a JetBrains account sign-in, for IDEs from 2026.3 on that no longer save it | AI quota and its refill |
 | <img src="icons/kilocode.svg" width="24" height="24" alt=""> | **Kilo Code** | Pasted key, or the login its CLI already saved | Credit balance and Kilo Pass |
 | | **LiteLLM** | Pasted key; self-hosted gateway address you enter | Team and user budgets |
 | | **LLM API Key Proxy** | Pasted key; self-hosted gateway address you enter | Quota groups by upstream |

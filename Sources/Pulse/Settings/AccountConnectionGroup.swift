@@ -126,40 +126,10 @@ struct AccountConnectionGroup: View {
                         }
                     }
                 }
-            } else if account.isPrimary, account.provider == .grokBot {
-                // A stored login that has expired or been refused is still
-                // stored: "Signed in" with only Sign out would leave no way
-                // forward on this row, so it offers a fresh sign-in too.
-                let loginLapsed = signIn.hasPrimaryGrokBotLogin && Self.isSignedOut(store.usage[account.id])
-                SettingsRow(
-                    String.localized("Cursor account"),
-                    subtitle: signIn.primaryGrokBotError
-                        ?? (loginLapsed
-                            ? String.localized("The saved login has expired or was refused. Sign in again.")
-                            : signIn.hasPrimaryGrokBotLogin
-                            ? String.localized("Signed in. Pulse holds the token for this Mac.")
-                            : String.localized("Optional. Without it, Pulse reads the Cursor editor's login.")),
-                    symbol: "person.crop.circle"
-                ) {
-                    if signIn.isSigningInPrimaryGrokBot {
-                        Button(String.localized("Cancel")) { signIn.cancelSignIn() }
-                    } else if signIn.hasPrimaryGrokBotLogin {
-                        HStack(spacing: 8) {
-                            if loginLapsed {
-                                Button(String.localized("Sign in again…")) {
-                                    signIn.signIn(to: .grokBot, replacing: account)
-                                }
-                                .disabled(signIn.signingIn != nil)
-                            }
-                            Button(String.localized("Sign out")) { signIn.signOutOfPrimaryGrokBot() }
-                        }
-                    } else {
-                        Button(String.localized("Sign in…")) {
-                            signIn.signIn(to: .grokBot, replacing: account)
-                        }
-                        .disabled(signIn.signingIn != nil)
-                    }
-                }
+            } else if account.isPrimary, ProviderSignInModel.primarySignIns.contains(account.provider) {
+                primarySignInRow
+                // JetBrains AI's route row follows below.
+                if account.provider.soleRoute != nil { SettingsRowDivider() }
             }
 
             // **Its own `if`, not the tail of that chain.** A provider can want
@@ -336,6 +306,50 @@ struct AccountConnectionGroup: View {
             if account.isPrimary, account.provider == .claudeCode, source != .endpoint {
                 SettingsRowDivider()
                 ClaudeCodeStatusLineRow(store: store, repairs: repairs)
+            }
+        }
+    }
+
+    /// The first account's own sign-in: Grok Bot's Cursor account, JetBrains
+    /// AI's JetBrains account.
+    ///
+    /// A stored login that has expired or been refused is still stored:
+    /// "Signed in" with only Sign out would leave no way forward on this row,
+    /// so it offers a fresh sign-in too.
+    private var primarySignInRow: some View {
+        let provider = account.provider
+        let hasLogin = signIn.hasPrimaryLogin(provider)
+        let loginLapsed = hasLogin && Self.isSignedOut(store.usage[account.id])
+        let jetBrains = provider == .jetBrainsAI
+        return SettingsRow(
+            jetBrains ? String.localized("JetBrains account") : String.localized("Cursor account"),
+            subtitle: signIn.primaryError(provider)
+                ?? (loginLapsed
+                    ? String.localized("The saved login has expired or was refused. Sign in again.")
+                    : hasLogin
+                    ? String.localized("Signed in. Pulse holds the token for this Mac.")
+                    : jetBrains
+                    ? String.localized("Optional. Without it, Pulse reads only the quota the IDE saved.")
+                    : String.localized("Optional. Without it, Pulse reads the Cursor editor's login.")),
+            symbol: "person.crop.circle"
+        ) {
+            if signIn.isSigningInPrimary(provider) {
+                Button(String.localized("Cancel")) { signIn.cancelSignIn() }
+            } else if hasLogin {
+                HStack(spacing: 8) {
+                    if loginLapsed {
+                        Button(String.localized("Sign in again…")) {
+                            signIn.signIn(to: provider, replacing: account)
+                        }
+                        .disabled(signIn.signingIn != nil)
+                    }
+                    Button(String.localized("Sign out")) { signIn.signOutOfPrimary(provider) }
+                }
+            } else {
+                Button(String.localized("Sign in…")) {
+                    signIn.signIn(to: provider, replacing: account)
+                }
+                .disabled(signIn.signingIn != nil)
             }
         }
     }

@@ -149,7 +149,7 @@ struct JetBrainsAITests {
     func noIDE() async throws {
         let home = try temporaryHome()
         defer { try? FileManager.default.removeItem(at: home) }
-        #expect(await JetBrainsAIUsageService.fetch(context, home: home).state == .unavailable(.localAppMissing))
+        #expect(await JetBrainsAIUsageService.fetch(context, home: home, storedLogin: { .none }).state == .unavailable(.localAppMissing))
     }
 
     @Test("The quota written last is the one read, and only from an IDE's folder")
@@ -168,7 +168,7 @@ struct JetBrainsAITests {
         try files.setAttributes([.modificationDate: Date(timeIntervalSince1970: 2_000)], ofItemAtPath: newer.path)
         try files.setAttributes([.modificationDate: Date(timeIntervalSince1970: 3_000)], ofItemAtPath: stranger.path)
 
-        let usage = await JetBrainsAIUsageService.fetch(context, home: home)
+        let usage = await JetBrainsAIUsageService.fetch(context, home: home, storedLogin: { .none })
         #expect(usage.windows.map(\.usedFraction) == [0.3])
     }
 

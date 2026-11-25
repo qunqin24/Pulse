@@ -21,8 +21,8 @@ The stored tokens are `direct`, `system`, `systemRequired` and `manual`; an olde
 
 The boundary includes:
 
-- provider usage requests, including the isolated ephemeral sessions used for borrowed browser cookies;
-- OAuth, device-code and browser-login token exchanges;
+- provider usage requests, including the isolated ephemeral sessions used for borrowed browser cookies, and JetBrains AI's online quota once signed in (`oauth.account.jetbrains.com`, `api.jetbrains.cloud`, `api.jetbrains.ai`; [providers/jetbrains-ai.md](providers/jetbrains-ai.md#online-route));
+- OAuth, device-code and browser-login token exchanges, JetBrains AI's included (its sign-in page itself, `junie.jetbrains.com`, opens in the user's browser);
 - the models.dev price download;
 - the status-page reads on every provider pane that has one (44 providers), and the outage notification's ([providers/README.md](providers/README.md#service-status));
 - the day's exchange rate from ExchangeRate-API's open access endpoint, only while estimates are shown in a currency other than the dollar ([refresh-and-data.md](refresh-and-data.md#currency));

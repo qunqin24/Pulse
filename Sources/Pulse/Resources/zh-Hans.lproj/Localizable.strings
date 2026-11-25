@@ -403,6 +403,8 @@
 "Signed in. Pulse holds a read-only token for this Mac." = "已登录。Pulse 在本机保存了一个只读令牌。";
 "Cursor account" = "Cursor 账号";
 "Optional. Without it, Pulse reads the Cursor editor's login." = "可选。不登录则读取 Cursor 编辑器的登录。";
+"JetBrains account" = "JetBrains 账号";
+"Optional. Without it, Pulse reads only the quota the IDE saved." = "可选。不登录则只读取 IDE 保存的额度。";
 "The saved login has expired or was refused. Sign in again." = "保存的登录已过期或被拒绝，请重新登录。";
 "Signed in. Pulse holds the token for this Mac." = "已登录。Pulse 在本机保存了令牌。";
 "The browser didn't come back." = "浏览器没有返回结果。";
@@ -790,9 +792,9 @@
 "From platform.openai.com. Stored encrypted on this Mac." = "在 platform.openai.com 获取。加密保存在本机。";
 
 /* JetBrains AI */
-"As current as the IDE last left it." = "以 IDE 最后一次写入的内容为准。";
-"Reads the AI Assistant quota your JetBrains IDE saves on this Mac. Nothing is sent anywhere." = "读取 JetBrains IDE 在本机保存的 AI Assistant 用量额度。不会向外发送任何数据。";
-"The quota your JetBrains IDE saved" = "JetBrains IDE 保存的用量额度";
+"Without a sign-in, only the IDE's file is read." = "不登录则只读取 IDE 的文件。";
+"Reads the AI quota your JetBrains IDE saves on this Mac. After you sign in to a JetBrains account, Pulse asks JetBrains for it when the IDE saved none." = "读取 JetBrains IDE 在本机保存的 AI 额度。登录 JetBrains 账号后，IDE 没有保存额度时由 Pulse 向 JetBrains 查询。";
+"The IDE's saved quota, or JetBrains once signed in" = "IDE 保存的额度；登录后向 JetBrains 查询";
 
 /* Warp */
 "From Warp's settings, under API Keys. Stored encrypted on this Mac." = "在 Warp 设置的 API Keys 中获取。加密保存在本机。";

@@ -706,7 +706,7 @@ enum OAuthLogin {
 
     /// Everything but the unreserved set, which is what a form body wants and
     /// what the published client does.
-    private static func formEncoded(_ value: String) -> String {
+    static func formEncoded(_ value: String) -> String {
         let unreserved = CharacterSet(charactersIn: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
         return value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? value
     }
@@ -736,7 +736,7 @@ enum OAuthLogin {
         return auth["chatgpt_account_id"] as? String
     }
 
-    private static func claims(inJWT token: String) -> [String: Any]? {
+    static func claims(inJWT token: String) -> [String: Any]? {
         let parts = token.split(separator: ".")
         guard parts.count == 3 else { return nil }
 
