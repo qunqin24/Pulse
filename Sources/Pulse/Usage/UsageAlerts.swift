@@ -793,6 +793,40 @@ final class UsageAlerts {
         return formatter.string(from: items) ?? items.joined(separator: ", ")
     }
 
+    static func windowStarterFailure(for provider: Provider, outcome: WindowStarter.Outcome, title: String) -> UNNotificationRequest? {
+        let body: String
+        switch outcome {
+        case .sent: return nil
+        case .timedOut:
+            body = .localized("The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again.")
+        case .failed:
+            body = .localized("The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again.")
+        case .toolMissing:
+            body = .localized("The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again.")
+        }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.subtitle = .localized("Couldn't start the window")
+        content.body = body
+        content.sound = .default
+        return UNNotificationRequest(identifier: "window-starter-\(provider.rawValue)", content: content, trigger: nil)
+    }
+
+    /// The attempt is already recorded in Settings. A pending permission
+    /// prompt may finish after a missing tool has already returned.
+    func postWindowStarterFailure(for provider: Provider, outcome: WindowStarter.Outcome) {
+        guard Self.isSupported, settings.primesWindows(for: provider),
+              let request = Self.windowStarterFailure(for: provider, outcome: outcome, title: settings.label(for: AccountKey(provider)))
+        else { return }
+        Task {
+            if let authorizationRequest {
+                guard await authorizationRequest.value else { return }
+            }
+            guard settings.primesWindows(for: provider) else { return }
+            try? await UNUserNotificationCenter.current().add(request)
+        }
+    }
+
     private func post(_ alert: UsageAlert) {
         let content = UNMutableNotificationContent()
         content.title = settings.label(for: alert.account)

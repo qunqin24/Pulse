@@ -913,9 +913,13 @@
 "Short: week" = "Нед";
 "Short: month" = "Мес";
 "Start windows automatically" = "Автоматический старт периодов";
-"Start a new window after each reset" = "Начинать новый период после каждого сброса";
-"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда лимит на 5 часов сбрасывается, Pulse отправляет «hi» модели Haiku через Claude Code, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
-"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "Когда сбрасывается лимит на 5 часов или недельный лимит, Pulse отправляет «hi» самой дешёвой модели через Codex, и отсчёт следующего периода начинается сразу, а не с вашего следующего сообщения. Ничего не сохраняется.";
+"Start a new window" = "Начинать новый период";
+"When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "После сброса пятичасового лимита или пока отсчёт ещё не начался, Pulse отправляет одно «hi» модели Haiku через Claude Code. Переписка не сохраняется. При ошибке Pulse уведомит вас один раз. Следующая попытка возможна только после сброса, время которого Pulse узнал заранее.";
+"When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "После сброса пятичасового или недельного лимита либо пока отсчёт по нему ещё не начался, Pulse отправляет одно «hi» самой дешёвой модели через Codex. Переписка не сохраняется. При ошибке Pulse уведомит вас один раз. Следующая попытка возможна только после сброса, время которого Pulse узнал заранее.";
+"Couldn't start the window" = "Не удалось начать период";
+"The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again." = "Инструмент не ответил вовремя. Pulse попробует снова только после сброса, время которого известно заранее.";
+"The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again." = "Не удалось отправить сообщение. Проверьте, выполнен ли вход в инструменте командной строки. Pulse попробует снова только после сброса, время которого известно заранее.";
+"The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again." = "Инструмент командной строки не найден. Pulse попробует снова только после сброса, время которого известно заранее.";
 "Only between" = "Только в часы";
 "A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "Если сброс приходится на другое время, новый период запускается, когда наступят эти часы. Общая настройка для Claude Code и Codex.";
 "Last started" = "Последний запуск";

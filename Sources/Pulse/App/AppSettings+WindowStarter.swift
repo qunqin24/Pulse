@@ -11,6 +11,7 @@ extension AppSettings.Key {
     static let primedProviders = "settings.primedProviders"
     static let primerStart = "settings.primerStart"
     static let primerEnd = "settings.primerEnd"
+    static let primerResets = "settings.primerResets"
     static let primerRunTimes = "settings.primerRunTimes"
     static let primerRunOutcomes = "settings.primerRunOutcomes"
 }
@@ -47,6 +48,18 @@ extension AppSettings {
         primerRunOutcomes[provider.rawValue] = outcome.rawValue
         defaults.set(primerRunTimes, forKey: Key.primerRunTimes)
         defaults.set(primerRunOutcomes, forKey: Key.primerRunOutcomes)
+    }
+
+    /// Only the provider, limit row and dates survive a relaunch.
+    var rememberedPrimerResets: [String: WindowPrimer.Reset] {
+        get {
+            guard let data = defaults.data(forKey: Key.primerResets) else { return [:] }
+            return (try? JSONDecoder().decode([String: WindowPrimer.Reset].self, from: data)) ?? [:]
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            defaults.set(data, forKey: Key.primerResets)
+        }
     }
 
     /// The settings `init` has no parameter for.

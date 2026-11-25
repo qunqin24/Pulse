@@ -29,37 +29,94 @@ struct PrimerHours: Equatable, Sendable {
     }
 }
 
-/// Starts a usage window as soon as it has reset, for the accounts whose
-/// switch is on — see `WindowStarter` for why and how.
-///
-/// **By the clock, not by guessing from the reply.** A window that has reset
-/// but not restarted is reported differently by each provider, and not
-/// documented by either. What is certain is the reset time the last reading
-/// stated: once it has passed, the window is over. So each eligible window's
-/// reset is remembered, a timer is set for just after it, and at that moment
-/// one "hi" is sent — unless a reading since shows a later reset, which means
-/// the user has started it already.
-///
-/// Off by default, per provider, and only after the user has read what it
-/// does (the confirmation in Settings). Only the first account of each: the
-/// tools send as whoever they are signed in as, which is that account.
+/// Sends one message for an eligible account when a remembered reset comes
+/// due or a live reading shows a window waiting for its first message.
 @MainActor
 final class WindowPrimer {
     private let store: UsageStore
     private let settings: AppSettings
+    private let alerts: UsageAlerts
     private var timer: Timer?
     private var generation = 0
     private var inFlight: Set<Provider> = []
-    /// The reset each eligible window was last seen to be heading for.
-    private var resets: [String: Date] = [:]
+    private var windows: [String: WindowState]
+    private var savedResets: [String: Reset]
 
-    /// A reading can arrive a little after the reset it stated; the window
-    /// is given this long to be over before it is started again.
+    /// A reading can arrive a little after the reset it stated.
     nonisolated static let grace: TimeInterval = 60
+    typealias Run = (date: Date, outcome: WindowStarter.Outcome)
 
-    init(store: UsageStore, settings: AppSettings) {
+    /// Evidence that this window had a countdown. A reset date alone cannot
+    /// tell us whether the countdown was seen before or after the last send.
+    struct Reset: Equatable, Codable {
+        let date: Date
+        let seenAt: Date
+    }
+
+    struct WindowState {
+        private(set) var reset: Reset?
+        private var clockArmed = false
+        private var current: UsageWindow?
+        private var nilSince: Date?
+
+        init(reset: Reset? = nil) { self.reset = reset }
+
+        mutating func record(_ window: UsageWindow?, receivedAt: Date, now: Date, last: Run?) {
+            current = window
+            guard let window else {
+                nilSince = nil
+                return
+            }
+            guard let date = window.resetsAt else {
+                nilSince = nilSince ?? now
+                return
+            }
+            nilSince = nil
+            guard date > now else { return }
+            clockArmed = true
+
+            // Keep the first sighting after each attempt. Re-reading the same
+            // store snapshot on a settings change cannot re-arm an idle start.
+            if let reset, reset.date == date {
+                guard let last, reset.seenAt <= last.date, receivedAt > last.date else { return }
+            }
+            reset = Reset(date: date, seenAt: receivedAt)
+        }
+
+        private func idleStart(last: Run?, now: Date) -> Date? {
+            guard let current, (current.resetsAt ?? .distantPast) <= now,
+                  let since = current.resetsAt ?? nilSince else { return nil }
+            let idle = since.addingTimeInterval(WindowPrimer.grace)
+            guard let last else { return idle }
+            guard let reset, reset.date > last.date else { return nil }
+            switch last.outcome {
+            case .sent:
+                return reset.seenAt > last.date ? idle : nil
+            case .toolMissing, .failed, .timedOut:
+                return max(idle, reset.date.addingTimeInterval(WindowPrimer.grace))
+            }
+        }
+
+        /// Earliest permitted action for this window, shared by the timer and
+        /// its callback. Restored evidence alone never arms the clock.
+        func nextStart(last: Run?, now: Date, hours: PrimerHours, calendar: Calendar = .current) -> Date? {
+            func allowed(_ date: Date) -> Date { hours.next(after: max(now, date), calendar: calendar) }
+            let idle = idleStart(last: last, now: now).map(allowed)
+            guard clockArmed, let reset, reset.date > (last?.date ?? .distantPast) else { return idle }
+            let clock = allowed(reset.date.addingTimeInterval(WindowPrimer.grace))
+            guard WindowPrimer.isDue(reset: reset.date, current: current, now: clock, hours: hours, calendar: calendar)
+            else { return idle }
+            return min(clock, idle ?? clock)
+        }
+    }
+
+    init(store: UsageStore, settings: AppSettings, alerts: UsageAlerts) {
         self.store = store
         self.settings = settings
+        self.alerts = alerts
+        let saved = settings.rememberedPrimerResets
+        savedResets = saved
+        windows = saved.mapValues { WindowState(reset: $0) }
     }
 
     func start() {
@@ -92,13 +149,9 @@ final class WindowPrimer {
     }
 
     /// The noted resets of the providers that will still be started.
-    nonisolated static func kept(_ resets: [String: Date], starting providers: Set<Provider>) -> [String: Date] {
+    nonisolated static func kept<Value>(_ resets: [String: Value], starting providers: Set<Provider>) -> [String: Value] {
         let prefixes = providers.map { AccountKey($0).id + "|" }
         return resets.filter { key, _ in prefixes.contains { key.hasPrefix($0) } }
-    }
-
-    private static func key(_ account: AccountKey, _ window: UsageWindow) -> String {
-        "\(account.id)|\(window.id)"
     }
 
     // MARK: - Watching
@@ -117,36 +170,55 @@ final class WindowPrimer {
         schedule()
     }
 
-    /// Notes every eligible window's coming reset, reading what the tracking
-    /// closure has to follow: the switches, the hours, and the readings.
+    private var starting: [Provider] {
+        Self.providers.filter { settings.primesWindows(for: $0) && settings.isEnabled(AccountKey($0)) }
+    }
+
+    /// Track raw readings, switches and hours together. An absent row breaks
+    /// continuous nil-reset grace, but a clock already armed can still ring.
     private func record() {
         let now = Date()
         _ = settings.primerHours
-        for provider in Self.providers where settings.primesWindows(for: provider) {
-            let account = AccountKey(provider)
-            guard settings.isEnabled(account) else { continue }
-            for window in store.usage(for: account).windows where Self.eligible(window, of: provider) {
-                if let reset = window.resetsAt, reset > now {
-                    resets[Self.key(account, window)] = reset
-                }
+        let providers = starting
+        windows = Self.kept(windows, starting: Set(providers))
+        for provider in providers {
+            let reading = store.rawLiveWindows(for: provider)
+            var current: [String: UsageWindow] = [:]
+            for window in reading?.windows ?? [] where Self.eligible(window, of: provider) {
+                current["\(provider.rawValue)|\(window.id)"] = window
+            }
+            let last = settings.lastPrimerRun(for: provider)
+            let known = Self.kept(windows, starting: [provider])
+            for key in Set(known.keys).union(current.keys) {
+                windows[key, default: WindowState()].record(
+                    current[key], receivedAt: reading?.receivedAt ?? now, now: now, last: last
+                )
             }
         }
+        saveResets()
+    }
+
+    private func saveResets() {
+        let resets = windows.compactMapValues(\.reset)
+        guard resets != savedResets else { return }
+        settings.rememberedPrimerResets = resets
+        savedResets = resets
     }
 
     // MARK: - Acting
 
+    private func starts(for provider: Provider, now: Date) -> [String: Date] {
+        let last = settings.lastPrimerRun(for: provider)
+        let hours = settings.primerHours
+        return Self.kept(windows, starting: [provider]).compactMapValues {
+            $0.nextStart(last: last, now: now, hours: hours)
+        }
+    }
+
     private func schedule() {
         timer?.invalidate()
-        // **A reset nobody will act on is not something to wake for.** Turning
-        // the starter off, or the account, left its noted resets here; once
-        // they passed, every timer came due at once, `fire` skipped them, and
-        // the loop woke again in five seconds — for as long as Pulse ran.
-        resets = Self.kept(resets, starting: Set(Self.providers.filter {
-            settings.primesWindows(for: $0) && settings.isEnabled(AccountKey($0))
-        }))
-        let hours = settings.primerHours
         let now = Date()
-        let times = resets.values.map { hours.next(after: max($0.addingTimeInterval(Self.grace), now)) }
+        let times = starting.filter { !inFlight.contains($0) }.compactMap { starts(for: $0, now: now).values.min() }
         guard let soonest = times.min() else { return }
         let delay = max(soonest.timeIntervalSince(now), 5)
         let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
@@ -156,32 +228,32 @@ final class WindowPrimer {
         self.timer = timer
     }
 
+    /// One send consumes the due windows of this account together. A sibling
+    /// with a later deadline keeps its clock and the evidence saved for relaunch.
+    nonisolated static func takeDue(_ starts: [String: Date], at now: Date, from windows: inout [String: WindowState]) -> Bool {
+        let due = starts.filter { $0.value <= now }
+        for key in due.keys { windows[key] = nil }
+        return !due.isEmpty
+    }
+
     private func fire() {
+        // A fetch or switch change can land before the observation task runs.
+        record()
         let now = Date()
-        let hours = settings.primerHours
-        for provider in Self.providers where settings.primesWindows(for: provider) && !inFlight.contains(provider) {
-            let account = AccountKey(provider)
-            guard settings.isEnabled(account) else { continue }
-            let windows = store.usage(for: account).windows
-            let due = resets.filter { key, reset in
-                guard key.hasPrefix(account.id + "|") else { return false }
-                let id = String(key.dropFirst(account.id.count + 1))
-                return Self.isDue(reset: reset, current: windows.first { $0.id == id }, now: now, hours: hours)
-            }
-            guard !due.isEmpty else { continue }
-            // One message starts every window of the account at once.
-            for key in due.keys { resets[key] = nil }
+        for provider in starting where !inFlight.contains(provider) {
+            let times = starts(for: provider, now: now)
+            guard Self.takeDue(times, at: now, from: &windows) else { continue }
             inFlight.insert(provider)
             Task { @MainActor in
                 let outcome = await WindowStarter.start(provider)
                 self.inFlight.remove(provider)
                 self.settings.recordPrimerRun(for: provider, outcome: outcome, at: Date())
-                // The new reset, so the next start is scheduled from it.
-                self.store.refresh(account)
+                self.alerts.postWindowStarterFailure(for: provider, outcome: outcome)
+                self.store.refresh(AccountKey(provider))
+                self.schedule()
             }
         }
-        // Whatever was not due yet — or the rest of the hours — is scheduled
-        // again; the tracking only re-runs on a change.
+        saveResets()
         schedule()
     }
 }

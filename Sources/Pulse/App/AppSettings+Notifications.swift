@@ -84,7 +84,7 @@ extension AppSettings {
     /// Whether anything at all would be posted. What decides if permission is
     /// worth asking for.
     var wantsAlerts: Bool {
-        wantsUsageAlerts || alertsOnOutage || alertsOnRecap
+        wantsUsageAlerts || alertsOnOutage || alertsOnRecap || !primedProviders.isEmpty
     }
 
     /// The settings `init` has no parameter for.

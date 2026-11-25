@@ -1,12 +1,12 @@
 # Window starter
 
-Owns: starting Claude Code's and Codex's usage windows as soon as they reset. Sources: `Sources/Pulse/Usage/WindowPrimer.swift` (when) and `Sources/Pulse/Providers/WindowStarter.swift` (what is sent). Pinned by `Tests/PulseTests/WindowPrimerTests.swift`.
+Pulse can start a Claude Code or Codex usage window after a reset or while its countdown is idle. Sources: `Sources/Pulse/Usage/WindowPrimer.swift` (when) and `Sources/Pulse/Providers/WindowStarter.swift` (what is sent). Pinned by `Tests/PulseTests/WindowPrimerTests.swift`.
 
 ## Why
 
-Claude Code's five-hour window and Codex's windows start at the **first message after a reset**, not at the reset. Somebody who comes back three hours after a reset starts a fresh window then, and if they run dry waits all of it out, where a window started at the reset would already be three hours through. The starter sends one "hi" after each reset so the clock starts then.
+Claude Code's five-hour window and Codex's windows start at the **first message after a reset**, not at the reset. Somebody who comes back three hours after a reset starts a fresh window then, and if they run dry waits all of it out, where a window started at the reset would already be three hours through. The starter sends one "hi" to start the countdown.
 
-Claude Code's weekly limit resets at a fixed hour whatever anybody does, so only its five hours are started. Codex's five hours and week both wait for a first message, so both are. Account-wide limits only; a limit scoped to one model is left alone.
+Claude Code's weekly limit resets at a fixed hour whatever anybody does, so only its five hours are started. Codex's five hours and week both wait for a first message, so both are. Only reported, account-wide limits qualify. Scoped and estimated windows are excluded.
 
 ## It is not the providers' feature
 
@@ -16,15 +16,14 @@ It is also the one place Pulse acts rather than reads. It holds no credential fo
 
 ## When (`WindowPrimer`)
 
-**By the clock, not by guessing from the reply.** How a window that has reset but not restarted is reported differs by provider and is documented by neither. What is certain is the reset time the last reading stated. So:
+The switch and the first account must both be enabled. A single message can start all the account's idle windows. An idle Codex five-hour window can trigger that message while the weekly window continues counting down on its original clock.
 
-- Every reading of an eligible window with a future `resetsAt` is remembered.
-- Before each timer is set, the resets of a provider whose starter or account is now off are forgotten (`WindowPrimer.kept`). They were kept, and once they had passed the timer came due every five seconds for as long as Pulse ran, only for `fire` to skip them.
-- A one-shot timer is set for the earliest remembered reset plus a minute's grace (`WindowPrimer.grace`), moved to the start of the allowed hours if it falls outside them.
-- When it fires, a window is due if its reset and grace have passed, it is inside the hours, and the latest reading does not show a **later** reset — which would mean the user has used it since (`WindowPrimer.isDue`). One message starts every due window of the account.
-- The account is then refreshed, so its new reset is remembered and the next start scheduled from it.
+- **A reset seen coming.** When a reading shows a future reset, Pulse sets a one-shot timer for one minute after that reset. A newer countdown updates the deadline. Once armed, this clock can still fire if the row disappears from a later reading.
+- **An idle window.** Pulse also checks the rows in the latest raw live fetch, before display reconciliation drops expired windows. A timestamp at least a minute in the past qualifies immediately, including Codex’s Unix timestamp of zero. When a row has no reset timestamp, Pulse waits one minute from the first continuous live sighting. A future countdown during that minute replaces the idle wake. Missing rows, stale or unavailable readings, and the cache shown at launch cannot establish an idle window.
+- **After a successful send.** Pulse refreshes the account. If the window still looks idle, no further idle start is scheduled. A future reset observed for that window after the send allows a subsequent idle reading to start it again. Pulse keeps the reset and when it saw it across relaunch, so it can recognize the cycle even if it was closed over the reset. Restoring that evidence alone schedules no send.
+- **After a failed send.** A missing tool, failed command, or timeout ends the attempt. Pulse records the result and requests one failure notification. The window can start again only after a later reset that Pulse observed in advance has passed its minute of grace. Refreshing or relaunching with the same idle window leaves it stopped.
 
-**Hours** (`PrimerHours`, default 07:00–23:00, shared by both providers, overnight ranges allowed, equal start and end is all day): a reset outside them is started when they begin. A window started at 3 a.m. resets at 8, while somebody is asleep, and again five hours later.
+**Allowed hours** use the Mac's clock and are shared by both providers. The default is 07:00–23:00. An overnight range is valid, and equal start and end times allow the whole day. A start that would fall outside the selected hours waits until they open. Turning off the starter or account discards its pending wakes and reset evidence.
 
 ## What is sent (`WindowStarter`)
 
@@ -44,4 +43,4 @@ Measured 2026-09-27: Codex answered in about eight seconds on `gpt-5.6-luna` at 
 
 ## What the pane shows
 
-**Last started**: the time of the last attempt and, when it did not go through, why — the tool not found, not signed in or failing, or not answering within two minutes (`WindowStarter.deadline`). Stored in `AppSettings.primerRunTimes` / `primerRunOutcomes`. A failure is not retried until the next reset.
+**Last started**: the time of the last attempt and, when it did not go through, why — the tool not found, not signed in or failing, or not answering within two minutes (`WindowStarter.deadline`). Stored in `AppSettings.primerRunTimes` / `primerRunOutcomes`. The pane keeps this record even if macOS denies notification permission. [Window starter notifications](notifications.md#window-starter-failures)

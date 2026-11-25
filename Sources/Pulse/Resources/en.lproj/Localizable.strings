@@ -913,9 +913,13 @@
 "Short: week" = "Wk";
 "Short: month" = "Mo";
 "Start windows automatically" = "Start windows automatically";
-"Start a new window after each reset" = "Start a new window after each reset";
-"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved.";
-"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved.";
+"Start a new window" = "Start a new window";
+"When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming.";
+"When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming.";
+"Couldn't start the window" = "Couldn't start the window";
+"The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again." = "The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again.";
+"The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again." = "The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again.";
+"The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again." = "The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again.";
 "Only between" = "Only between";
 "A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "A reset outside these hours is started when they begin. Shared by Claude Code and Codex.";
 "Last started" = "Last started";

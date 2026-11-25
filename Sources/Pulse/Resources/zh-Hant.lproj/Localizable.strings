@@ -913,9 +913,13 @@
 "Short: week" = "週";
 "Short: month" = "月";
 "Start windows automatically" = "自動開始新視窗";
-"Start a new window after each reset" = "額度重設後自動開始新視窗";
-"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小時額度重設後，透過 Claude Code 給 Haiku 發一句「hi」，讓下一個視窗從這時開始計時，而不是等到你下一次發訊息。不會儲存任何對話。";
-"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小時或每週額度重設後，透過 Codex 給最便宜的模型發一句「hi」，讓下一個視窗從這時開始計時，而不是等到你下一次發訊息。不會儲存任何對話。";
+"Start a new window" = "開始新視窗";
+"When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 小時視窗重設或尚未開始倒數時，Pulse 會透過 Claude Code 傳一則「hi」給 Haiku，對話不會儲存。若傳送失敗，會通知你一次，等服務商預告的重設時間過後才會再傳。";
+"When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 小時或每週視窗重設或尚未開始倒數時，Pulse 會透過 Codex 傳一則「hi」給費用最低的模型，對話不會儲存。若傳送失敗，會通知你一次，等服務商預告的重設時間過後才會再傳。";
+"Couldn't start the window" = "無法開始視窗";
+"The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again." = "命令列工具未及時回應。Pulse 會等服務商預告的重設時間過後再試。";
+"The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again." = "訊息未送出，請確認命令列工具已登入。Pulse 會等服務商預告的重設時間過後再試。";
+"The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again." = "找不到命令列工具。Pulse 會等服務商預告的重設時間過後再試。";
 "Only between" = "僅在此時段";
 "A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "如果在這個時段之外重設，會等時段開始時再自動開始。Claude Code 與 Codex 共用。";
 "Last started" = "上次自動開始";

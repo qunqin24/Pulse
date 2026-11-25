@@ -913,9 +913,13 @@
 "Short: week" = "周";
 "Short: month" = "月";
 "Start windows automatically" = "自动开始新窗口";
-"Start a new window after each reset" = "额度重置后自动开始新窗口";
-"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小时额度重置后，通过 Claude Code 向 Haiku 发送一条「hi」，使下一个窗口从此时开始计时，而不是等到你下一次发消息。不会保存任何内容。";
-"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 小时或每周额度重置后，通过 Codex 向最便宜的模型发送一条「hi」，使下一个窗口从此时开始计时，而不是等到你下一次发消息。不会保存任何内容。";
+"Start a new window" = "开始新窗口";
+"When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 小时窗口重置或没有倒计时时，Pulse 会通过 Claude Code 向 Haiku 发送一条「hi」，不保存对话。发送失败时会通知一次，等到服务商预告的重置时间过后才会再发。";
+"When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 小时窗口或每周窗口重置或没有倒计时时，Pulse 会通过 Codex 向最便宜的模型发送一条「hi」，不保存对话。发送失败时会通知一次，等到服务商预告的重置时间过后才会再发。";
+"Couldn't start the window" = "窗口未能开始";
+"The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again." = "命令行工具未及时响应。Pulse 会等到服务商预告的重置时间过后再尝试。";
+"The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again." = "消息未能发出，请检查命令行工具是否已登录。Pulse 会等到服务商预告的重置时间过后再尝试。";
+"The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again." = "未找到命令行工具。Pulse 会等到服务商预告的重置时间过后再尝试。";
 "Only between" = "仅在此时段";
 "A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "如果在这个时段之外重置，会等时段开始时再自动开始。Claude Code 和 Codex 共用。";
 "Last started" = "上次自动开始";

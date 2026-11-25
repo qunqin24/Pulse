@@ -20,6 +20,19 @@ final class UsageStore {
     /// Keyed by account id rather than by provider: one of them can be signed
     /// in to more than once, and a reading belongs to the account it came from.
     private(set) var usage: [String: ProviderUsage] = [:]
+    /// Only the primary starter accounts need windows before cache reconciliation.
+    struct LiveWindows {
+        let windows: [UsageWindow]
+        let receivedAt: Date
+
+        init?(_ raw: ProviderUsage, at date: Date) {
+            guard raw.state == .live else { return nil }
+            windows = raw.windows
+            receivedAt = date
+        }
+    }
+
+    private var starterReadings: [Provider: LiveWindows] = [:]
     private(set) var diagnostics: [String: ConnectionDiagnostic] = [:]
     private(set) var isRefreshing = false
     /// Nil while an automatic refresh is fetching every provider; otherwise
@@ -570,6 +583,7 @@ final class UsageStore {
     /// switching or signing out of a credential source so an older account's
     /// figures cannot stand in while the new login is fetched.
     func resetReading(for account: AccountKey) {
+        if account.isPrimary { starterReadings[account.provider] = nil }
         if settings.isEnabled(account) {
             usage[account.id] = .unavailable(account, reason: .loading)
         }
@@ -765,6 +779,9 @@ final class UsageStore {
             previous: diagnostics[id], now: clock()
         )
         guard let account = AccountKey(id: id) else { return }
+        if account.isPrimary, WindowPrimer.providers.contains(account.provider) {
+            starterReadings[account.provider] = LiveWindows(raw, at: clock())
+        }
         // Before the alert rules, and regardless of whether they are on: the
         // mark's celebration is not a notification.
         resetWatch.observe(fetched, as: account)
@@ -810,6 +827,11 @@ final class UsageStore {
     /// Whether this window's current cycle has been seen spent off this Mac.
     func usedElsewhere(_ window: UsageWindow, account: AccountKey) -> Bool {
         elsewhere?.usedElsewhere(window, account: account) ?? false
+    }
+
+    /// The last raw live fetch for the starter's first account. Launch cache never enters this table.
+    func rawLiveWindows(for provider: Provider) -> LiveWindows? {
+        starterReadings[provider]
     }
 
     func usage(for account: AccountKey) -> ProviderUsage {

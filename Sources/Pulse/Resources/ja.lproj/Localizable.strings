@@ -913,9 +913,13 @@
 "Short: week" = "週";
 "Short: month" = "月";
 "Start windows automatically" = "ウィンドウを自動で開始";
-"Start a new window after each reset" = "リセット後に新しいウィンドウを自動で開始";
-"When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 時間の上限がリセットされたら、Claude Code から Haiku に「hi」を送り、次のウィンドウを次のメッセージ時ではなくその時点から計測させます。会話は保存されません。";
-"When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved." = "5 時間または週の上限がリセットされたら、Codex からいちばん安いモデルに「hi」を送り、次のウィンドウを次のメッセージ時ではなくその時点から計測させます。会話は保存されません。";
+"Start a new window" = "新しいウィンドウを開始";
+"When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 時間枠がリセットされたときや、カウントダウンが始まっていないときに、Claude Code から Haiku に「hi」を 1 回送ります。会話は保存されません。送信に失敗した場合は 1 回だけ通知し、次に送るのは Pulse が事前に確認したリセット時刻を過ぎてからです。";
+"When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming." = "5 時間枠または週間枠がリセットされたときや、カウントダウンが始まっていないときに、Codex から最も安いモデルに「hi」を 1 回送ります。会話は保存されません。送信に失敗した場合は 1 回だけ通知し、次に送るのは Pulse が事前に確認したリセット時刻を過ぎてからです。";
+"Couldn't start the window" = "ウィンドウを開始できませんでした";
+"The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again." = "制限時間内にツールから応答がありませんでした。次に送るのは、Pulse が事前に確認したリセット時刻を過ぎてからです。";
+"The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again." = "メッセージを送信できませんでした。ツールにログインしているか確認してください。次に送るのは、Pulse が事前に確認したリセット時刻を過ぎてからです。";
+"The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again." = "コマンドラインツールが見つかりませんでした。次に送るのは、Pulse が事前に確認したリセット時刻を過ぎてからです。";
 "Only between" = "この時間帯のみ";
 "A reset outside these hours is started when they begin. Shared by Claude Code and Codex." = "時間帯外のリセットは、時間帯が始まったときに開始します。Claude Code と Codex で共通です。";
 "Last started" = "前回の自動開始";
