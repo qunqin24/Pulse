@@ -18,8 +18,8 @@ struct WindowStarterGroup: View {
             SettingsRow(
                 String.localized("Start a new window"),
                 subtitle: provider == .claudeCode
-                    ? String.localized("When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming.")
-                    : String.localized("When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming."),
+                    ? String.localized("When the 5-hour window isn't counting down, sends “hi” to Haiku through Claude Code. Nothing is saved. A failure is notified once and not retried until the next reset.")
+                    : String.localized("When the 5-hour or weekly window isn't counting down, sends “hi” to the cheapest model through Codex. Nothing is saved. A failure is notified once and not retried until the next reset."),
                 symbol: "play.circle"
             ) {
                 Toggle("", isOn: Binding(
@@ -37,7 +37,7 @@ struct WindowStarterGroup: View {
 
                 SettingsRow(
                     String.localized("Only between"),
-                    subtitle: String.localized("Resets outside these hours wait until they begin. Shared by Claude Code and Codex."),
+                    subtitle: String.localized("Starts outside these hours wait until they begin. Shared by Claude Code and Codex."),
                     symbol: "clock"
                 ) {
                     HStack(spacing: 6) {

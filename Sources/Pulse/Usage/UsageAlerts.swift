@@ -801,11 +801,11 @@ final class UsageAlerts {
         switch outcome {
         case .sent: return nil
         case .timedOut:
-            body = .localized("The tool did not answer in time. Pulse will wait for a reset it has seen coming before trying again.")
+            body = .localized("The tool didn't answer in time. No retry until the next reset.")
         case .failed:
-            body = .localized("The message did not go through. Check that the tool is signed in. Pulse will wait for a reset it has seen coming before trying again.")
+            body = .localized("The message didn't go through; check that the tool is signed in. No retry until the next reset.")
         case .toolMissing:
-            body = .localized("The command-line tool was not found. Pulse will wait for a reset it has seen coming before trying again.")
+            body = .localized("The command-line tool wasn't found. No retry until the next reset.")
         }
         let content = UNMutableNotificationContent()
         content.title = title

@@ -6,7 +6,7 @@ Source: [`Sources/Pulse/Usage/UsageAlerts.swift`](../Sources/Pulse/Usage/UsageAl
 
 ## What can be said
 
-Eight events can trigger an automatic notification.
+Eight things, and nothing else — each something you would want to know *while looking at something else*.
 
 | Alert | Fires when | Gated by |
 |---|---|---|

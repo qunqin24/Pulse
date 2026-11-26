@@ -90,8 +90,11 @@ final class WindowPrimer {
             guard let last else { return idle }
             guard let reset, reset.date > last.date else { return nil }
             switch last.outcome {
+            // A countdown seen after the send has to run out first, as after a
+            // failure: a reading that contradicts it (no reset, from a fallback
+            // route) is not the window going idle again.
             case .sent:
-                return reset.seenAt > last.date ? idle : nil
+                return reset.seenAt > last.date ? max(idle, reset.date.addingTimeInterval(WindowPrimer.grace)) : nil
             case .toolMissing, .failed, .timedOut:
                 return max(idle, reset.date.addingTimeInterval(WindowPrimer.grace))
             }
@@ -149,6 +152,10 @@ final class WindowPrimer {
     }
 
     /// The noted resets of the providers that will still be started.
+    ///
+    /// **A reset nobody will act on is not something to wake for.** Kept after
+    /// a provider was turned off, a passed reset made the timer come due every
+    /// five seconds for as long as Pulse ran, only for `fire` to skip it.
     nonisolated static func kept<Value>(_ resets: [String: Value], starting providers: Set<Provider>) -> [String: Value] {
         let prefixes = providers.map { AccountKey($0).id + "|" }
         return resets.filter { key, _ in prefixes.contains { key.hasPrefix($0) } }
@@ -187,7 +194,7 @@ final class WindowPrimer {
             for window in reading?.windows ?? [] where Self.eligible(window, of: provider) {
                 current["\(provider.rawValue)|\(window.id)"] = window
             }
-            let last = settings.lastPrimerRun(for: provider)
+            let last = settings.governingPrimerRun(for: provider)
             let known = Self.kept(windows, starting: [provider])
             for key in Set(known.keys).union(current.keys) {
                 windows[key, default: WindowState()].record(
@@ -208,7 +215,7 @@ final class WindowPrimer {
     // MARK: - Acting
 
     private func starts(for provider: Provider, now: Date) -> [String: Date] {
-        let last = settings.lastPrimerRun(for: provider)
+        let last = settings.governingPrimerRun(for: provider)
         let hours = settings.primerHours
         return Self.kept(windows, starting: [provider]).compactMapValues {
             $0.nextStart(last: last, now: now, hours: hours)
@@ -244,10 +251,14 @@ final class WindowPrimer {
             let times = starts(for: provider, now: now)
             guard Self.takeDue(times, at: now, from: &windows) else { continue }
             inFlight.insert(provider)
+            // Stamped with when it began, not when it ended: a sibling window
+            // that resets during a two-minute attempt is a later reset, and
+            // must not be taken for one the attempt already covered.
+            let startedAt = now
             Task { @MainActor in
                 let outcome = await WindowStarter.start(provider)
                 self.inFlight.remove(provider)
-                self.settings.recordPrimerRun(for: provider, outcome: outcome, at: Date())
+                self.settings.recordPrimerRun(for: provider, outcome: outcome, at: startedAt)
                 self.alerts.postWindowStarterFailure(for: provider, outcome: outcome)
                 self.store.refresh(AccountKey(provider))
                 self.schedule()

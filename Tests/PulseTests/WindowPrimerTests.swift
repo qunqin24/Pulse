@@ -222,6 +222,45 @@ struct WindowPrimerTests {
         #expect(next(relaunched, at: Self.at(16), last: last) == Self.at(16))
     }
 
+    @Test("After a send, a reading with no reset cannot start a window still counting down")
+    func contradictoryReadingAfterSuccess() {
+        let last = (date: Self.at(10), outcome: WindowStarter.Outcome.sent)
+        var observed = state(window(.fiveHour, resets: Self.at(15)), at: Self.at(10, 1), last: last)
+        // A fallback route that keeps the row without its reset.
+        observed.record(window(.fiveHour, resets: nil), receivedAt: Self.at(11), now: Self.at(11), last: last)
+        #expect(next(observed, at: Self.at(11, 1), last: last) == Self.at(15, 1))
+    }
+
+    @Test("A sibling that resets while an attempt is running is a later reset, not one it covered")
+    func siblingResetDuringAttempt() {
+        let weeklyReset = Self.at(10).addingTimeInterval(30)
+        // The attempt is stamped with when it began, 10:00, though it timed out at 10:02.
+        let last = (date: Self.at(10), outcome: WindowStarter.Outcome.timedOut)
+        var week = state(window(.weekly, resets: weeklyReset), at: Self.at(9))
+        week.record(window(.weekly, resets: weeklyReset), receivedAt: Self.at(10, 3), now: Self.at(10, 3), last: last)
+        #expect(next(week, at: Self.at(10, 3), last: last) == Self.at(10, 3))
+    }
+
+    @Test("Turning the switch back on lets an idle window be tried again; 'Last started' keeps the failure")
+    @MainActor
+    func reenablingAllowsRetry() {
+        let (defaults, cleanup) = TestDefaults.make("WindowPrimerRearm")
+        defer { cleanup() }
+        let settings = AppSettings(defaults: defaults)
+        settings.setPrimesWindows(true, for: .codex)
+        settings.recordPrimerRun(for: .codex, outcome: .timedOut, at: Date().addingTimeInterval(60))
+        #expect(settings.governingPrimerRun(for: .codex)?.outcome == .timedOut)
+        // Turning it on again while on is not a new request.
+        settings.setPrimesWindows(true, for: .codex)
+        #expect(settings.governingPrimerRun(for: .codex)?.outcome == .timedOut)
+
+        settings.recordPrimerRun(for: .codex, outcome: .timedOut, at: Date().addingTimeInterval(-60))
+        settings.setPrimesWindows(false, for: .codex)
+        settings.setPrimesWindows(true, for: .codex)
+        #expect(settings.governingPrimerRun(for: .codex) == nil)
+        #expect(settings.lastPrimerRun(for: .codex)?.outcome == .timedOut)
+    }
+
     @Test("An idle five-hour window consumes one start and preserves the weekly clock")
     func siblingCountdownSurvives() {
         let now = Self.at(12)

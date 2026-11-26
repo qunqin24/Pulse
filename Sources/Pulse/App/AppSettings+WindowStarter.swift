@@ -14,6 +14,7 @@ extension AppSettings.Key {
     static let primerResets = "settings.primerResets"
     static let primerRunTimes = "settings.primerRunTimes"
     static let primerRunOutcomes = "settings.primerRunOutcomes"
+    static let primerArmedAt = "settings.primerArmedAt"
 }
 
 extension AppSettings {
@@ -33,7 +34,30 @@ extension AppSettings {
     }
 
     func setPrimesWindows(_ on: Bool, for provider: Provider) {
-        if on { primedProviders.insert(provider.rawValue) } else { primedProviders.remove(provider.rawValue) }
+        guard on else {
+            primedProviders.remove(provider.rawValue)
+            return
+        }
+        // Noted before the insert, which `WindowPrimer` observes.
+        if !primesWindows(for: provider) {
+            var armed = defaults.dictionary(forKey: Key.primerArmedAt) as? [String: Double] ?? [:]
+            armed[provider.rawValue] = Date().timeIntervalSince1970
+            defaults.set(armed, forKey: Key.primerArmedAt)
+        }
+        primedProviders.insert(provider.rawValue)
+    }
+
+    /// The attempt that still decides whether an idle window may be started.
+    ///
+    /// One from before the switch was last turned on does not: turning it back
+    /// on, through the risk confirmation, is the reader asking for a fresh try.
+    /// Without this a failed attempt could only be cleared by a reset Pulse saw
+    /// coming, and the switch did nothing. "Last started" still shows it.
+    func governingPrimerRun(for provider: Provider) -> (date: Date, outcome: WindowStarter.Outcome)? {
+        guard let last = lastPrimerRun(for: provider) else { return nil }
+        let armed = (defaults.dictionary(forKey: Key.primerArmedAt) as? [String: Double])?[provider.rawValue]
+        if let armed, last.date.timeIntervalSince1970 < armed { return nil }
+        return last
     }
 
     func lastPrimerRun(for provider: Provider) -> (date: Date, outcome: WindowStarter.Outcome)? {
