@@ -7,6 +7,40 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.16.1
+
+**中文**
+
+**新功能**
+
+- **小机器人可以是毛绒的。** 在账号设置的「材质」中选择「毛绒」，形象会长出一层绒毛，默认仍是纯色。
+- **sub2api 和 New API 可以添加多个账号。** 在服务商设置的「账号」中点「添加另一个账号」，每个账号各有地址、API key 和名称。感谢 [@iblueer](https://github.com/qunqin24/Pulse/issues/125) 提议。
+- **JetBrains AI 可以登录 JetBrains 账号读取额度。** 2026.3 起 IDE 不再在本机保存额度，在「JetBrains AI → 连接」中登录后，Pulse 会向 JetBrains 查询。感谢 [@tyler4400](https://github.com/qunqin24/Pulse/issues/122) 报告。
+- **Grok Bot 不装 Cursor 也能使用。** 在「Grok Bot → 连接」中通过 Cursor 网页登录即可。感谢 [@sunny0826](https://github.com/qunqin24/Pulse/pull/121) 贡献。
+- **窗口没在倒计时时也会自动开始。** 开启「开始新窗口」后，空着的窗口会发一条「hi」开始计时；发送失败会通知一次。感谢 [@tyler4400](https://github.com/qunqin24/Pulse/pull/128) 贡献。
+
+**改进与修复**
+
+- **小机器人出现得更快。** 每个形象第一次显示的等待时间缩短到原来的约七分之一。
+- **Antigravity 的 Gemini 4 Argon 试用模型计入金额。** Token 消耗中的 `gemini-4-argon-trial` 按 Gemini 4 Argon 的价格估算。
+- **设置和提示文字更简短。** 各语言的说明文字去掉了重复的内容，中文统一使用「服务商」「登录信息」。
+
+**English**
+
+**New**
+
+- **The robot can be fluffy.** Choose Fluffy under Material in an account's settings for a coat of fur; Flat stays the default.
+- **sub2api and New API take more than one account.** Click Add another account under Accounts in the provider's settings; each has its own address, API key and name. Thanks to [@iblueer](https://github.com/qunqin24/Pulse/issues/125) for the suggestion.
+- **JetBrains AI can sign in to a JetBrains account.** IDEs from 2026.3 no longer save the quota on the Mac; sign in under JetBrains AI › Connection and Pulse asks JetBrains instead. Thanks to [@tyler4400](https://github.com/qunqin24/Pulse/issues/122) for reporting it.
+- **Grok Bot works without Cursor installed.** Sign in through Cursor's page under Grok Bot › Connection. Thanks to [@sunny0826](https://github.com/qunqin24/Pulse/pull/121) for the contribution.
+- **Idle windows start too.** With Start a new window on, a window that isn't counting down gets one "hi" to start it; a failed send is notified once. Thanks to [@tyler4400](https://github.com/qunqin24/Pulse/pull/128) for the contribution.
+
+**Changed and fixed**
+
+- **The robot appears sooner.** A figure's first appearance waits about a seventh as long.
+- **Antigravity's Gemini 4 Argon trial is priced.** `gemini-4-argon-trial` in Token spend is estimated at Gemini 4 Argon's rates.
+- **Shorter settings and status text.** Repeated wording is gone in every language.
+
 ## 1.16.0
 
 **中文**
