@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.16.1</title>
+            <pubDate>Thu, 26 Nov 2026 01:18:39 -0000</pubDate>
+            <sparkle:version>1.16.1</sparkle:version>
+            <sparkle:shortVersionString>1.16.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.16.1</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.16.1</h2><p><strong>新功能</strong></p><ul><li><strong>小机器人可以是毛绒的。</strong> 在账号设置的「材质」中选择「毛绒」，形象会长出一层绒毛，默认仍是纯色。</li><li><strong>sub2api 和 New API 可以添加多个账号。</strong> 在服务商设置的「账号」中点「添加另一个账号」，每个账号各有地址、API key 和名称。感谢 <a href="https://github.com/qunqin24/Pulse/issues/125">@iblueer</a> 提议。</li><li><strong>JetBrains AI 可以登录 JetBrains 账号读取额度。</strong> 2026.3 起 IDE 不再在本机保存额度，在「JetBrains AI → 连接」中登录后，Pulse 会向 JetBrains 查询。感谢 <a href="https://github.com/qunqin24/Pulse/issues/122">@tyler4400</a> 报告。</li><li><strong>Grok Bot 不装 Cursor 也能使用。</strong> 在「Grok Bot → 连接」中通过 Cursor 网页登录即可。感谢 <a href="https://github.com/qunqin24/Pulse/pull/121">@sunny0826</a> 贡献。</li><li><strong>窗口没在倒计时时也会自动开始。</strong> 开启「开始新窗口」后，空着的窗口会发一条「hi」开始计时；发送失败会通知一次。感谢 <a href="https://github.com/qunqin24/Pulse/pull/128">@tyler4400</a> 贡献。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>小机器人出现得更快。</strong> 每个形象第一次显示的等待时间缩短到原来的约七分之一。</li><li><strong>Antigravity 的 Gemini 4 Argon 试用模型计入金额。</strong> Token 消耗中的 <code>gemini-4-argon-trial</code> 按 Gemini 4 Argon 的价格估算。</li><li><strong>设置和提示文字更简短。</strong> 各语言的说明文字去掉了重复的内容，中文统一使用「服务商」「登录信息」。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.16.1">在 GitHub 上查看更新说明</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.16.1/Pulse-1.16.1.zip"
+                       length="16880476"
+                       type="application/octet-stream"
+                       sparkle:edSignature="/892Sh9TkUOLrQGjKlvN6b56bgCfV+T7WDf4nxhfkdXT43vEjUF5TSCtn+PzbDoMs+6utsX9XbLjje6LZeAdCg==" />
+        </item>
+        <item>
             <title>1.16.0</title>
             <pubDate>Mon, 23 Nov 2026 07:00:20 -0000</pubDate>
             <sparkle:version>1.16.0</sparkle:version>

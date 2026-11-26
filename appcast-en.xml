@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.16.1</title>
+            <pubDate>Thu, 26 Nov 2026 01:18:39 -0000</pubDate>
+            <sparkle:version>1.16.1</sparkle:version>
+            <sparkle:shortVersionString>1.16.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.16.1</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.16.1</h2><p><strong>New</strong></p><ul><li><strong>The robot can be fluffy.</strong> Choose Fluffy under Material in an account&#x27;s settings for a coat of fur; Flat stays the default.</li><li><strong>sub2api and New API take more than one account.</strong> Click Add another account under Accounts in the provider&#x27;s settings; each has its own address, API key and name. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/125">@iblueer</a> for the suggestion.</li><li><strong>JetBrains AI can sign in to a JetBrains account.</strong> IDEs from 2026.3 no longer save the quota on the Mac; sign in under JetBrains AI › Connection and Pulse asks JetBrains instead. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/122">@tyler4400</a> for reporting it.</li><li><strong>Grok Bot works without Cursor installed.</strong> Sign in through Cursor&#x27;s page under Grok Bot › Connection. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/121">@sunny0826</a> for the contribution.</li><li><strong>Idle windows start too.</strong> With Start a new window on, a window that isn&#x27;t counting down gets one &quot;hi&quot; to start it; a failed send is notified once. Thanks to <a href="https://github.com/qunqin24/Pulse/pull/128">@tyler4400</a> for the contribution.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>The robot appears sooner.</strong> A figure&#x27;s first appearance waits about a seventh as long.</li><li><strong>Antigravity&#x27;s Gemini 4 Argon trial is priced.</strong> <code>gemini-4-argon-trial</code> in Token spend is estimated at Gemini 4 Argon&#x27;s rates.</li><li><strong>Shorter settings and status text.</strong> Repeated wording is gone in every language.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.16.1">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.16.1/Pulse-1.16.1.zip"
+                       length="16880476"
+                       type="application/octet-stream"
+                       sparkle:edSignature="/892Sh9TkUOLrQGjKlvN6b56bgCfV+T7WDf4nxhfkdXT43vEjUF5TSCtn+PzbDoMs+6utsX9XbLjje6LZeAdCg==" />
+        </item>
+        <item>
             <title>1.16.0</title>
             <pubDate>Mon, 23 Nov 2026 07:00:20 -0000</pubDate>
             <sparkle:version>1.16.0</sparkle:version>
