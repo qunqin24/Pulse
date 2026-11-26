@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import UserNotifications
 @testable import Pulse
 
 /// Starting a usage window after it resets: when it is due, which windows
@@ -71,6 +72,213 @@ struct WindowPrimerTests {
         #expect(WindowPrimer.isDue(reset: reset, current: stale, now: Self.at(11), hours: hours, calendar: Self.calendar))
     }
 
+    // MARK: Idle windows
+
+    private func state(_ row: UsageWindow?, at date: Date, last: WindowPrimer.Run? = nil) -> WindowPrimer.WindowState {
+        var state = WindowPrimer.WindowState()
+        state.record(row, receivedAt: date, now: date, last: last)
+        return state
+    }
+
+    private func next(_ state: WindowPrimer.WindowState, at date: Date, last: WindowPrimer.Run? = nil) -> Date? {
+        state.nextStart(last: last, now: date, hours: .default, calendar: Self.calendar)
+    }
+
+    @Test("A present row with no reset waits a full minute from its first live sighting")
+    func nilResetGrace() {
+        let now = Self.at(10)
+        let idle = window(.fiveHour, resets: nil)
+        var observed = state(idle, at: now)
+        let later = now.addingTimeInterval(59)
+        observed.record(idle, receivedAt: later, now: later, last: nil)
+        #expect(next(observed, at: later) == Self.at(10, 1))
+        #expect(next(observed, at: Self.at(10, 1)) == Self.at(10, 1))
+
+        // Losing the live row cancels the wake and breaks continuous grace.
+        observed.record(nil, receivedAt: later, now: later, last: nil)
+        #expect(next(observed, at: Self.at(10, 1)) == nil)
+        observed.record(idle, receivedAt: Self.at(10, 2), now: Self.at(10, 2), last: nil)
+        #expect(next(observed, at: Self.at(10, 2)) == Self.at(10, 3))
+    }
+
+    @Test("A countdown appearing during nil grace replaces the idle wake with its own deadline")
+    func countdownDuringGrace() {
+        var observed = state(window(.fiveHour, resets: nil), at: Self.at(10))
+        let later = Self.at(10).addingTimeInterval(15)
+        observed.record(window(.fiveHour, resets: Self.at(15)), receivedAt: later, now: later, last: nil)
+        #expect(next(observed, at: Self.at(10, 1)) == Self.at(15, 1))
+    }
+
+    @Test("A clock armed by a live countdown is still due if the row disappears")
+    func clockSurvivesMissingRow() {
+        var observed = state(window(.fiveHour, resets: Self.at(11)), at: Self.at(10))
+        observed.record(nil, receivedAt: Self.at(10, 30), now: Self.at(10, 30), last: nil)
+        #expect(next(observed, at: Self.at(10, 30)) == Self.at(11, 1))
+        #expect(next(observed, at: Self.at(11, 1)) == Self.at(11, 1))
+    }
+
+    @Test("A past timestamp supplies its own grace, even on the first live reading")
+    func pastResetGrace() {
+        let reset = Self.at(10)
+        let row = window(.fiveHour, resets: reset)
+        let justAfter = reset.addingTimeInterval(59)
+        #expect(next(state(row, at: justAfter), at: justAfter) == Self.at(10, 1))
+        #expect(next(state(row, at: Self.at(10, 2)), at: Self.at(10, 2)) == Self.at(10, 2))
+        #expect(state(row, at: justAfter).reset == nil, "An already-past timestamp is never remembered as a countdown")
+    }
+
+    @Test("Codex reset_at zero survives in the raw live rows the starter sees")
+    @MainActor
+    func codexZeroReset() throws {
+        let now = Self.at(12)
+        let raw = CodexUsageService.parseUsageResponse([
+            "rate_limit": ["primary_window": ["used_percent": 0, "limit_window_seconds": 18_000, "reset_at": 0]]
+        ], for: AccountKey(.codex))
+        let row = try #require(UsageStore.LiveWindows(raw, at: now)?.windows.first)
+        #expect(row.resetsAt == Date(timeIntervalSince1970: 0))
+        #expect(WindowPrimer.eligible(row, of: .codex))
+        #expect(raw.current(at: now) == nil)
+        #expect(next(state(row, at: now), at: now) == now)
+    }
+
+    @Test("Missing, cached, stale and unavailable rows cannot supply an idle start")
+    @MainActor
+    func onlyPresentLiveRowsStart() {
+        let now = Self.at(12)
+        let idle = window(.fiveHour, resets: nil)
+        for status in [ProviderUsage.State.stale, .unavailable(.unreachable)] {
+            let raw = ProviderUsage(account: AccountKey(.codex), windows: [idle], observedAt: now,
+                                    state: status, plan: nil, creditBalance: nil)
+            #expect(UsageStore.LiveWindows(raw, at: now) == nil)
+        }
+        // Pro can return a weekly row without a five-hour row.
+        let raw = ProviderUsage(account: AccountKey(.codex), windows: [window(.weekly, resets: Self.at(18))],
+                                observedAt: now, state: .live, plan: nil, creditBalance: nil)
+        let rows = UsageStore.LiveWindows(raw, at: now)?.windows ?? []
+        #expect(next(state(rows.first { $0.kind == .fiveHour }, at: now), at: now) == nil)
+        #expect(next(state(rows.first, at: now), at: now) == Self.at(18, 1))
+    }
+
+    @Test("An idle window outside the hours wakes when they next open")
+    func idleOutsideHours() {
+        let now = Self.at(23, 30)
+        let opens = PrimerHours.default.next(after: now, calendar: Self.calendar)
+        #expect(next(state(window(.fiveHour, resets: Self.at(22)), at: now), at: now) == opens)
+        // Grace itself can finish just after closing time.
+        let closing = Self.at(23).addingTimeInterval(-30)
+        #expect(next(state(window(.fiveHour, resets: nil), at: closing), at: closing) == opens)
+    }
+
+    @Test("Neither success nor failure repeats on a still-idle reading",
+          arguments: [WindowStarter.Outcome.sent, .failed, .toolMissing, .timedOut])
+    func unchangedIdleDoesNotRearm(_ outcome: WindowStarter.Outcome) {
+        let last = (date: Self.at(10), outcome: outcome)
+        let now = Self.at(12)
+        for reset in [nil, Self.at(11), Date(timeIntervalSince1970: 0)] as [Date?] {
+            let observed = state(window(.fiveHour, resets: reset), at: now, last: last)
+            #expect(next(observed, at: Self.at(12, 2), last: last) == nil)
+        }
+        // A countdown that reset before the attempt cannot authorize another.
+        var old = state(window(.fiveHour, resets: Self.at(9)), at: Self.at(8))
+        old.record(window(.fiveHour, resets: nil), receivedAt: now, now: now, last: last)
+        #expect(next(old, at: Self.at(12, 2), last: last) == nil)
+    }
+
+    @Test("After a failure the next observed reset must actually pass grace",
+          arguments: [WindowStarter.Outcome.failed, .toolMissing, .timedOut])
+    func nextResetAfterFailure(_ outcome: WindowStarter.Outcome) {
+        let last = (date: Self.at(10), outcome: outcome)
+        var observed = state(window(.fiveHour, resets: Self.at(12)), at: Self.at(11), last: last)
+        let idle = window(.fiveHour, resets: Date(timeIntervalSince1970: 0))
+        observed.record(idle, receivedAt: Self.at(11, 1), now: Self.at(11, 1), last: last)
+        #expect(next(observed, at: Self.at(11, 1), last: last) == Self.at(12, 1))
+        #expect(next(observed, at: Self.at(12, 1), last: last) == Self.at(12, 1))
+
+        // Relaunch restores the evidence. Until another live row arrives
+        // neither launch cache nor the passage of time alone can start it.
+        var relaunched = WindowPrimer.WindowState(reset: observed.reset)
+        #expect(next(relaunched, at: Self.at(13), last: last) == nil)
+        relaunched.record(idle, receivedAt: Self.at(13), now: Self.at(13), last: last)
+        #expect(next(relaunched, at: Self.at(13), last: last) == Self.at(13))
+    }
+
+    @Test("A success needs a countdown seen since the send, then an idle row")
+    func completedCycleAfterSuccess() {
+        let last = (date: Self.at(10), outcome: WindowStarter.Outcome.sent)
+        let countdown = window(.fiveHour, resets: Self.at(15))
+        let idle = window(.fiveHour, resets: Date(timeIntervalSince1970: 0))
+        var observed = state(countdown, at: Self.at(9))
+        // Changing hours after sending re-reads the pre-send snapshot.
+        observed.record(countdown, receivedAt: Self.at(9), now: Self.at(11), last: last)
+        var relaunched = WindowPrimer.WindowState(reset: observed.reset)
+        relaunched.record(idle, receivedAt: Self.at(16), now: Self.at(16), last: last)
+        #expect(next(relaunched, at: Self.at(16), last: last) == nil)
+
+        // A new live fetch of the very same countdown is post-send evidence.
+        observed.record(countdown, receivedAt: Self.at(11), now: Self.at(11), last: last)
+        relaunched = WindowPrimer.WindowState(reset: observed.reset)
+        #expect(next(relaunched, at: Self.at(16), last: last) == nil)
+        relaunched.record(idle, receivedAt: Self.at(16), now: Self.at(16), last: last)
+        #expect(next(relaunched, at: Self.at(16), last: last) == Self.at(16))
+    }
+
+    @Test("An idle five-hour window consumes one start and preserves the weekly clock")
+    func siblingCountdownSurvives() {
+        let now = Self.at(12)
+        let idle = window(.fiveHour, resets: Self.at(11))
+        var windows = ["five": state(idle, at: now), "week": state(window(.weekly, resets: Self.at(18)), at: now)]
+        let starts = windows.compactMapValues { next($0, at: now) }
+        #expect(starts == ["five": now, "week": Self.at(18, 1)])
+        let sent = WindowPrimer.takeDue(starts, at: now, from: &windows)
+        #expect(sent)
+        #expect(Set(windows.keys) == ["week"])
+        let last = (date: now, outcome: WindowStarter.Outcome.sent)
+        windows["five"] = state(idle, at: Self.at(12, 2), last: last)
+        // Seeing the week's countdown again after the send re-arms only the week.
+        windows["week"]?.record(window(.weekly, resets: Self.at(18)), receivedAt: Self.at(12, 2),
+                                now: Self.at(12, 2), last: last)
+        let after = windows.compactMapValues { next($0, at: Self.at(12, 2), last: last) }
+        #expect(after == ["week": Self.at(18, 1)])
+    }
+
+    @Test("Successful sends are silent and all three failure notices replace the previous one for the provider")
+    @MainActor
+    func failureNotices() throws {
+        #expect(UsageAlerts.windowStarterFailure(for: .codex, outcome: .sent, title: "Work") == nil)
+        var bodies: Set<String> = []
+        for outcome in [WindowStarter.Outcome.timedOut, .toolMissing, .failed] {
+            let request = try #require(UsageAlerts.windowStarterFailure(for: .codex, outcome: outcome, title: "Work"))
+            #expect(request.identifier == "window-starter-codex")
+            #expect(request.content.title == "Work")
+            #expect(request.content.subtitle == String.localized("Couldn't start the window"))
+            #expect(request.content.sound != nil)
+            bodies.insert(request.content.body)
+        }
+        #expect(bodies.count == 3)
+        #expect(!bodies.contains(""))
+    }
+
+    @Test("Starter permission and reset evidence survive relaunch independently of unreadable-usage alerts")
+    @MainActor
+    func rememberedSettings() {
+        let (defaults, cleanup) = TestDefaults.make("WindowPrimer")
+        defer { cleanup() }
+        let settings = AppSettings(defaults: defaults)
+        settings.setPrimesWindows(true, for: .codex)
+        settings.recordPrimerRun(for: .codex, outcome: .timedOut, at: Self.at(10))
+        let reset = WindowPrimer.Reset(date: Self.at(16), seenAt: Self.at(11))
+        settings.rememberedPrimerResets = ["codex|weekly": reset]
+
+        let restored = AppSettings(defaults: defaults)
+        restored.restoreWindowStarter(from: defaults)
+        #expect(restored.wantsAlerts)
+        #expect(!restored.wantsUsageAlerts)
+        #expect(restored.lastPrimerRun(for: .codex)?.outcome == .timedOut)
+        #expect(restored.rememberedPrimerResets == ["codex|weekly": reset])
+        restored.setPrimesWindows(false, for: .codex)
+        #expect(!restored.wantsAlerts)
+    }
+
     // MARK: Which
 
     @Test("Claude Code's five hours only; Codex's five hours and week; nothing scoped or inferred")
@@ -81,6 +289,9 @@ struct WindowPrimerTests {
         #expect(WindowPrimer.eligible(window(.weekly, resets: nil), of: .codex))
         #expect(!WindowPrimer.eligible(window(.weekly, resets: nil, scope: "Spark"), of: .codex))
         #expect(!WindowPrimer.eligible(window(.fiveHour, resets: nil), of: .cursor))
+        var estimate = window(.fiveHour, resets: nil)
+        estimate.estimate = .planPrice
+        #expect(!WindowPrimer.eligible(estimate, of: .codex))
     }
 
     // MARK: What is sent

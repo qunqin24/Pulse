@@ -1,13 +1,14 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import SwiftUI
 
-/// Sends "hi" after each reset so the next window starts then — see
+/// Sends "hi" to start the window after a reset or while idle — see
 /// `WindowPrimer`. Switching it on goes through a confirmation that says
 /// plainly this is not the provider's feature and may cost the account;
 /// the reader decides with that in front of them, not in a subtitle.
 struct WindowStarterGroup: View {
     let provider: Provider
     let settings: AppSettings
+    let alerts: UsageAlerts
 
     /// The provider whose window starter is waiting on the risk confirmation.
     @State private var confirmingStarter: Provider?
@@ -15,10 +16,10 @@ struct WindowStarterGroup: View {
     var body: some View {
         SettingsGroup(String.localized("Start windows automatically")) {
             SettingsRow(
-                String.localized("Start a new window after each reset"),
+                String.localized("Start a new window"),
                 subtitle: provider == .claudeCode
-                    ? String.localized("When the 5-hour limit resets, sends “hi” to Haiku through Claude Code, so the next window starts counting then rather than at your next message. Nothing is saved.")
-                    : String.localized("When the 5-hour or weekly limit resets, sends “hi” to the cheapest model through Codex, so the next window starts counting then rather than at your next message. Nothing is saved."),
+                    ? String.localized("When the 5-hour window resets or is not counting down, Pulse sends one “hi” to Haiku through Claude Code without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming.")
+                    : String.localized("When the 5-hour or weekly window resets or is not counting down, Pulse sends one “hi” to the cheapest model through Codex without saving the conversation. If sending fails, Pulse notifies you once and waits for a reset it has seen coming."),
                 symbol: "play.circle"
             ) {
                 Toggle("", isOn: Binding(
@@ -72,6 +73,7 @@ struct WindowStarterGroup: View {
         ) {
             Button(String.localized("I understand the risk, turn it on"), role: .destructive) {
                 settings.setPrimesWindows(true, for: provider)
+                Task { _ = await alerts.requestAuthorizationIfNeeded() }
                 confirmingStarter = nil
             }
             Button(String.localized("Cancel"), role: .cancel) { confirmingStarter = nil }

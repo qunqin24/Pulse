@@ -2,11 +2,11 @@
 
 Owns: when Pulse posts a system notification, what it says, and what it refuses to say. Settings copy and layout: [ui/settings.md](ui/settings.md). Where readings come from: [refresh-and-data.md](refresh-and-data.md).
 
-Source: [`Sources/Pulse/Usage/UsageAlerts.swift`](../Sources/Pulse/Usage/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure` / `lowBalanceAlerts` / `alertsOnOutage` / `alertsOnRecap`. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds. Limit alerts use `ProviderUsage.current(at:)` to omit windows whose reset or whole-bucket expiry has passed; reconsidering such a reading also requests a refresh.
+Source: [`Sources/Pulse/Usage/UsageAlerts.swift`](../Sources/Pulse/Usage/UsageAlerts.swift). Settings: `AppSettings.alertThreshold` / `alertsOnReset` / `alertsOnFailure` / `lowBalanceAlerts` / `alertsOnOutage` / `alertsOnRecap` and the per-provider window starter switch. Every fetch goes through `UsageStore.commit(_:raw:for:)`, which passes both the raw result and the reconciled display reading. An explicit notification-setting change also calls `reconsiderAlerts()` after authorization succeeds. Limit alerts use `ProviderUsage.current(at:)` to omit windows whose reset or whole-bucket expiry has passed; reconsidering such a reading also requests a refresh.
 
 ## What can be said
 
-Seven things, and nothing else — each something you would want to know *while looking at something else*.
+Eight events can trigger an automatic notification.
 
 | Alert | Fires when | Gated by |
 |---|---|---|
@@ -17,6 +17,7 @@ Seven things, and nothing else — each something you would want to know *while 
 | `lowBalance(remaining:)` | A prepaid balance falls under the figure set for that account | `lowBalanceAlerts[account]` |
 | Service outage (`OutageMemory`) | A provider's own status page (44 have one) reports a component its account runs on down, worse, or back | `alertsOnOutage`, and the provider switched on |
 | Recap ready (`RecapNoticeRule`) | In the first three days of a month, last month had records in the scan Pulse already holds, and that month has not been announced | `alertsOnRecap`, and Token spend reading on |
+| Window starter failure | A single attempt to send “hi” returns `toolMissing`, `failed`, or `timedOut` | The provider’s **Start a new window** switch |
 
 **All off by default. All use the default sound; muting is macOS's own per-app "Play sound for notifications".** A notification with no `sound` is silent and the system switch cannot add one back (it only removes a sound the app asked for), so a silent notification leaves no working off switch and a banner on another display goes unseen. One rule for all, since macOS has one switch per app. `requestAuthorization` asks for `[.alert, .sound]`: without `.sound` in the grant, `soundSetting` is disabled and every `content.sound` is dropped.
 
@@ -54,6 +55,12 @@ Requested 2026-10-04, after the status rows on the Codex, Claude Code and DeepSe
 - **One notification per provider**, every component in one sentence ("OpenAI reports CLI (Partial outage) and Codex API (Degraded performance)."), identifier `service-status-<provider>`, so a newer one replaces the last.
 - **Every five minutes, on its own clock** (`ServiceStatus.checkInterval`, a loop `UsageAlerts.start` begins), not the refresh pass, which stretches to 30 minutes when idle. Not more often: status pages are written by people minutes into an incident. A tick returns at once unless the switch is on and a provider with a page is in use. The sleep is on the continuous clock, so a tick due during sleep runs right after waking. Each check reads only the current state, one request per feed — a company's page shared by two providers (Cursor and Grok Bot) is read once; one check at a time, its feeds concurrently.
 - **Its own file**, `status-alerts.json`, not a field on `AlertMemory`: that type decodes as a whole, and a key old files lack would discard every limit already warned about. This switch alone writes no `alerts.json`.
+
+### Window starter failures
+
+Confirming **Start a new window** in the Claude Code or Codex account pane calls `requestAuthorizationIfNeeded`. A send failure uses this switch independently of `alertsOnFailure`, which counts failed usage reads. Both a clock-triggered start and an idle start can produce this notification. [Window starter](window-starter.md)
+
+Pulse records the attempt before requesting delivery. The title is the first account’s label. The notification explains what went wrong and when Pulse may try again. Each failed attempt requests one notification with the default sound and identifier `window-starter-<provider>`, so a later failure replaces the earlier one. A refresh or relaunch never replays a recorded failure. If permission is denied, the result remains in **Last started**. Authorization and delivery both use the `UsageAlerts.isSupported` guard.
 
 ### The monthly recap
 
@@ -110,7 +117,7 @@ It is updated even when a grant was refused or the build is unbundled, so neithe
 
 `AlertMemory.alerts(for:as:…)` is pure apart from `self`; the clock is passed in as `now`. Every rule here is covered by `AlertMemoryTests` ([testing.md](testing.md)); change one, change that.
 
-`UsageAlerts.observe` returns at once when `AppSettings.wantsUsageAlerts` is false (`wantsAlerts` adds the outage and recap switches, for permission only), so nothing is tracked or written for a feature nobody switched on.
+`UsageAlerts.observe` returns at once when `AppSettings.wantsUsageAlerts` is false (`wantsAlerts` also includes the outage, recap, and window starter switches for permission), so nothing is tracked or written for a feature nobody switched on.
 
 ## Test notification
 

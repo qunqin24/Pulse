@@ -8,6 +8,7 @@ struct AccountPane: View {
     let account: AccountKey
     let store: UsageStore
     let settings: AppSettings
+    let alerts: UsageAlerts
     let navigation: SettingsNavigation
     let history: AccountHistoryModel
     let flows: AccountFlows
@@ -35,7 +36,7 @@ struct AccountPane: View {
             // Claude Code's and Codex's first account: the tool sends as
             // whoever it is signed in as, which is that account.
             if account.isPrimary, WindowPrimer.providers.contains(account.provider), settings.isEnabled(account) {
-                WindowStarterGroup(provider: account.provider, settings: settings)
+                WindowStarterGroup(provider: account.provider, settings: settings, alerts: alerts)
             }
 
             if !settings.needsProviderSelection {
