@@ -9,6 +9,18 @@ import UniformTypeIdentifiers
 @Suite("Credit amount render", .serialized)
 @MainActor
 struct CreditAmountRenderTests {
+    @Test("Copilot quota amounts retain full large figures in both display modes")
+    func fullCopilotAmounts() {
+        defer { LocalizationSource.use(.system) }
+        LocalizationSource.use(.english)
+        let window = UsageWindow(id: "copilot.premium_interactions", kind: .monthly, scope: nil,
+                                 usedFraction: 0.5, windowSeconds: 30 * 86_400, resetsAt: nil,
+                                 amounts: .init(used: 1_234_567.2, remaining: 1_765_432.8, limit: 3_000_000))
+        #expect(UsageDetailCard.amountText(window, remaining: false, abbreviates: false) == "1,234,567.2 / 3,000,000")
+        #expect(UsageDetailCard.amountText(window, remaining: true, abbreviates: false) == "1,765,432.8 / 3,000,000")
+        #expect(UsageDetailCard.amountText(window, remaining: false) != "1,234,567.2 / 3,000,000")
+    }
+
     @Test(.enabled(if: ProcessInfo.processInfo.environment["PULSE_CREDIT_AMOUNTS_PREVIEW"] != nil))
     func renderQoderParts() throws {
         let folder = URL(fileURLWithPath: try #require(ProcessInfo.processInfo.environment["PULSE_CREDIT_AMOUNTS_PREVIEW"]))

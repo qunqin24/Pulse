@@ -27,7 +27,7 @@ allowance that has been spent: the snapshot still carries the issued
 `entitlement` and its `credits_used`. That is not a placeholder and must stay
 visible. Only a false flag with neither is dropped.
 
-With **Show quota amounts** on (Copilot's settings, off by default), the detail card for an issued quota with a valid absolute remainder displays the used or remaining amount out of its total.
+With **Show quota amounts** on (Copilot's settings, off by default), the detail card for an issued quota with a valid absolute remainder displays the used or remaining amount out of its total. The card writes out the figures rather than abbreviating them and gives them priority over the row title in narrow layouts.
 The absolute remainder comes from `quota_remaining` when present, or `remaining`
 otherwise; used is the total minus that remainder. The internal fields are not
 a documented billing unit, so the card does not label them as GitHub AI Credits.

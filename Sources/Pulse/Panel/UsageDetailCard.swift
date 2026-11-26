@@ -373,7 +373,8 @@ struct UsageDetailCard: View {
             burn: showsForecast ? BurnRate.reading(for: window) : nil,
             value: valueText(window),
             amount: showsAmounts || window.amounts?.currency != nil
-                ? Self.amountText(window, remaining: showsRemaining) : nil
+                ? Self.amountText(window, remaining: showsRemaining, abbreviates: usage.account.provider != .copilot) : nil,
+            prioritizesAmount: usage.account.provider == .copilot
         )
         .transition(Self.rowTransition)
     }
@@ -651,12 +652,17 @@ struct UsageDetailCard: View {
     /// all of it — the same way round as the percentage under it, which says
     /// "Left" or "Used". Nil where the provider stated no remainder and the row
     /// counts what is left: the two others are not subtracted for it.
-    nonisolated static func amountText(_ window: UsageWindow, remaining: Bool) -> String? {
+    nonisolated static func amountText(_ window: UsageWindow, remaining: Bool, abbreviates: Bool = true) -> String? {
         guard let amounts = window.amounts, amounts.limit > 0,
               let figure = remaining ? amounts.remaining : amounts.used
         else { return nil }
         if let currency = amounts.currency {
             return "\(Money.reported(max(figure, 0), code: currency)) / \(Money.reported(amounts.limit, code: currency))"
+        }
+        if !abbreviates {
+            let style = FloatingPointFormatStyle<Double>.number
+                .precision(.fractionLength(0...1)).locale(LocalizationSource.locale)
+            return "\(max(figure, 0).formatted(style)) / \(amounts.limit.formatted(style))"
         }
         return "\(creditAmount(max(figure, 0))) / \(creditAmount(amounts.limit))"
     }
@@ -1283,6 +1289,8 @@ private struct ProgressMetricRow: View {
     /// draws nothing; the line is the name's either way, so the row's height
     /// does not change.
     var amount: String?
+    /// Keep the full Copilot quota visible even when a localized title is long.
+    var prioritizesAmount = false
 
     /// "88% Used", or "12% Left" when the figure is counted the other way.
     private var figureLabel: String {
@@ -1314,7 +1322,8 @@ private struct ProgressMetricRow: View {
                         .foregroundStyle(.primary.opacity(0.45))
                         .monospacedDigit()
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(prioritizesAmount ? 0.6 : 0.8)
+                        .layoutPriority(prioritizesAmount ? 2 : 0)
                 }
             }
             .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
