@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.16.2</title>
+            <pubDate>Fri, 27 Nov 2026 05:11:58 -0000</pubDate>
+            <sparkle:version>1.16.2</sparkle:version>
+            <sparkle:shortVersionString>1.16.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.16.2</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.16.2</h2><p><strong>New</strong></p><ul><li><strong>Choose what each account&#x27;s card shows.</strong> Pick each part under Card contents in an account&#x27;s settings; the old Forecast, Detailed card, quota amounts and reset credits switches are all here now, and the whole card is shown by default.</li><li><strong>Trend charts on each model&#x27;s page.</strong> Open a model in Token spend and Trends shows its output speed, first token, cache hit rate and usage over time.</li><li><strong>Codex&#x27;s card shows its last step&#x27;s speed.</strong> The card shows the output speed of Codex&#x27;s latest model call and how long ago it ended, to tell whether Codex is still working. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/126">@kimiyeah001</a> for the suggestion.</li><li><strong>Every account can take its own name.</strong> Fill in Name under Panel in an account&#x27;s settings, the first account included; left empty, the provider&#x27;s name is shown. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/125">@iblueer</a> for the suggestion.</li></ul><p><strong>Changed and fixed</strong></p><ul><li><strong>Antigravity works with only the Gemini app installed.</strong> Pulse now uses the agy inside Gemini.app. Thanks to <a href="https://github.com/qunqin24/Pulse/issues/129">@tyrival</a> for reporting it.</li><li><strong>The Gemini provider is now called Gemini CLI.</strong> This tells it apart from the Gemini app.</li><li><strong>Current usage in Settings matches the card.</strong> Each limit is drawn as the card&#x27;s bar.</li><li><strong>Models carry their maker&#x27;s icon.</strong> Token spend&#x27;s model list and each model&#x27;s page header show the maker&#x27;s icon.</li><li><strong>The window starter reads again before sending.</strong> A held idle start checks that the window is still idle first.</li><li><strong>JetBrains AI reads online when its local quota has expired.</strong> A signed-in account no longer stays on the expired quota in the IDE&#x27;s file.</li><li><strong>Claude Code&#x27;s product share clears with its weekly limit.</strong> After the weekly limit resets, Settings no longer shows last week&#x27;s share per product.</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.16.2">Release notes on GitHub</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.16.2/Pulse-1.16.2.zip"
+                       length="17026051"
+                       type="application/octet-stream"
+                       sparkle:edSignature="0cXGL6n+TTp9PCi9hyj8SBYlYPnbxtuQ0UikQGliKK2sOQg6dOnYUODkfZaNK0wN8g0WQS3qnCmECY6F9NUEDw==" />
+        </item>
+        <item>
             <title>1.16.1</title>
             <pubDate>Thu, 26 Nov 2026 01:18:39 -0000</pubDate>
             <sparkle:version>1.16.1</sparkle:version>

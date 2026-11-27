@@ -6,6 +6,24 @@
         <description>Updates for Pulse.</description>
         <language>en</language>
         <item>
+            <title>1.16.2</title>
+            <pubDate>Fri, 27 Nov 2026 05:11:58 -0000</pubDate>
+            <sparkle:version>1.16.2</sparkle:version>
+            <sparkle:shortVersionString>1.16.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/qunqin24/Pulse/releases/tag/v1.16.2</link>
+            <description><![CDATA[<style>
+  h2 { font-size: 1.05em; margin: 0 0 .5em; }
+  ul { margin: 0; padding-left: 1.2em; }
+  li { margin: .3em 0; }
+  p { margin: .8em 0 0; }
+</style><h2>Pulse 1.16.2</h2><p><strong>新功能</strong></p><ul><li><strong>卡片内容可以按账号选择。</strong> 在账号设置的「卡片内容」中逐项选择卡片显示什么，原来的「用尽预测」「详细卡片」、额度数值和额度重置券开关都并入这里，默认显示完整内容。</li><li><strong>模型详情页显示趋势图。</strong> 在 Token 消耗中打开一个模型，「趋势」显示输出速度、首字延迟、缓存命中率和用量随时间的变化。</li><li><strong>Codex 卡片显示上一步速度。</strong> 卡片上显示 Codex 最近一次模型调用的输出速度和距今多久，用来判断 Codex 是否还在工作。感谢 <a href="https://github.com/qunqin24/Pulse/issues/126">@kimiyeah001</a> 提议。</li><li><strong>每个账号都可以自定义名称。</strong> 在账号设置的「面板」中填写「名称」，第一个账号也可以，留空时显示服务商名称。感谢 <a href="https://github.com/qunqin24/Pulse/issues/125">@iblueer</a> 提议。</li></ul><p><strong>改进与修复</strong></p><ul><li><strong>只装 Gemini 桌面版也能读取 Antigravity。</strong> Pulse 现在会使用 Gemini.app 内置的 agy。感谢 <a href="https://github.com/qunqin24/Pulse/issues/129">@tyrival</a> 报告。</li><li><strong>Gemini 服务商改名为 Gemini CLI。</strong> 以便和 Gemini 桌面版区分。</li><li><strong>设置中的「当前用量」与卡片样式一致。</strong> 每个额度按卡片上的条形绘制。</li><li><strong>模型旁显示厂商图标。</strong> Token 消耗的模型列表和模型详情页标题旁显示模型厂商的图标。</li><li><strong>窗口启动器发送前先重新读取。</strong> 被推迟的空闲窗口启动会先确认窗口仍然空着再发送。</li><li><strong>JetBrains AI 本地额度过期时改为在线读取。</strong> 已登录 JetBrains 账号时，不再停在本机文件里过期的额度。</li><li><strong>Claude Code 的产品占比随周额度清空。</strong> 周额度重置后，设置中不再显示上一周的各产品占比。</li></ul><p><a href="https://github.com/qunqin24/Pulse/releases/tag/v1.16.2">在 GitHub 上查看更新说明</a></p>]]></description>
+            <enclosure url="https://github.com/qunqin24/Pulse/releases/download/v1.16.2/Pulse-1.16.2.zip"
+                       length="17026051"
+                       type="application/octet-stream"
+                       sparkle:edSignature="0cXGL6n+TTp9PCi9hyj8SBYlYPnbxtuQ0UikQGliKK2sOQg6dOnYUODkfZaNK0wN8g0WQS3qnCmECY6F9NUEDw==" />
+        </item>
+        <item>
             <title>1.16.1</title>
             <pubDate>Thu, 26 Nov 2026 01:18:39 -0000</pubDate>
             <sparkle:version>1.16.1</sparkle:version>
