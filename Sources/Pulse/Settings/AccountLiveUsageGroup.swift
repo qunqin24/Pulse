@@ -72,10 +72,16 @@ struct AccountLiveUsageGroup: View {
                     ForEach(Array(usage.windows.enumerated()), id: \.element.id) { index, window in
                         if index > 0 { SettingsRowDivider() }
 
-                        SettingsRow(window.name, subtitle: resetText(window)) {
-                            Text(window.percentText(remaining: settings.showsRemaining))
-                                .font(.system(size: 13, weight: .medium))
-                                .monospacedDigit()
+                        // The panel card's row, at Settings' size: the bar,
+                        // then what is left or used and when it resets.
+                        SettingsRow(window.name, controlBelow: true) {
+                            LimitBarRow(
+                                window: window,
+                                showsRemaining: settings.showsRemaining,
+                                reset: resetText(window),
+                                warningAt: settings.warningThreshold.fraction,
+                                style: settings.usageBarStyle
+                            )
                         }
                     }
                 }
@@ -131,6 +137,52 @@ struct AccountLiveUsageGroup: View {
             Calendar.current.isDateInToday(resets) ? "jmm" : "MMMdjmm"
         )
         return String.localized("Resets \(formatter.string(from: resets))")
+    }
+}
+
+/// One limit as the panel's card draws it (`ProgressMetricRow`): the bar in
+/// the rail's style and colour, then "88% Left" or "12% Used" — the word
+/// follows the figure, as there — and the reset, dimmer, on the right.
+private struct LimitBarRow: View {
+    let window: UsageWindow
+    let showsRemaining: Bool
+    let reset: String?
+    let warningAt: Double
+    let style: UsageBarStyle
+
+    private var figure: String {
+        let percent = window.percentText(remaining: showsRemaining)
+        return showsRemaining ? .localized("\(percent) Left") : .localized("\(percent) Used")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            UsageBar(
+                fraction: showsRemaining ? window.remainingFraction : window.usedFraction,
+                accent: window.tint(warningAt: warningAt),
+                track: Color.primary.opacity(0.12),
+                style: style
+            )
+            .frame(height: style == .segmented ? UsageBar.segmentedHeight : UsageBar.continuousHeight)
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(verbatim: figure)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(UsageTint.isSpent(window) ? Color.pulseExhausted : .primary)
+                    .monospacedDigit()
+                    .fixedSize()
+                Spacer(minLength: 0)
+                if let reset {
+                    Text(verbatim: reset)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(window.name)
+        .accessibilityValue([figure, reset].compactMap { $0 }.joined(separator: ". "))
     }
 }
 
