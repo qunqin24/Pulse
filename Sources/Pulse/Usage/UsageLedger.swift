@@ -183,11 +183,11 @@ extension TokenTally {
 /// (`minimumOutput`), and none that took longer than `longest` — a retry or a
 /// stall, not a speed.
 ///
-/// **The wait for the first token** is a separate figure, and only Codex's:
-/// it writes `time_to_first_token_ms` for the first request of each turn.
-/// Claude Code's transcript has no such field — its first line is written
-/// when a whole content block is done — so its latency is left unsaid rather
-/// than guessed.
+/// **The wait for the first token** is a separate figure. Codex writes
+/// `time_to_first_token_ms` for the first request of each turn. Claude Code
+/// writes none, and its first line is written when a whole block is done, so
+/// its wait is dated only where that block says how long it streamed
+/// (`ReplyClock`); a reply that opens with text has none.
 struct ReplyTiming: Codable, Sendable, Equatable {
     var outputTokens = 0
     var seconds = 0.0
@@ -762,7 +762,7 @@ actor UsageLedgerReader {
     static let shared = UsageLedgerReader()
 
     /// The number in `ledger-<n>-<provider>.bin`; see `FileCache.file`.
-    nonisolated static let cacheVersion = 9
+    nonisolated static let cacheVersion = 10
 
     /// Tokens by quarter-hour (`yyyy-MM-dd HH:mm`, local) and then by model.
     private typealias Buckets = [String: [String: TokenTally]]
@@ -1670,7 +1670,12 @@ actor UsageLedgerReader {
             // Placed at its first line, counted at its last.
             let placed = replies[id]?.slot ?? slot
             replies[id] = ScannedReply(slot: placed, model: model, tally: tally)
-            clock.reply(id, model: model, slot: placed, output: tally.output, at: at)
+            // How long the line's own block streamed, where Claude Code
+            // records it: a thinking block's or a tool call's. Read on a
+            // reply's first line, it dates the first token (`ReplyClock`).
+            let streamed = ((root["thinkingDurationMs"] ?? root["toolInputStreamMs"]) as? NSNumber)
+                .map { $0.doubleValue / 1000 }
+            clock.reply(id, model: model, slot: placed, output: tally.output, at: at, streamed: streamed)
         }
         clock.finish()
 
@@ -1683,6 +1688,18 @@ actor UsageLedgerReader {
     /// Times Claude Code's replies as their lines go by: from the last line
     /// that sent a request to the last line of the reply.
     ///
+    /// **And the wait for the first token, where the first line can date it.**
+    /// A line is written when its block is complete, so the first line's time
+    /// is not the first token's. Newer Claude Code versions say how long a
+    /// thinking block (`thinkingDurationMs`) or a tool call's input
+    /// (`toolInputStreamMs`) streamed; a reply that opens with one of those
+    /// began streaming that long before its first line, and the wait is from
+    /// the request to then. A reply that opens with text carries no such
+    /// figure and has no wait (measured 2026-11-27: 271 of 300 replies in one
+    /// session could be timed, median 1.3 s). Out-of-range results — a
+    /// negative one from a request line that was not this reply's, or one
+    /// past two minutes — are dropped by `ReplyTiming.firstToken(after:)`.
+    ///
     /// **Not before the previous reply finished.** A tool result can land
     /// between two lines of the reply that asked for it (seen in a few
     /// hundred replies here); the next request still waits for the reply to
@@ -1691,13 +1708,13 @@ actor UsageLedgerReader {
         /// By message id, so the timing travels with its reply (`ScannedReply`).
         private(set) var timings: [String: ReplyTiming] = [:]
         private var pending: Date?
-        private var open: (id: String, model: String, slot: String, sent: Date?, finished: Date, output: Int)?
+        private var open: (id: String, model: String, slot: String, sent: Date?, finished: Date, output: Int, firstToken: Double?)?
         private var lastFinished: Date?
         private var done: Set<String> = []
 
         mutating func sent(at date: Date) { pending = date }
 
-        mutating func reply(_ id: String, model: String, slot: String, output: Int, at date: Date) {
+        mutating func reply(_ id: String, model: String, slot: String, output: Int, at date: Date, streamed: Double? = nil) {
             if open?.id == id {
                 open?.finished = date
                 open?.output = output
@@ -1709,7 +1726,8 @@ actor UsageLedgerReader {
             guard !done.contains(id) else { return }
             let sent = pending.map { start in lastFinished.map { max($0, start) } ?? start }
             pending = nil
-            open = (id, model, slot, sent, date, output)
+            let firstToken = sent.flatMap { sent in streamed.map { date.timeIntervalSince(sent) - $0 } }
+            open = (id, model, slot, sent, date, output, firstToken)
         }
 
         mutating func finish() {
@@ -1717,9 +1735,10 @@ actor UsageLedgerReader {
             open = nil
             done.insert(reply.id)
             lastFinished = reply.finished
-            guard let sent = reply.sent,
-                  let timing = ReplyTiming(output: reply.output, from: sent, to: reply.finished) else { return }
-            timings[reply.id] = timing
+            let speed = reply.sent.flatMap { ReplyTiming(output: reply.output, from: $0, to: reply.finished) }
+            let wait = reply.firstToken.flatMap(ReplyTiming.firstToken(after:))
+            guard speed != nil || wait != nil else { return }
+            timings[reply.id] = (speed ?? ReplyTiming()) + (wait ?? ReplyTiming())
         }
     }
 
@@ -2019,7 +2038,7 @@ actor UsageLedgerReader {
 /// What has already been counted, so opening settings a second time doesn't
 /// re-read a few hundred megabytes of transcripts.
 ///
-/// On disk it is `TranscriptCacheCodec`'s bytes (`ledger-9-<provider>.bin`);
+/// On disk it is `TranscriptCacheCodec`'s bytes (`ledger-10-<provider>.bin`);
 /// `Codable` remains only to read the JSON file it replaced, once.
 struct FileCache: Codable, Equatable {
     struct Stamp: Codable, Equatable {
@@ -2155,6 +2174,11 @@ struct FileCache: Codable, Equatable {
         // `isReview` (a session Codex ran to review another's action, which
         // has no words of the user's), and titles now unwrap links; a rollout
         // that has not changed is never read again.
+        //
+        // **`ledger-10`: Claude Code's first-token wait.** Replies that open
+        // with a thinking block or a tool call carry how long it streamed,
+        // which dates the first token (`ReplyClock`); a transcript read before
+        // has none, and an unchanged one is never read again.
         //
         // **No new number for the archive.** An entry holds what it held; a
         // deleted transcript's counted share moves to `TranscriptArchive`, a

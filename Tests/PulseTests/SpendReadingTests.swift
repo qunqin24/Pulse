@@ -210,7 +210,7 @@ struct SpendReadingTests {
         try FileManager.default.createDirectory(at: cache, withIntermediateDirectories: true)
         let reader = AgentLedgers(home: root, environment: [:], cacheDirectory: cache, prices: { [:] })
         #expect(try await reader.scan().ledgers[.codex]?.allTime.tokens == 110)
-        #expect(FileManager.default.fileExists(atPath: cache.appending(path: "ledger-9-codex.bin").path))
+        #expect(FileManager.default.fileExists(atPath: cache.appending(path: "ledger-\(UsageLedgerReader.cacheVersion)-codex.bin").path))
     }
 
     private func codexCount(_ time: String, input: Int, output: Int, last: (input: Int, output: Int)) -> String {

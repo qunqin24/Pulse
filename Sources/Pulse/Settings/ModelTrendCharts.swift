@@ -7,7 +7,8 @@ import SwiftUI
 ///
 /// **This Mac's records, not the provider's.** Speeds are timed from the
 /// request to the end of its reply as the CLIs logged them; the first token is
-/// Codex's own measure, and no other agent's log carries one. A point with too
+/// Codex's own measure, or for Claude Code worked out from how long a reply's
+/// opening thinking or tool call streamed (`UsageLedgerReader.ReplyClock`). A point with too
 /// little behind it is skipped, never drawn as a zero: the line joins its
 /// neighbours, and only measured points carry a dot.
 struct ModelTrendCharts: View {

@@ -19,7 +19,7 @@ struct LedgerCacheWriteTests {
         let first = await reader.ledger(for: .claudeCode, prices: [:])
         #expect(first.allTime.tokens == 110)
         #expect(first.allTime.cost == 0)
-        let saved = cache.appending(path: "ledger-9-\(Provider.claudeCode.rawValue).bin")
+        let saved = cache.appending(path: "ledger-\(UsageLedgerReader.cacheVersion)-\(Provider.claudeCode.rawValue).bin")
         // An old timestamp makes a write observable without sleeps or timing thresholds.
         let sentinel = Date(timeIntervalSince1970: 1_000_000)
         try FileManager.default.setAttributes([.modificationDate: sentinel], ofItemAtPath: saved.path)

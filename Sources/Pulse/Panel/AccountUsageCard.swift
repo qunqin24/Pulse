@@ -346,7 +346,7 @@ struct AccountUsageCard: View {
         } else if provider == .codex {
             sentences.append(String.localized("First token is Codex's own measure of how long a turn waited for it."))
         } else {
-            sentences.append(String.localized("Claude Code doesn't record when the first token arrived, so its wait isn't shown."))
+            sentences.append(String.localized("Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none."))
         }
         // Chinese and Japanese run sentences together; the rest put a space.
         let language = LocalizationSource.locale.language.languageCode?.identifier

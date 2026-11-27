@@ -358,7 +358,7 @@ struct SpendDataQualityTests {
             #expect(!ordinary.isReview)
             #expect(ordinary.title == "add a retry")
         }
-        #expect(FileManager.default.fileExists(atPath: cache.appending(path: "ledger-9-codex.bin").path))
+        #expect(FileManager.default.fileExists(atPath: cache.appending(path: "ledger-\(UsageLedgerReader.cacheVersion)-codex.bin").path))
     }
 
     // MARK: - What a row says

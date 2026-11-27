@@ -955,7 +955,7 @@
 "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "佔比與快取命中按最近 31 天計算；token/秒只看最近 24 小時，從送出請求算到回覆寫完。";
 "Too few replies in the last 24 hours to time." = "最近 24 小時的回覆太少，暫不顯示速度。";
 "First token is Codex's own measure of how long a turn waited for it." = "首字延遲由 Codex 自行測量，是每輪等到第一個 token 的時間。";
-"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code 不記錄第一個 token 何時到達，所以這裡不顯示首字延遲。";
+"Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none." = "Claude Code 的首字延遲由回覆開頭的思考或工具呼叫串流輸出的時長推算；以文字開頭的回覆不計。";
 "%@ s" = "%@ 秒";
 "Trends" = "趨勢";
 "Average %@" = "平均 %@";

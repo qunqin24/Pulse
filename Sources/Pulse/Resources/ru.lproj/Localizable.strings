@@ -955,7 +955,7 @@
 "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "Доля и попадания в кэш — за последние 31 день; токены в секунду — только за последние 24 часа, от отправки запроса до конца ответа.";
 "Too few replies in the last 24 hours to time." = "За последние 24 часа слишком мало ответов, чтобы измерить скорость.";
 "First token is Codex's own measure of how long a turn waited for it." = "«Первый токен» — сколько каждый запрос ждал первого токена, по замерам самого Codex.";
-"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code не записывает, когда пришёл первый токен, поэтому время ожидания не показано.";
+"Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none." = "Первый токен у Claude Code вычисляется по тому, сколько шли размышление или вызов инструмента в начале ответа; ответы, начинающиеся с текста, не учитываются.";
 "%@ s" = "%@ с";
 "Trends" = "Динамика";
 "Average %@" = "В среднем %@";

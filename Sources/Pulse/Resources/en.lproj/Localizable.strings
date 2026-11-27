@@ -955,7 +955,7 @@
 "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply.";
 "Too few replies in the last 24 hours to time." = "Too few replies in the last 24 hours to time.";
 "First token is Codex's own measure of how long a turn waited for it." = "First token is Codex's own measure of how long a turn waited for it.";
-"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code doesn't record when the first token arrived, so its wait isn't shown.";
+"Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none." = "Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none.";
 "%@ s" = "%@ s";
 "Trends" = "Trends";
 "Average %@" = "Average %@";

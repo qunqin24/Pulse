@@ -955,7 +955,7 @@
 "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "割合とキャッシュヒットは過去 31 日間、トークン/秒は過去 24 時間のみで、リクエストを送ってから返信を書き終えるまでで計ります。";
 "Too few replies in the last 24 hours to time." = "過去 24 時間の返信が少ないため、速度はまだ表示しません。";
 "First token is Codex's own measure of how long a turn waited for it." = "最初のトークンは Codex 自身が計測した、各ターンで最初のトークンが届くまでの時間です。";
-"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code は最初のトークンが届いた時刻を記録しないため、待ち時間は表示しません。";
+"Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none." = "Claude Code の最初のトークンまでの時間は、返答冒頭の思考やツール呼び出しのストリーミング時間から推算します。テキストで始まる返答は含みません。";
 "%@ s" = "%@ 秒";
 "Trends" = "推移";
 "Average %@" = "平均 %@";

@@ -39,6 +39,36 @@ struct ReplyTimingTests {
         #expect(timing.firstTokenTurns == 0)
     }
 
+    @Test("Claude Code's first token is dated by how long a reply's opening thinking or tool call streamed")
+    func claudeCodeFirstToken() async {
+        func opening(_ time: String, id: String, field: String?, ms: Int, output: Int) -> String {
+            let extra = field.map { #","\#($0)":\#(ms)"# } ?? ""
+            return #"{"type":"assistant","message":{"id":"\#(id)","model":"claude-test","usage":{"input_tokens":10,"output_tokens":\#(output)}},"timestamp":"\#(time)"\#(extra)}"#
+        }
+        let lines = [
+            Self.claudeLine("user", "2026-09-20T10:00:00.000Z"),
+            // Thought for 4 s, done at 5.5 s: the first token came at 1.5 s.
+            opening("2026-09-20T10:00:05.500Z", id: "a", field: "thinkingDurationMs", ms: 4_000, output: 20),
+            Self.claudeLine("assistant", "2026-09-20T10:00:10.000Z", id: "a", output: 500),
+            Self.claudeLine("user", "2026-09-20T10:00:11.000Z"),
+            // A tool call that streamed 2 s, done at 14 s: first token at 1 s.
+            opening("2026-09-20T10:00:14.000Z", id: "b", field: "toolInputStreamMs", ms: 2_000, output: 50),
+            Self.claudeLine("user", "2026-09-20T10:00:15.000Z"),
+            // Opens with text: no figure, no wait.
+            opening("2026-09-20T10:00:18.000Z", id: "c", field: nil, ms: 0, output: 300),
+            Self.claudeLine("user", "2026-09-20T10:00:19.000Z"),
+            // A streaming time longer than the gap: not this reply's request.
+            opening("2026-09-20T10:00:20.000Z", id: "d", field: "thinkingDurationMs", ms: 9_000, output: 10),
+        ]
+        let scanned = await UsageLedgerReader(cacheDirectory: URL.temporaryDirectory)
+            .parseClaudeCode(Data(lines.joined(separator: "\n").utf8))
+        let timing = scanned.allTimings.values.flatMap(\.values).reduce(ReplyTiming(), +)
+        #expect(timing.firstTokenTurns == 2)
+        #expect(abs(timing.firstTokenSeconds - (1.5 + 1)) < 0.001)
+        // The speed is unchanged: "a" and "c" were long enough to time.
+        #expect(timing.replies == 2)
+    }
+
     @Test("A reply copied into a resumed session's transcript is counted once, for the original")
     func resumedCopiesCountOnce() async throws {
         let root = URL.temporaryDirectory.appending(path: "PulseResumed-\(UUID().uuidString)")

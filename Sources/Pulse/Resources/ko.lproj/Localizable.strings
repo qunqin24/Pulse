@@ -955,7 +955,7 @@
 "Share and cache hit cover the last 31 days; tokens per second only the last 24 hours, from sending a request to the end of its reply." = "비중과 캐시 적중은 최근 31일, 토큰/초는 최근 24시간만 보며 요청을 보낸 때부터 답변이 끝날 때까지로 잽니다.";
 "Too few replies in the last 24 hours to time." = "최근 24시간 동안의 답변이 적어 아직 속도를 표시하지 않습니다.";
 "First token is Codex's own measure of how long a turn waited for it." = "첫 토큰은 Codex가 직접 잰, 각 턴에서 첫 토큰이 오기까지 걸린 시간입니다.";
-"Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code는 첫 토큰이 도착한 시각을 기록하지 않아 지연 시간을 표시하지 않습니다.";
+"Claude Code's first token is worked out from how long a reply's opening thinking or tool call streamed; a reply that opens with text has none." = "Claude Code의 첫 토큰 지연은 답변 첫머리의 사고나 도구 호출이 스트리밍된 시간으로 추산합니다. 텍스트로 시작하는 답변은 제외합니다.";
 "%@ s" = "%@초";
 "Trends" = "추이";
 "Average %@" = "평균 %@";
