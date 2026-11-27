@@ -960,6 +960,8 @@
 "Prompt cache (%@)" = "Prompt cache (%@)";
 "%@ left" = "%@ left";
 "Expired" = "Expired";
+"Last step's speed" = "Last step's speed";
+"≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "Prompt cache · %@ chats";
 "Soonest in %@" = "Soonest in %@";
 "Prompt cache" = "Prompt cache";

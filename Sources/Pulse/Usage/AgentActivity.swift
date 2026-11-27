@@ -45,6 +45,32 @@ enum AgentActivity {
     struct State: Sendable, Equatable {
         var lastWrite: Date?
         var isWorking: Bool
+        /// Codex only: the newest model call long enough to time. See `Step`.
+        var lastStep: Step? = nil
+    }
+
+    /// One Codex model call: how many tokens it wrote and how long it took
+    /// (#126).
+    ///
+    /// Codex writes nothing while a call streams, only a `token_usage_record`
+    /// as it ends, so this is the speed of the last call, not of the one
+    /// running. Timed from the record that handed the model its move — a
+    /// tool's result, a prompt, `task_started` — to the usage record, so the
+    /// wait for the first token is in it, and a short call reads slow: only a
+    /// call of `Step.minimumTokens` or more counts. Its `finishedAt` is the
+    /// point: a time that stops moving while the ring still turns is a Codex
+    /// that has stopped answering.
+    struct Step: Sendable, Equatable {
+        let outputTokens: Int
+        let duration: TimeInterval
+        let finishedAt: Date
+
+        var tokensPerSecond: Double { Double(outputTokens) / duration }
+
+        static let minimumTokens = 200
+        /// Past this the card drops the line: an hour-old speed says nothing
+        /// about the session in front of somebody.
+        static let staleAfter: TimeInterval = 60 * 60
     }
 
     /// What a turn in flight is waiting for, which is what decides how long
@@ -109,7 +135,8 @@ enum AgentActivity {
             let lines = tail(of: file.url, limit: isZcode ? 2 * 1024 * 1024 : 128 * 1024)
             let reading = isZcode
                 ? zcodeReading(in: lines, modified: file.modified)
-                : Reading(lastWrite: file.modified, verdict: verdict(in: lines, provider: provider))
+                : Reading(lastWrite: file.modified, verdict: verdict(in: lines, provider: provider),
+                          step: provider == .codex ? codexStep(in: lines) : nil)
             // Empty/unreadable tails and cancelled reads must be retried.
             if !lines.isEmpty, !Task.isCancelled {
                 readings[file.url] = (file, provider, reading)
@@ -144,6 +171,17 @@ enum AgentActivity {
                 lastWrite = cache.read(newest, provider: provider).lastWrite
             }
             var state = State(lastWrite: lastWrite, isWorking: false)
+
+            // The newest file too, however old: a Codex that stopped answering
+            // ten minutes ago has no recent file, and that is when the time
+            // of its last call is worth showing.
+            if provider == .codex {
+                let candidates = files.recent + [files.newest].compactMap { $0 }
+                retained.formUnion(candidates.map(\.url))
+                state.lastStep = candidates
+                    .compactMap { cache.read($0, provider: provider).step }
+                    .max { $0.finishedAt < $1.finishedAt }
+            }
 
             // Any live session counts: two terminals can be running at once,
             // and the newest file is not necessarily the busy one. The filter
@@ -345,6 +383,37 @@ enum AgentActivity {
     fileprivate struct Reading: Sendable {
         let lastWrite: Date?
         let verdict: Verdict
+        var step: Step? = nil
+    }
+
+    /// The newest timeable model call in a Codex tail, read backwards: its
+    /// `token_usage_record`, then the record before it that gave the model
+    /// its move. Two usage records with nothing handed over between them leave
+    /// the later one with no start, so the earlier is tried instead.
+    static func codexStep(in lines: [Data]) -> Step? {
+        var end: (at: Date, tokens: Int)?
+        for line in lines.reversed() {
+            guard !Task.isCancelled else { return nil }
+            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  let at = stamp(of: record) else { continue }
+            let payload = record["payload"] as? [String: Any]
+            if record["type"] as? String == "token_usage_record" {
+                let tokens = ((payload?["usage"] as? [String: Any])?["output_tokens"] as? NSNumber)?.intValue ?? 0
+                end = tokens >= Step.minimumTokens ? (at, tokens) : nil
+                continue
+            }
+            guard let found = end else { continue }
+            switch payload?["type"] as? String {
+            case "task_started", "user_message", "token_count",
+                 "function_call_output", "custom_tool_call_output", "tool_search_output":
+                let duration = found.at.timeIntervalSince(at)
+                guard duration >= 1 else { end = nil; continue }
+                return Step(outputTokens: found.tokens, duration: duration, finishedAt: found.at)
+            default:
+                continue
+            }
+        }
+        return nil
     }
 
     private static func zcodeReading(in lines: [Data], modified: Date) -> Reading {
@@ -671,6 +740,9 @@ final class AgentActivityMonitor {
     /// own previous render would celebrate whenever SwiftUI rebuilt it.
     private(set) var finishedAt: [Provider: Date] = [:]
 
+    /// Codex's last timed model call, for its card. See `AgentActivity.Step`.
+    private(set) var lastStep: [Provider: AgentActivity.Step] = [:]
+
     /// Fast enough that the spinner starts and stops with the turn rather than
     /// lagging it noticeably, slow enough to be free.
     private static let interval: TimeInterval = 2
@@ -719,6 +791,7 @@ final class AgentActivityMonitor {
         running = []
         lastWrite = nil
         finishedAt = [:]
+        lastStep = [:]
     }
 
     /// Internal, with the task returned, so tests can await a complete scan
@@ -753,5 +826,8 @@ final class AgentActivityMonitor {
 
         let newest = states.values.compactMap(\.lastWrite).max()
         if newest != lastWrite { lastWrite = newest }
+
+        let steps = states.compactMapValues(\.lastStep)
+        if steps != lastStep { lastStep = steps }
     }
 }

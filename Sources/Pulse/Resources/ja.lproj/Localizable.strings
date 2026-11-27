@@ -960,6 +960,8 @@
 "Prompt cache (%@)" = "プロンプトキャッシュ（%@）";
 "%@ left" = "残り %@";
 "Expired" = "期限切れ";
+"Last step's speed" = "直前のステップの速度";
+"≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "プロンプトキャッシュ · %@ 件の会話";
 "Soonest in %@" = "最短で %@後に期限切れ";
 "Prompt cache" = "プロンプトキャッシュ";

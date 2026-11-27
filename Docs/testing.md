@@ -28,6 +28,7 @@ By default, every suite is a synthetic check of production code — no live prov
 | `RefreshPacingTests` | Automatic cadence, the unwatched-spend cap, the timer as the only caller that skips providers not yet due; timestamps alone and an empty batch are not usage changes (Devin and every represented provider). [refresh-and-data.md](refresh-and-data.md) |
 | `RefreshTimerTests` | The timer's wait: added-only rails keep the chosen interval, Automatic with nothing primary uses the adaptive one, the soonest primary account sets it, never under fifteen seconds. |
 | `AgentActivityTests` | Only selected transcript providers are scanned, enabled and added accounts included; no local provider, no scan; held readers cover cancellation and late results; cached tail grace and changed/new/deleted files. [refresh-and-data.md](refresh-and-data.md) |
+| `CodexStepTests` | Codex's last model call is timed from the record that handed it the move to its `token_usage_record`; calls under 200 tokens are passed over; a tail with no start gives nothing; the newest file counts even when too old to be working (#126) |
 | `ElsewhereWatchTests` | A limit spent where this Mac's logs cannot see (two points gone, nothing spent here) loses its value estimate; a rise this Mac paid for or a one-point tick does not. |
 | `ZaiHistoryReadTests` | No key is not a failed request; a successful reply with no rows is an answer. |
 

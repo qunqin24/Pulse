@@ -134,7 +134,8 @@ enum DetailCardLayout {
             + activitySpacing + rowTextLineHeight
             + activitySpacing + rowTextLineHeight
             // The prompt cache's line, and under it — with several
-            // conversations — the name of the one about to lapse.
+            // conversations — the name of the one about to lapse. Codex's
+            // last step takes the same place, one line of it.
             + activitySpacing + rowTextLineHeight + promptCacheNameHeight
             + activitySpacing + footnoteHeight
     }
@@ -183,6 +184,9 @@ struct UsageDetailCard: View {
     /// When each live session's prompt cache lapses, where the logs say. The
     /// card names the soonest; Settings lists them all.
     var promptCache: PromptCacheReading?
+    /// Codex's last timed model call on this Mac (#126), drawn where Claude
+    /// Code's prompt cache goes.
+    var lastStep: AgentActivity.Step?
     /// Windows whose current cycle was seen spent off this Mac
     /// (`ElsewhereWatch`), which take no value estimate.
     var usedElsewhere: Set<String> = []
@@ -440,7 +444,7 @@ struct UsageDetailCard: View {
             }
 
             if isDetailed, let spend {
-                ActivitySection(spend: spend, provider: usage.provider, promptCache: promptCache)
+                ActivitySection(spend: spend, provider: usage.provider, promptCache: promptCache, lastStep: lastStep)
                     .transition(Self.rowTransition)
             }
             // Qoder keeps no history on this Mac; its account's records stand
@@ -846,6 +850,7 @@ private struct ActivitySection: View {
     let spend: UsageDetailCard.Spend
     let provider: Provider
     var promptCache: PromptCacheReading?
+    var lastStep: AgentActivity.Step?
 
     /// The provider's figures rather than this Mac's: headed and footed as
     /// such. Read off the ledger once there is one, since OpenCode Go's source
@@ -903,7 +908,11 @@ private struct ActivitySection: View {
                     .frame(height: DetailCardLayout.chartHeight)
                 topModel(ledger)
                 cacheHitRate(ledger)
-                if let promptCache { PromptCacheRow(reading: promptCache) }
+                if let promptCache {
+                    PromptCacheRow(reading: promptCache)
+                } else if let lastStep {
+                    LastStepRow(step: lastStep)
+                }
                 // Only where the figures are not this Mac's own: this Mac's
                 // records carry no line saying the money is an estimate (the
                 // Token spend pane says so).
@@ -1098,6 +1107,42 @@ private struct PromptCacheRow: View {
     private static func timeLeft(_ lapse: PromptCacheLapse, now: Date, several: Bool) -> String {
         let left = duration(lapse.expiresAt.timeIntervalSince(now))
         return several ? .localized("Soonest in \(left)") : .localized("\(left) left")
+    }
+}
+
+/// "≈ 68 tok/s · 12 sec. ago": Codex's last timed model call (#126). The time
+/// is the point — one that stops moving while the ring turns is a Codex that
+/// has stopped answering — so it ticks on its own, and an hour-old step is
+/// not drawn.
+private struct LastStepRow: View {
+    let step: AgentActivity.Step
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 5)) { context in
+            let elapsed = context.date.timeIntervalSince(step.finishedAt)
+            if elapsed < AgentActivity.Step.staleAfter {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(localized: "Last step's speed")
+                        .foregroundStyle(.primary.opacity(0.45))
+                    Spacer(minLength: 0)
+                    Text(verbatim: Self.value(step, elapsed: elapsed))
+                        .foregroundStyle(.primary.opacity(0.9))
+                        .monospacedDigit()
+                }
+                .font(.system(size: DetailCardLayout.rowFontSize, weight: .regular, design: .rounded))
+                .lineLimit(1)
+                .frame(height: DetailCardLayout.rowTextLineHeight)
+            }
+        }
+    }
+
+    static func value(_ step: AgentActivity.Step, elapsed: TimeInterval) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = LocalizationSource.locale
+        formatter.unitsStyle = .short
+        let ago = formatter.localizedString(fromTimeInterval: -max(1, elapsed))
+        let speed = String(Int(step.tokensPerSecond.rounded()))
+        return .localized("≈ \(speed) tok/s · \(ago)")
     }
 }
 

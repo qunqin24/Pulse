@@ -117,6 +117,9 @@ struct FloatingUsagePanelContent: View {
                             qoderCredits: selected.provider == .qoder ? cardLedgers.qoderCredits : nil,
                             promptCache: showsSpend(for: selected.account)
                                 ? cardLedgers.promptCache[selected.account.provider] : nil,
+                            // `~/.codex` is the first account's.
+                            lastStep: selected.account == AccountKey(.codex) && showsSpend(for: selected.account)
+                                ? store.activity.lastStep[.codex] : nil,
                             usedElsewhere: Set(selected.windows.filter {
                                 store.usedElsewhere($0, account: selected.account)
                             }.map(\.id)),

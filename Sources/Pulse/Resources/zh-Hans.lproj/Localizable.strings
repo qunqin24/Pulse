@@ -960,6 +960,8 @@
 "Prompt cache (%@)" = "提示缓存（%@）";
 "%@ left" = "还剩 %@";
 "Expired" = "已过期";
+"Last step's speed" = "上一步速度";
+"≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "提示缓存 · %@ 个对话";
 "Soonest in %@" = "最早 %@ 后过期";
 "Prompt cache" = "提示缓存";

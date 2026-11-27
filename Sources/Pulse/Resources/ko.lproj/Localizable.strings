@@ -960,6 +960,8 @@
 "Prompt cache (%@)" = "프롬프트 캐시(%@)";
 "%@ left" = "%@ 남음";
 "Expired" = "만료됨";
+"Last step's speed" = "직전 단계 속도";
+"≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "프롬프트 캐시 · 대화 %@개";
 "Soonest in %@" = "가장 빨리 %@ 후 만료";
 "Prompt cache" = "프롬프트 캐시";
