@@ -7,6 +7,46 @@ shows in the update window — see [Scripts/changelog.py](Scripts/changelog.py).
 Add the entry **before** tagging, in the small grammar the converter knows:
 bullets, `**bold**`, `` `code` `` and `[links](https://example.com)`.
 
+## 1.16.2
+
+**中文**
+
+**新功能**
+
+- **卡片内容可以按账号选择。** 在账号设置的「卡片内容」中逐项选择卡片显示什么，原来的「用尽预测」「详细卡片」、额度数值和额度重置券开关都并入这里，默认显示完整内容。
+- **模型详情页显示趋势图。** 在 Token 消耗中打开一个模型，「趋势」显示输出速度、首字延迟、缓存命中率和用量随时间的变化。
+- **Codex 卡片显示上一步速度。** 卡片上显示 Codex 最近一次模型调用的输出速度和距今多久，用来判断 Codex 是否还在工作。感谢 [@kimiyeah001](https://github.com/qunqin24/Pulse/issues/126) 提议。
+- **每个账号都可以自定义名称。** 在账号设置的「面板」中填写「名称」，第一个账号也可以，留空时显示服务商名称。感谢 [@iblueer](https://github.com/qunqin24/Pulse/issues/125) 提议。
+
+**改进与修复**
+
+- **只装 Gemini 桌面版也能读取 Antigravity。** Pulse 现在会使用 Gemini.app 内置的 agy。感谢 [@tyrival](https://github.com/qunqin24/Pulse/issues/129) 报告。
+- **Gemini 服务商改名为 Gemini CLI。** 以便和 Gemini 桌面版区分。
+- **设置中的「当前用量」与卡片样式一致。** 每个额度按卡片上的条形绘制。
+- **模型旁显示厂商图标。** Token 消耗的模型列表和模型详情页标题旁显示模型厂商的图标。
+- **窗口启动器发送前先重新读取。** 被推迟的空闲窗口启动会先确认窗口仍然空着再发送。
+- **JetBrains AI 本地额度过期时改为在线读取。** 已登录 JetBrains 账号时，不再停在本机文件里过期的额度。
+- **Claude Code 的产品占比随周额度清空。** 周额度重置后，设置中不再显示上一周的各产品占比。
+
+**English**
+
+**New**
+
+- **Choose what each account's card shows.** Pick each part under Card contents in an account's settings; the old Forecast, Detailed card, quota amounts and reset credits switches are all here now, and the whole card is shown by default.
+- **Trend charts on each model's page.** Open a model in Token spend and Trends shows its output speed, first token, cache hit rate and usage over time.
+- **Codex's card shows its last step's speed.** The card shows the output speed of Codex's latest model call and how long ago it ended, to tell whether Codex is still working. Thanks to [@kimiyeah001](https://github.com/qunqin24/Pulse/issues/126) for the suggestion.
+- **Every account can take its own name.** Fill in Name under Panel in an account's settings, the first account included; left empty, the provider's name is shown. Thanks to [@iblueer](https://github.com/qunqin24/Pulse/issues/125) for the suggestion.
+
+**Changed and fixed**
+
+- **Antigravity works with only the Gemini app installed.** Pulse now uses the agy inside Gemini.app. Thanks to [@tyrival](https://github.com/qunqin24/Pulse/issues/129) for reporting it.
+- **The Gemini provider is now called Gemini CLI.** This tells it apart from the Gemini app.
+- **Current usage in Settings matches the card.** Each limit is drawn as the card's bar.
+- **Models carry their maker's icon.** Token spend's model list and each model's page header show the maker's icon.
+- **The window starter reads again before sending.** A held idle start checks that the window is still idle first.
+- **JetBrains AI reads online when its local quota has expired.** A signed-in account no longer stays on the expired quota in the IDE's file.
+- **Claude Code's product share clears with its weekly limit.** After the weekly limit resets, Settings no longer shows last week's share per product.
+
 ## 1.16.1
 
 **中文**
