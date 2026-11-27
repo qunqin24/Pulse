@@ -39,11 +39,31 @@ final class WindowPrimer {
     private var timer: Timer?
     private var generation = 0
     private var inFlight: Set<Provider> = []
+    /// When a fresh read was asked for, per provider (`idleFreshness`).
+    private var refreshing: [Provider: Date] = [:]
     private var windows: [String: WindowState]
     private var savedResets: [String: Reset]
 
     /// A reading can arrive a little after the reset it stated.
     nonisolated static let grace: TimeInterval = 60
+
+    /// How old the reading behind an idle-only start may be when it fires.
+    /// A start held back — to the allowed hours, or by a long quiet spell —
+    /// acts on whatever the store last read, which can be hours old: a review
+    /// sent "hi" at 7 a.m. on a reading from 0 a.m., after the window had been
+    /// started on another device. Older than this, the account is read again
+    /// first and the start waits for that answer.
+    nonisolated static let idleFreshness: TimeInterval = 5 * 60
+    /// How long to wait on a fresh read before asking again.
+    nonisolated static let refreshRetry: TimeInterval = 60
+
+    /// Whether a due start must wait for a fresh reading: only when no known
+    /// reset makes it due and the reading it rests on is too old.
+    nonisolated static func needsFreshReading(dueByClock: Bool, receivedAt: Date?, now: Date) -> Bool {
+        guard !dueByClock else { return false }
+        guard let receivedAt else { return true }
+        return now.timeIntervalSince(receivedAt) > idleFreshness
+    }
     typealias Run = (date: Date, outcome: WindowStarter.Outcome)
 
     /// Evidence that this window had a countdown. A reset date alone cannot
@@ -98,6 +118,14 @@ final class WindowPrimer {
             case .toolMissing, .failed, .timedOut:
                 return max(idle, reset.date.addingTimeInterval(WindowPrimer.grace))
             }
+        }
+
+        /// Whether a known reset, not an idle reading, makes this window due
+        /// now. A reset is a fact about the clock and needs no fresh look; an
+        /// idle reading is only as good as its age (`needsFreshReading`).
+        func dueByClock(last: Run?, now: Date, hours: PrimerHours, calendar: Calendar = .current) -> Bool {
+            guard clockArmed, let reset, reset.date > (last?.date ?? .distantPast) else { return false }
+            return WindowPrimer.isDue(reset: reset.date, current: current, now: now, hours: hours, calendar: calendar)
         }
 
         /// Earliest permitted action for this window, shared by the timer and
@@ -225,7 +253,13 @@ final class WindowPrimer {
     private func schedule() {
         timer?.invalidate()
         let now = Date()
-        let times = starting.filter { !inFlight.contains($0) }.compactMap { starts(for: $0, now: now).values.min() }
+        let times = starting.filter { !inFlight.contains($0) }.compactMap { provider -> Date? in
+            guard let soonest = starts(for: provider, now: now).values.min() else { return nil }
+            // Waiting on a fresh read: its answer re-runs this through the
+            // observation; the timer only covers a read that never comes.
+            if let asked = refreshing[provider] { return max(soonest, asked.addingTimeInterval(Self.refreshRetry)) }
+            return soonest
+        }
         guard let soonest = times.min() else { return }
         let delay = max(soonest.timeIntervalSince(now), 5)
         let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
@@ -249,6 +283,20 @@ final class WindowPrimer {
         let now = Date()
         for provider in starting where !inFlight.contains(provider) {
             let times = starts(for: provider, now: now)
+            let due = times.filter { $0.value <= now }
+            guard !due.isEmpty else { continue }
+            let last = settings.governingPrimerRun(for: provider)
+            let hours = settings.primerHours
+            let byClock = due.keys.contains { windows[$0]?.dueByClock(last: last, now: now, hours: hours) == true }
+            let reading = store.rawLiveWindows(for: provider)
+            if Self.needsFreshReading(dueByClock: byClock, receivedAt: reading?.receivedAt, now: now) {
+                if refreshing[provider].map({ now.timeIntervalSince($0) >= Self.refreshRetry }) ?? true {
+                    refreshing[provider] = now
+                    store.refresh(AccountKey(provider))
+                }
+                continue
+            }
+            refreshing[provider] = nil
             guard Self.takeDue(times, at: now, from: &windows) else { continue }
             inFlight.insert(provider)
             // Stamped with when it began, not when it ended: a sibling window

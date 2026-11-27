@@ -21,6 +21,30 @@ struct WindowPrimerTests {
         UsageWindow(id: "w", kind: kind, scope: scope, usedFraction: 0, windowSeconds: 18_000, resetsAt: resets)
     }
 
+    // MARK: Fresh readings
+
+    @Test("An idle-only start held for hours asks for a fresh reading; a known reset does not")
+    func freshReading() {
+        // Read idle at midnight, held to 07:00 by the allowed hours.
+        let read = Self.at(0)
+        #expect(WindowPrimer.needsFreshReading(dueByClock: false, receivedAt: read, now: Self.at(7)))
+        #expect(!WindowPrimer.needsFreshReading(dueByClock: false, receivedAt: Self.at(6, 58), now: Self.at(7)))
+        #expect(WindowPrimer.needsFreshReading(dueByClock: false, receivedAt: nil, now: Self.at(7)))
+        #expect(!WindowPrimer.needsFreshReading(dueByClock: true, receivedAt: read, now: Self.at(7)))
+    }
+
+    @Test("A window is due by the clock only on a reset it saw coming")
+    func dueByClock() {
+        var seen = WindowPrimer.WindowState()
+        seen.record(window(.fiveHour, resets: Self.at(9)), receivedAt: Self.at(8), now: Self.at(8), last: nil)
+        #expect(!seen.dueByClock(last: nil, now: Self.at(9), hours: .default, calendar: Self.calendar))
+        #expect(seen.dueByClock(last: nil, now: Self.at(9, 2), hours: .default, calendar: Self.calendar))
+
+        var idle = WindowPrimer.WindowState()
+        idle.record(window(.fiveHour, resets: nil), receivedAt: Self.at(8), now: Self.at(8), last: nil)
+        #expect(!idle.dueByClock(last: nil, now: Self.at(9, 2), hours: .default, calendar: Self.calendar))
+    }
+
     // MARK: Hours
 
     @Test("Daytime hours, overnight hours, and all day")
