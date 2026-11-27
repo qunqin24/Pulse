@@ -18,6 +18,32 @@ struct ProductShareTests {
         ["seven_day_breakdown": ["rows": rows]]
     }
 
+    @Test("Dropping the expired weekly limit drops its product split with it")
+    func splitGoesWithItsWeek() throws {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        var usage = ProviderUsage(
+            account: AccountKey(.claudeCode),
+            windows: [
+                UsageWindow(id: "session", kind: .fiveHour, scope: nil, usedFraction: 0.1,
+                            windowSeconds: 5 * 3600, resetsAt: now.addingTimeInterval(3600)),
+                UsageWindow(id: "weekly", kind: .weekly, scope: nil, usedFraction: 0.4,
+                            windowSeconds: 7 * 86_400, resetsAt: now.addingTimeInterval(-60)),
+            ],
+            observedAt: now.addingTimeInterval(-120), state: .live, plan: nil, creditBalance: nil
+        )
+        usage.productShare = ProductShare(rows: [["display_name": "Claude Code", "percent": 100]], asOf: now)
+        let current = try #require(usage.current(at: now))
+        #expect(current.windows.map(\.id) == ["session"])
+        #expect(current.productShare == nil)
+
+        // A week still running keeps its split.
+        usage.windows[1] = UsageWindow(id: "weekly", kind: .weekly, scope: nil, usedFraction: 0.4,
+                                       windowSeconds: 7 * 86_400, resetsAt: now.addingTimeInterval(86_400))
+        usage.windows[0] = UsageWindow(id: "session", kind: .fiveHour, scope: nil, usedFraction: 0.1,
+                                       windowSeconds: 5 * 3600, resetsAt: now.addingTimeInterval(-60))
+        #expect(try #require(usage.current(at: now)).productShare != nil)
+    }
+
     @Test("The reply's split becomes the products above zero, largest first")
     func readsTheSplit() throws {
         let usage = ClaudeCodeUsageService.parse(try Self.root("claude-usage-product-share"), for: AccountKey(.claudeCode))

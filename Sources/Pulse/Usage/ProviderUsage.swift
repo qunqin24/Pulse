@@ -985,6 +985,12 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
 
         var copy = self
         copy.windows = kept
+        // The product split describes the week of the account-wide weekly
+        // limit. Dropping that week while keeping its split let Settings show
+        // last week's shares beside this week, since the reset that hides
+        // them (`AccountLiveUsageGroup.visibleShare`) went with the row.
+        let isWeek = { (window: UsageWindow) in window.kind == .weekly && window.scope == nil }
+        if windows.contains(where: isWeek), !kept.contains(where: isWeek) { copy.productShare = nil }
         return copy
     }
 
