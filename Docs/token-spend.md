@@ -55,7 +55,7 @@ Under the headline total sits a **Token activity** section (「Token 活动」):
 
 ## Model details
 
-Every model row carries its maker's mark, matched by name (`RecapVendorMark`, the recap's table; a maker with no bundled mark gets a plain `cpu` symbol, never another company's), and opens its token details, including when only one model is listed, and models beyond the initial eight remain reachable. Opening a model from the overview counts every agent that used it; opening one inside an agent keeps that agent as the scope; Back returns to the model list in that scope. The selected model is temporary navigation state; the span remains the saved preference.
+Every model row carries its maker's mark, matched by name (`RecapVendorMark`, the recap's table; a maker with no bundled mark gets a plain `cpu` symbol, never another company's; the detail's header carries the same), and opens its token details, including when only one model is listed, and models beyond the initial eight remain reachable. Opening a model from the overview counts every agent that used it; opening one inside an agent keeps that agent as the scope; Back returns to the model list in that scope. The selected model is temporary navigation state; the span remains the saved preference.
 
 The detail shows the model's token total and API cost estimate, the new-input/cache-hit/output split with amounts, daily and hourly token usage, contributions by agent with amounts, and a paged daily table with a sortable cost column. A model with nothing in a newly selected span stays open with an empty state. Opening a model and changing its span only summarize the ledgers in memory; **Rescan** is the explicit reread.
 

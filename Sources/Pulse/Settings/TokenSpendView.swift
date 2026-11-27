@@ -262,6 +262,15 @@ struct TokenSpendView: View {
                     .font(.system(size: 12))
                 Text(verbatim: "·")
                     .foregroundStyle(.secondary)
+                // The maker's mark, as on the model's row and the agent's
+                // header; the plain chip where the app has none.
+                if let icon = RecapVendorMark.resource(forModel: name) {
+                    LobeIconView(resource: icon, size: 13)
+                } else {
+                    Image(systemName: "cpu")
+                        .font(.system(size: 11))
+                        .accessibilityHidden(true)
+                }
                 Text(name)
                     .font(.system(size: 12, weight: .medium))
             }
