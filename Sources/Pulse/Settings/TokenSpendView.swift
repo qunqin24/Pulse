@@ -795,7 +795,13 @@ struct TokenSpendView: View {
                         // Which agents sent work to it — one model can belong
                         // to two, and the row would otherwise look like it
                         // belongs to whichever is listed first above.
-                        subtitle: model.agents.map(\.displayName).joined(separator: " · ")
+                        subtitle: model.agents.map(\.displayName).joined(separator: " · "),
+                        // The maker's mark, by the name (`RecapVendorMark`).
+                        // A model of a maker the app has no mark for gets a
+                        // plain chip, never another company's mark, and keeps
+                        // its title level with the rest.
+                        icon: RecapVendorMark.resource(forModel: model.name),
+                        symbol: "cpu"
                     ) {
                         HStack(spacing: 10) {
                             ShareBar(share: model.share)
