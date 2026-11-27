@@ -84,4 +84,27 @@ struct CodexStepTests {
         #expect(state.lastStep?.outputTokens == 1_000)
         #expect(state.lastStep?.finishedAt == Self.base.addingTimeInterval(20))
     }
+
+    @Test("An older session's step outlives five minutes when a newer one has none")
+    func olderSessionKeepsItsStep() throws {
+        let home = try EditorTestSupport.temporary("codex-step-two")
+        defer { try? FileManager.default.removeItem(at: home) }
+        let folder = home.appending(path: ".codex/sessions/2026/11/27")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        func write(_ name: String, _ lines: [Data], modified: Date) throws {
+            var text = Data()
+            for line in lines { text += line + Data("\n".utf8) }
+            let file = folder.appending(path: name)
+            try text.write(to: file)
+            try FileManager.default.setAttributes([.modificationDate: modified], ofItemAtPath: file.path)
+        }
+        try write("rollout-old.jsonl", [Self.event(0, "task_started"), Self.usage(20, output: 1_000)],
+                  modified: Self.base.addingTimeInterval(20))
+        try write("rollout-new.jsonl", [Self.event(30, "task_started")], modified: Self.base.addingTimeInterval(30))
+
+        for elapsed: TimeInterval in [299, 301, 50 * 60] {
+            let state = AgentActivity.states(for: [.codex], now: Self.base.addingTimeInterval(20 + elapsed), home: home)[.codex]
+            #expect(state?.lastStep?.outputTokens == 1_000, "at \(elapsed) s")
+        }
+    }
 }

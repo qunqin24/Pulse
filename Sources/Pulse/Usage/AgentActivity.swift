@@ -172,11 +172,14 @@ enum AgentActivity {
             }
             var state = State(lastWrite: lastWrite, isWorking: false)
 
-            // The newest file too, however old: a Codex that stopped answering
-            // ten minutes ago has no recent file, and that is when the time
-            // of its last call is worth showing.
+            // Every file written within the hour the card shows a step for,
+            // and the newest however old: a Codex that stopped answering ten
+            // minutes ago has no recent file, and that is when the time of its
+            // last call is worth showing. Not the five-minute set the working
+            // check uses: with a newer session holding no timeable call, the
+            // last one's step vanished at five minutes, not an hour (review).
             if provider == .codex {
-                let candidates = files.recent + [files.newest].compactMap { $0 }
+                let candidates = files.lastHour + [files.newest].compactMap { $0 }
                 retained.formUnion(candidates.map(\.url))
                 state.lastStep = candidates
                     .compactMap { cache.read($0, provider: provider).step }
@@ -593,9 +596,10 @@ enum AgentActivity {
     /// recent files. Old history contributes only its newest modification date.
     private static func transcripts(
         for provider: Provider, home: URL, now: Date
-    ) -> (newest: ActivityFile?, recent: [ActivityFile]) {
+    ) -> (newest: ActivityFile?, recent: [ActivityFile], lastHour: [ActivityFile]) {
         var newest: ActivityFile?
         var recent: [ActivityFile] = []
+        var lastHour: [ActivityFile] = []
 
         for root in roots(for: provider, home: home) {
             guard let walker = FileManager.default.enumerator(
@@ -622,10 +626,11 @@ enum AgentActivity {
                 let file = ActivityFile(url: url, modified: modified, size: size)
                 if newest == nil || modified > newest!.modified { newest = file }
                 if now.timeIntervalSince(modified) <= Wait.tool.grace { recent.append(file) }
+                if provider == .codex, now.timeIntervalSince(modified) <= Step.staleAfter { lastHour.append(file) }
             }
         }
 
-        return (newest, recent.sorted { $0.modified > $1.modified })
+        return (newest, recent.sorted { $0.modified > $1.modified }, lastHour)
     }
 
     private static func written(_ url: URL) -> (modified: Date, size: Int)? {
