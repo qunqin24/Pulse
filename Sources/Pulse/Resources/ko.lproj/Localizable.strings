@@ -957,6 +957,9 @@
 "First token is Codex's own measure of how long a turn waited for it." = "첫 토큰은 Codex가 직접 잰, 각 턴에서 첫 토큰이 오기까지 걸린 시간입니다.";
 "Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code는 첫 토큰이 도착한 시각을 기록하지 않아 지연 시간을 표시하지 않습니다.";
 "%@ s" = "%@초";
+"Trends" = "추이";
+"Average %@" = "평균 %@";
+"Not enough data in this span." = "이 기간의 데이터가 부족합니다.";
 "Prompt cache (%@)" = "프롬프트 캐시(%@)";
 "%@ left" = "%@ 남음";
 "Expired" = "만료됨";

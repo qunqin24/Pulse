@@ -957,6 +957,9 @@
 "First token is Codex's own measure of how long a turn waited for it." = "首字延迟由 Codex 自己测量，是每轮等到第一个 token 的时间。";
 "Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code 不记录第一个 token 何时到达，所以这里不显示首字延迟。";
 "%@ s" = "%@ 秒";
+"Trends" = "趋势";
+"Average %@" = "平均 %@";
+"Not enough data in this span." = "这段时间的数据不够。";
 "Prompt cache (%@)" = "提示缓存（%@）";
 "%@ left" = "还剩 %@";
 "Expired" = "已过期";

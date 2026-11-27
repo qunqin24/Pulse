@@ -31,6 +31,7 @@ struct ModelSpendDetailView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             total
+            ModelTrendCharts(model: model)
             kinds
             hours
             if !model.agents.isEmpty { agents }

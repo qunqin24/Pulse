@@ -957,6 +957,9 @@
 "First token is Codex's own measure of how long a turn waited for it." = "首字延遲由 Codex 自行測量，是每輪等到第一個 token 的時間。";
 "Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code 不記錄第一個 token 何時到達，所以這裡不顯示首字延遲。";
 "%@ s" = "%@ 秒";
+"Trends" = "趨勢";
+"Average %@" = "平均 %@";
+"Not enough data in this span." = "這段時間的資料不足。";
 "Prompt cache (%@)" = "提示快取（%@）";
 "%@ left" = "還剩 %@";
 "Expired" = "已過期";

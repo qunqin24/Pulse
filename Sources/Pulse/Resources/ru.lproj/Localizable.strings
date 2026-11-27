@@ -957,6 +957,9 @@
 "First token is Codex's own measure of how long a turn waited for it." = "«Первый токен» — сколько каждый запрос ждал первого токена, по замерам самого Codex.";
 "Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code не записывает, когда пришёл первый токен, поэтому время ожидания не показано.";
 "%@ s" = "%@ с";
+"Trends" = "Динамика";
+"Average %@" = "В среднем %@";
+"Not enough data in this span." = "За этот период данных мало.";
 "Prompt cache (%@)" = "Кэш промптов (%@)";
 "%@ left" = "осталось %@";
 "Expired" = "истёк";

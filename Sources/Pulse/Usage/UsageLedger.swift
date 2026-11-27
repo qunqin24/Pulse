@@ -841,9 +841,10 @@ actor UsageLedgerReader {
         _ buckets: [String: [String: TokenTally]],
         with prices: [String: ModelPrice],
         calendar: Calendar = .current,
-        vendor: String? = nil
+        vendor: String? = nil,
+        timings: [String: [String: ReplyTiming]] = [:]
     ) -> UsageLedger {
-        priced(buckets, with: prices, calendar: calendar, vendor: vendor)
+        priced(buckets, with: prices, calendar: calendar, vendor: vendor, timings: timings)
     }
 
     /// Turns buckets into days, slots and money.

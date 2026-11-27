@@ -957,6 +957,9 @@
 "First token is Codex's own measure of how long a turn waited for it." = "最初のトークンは Codex 自身が計測した、各ターンで最初のトークンが届くまでの時間です。";
 "Claude Code doesn't record when the first token arrived, so its wait isn't shown." = "Claude Code は最初のトークンが届いた時刻を記録しないため、待ち時間は表示しません。";
 "%@ s" = "%@ 秒";
+"Trends" = "推移";
+"Average %@" = "平均 %@";
+"Not enough data in this span." = "この期間のデータが足りません。";
 "Prompt cache (%@)" = "プロンプトキャッシュ（%@）";
 "%@ left" = "残り %@";
 "Expired" = "期限切れ";

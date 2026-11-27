@@ -101,6 +101,34 @@ struct ModelSpendSummary: Equatable, Sendable {
     /// no price changes.
     var hasPartialCounts = false
 
+    /// The model's trend charts: one point a day, or an hour where the span
+    /// is one or two days. See `TrendPoint`.
+    var trend: [TrendPoint] = []
+    var trendIsHourly = false
+    /// Over the whole span, as the charts' headings state them. Nil when too
+    /// few replies were timed, or a day's cache split cannot be vouched for.
+    var averageSpeed: Double? = nil
+    var averageFirstToken: TimeInterval? = nil
+    var cacheHitRate: Double? = nil
+
+    /// One point of the trend charts. Every figure is nil where nothing may be
+    /// said — too few timed replies, a cache split that does not add up, an
+    /// hour whose tokens do not reconcile — and the chart leaves a gap there
+    /// rather than drawing a zero nobody measured.
+    struct TrendPoint: Identifiable, Equatable, Sendable {
+        let start: Date
+        let tokens: Int?
+        let cacheHitRate: Double?
+        let tokensPerSecond: Double?
+        let firstToken: TimeInterval?
+        var id: Date { start }
+    }
+
+    /// Fewer timed replies than this in one point and it is left blank: one
+    /// or two requests are luck, not a speed. Lower than the 24-hour figure's
+    /// `UsageLedger.fewestTimedReplies` because a point is an hour or a day.
+    static let fewestTimedPerPoint = 3
+
     var isEmpty: Bool { tokens == 0 }
 
     var activeDays: Int { days.count { $0.tokens > 0 } }
@@ -168,6 +196,14 @@ struct ModelSpendSummary: Equatable, Sendable {
         var agentCost: [SpendAgent: TokenCost] = [:]
         var agentUnpriced: [SpendAgent: Int] = [:]
         var hourTokens: [Int: Int] = [:]
+        // The trend charts' inputs: replies timed per day and per hour, the
+        // model's tallies per hour, and the days whose cache split cannot be
+        // vouched for (a source with no cache column, partial counts, or
+        // tokens no kind claims).
+        var dayTiming: [Date: ReplyTiming] = [:]
+        var hourTiming: [Date: ReplyTiming] = [:]
+        var hourTally: [Date: TokenTally] = [:]
+        var cacheUnvouched: Set<Date> = []
         var totalTally = TokenTally()
         var totalCost = TokenCost()
         var totalUnpriced = 0
@@ -219,6 +255,9 @@ struct ModelSpendSummary: Equatable, Sendable {
                         tally: modelTally, unclassified: rawUnclassified, tokens: tokens
                     )
                     let unclassified = rawUnclassified ?? 0
+                    if !ledger.reportsCacheReads || ledger.hasPartialCounts || modelTally == nil || unclassified != 0 {
+                        cacheUnvouched.insert(day.date)
+                    }
 
                     if accountsForAll,
                        let daySum = Self.adding(dayTally[day.date] ?? TokenTally(), modelTally ?? TokenTally()),
@@ -273,6 +312,17 @@ struct ModelSpendSummary: Equatable, Sendable {
                     let date = calendar.startOfDay(for: slot.start)
                     ledgerSlotTokens[date, default: [:]][rawID, default: 0] += slotTokens
                     hourTokens[calendar.component(.hour, from: slot.start), default: 0] += slotTokens
+                    if let hour = calendar.dateInterval(of: .hour, for: slot.start)?.start,
+                       let sum = Self.adding(hourTally[hour] ?? TokenTally(), modelTally) {
+                        hourTally[hour] = sum
+                    }
+                }
+                for (rawID, timing) in slot.timings where (ledger.modelNames[rawID] ?? rawID) == name {
+                    let date = calendar.startOfDay(for: slot.start)
+                    dayTiming[date] = (dayTiming[date] ?? ReplyTiming()) + timing
+                    if let hour = calendar.dateInterval(of: .hour, for: slot.start)?.start {
+                        hourTiming[hour] = (hourTiming[hour] ?? ReplyTiming()) + timing
+                    }
                 }
             }
 
@@ -358,7 +408,79 @@ struct ModelSpendSummary: Equatable, Sendable {
             cursor = next
         }
 
+        summary.addTrend(
+            dayTiming: dayTiming, hourTiming: hourTiming, hourTally: hourTally,
+            cacheUnvouched: cacheUnvouched, hoursReconcile: hoursComplete, now: now, calendar: calendar
+        )
         return summary
+    }
+
+    // MARK: - Trend
+
+    /// Output speed: all output over all timed seconds, so a long reply
+    /// weighs what it wrote. First token: the mean over turns.
+    static func speed(_ timing: ReplyTiming?, fewest: Int) -> Double? {
+        guard let timing, timing.replies >= fewest, timing.seconds > 0 else { return nil }
+        return Double(timing.outputTokens) / timing.seconds
+    }
+
+    static func firstToken(_ timing: ReplyTiming?, fewest: Int) -> TimeInterval? {
+        guard let timing, timing.firstTokenTurns >= fewest else { return nil }
+        return timing.firstTokenSeconds / Double(timing.firstTokenTurns)
+    }
+
+    /// Cache reads over everything read in, as `UsageLedger.cacheHitRate`.
+    static func cacheHitRate(_ tally: TokenTally?) -> Double? {
+        guard let tally, !tally.reportsNoCache else { return nil }
+        let input = tally.input + tally.cacheWrite + tally.cacheRead
+        return input > 0 ? Double(tally.cacheRead) / Double(input) : nil
+    }
+
+    private mutating func addTrend(
+        dayTiming: [Date: ReplyTiming], hourTiming: [Date: ReplyTiming], hourTally: [Date: TokenTally],
+        cacheUnvouched: Set<Date>, hoursReconcile: Bool, now: Date, calendar: Calendar
+    ) {
+        let fewest = Self.fewestTimedPerPoint
+        let inSpan = Set(days.map(\.date))
+        let timed = dayTiming.filter { inSpan.contains($0.key) }.values.reduce(ReplyTiming(), +)
+        averageSpeed = Self.speed(timed, fewest: UsageLedger.fewestTimedReplies)
+        averageFirstToken = Self.firstToken(timed, fewest: UsageLedger.fewestTimedReplies)
+        let active = days.filter { $0.tokens > 0 }.map(\.date)
+        if active.allSatisfy({ !cacheUnvouched.contains($0) }) { cacheHitRate = Self.cacheHitRate(tally) }
+
+        // A day or two is one line of hours; anything longer, one of days.
+        trendIsHourly = days.count <= 2
+        guard trendIsHourly else {
+            trend = days.map { day in
+                TrendPoint(
+                    start: day.date,
+                    tokens: day.tokens,
+                    cacheHitRate: day.tokens > 0 && !cacheUnvouched.contains(day.date) ? Self.cacheHitRate(day.tally) : nil,
+                    tokensPerSecond: Self.speed(dayTiming[day.date], fewest: fewest),
+                    firstToken: Self.firstToken(dayTiming[day.date], fewest: fewest)
+                )
+            }
+            return
+        }
+        let thisHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
+        trend = days.flatMap { day -> [TrendPoint] in
+            (0..<24).compactMap { offset in
+                guard let hour = calendar.date(byAdding: .hour, value: offset, to: day.date),
+                      calendar.isDate(hour, inSameDayAs: day.date), hour <= thisHour
+                else { return nil }
+                let tally = hourTally[hour]
+                let tokens = tally.flatMap(Self.checkedTotal) ?? 0
+                return TrendPoint(
+                    start: hour,
+                    // An hour whose quarter-hours do not add up to the day is
+                    // not drawn: nobody measured it.
+                    tokens: hoursReconcile ? tokens : nil,
+                    cacheHitRate: tokens > 0 && !cacheUnvouched.contains(day.date) ? Self.cacheHitRate(tally) : nil,
+                    tokensPerSecond: Self.speed(hourTiming[hour], fewest: fewest),
+                    firstToken: Self.firstToken(hourTiming[hour], fewest: fewest)
+                )
+            }
+        }
     }
 
     // MARK: - Checked metadata
