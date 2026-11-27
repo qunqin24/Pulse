@@ -53,18 +53,22 @@ extension AntigravityUsageService {
     /// name of the editor's own shell command, which is a different program.
     ///
     /// **Then the copy Gemini.app keeps.** The Gemini desktop app carries
-    /// Antigravity and installs the same CLI to `~/.gemini/bin/agy`, kept up
-    /// to date by its own updater (`agy.version.json` beside it); it runs no
-    /// language server of its own. Someone who has only Gemini.app has only
-    /// this copy (#106). Last, so a CLI installed on purpose is the one asked.
+    /// Antigravity: check its updater-managed `~/.gemini/bin/agy` first,
+    /// then `Contents/Helpers/agy` inside Gemini.app in the user's or system
+    /// Applications folder (#129). The updater-managed copy is not always
+    /// present. These are last, so a CLI installed on purpose is asked first.
     static func locateCLI(home: String = NSHomeDirectory(),
                           isExecutable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:)) -> URL? {
         CommandLocator.locate("agy") ?? geminiAppCLI(home: home, isExecutable: isExecutable)
     }
 
     static func geminiAppCLI(home: String, isExecutable: (String) -> Bool) -> URL? {
-        let path = "\(home)/.gemini/bin/agy"
-        return isExecutable(path) ? URL(fileURLWithPath: path) : nil
+        let candidates = [
+            "\(home)/.gemini/bin/agy",
+            "\(home)/Applications/Gemini.app/Contents/Helpers/agy",
+            "/Applications/Gemini.app/Contents/Helpers/agy",
+        ]
+        return candidates.first(where: isExecutable).map { URL(fileURLWithPath: $0) }
     }
 
     static func askCLI(_ binary: URL) async -> CLIAnswer {

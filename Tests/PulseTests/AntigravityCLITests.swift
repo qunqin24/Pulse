@@ -130,6 +130,50 @@ struct AntigravityCLITests {
         }
     }
 
+    // MARK: - Gemini.app discovery
+
+    @Test("Gemini's CLI is found in either Applications folder without an updater copy",
+          arguments: ["/Users/someone/Applications", "/Applications"])
+    func bundledCLI(applications: String) {
+        let path = "\(applications)/Gemini.app/Contents/Helpers/agy"
+        let found = AntigravityUsageService.geminiAppCLI(
+            home: "/Users/someone", isExecutable: { $0 == path }
+        )
+        #expect(found?.path == path)
+    }
+
+    @Test("Gemini's updater copy precedes app bundles, then the user's app precedes the system app")
+    func geminiCLIPriority() {
+        let updater = "/Users/someone/.gemini/bin/agy"
+        let userApp = "/Users/someone/Applications/Gemini.app/Contents/Helpers/agy"
+        let systemApp = "/Applications/Gemini.app/Contents/Helpers/agy"
+        for available in [[updater, userApp, systemApp], [userApp, systemApp]] {
+            let found = AntigravityUsageService.geminiAppCLI(
+                home: "/Users/someone", isExecutable: { available.contains($0) }
+            )
+            #expect(found?.path == available.first)
+        }
+    }
+
+    @Test("A non-executable Gemini candidate is skipped, and no executable means no CLI")
+    func geminiCLIRequiresExecutable() {
+        var checked: [String] = []
+        let systemApp = "/Applications/Gemini.app/Contents/Helpers/agy"
+        let found = AntigravityUsageService.geminiAppCLI(home: "/Users/someone") { path in
+            checked.append(path)
+            return path == systemApp
+        }
+        #expect(found?.path == systemApp)
+        #expect(checked == [
+            "/Users/someone/.gemini/bin/agy",
+            "/Users/someone/Applications/Gemini.app/Contents/Helpers/agy",
+            systemApp,
+        ])
+        #expect(AntigravityUsageService.geminiAppCLI(
+            home: "/Users/someone", isExecutable: { _ in false }
+        ) == nil)
+    }
+
     // MARK: - The version gate
 
     @Test("Only a version that answers /usage itself is asked")
