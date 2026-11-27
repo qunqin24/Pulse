@@ -82,16 +82,6 @@ struct AccountsGroup: View {
                 }
                 if !account.isPrimary {
                     SettingsRowDivider()
-                    SettingsRow(String.localized("Name"), symbol: "tag") {
-                        TextField("", text: Binding(
-                            get: { settings.label(for: account) },
-                            set: { settings.rename(account, to: $0) }
-                        ))
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: SettingsLayout.controlWidth)
-                    }
-
-                    SettingsRowDivider()
 
                     SettingsRow(
                         String.localized("Remove account"),

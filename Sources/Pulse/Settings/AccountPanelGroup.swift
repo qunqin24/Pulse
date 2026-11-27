@@ -24,6 +24,21 @@ struct AccountPanelGroup: View {
                 .disabled(settings.isEnabled(account) && settings.enabledAccounts.count == 1)
             }
 
+            // Every account but an extension's, which its manifest names
+            // (#125). Empty shows the provider's name in its place.
+            if provider != .pulseExtension {
+                SettingsRowDivider()
+
+                SettingsRow(String.localized("Name"), symbol: "tag") {
+                    TextField("", text: Binding(
+                        get: { settings.givenName(for: account) },
+                        set: { settings.rename(account, to: $0) }
+                    ), prompt: Text(verbatim: provider.displayName))
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: SettingsLayout.controlWidth)
+                }
+            }
+
             SettingsRowDivider()
 
             ringWindowRow(for: account)

@@ -9,6 +9,7 @@ import Foundation
 
 extension AppSettings.Key {
     static let extraAccounts = "settings.extraAccounts"
+    static let accountNames = "settings.accountNames"
     static let extensionNames = "settings.extensionNames"
     static let providerOrder = "settings.providerOrder"
     // Which accounts are enabled is `ProviderSelection.enabledKey`: the first
@@ -25,6 +26,13 @@ extension AppSettings {
         let data = try? JSONEncoder().encode(extraAccounts)
         defaults.set(data, forKey: Key.extraAccounts)
         onChange?()
+    }
+
+    func accountNamesChanged(from old: [String: String]) {
+        // Accounts nobody has ordered sort by name.
+        orderedCache = nil
+        guard accountNames != old else { return }
+        defaults.set(accountNames, forKey: Key.accountNames)
     }
 
     func providerOrderChanged(from old: [String]) {
@@ -82,15 +90,29 @@ extension AppSettings {
         return extensions.first { $0.account == account }
     }
 
-    /// What to call an account. A provider's first one is just the provider;
-    /// the rest carry a label so two subscriptions can be told apart.
+    /// What to call an account: the name the user gave it, else the
+    /// provider's (#125). An added account's name was asked for when it was
+    /// added; a first account has none until somebody types one. A blank
+    /// name is no name.
     func label(for account: AccountKey) -> String {
         // The manifest's name. A removed extension's account is gone from
         // every list, so the fallback is only ever read in passing.
         if account.provider == .pulseExtension {
             return pulseExtension(for: account)?.name ?? account.slot
         }
-        return extraAccounts.first { $0.key == account }?.label ?? account.provider.displayName
+        let given = account.isPrimary
+            ? accountNames[account.id]
+            : extraAccounts.first { $0.key == account }?.label
+        guard let given, !given.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return account.provider.displayName
+        }
+        return given
+    }
+
+    /// The name as typed, for the field that edits it: empty when there is
+    /// none, so the field shows the provider's name as its placeholder.
+    func givenName(for account: AccountKey) -> String {
+        account.isPrimary ? accountNames[account.id] ?? "" : extraAccounts.first { $0.key == account }?.label ?? ""
     }
 
     // MARK: - Order
@@ -305,6 +327,11 @@ extension AppSettings {
     }
 
     func rename(_ account: AccountKey, to label: String) {
+        guard account.provider != .pulseExtension else { return }
+        if account.isPrimary {
+            accountNames[account.id] = label.isEmpty ? nil : label
+            return
+        }
         guard let index = extraAccounts.firstIndex(where: { $0.key == account }) else { return }
         extraAccounts[index].label = label
     }
@@ -365,9 +392,10 @@ extension AppSettings {
             // else in the app tolerates duplicates (`label(for:)` takes the
             // first), so crashing here would be the only place that doesn't.
             labels: Dictionary(
-                extras.map { ($0.id, $0.label) } + found.map { ($0.0.id, $0.1) },
+                extras.map { ($0.id, $0.label) } + found.map { ($0.0.id, $0.1) }
+                    + (defaults.dictionary(forKey: Key.accountNames) as? [String: String] ?? [:]).map { ($0.key, $0.value) },
                 uniquingKeysWith: { first, _ in first }
-            ),
+            ).filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty },
             pinnedWindows: defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:]
         )
     }

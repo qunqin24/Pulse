@@ -25,7 +25,7 @@ Window names are localized in the app and would change under a script's feet, so
 - `kind` — a flat token: `fiveHour`, `daily`, `weekly`, `monthly`, `spend`, `balance`, `messages`, `topUp`, `credits`, `sharedCredits`, `planCredits`, `dedicatedCredits`, or `other:<seconds>`. `messages` is an allowance counted in messages rather than in time ([providers/devin.md](providers/devin.md)): no window, no reset, `reportsLength` false. `balance` is prepaid credit, which is **not a limit**: it never turns over, so `reportsLength` is false and `resetsAt` is null on those rows ([providers/deepseek.md](providers/deepseek.md)). `topUp` is an additional allowance with a size the provider states. V2EX's top-up has no expiry or reset ([providers/v2ex.md](providers/v2ex.md)); DimAgent's add-on buckets carry their reported expiry, with no reset ([providers/dimagent.md](providers/dimagent.md)). Only a provider's own exhaustion signal may call an allowance spent. `credits` is an allowance counted in the provider's own credits and `sharedCredits` a team's pool of them, reported beside it and never summed with it ([providers/qoder.md](providers/qoder.md)): each carries the provider's reset where it states one, and `reportsLength` false. `planCredits` is the subscription allowance, including DimAgent's independently reported bucket. Qoder exposes `planCredits`, `dedicatedCredits` and `topUp` when "Show each part of the credits" is on. `UsageWindow.Kind` is `Codable`, but its synthesised form is an object with an associated value in it; fine on disk, awkward in a `jq` filter.
 - `scope`, `name` — product names, the same in every language.
 - `estimated` / `estimatedFrom` — true where the provider said how much of an allowance is **left** and never how large it is, so the denominator behind `usedFraction` was inferred; `estimatedFrom` is a stable token saying which inference — `planPrice` ([providers/command-code.md](providers/command-code.md)), `sinceTopUp` or `yourBudget` ([providers/deepseek.md](providers/deepseek.md)). The wording that marks it on screen is localized; neither of these is, which is why they are not folded into `scope`.
-- `label` — the user's own name for an added account, theirs to have written in any language; an extension's name from its manifest. On a **window**, `label` is an extension's own name for that limit — absent for every built-in provider, whose limits are named by `kind`. See [extensions.md](extensions.md). An extension's `metrics[]` carry its own `label` and `unit` the same way.
+- `label` — the user's own name for an account (a first account's too, once given one; #125), theirs to have written in any language; an extension's name from its manifest. On a **window**, `label` is an extension's own name for that limit — absent for every built-in provider, whose limits are named by `kind`. See [extensions.md](extensions.md). An extension's `metrics[]` carry its own `label` and `unit` the same way.
 
 ## Shape
 
@@ -36,7 +36,7 @@ accounts[]
                        "extension#<id>" for an extension
   provider             the Provider case; "extension" for every extension
   name                 the product's name
-  label                the user's name for it; the product's name for a first account
+  label                the user's name for it; absent for a first account nobody named
   plan                 when the provider names one
   creditBalance        when the provider reports one
   observedAt           when this reading was taken, absent when there is none

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
 import SwiftUI
 
-/// Adding another deployment of a self-hosted gateway, naming it, and getting
-/// rid of it (#125).
+/// Adding another deployment of a self-hosted gateway, and getting rid of it
+/// (#125). Every account's name is in its Panel group.
 ///
 /// `AccountsGroup`'s counterpart for the providers whose added accounts are
 /// typed in rather than signed in to (`Provider.addsAccountsByAddress`). There
@@ -29,17 +29,6 @@ struct GatewayAccountsGroup: View {
                     }
                 }
             } else {
-                SettingsRow(String.localized("Name"), symbol: "tag") {
-                    TextField("", text: Binding(
-                        get: { settings.label(for: account) },
-                        set: { settings.rename(account, to: $0) }
-                    ))
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: SettingsLayout.controlWidth)
-                }
-
-                SettingsRowDivider()
-
                 SettingsRow(
                     String.localized("Remove account"),
                     subtitle: String.localized("Forgets its address and key and takes it off the rail."),

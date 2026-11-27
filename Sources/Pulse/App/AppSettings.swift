@@ -792,6 +792,13 @@ final class AppSettings {
         didSet { sessionBrowsersChanged(from: oldValue) }
     }
 
+    /// What the user calls a provider's first account, keyed by account id
+    /// (#125). An added account keeps its name in `extraAccounts`; an
+    /// extension is named by its manifest. Absent means the provider's name.
+    var accountNames: [String: String] {
+        didSet { accountNamesChanged(from: oldValue) }
+    }
+
     /// Which route each provider's figures are read by, keyed by provider. A
     /// missing entry means `.automatic`.
     var sources: [String: String] {
@@ -999,6 +1006,7 @@ final class AppSettings {
         pinnedWindows: [String: String] = [:],
         sources: [String: String] = [:],
         sessionBrowsers: [String: String] = [:],
+        accountNames: [String: String] = [:],
         ringTints: [String: String] = [:],
         refreshInterval: RefreshInterval = .default,
         networkProxy: NetworkProxySettings = .default,
@@ -1062,6 +1070,7 @@ final class AppSettings {
         self.pinnedWindows = pinnedWindows
         self.sources = sources
         self.sessionBrowsers = sessionBrowsers
+        self.accountNames = accountNames
         self.ringTints = ringTints
         self.refreshInterval = refreshInterval
         self.networkProxy = networkProxy
@@ -1173,6 +1182,7 @@ final class AppSettings {
             pinnedWindows: codexPinsNamedLikeHTTP(defaults.dictionary(forKey: Key.pinnedWindows) as? [String: String] ?? [:]),
             sources: defaults.dictionary(forKey: Key.sources) as? [String: String] ?? [:],
             sessionBrowsers: defaults.dictionary(forKey: Key.sessionBrowsers) as? [String: String] ?? [:],
+            accountNames: defaults.dictionary(forKey: Key.accountNames) as? [String: String] ?? [:],
             ringTints: defaults.dictionary(forKey: Key.ringTints) as? [String: String] ?? [:],
             refreshInterval: defaults.settingsIntChoice(Key.refreshInterval) ?? .default,
             networkProxy: Self.storedNetworkProxy(in: defaults),
