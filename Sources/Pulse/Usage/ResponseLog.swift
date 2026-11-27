@@ -107,13 +107,15 @@ enum ResponseLog {
         } else {
             body = text(of: data ?? Data(), contentType: http?.value(forHTTPHeaderField: "Content-Type"))
         }
-        // A redirect's whole meaning is where it points: the sign-in page, or
-        // only another address on the same site. Scheme, host and path, as
-        // for the request's own address.
+        // A redirect's whole meaning is where it points: a sign-in host, or
+        // the same site. **The site only**, never the path: the body's
+        // redaction has already run, and a path can carry a token it would
+        // have caught (a review found one copied out through Copy replies).
         if let http, (300..<400).contains(http.statusCode),
            let location = http.value(forHTTPHeaderField: "Location"),
-           let target = URL(string: location, relativeTo: response?.url ?? request.url)?.absoluteURL {
-            body = "Location: \(address(of: target))" + (body.isEmpty ? "" : "\n\(body)")
+           let target = URL(string: location, relativeTo: response?.url ?? request.url)?.absoluteURL,
+           let scheme = target.scheme, let host = target.host() {
+            body = "Location: \(scheme)://\(host)" + (body.isEmpty ? "" : "\n\(body)")
         }
         // Whatever this request carried, wherever the reply echoes it back.
         body = masking(credentials(in: request), in: body)

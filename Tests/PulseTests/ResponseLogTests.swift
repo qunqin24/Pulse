@@ -135,15 +135,15 @@ struct ResponseLogTests {
         #expect(entry.body.contains("bad token"))
     }
 
-    @Test("A redirect says where it pointed, without the query")
+    @Test("A redirect says which site it pointed to, never the path or query")
     func redirectTarget() {
         let url = URL(string: "https://example.com/app")!
         let reply = HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil,
-                                    headerFields: ["Location": "https://accounts.example.com/signin?continue=secret"])
+                                    headerFields: ["Location": "https://accounts.example.com/s/AKfycbz7Q2mN9xR4tLpW8vK3jH6/signin?continue=secret"])
         let entry = ResponseLog.entry(URLRequest(url: url), response: reply, data: Data(), error: nil, at: Date())
-        #expect(entry.body == "Location: https://accounts.example.com/signin")
+        #expect(entry.body == "Location: https://accounts.example.com")
         let relative = HTTPURLResponse(url: url, statusCode: 301, httpVersion: nil, headerFields: ["Location": "/app/"])
         #expect(ResponseLog.entry(URLRequest(url: url), response: relative, data: Data(), error: nil, at: Date()).body
-            == "Location: https://example.com/app/")
+            == "Location: https://example.com")
     }
 }
