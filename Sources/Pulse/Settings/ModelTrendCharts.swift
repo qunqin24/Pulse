@@ -118,7 +118,7 @@ private struct TrendLine: View {
                     .stroke(tint, style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                 if points.count < 40 {
                     ForEach(Array(points.enumerated()), id: \.offset) { _, point in
-                        Circle().fill(tint).frame(width: 4, height: 4).position(point)
+                        Circle().fill(tint).frame(width: 5, height: 5).position(point)
                     }
                 }
             }
@@ -135,22 +135,53 @@ private struct TrendLine: View {
         return (low - pad)...(high + pad)
     }
 
-    /// Quadratic curves through the midpoints, with each point as the control:
-    /// smooth, and never beyond the points themselves, as a spline can be.
+    /// A monotone cubic through every point (Fritsch–Carlson): the curve
+    /// passes through each measured figure and never rises or dips beyond
+    /// its two neighbours, so it adds no peak the data does not have. A
+    /// curve through the midpoints, tried first, missed the points it was
+    /// drawn from and flattened every peak.
     static func smooth(_ points: [CGPoint]) -> Path {
         Path { path in
             guard let first = points.first else { return }
             path.move(to: first)
-            guard points.count > 2 else {
+            let count = points.count
+            guard count > 2 else {
                 points.dropFirst().forEach { path.addLine(to: $0) }
                 return
             }
-            for index in 1..<(points.count - 1) {
-                let middle = CGPoint(x: (points[index].x + points[index + 1].x) / 2,
-                                     y: (points[index].y + points[index + 1].y) / 2)
-                path.addQuadCurve(to: middle, control: points[index])
+            let slopes = (0..<(count - 1)).map { index -> CGFloat in
+                let dx = points[index + 1].x - points[index].x
+                return dx == 0 ? 0 : (points[index + 1].y - points[index].y) / dx
             }
-            path.addLine(to: points[points.count - 1])
+            var tangents = [CGFloat](repeating: 0, count: count)
+            tangents[0] = slopes[0]
+            tangents[count - 1] = slopes[count - 2]
+            for index in 1..<(count - 1) {
+                tangents[index] = slopes[index - 1] * slopes[index] <= 0 ? 0 : (slopes[index - 1] + slopes[index]) / 2
+            }
+            for index in 0..<(count - 1) where slopes[index] == 0 {
+                tangents[index] = 0
+                tangents[index + 1] = 0
+            }
+            for index in 0..<(count - 1) where slopes[index] != 0 {
+                let a = tangents[index] / slopes[index]
+                let b = tangents[index + 1] / slopes[index]
+                let length = a * a + b * b
+                if length > 9 {
+                    let scale = 3 / length.squareRoot()
+                    tangents[index] = scale * a * slopes[index]
+                    tangents[index + 1] = scale * b * slopes[index]
+                }
+            }
+            for index in 0..<(count - 1) {
+                let start = points[index], end = points[index + 1]
+                let third = (end.x - start.x) / 3
+                path.addCurve(
+                    to: end,
+                    control1: CGPoint(x: start.x + third, y: start.y + tangents[index] * third),
+                    control2: CGPoint(x: end.x - third, y: end.y - tangents[index + 1] * third)
+                )
+            }
         }
     }
 }
