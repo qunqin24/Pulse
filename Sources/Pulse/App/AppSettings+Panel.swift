@@ -201,14 +201,14 @@ extension AppSettings {
 
     // MARK: - Card contents
 
-    /// What this account's card shows: its own list once changed, else what
-    /// the older switches say. Only parts the account can show at all.
+    /// What this account's card shows: its own list once changed, else the
+    /// default (`defaultCardParts`). Only parts the account can show at all.
     func cardParts(for account: AccountKey) -> Set<CardPart> {
         let available = Set(CardPart.available(for: account))
         if let stored = cardParts[account.id] {
             return Set(stored.compactMap(CardPart.init(rawValue:))).intersection(available)
         }
-        return legacyCardParts(for: account).intersection(available)
+        return defaultCardParts(for: account).intersection(available)
     }
 
     func setCardPart(_ part: CardPart, shown: Bool, for account: AccountKey) {
@@ -219,11 +219,15 @@ extension AppSettings {
         cardParts[account.id] = CardPart.allCases.filter(parts.contains).map(\.rawValue)
     }
 
-    /// The card as the switches before `CardPart` drew it: the detailed
-    /// card's parts with **Detailed card** on, the global forecast, Copilot's
-    /// and Qoder's amounts, Codex's reset credits.
-    func legacyCardParts(for account: AccountKey) -> Set<CardPart> {
-        var parts: Set<CardPart> = detailedCards.contains(account.id) ? CardPart.detailed : []
+    /// An account nobody has changed: the whole card — what **Detailed card**
+    /// used to switch on — for every account, to be turned off part by part.
+    /// Three parts keep the switches they had, off unless somebody turned them
+    /// on: the forecast (a fourth line under every limit), Copilot's and
+    /// Qoder's amounts (some Copilot seats report them in an undocumented
+    /// unit) and Codex's reset credits (a call to its app server on every
+    /// refresh).
+    func defaultCardParts(for account: AccountKey) -> Set<CardPart> {
+        var parts = CardPart.detailed
         if showsForecast { parts.insert(.forecast) }
         if (account.provider == .copilot && copilotShowsAmounts) || (account.provider == .qoder && qoderShowsAmounts) {
             parts.insert(.amounts)

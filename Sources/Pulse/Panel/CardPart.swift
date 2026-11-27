@@ -7,9 +7,9 @@ import Foundation
 /// **One list instead of five scattered switches.** The card's extras used to
 /// hang off a global Forecast switch, a per-account Detailed card switch,
 /// Copilot's and Qoder's amounts, and Codex's reset credits. They are all
-/// here now; those settings still decide what an account shows until somebody
-/// changes its list (`AppSettings.legacyCardParts`), so nothing moves on
-/// upgrade.
+/// here now. An account nobody has changed shows the whole card, with the
+/// forecast, amounts and reset credits as their old switches say
+/// (`AppSettings.defaultCardParts`).
 enum CardPart: String, CaseIterable, Sendable {
     case plan
     case updated

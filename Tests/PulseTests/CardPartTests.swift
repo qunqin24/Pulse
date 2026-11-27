@@ -29,36 +29,39 @@ struct CardPartTests {
         #expect(!CardPart.available(for: AccountKey(.qoder)).contains(.topModel))
     }
 
-    @Test("Until changed, an account shows what the older switches said")
-    func legacyDefaults() {
+    @Test("Until changed, an account shows the whole card; three parts keep their old switches")
+    func defaults() {
         withSettings { settings, _ in
-            #expect(settings.cardParts(for: AccountKey(.claudeCode)).isEmpty)
-            settings.setShowsDetailedCard(true, for: AccountKey(.claudeCode))
+            #expect(settings.cardParts(for: AccountKey(.claudeCode))
+                == [.plan, .updated, .value, .figures, .chart, .topModel, .cacheHitRate, .promptCache])
+            #expect(settings.cardParts(for: AccountKey(.copilot)).isSuperset(of: [.plan, .updated]))
+            #expect(settings.cardParts(for: AccountKey(.copilot)).isDisjoint(with: [.forecast, .amounts]))
+            #expect(settings.cardParts(for: AccountKey(.codex)).isSuperset(of: [.plan, .lastStep, .figures]))
+            #expect(!settings.cardParts(for: AccountKey(.codex)).contains(.resetCredits))
+
             settings.showsForecast = true
             settings.copilotShowsAmounts = true
             settings.showsCodexResetCredits = true
-            #expect(settings.cardParts(for: AccountKey(.claudeCode))
-                == [.plan, .updated, .forecast, .value, .figures, .chart, .topModel, .cacheHitRate, .promptCache])
-            #expect(settings.cardParts(for: AccountKey(.copilot)) == [.forecast, .amounts])
-            #expect(settings.cardParts(for: AccountKey(.codex)) == [.forecast, .resetCredits])
+            #expect(settings.cardParts(for: AccountKey(.copilot)).isSuperset(of: [.forecast, .amounts]))
+            #expect(settings.cardParts(for: AccountKey(.codex)).isSuperset(of: [.forecast, .resetCredits]))
         }
     }
 
     @Test("A change writes the account's own list, which then stays put and is kept")
     func ownList() {
         withSettings { settings, defaults in
+            let all = settings.cardParts(for: AccountKey(.claudeCode))
             settings.showsForecast = true
-            settings.setCardPart(.plan, shown: true, for: AccountKey(.claudeCode))
-            #expect(settings.cardParts(for: AccountKey(.claudeCode)) == [.plan, .forecast])
+            settings.setCardPart(.chart, shown: false, for: AccountKey(.claudeCode))
+            #expect(settings.cardParts(for: AccountKey(.claudeCode)) == all.union([.forecast]).subtracting([.chart]))
             // The old switch no longer moves it.
             settings.showsForecast = false
-            #expect(settings.cardParts(for: AccountKey(.claudeCode)) == [.plan, .forecast])
-            #expect(settings.cardParts(for: AccountKey(.codex)).isEmpty)
-            settings.setCardPart(.forecast, shown: false, for: AccountKey(.claudeCode))
-            #expect(settings.cardParts(for: AccountKey(.claudeCode)) == [.plan])
+            #expect(settings.cardParts(for: AccountKey(.claudeCode)).contains(.forecast))
+            // Another account still follows the default.
+            #expect(!settings.cardParts(for: AccountKey(.codex)).contains(.forecast))
 
             let back = AppSettings.restoredSettings(from: defaults, detected: [], scan: ExtensionCatalog.Scan())
-            #expect(back.cardParts(for: AccountKey(.claudeCode)) == [.plan])
+            #expect(back.cardParts(for: AccountKey(.claudeCode)) == all.union([.forecast]).subtracting([.chart]))
         }
     }
 
