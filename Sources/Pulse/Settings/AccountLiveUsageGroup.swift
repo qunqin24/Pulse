@@ -150,31 +150,36 @@ private struct LimitBarRow: View {
     let warningAt: Double
     let style: UsageBarStyle
 
+    /// Settings' rows are wider and their text larger than the card's, so the
+    /// bar is drawn larger too: the card's proportions, not its sizes.
+    private static let scale: CGFloat = 1.3
+
     private var figure: String {
         let percent = window.percentText(remaining: showsRemaining)
         return showsRemaining ? .localized("\(percent) Left") : .localized("\(percent) Used")
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             UsageBar(
                 fraction: showsRemaining ? window.remainingFraction : window.usedFraction,
                 accent: window.tint(warningAt: warningAt),
                 track: Color.primary.opacity(0.12),
-                style: style
+                style: style,
+                scale: Self.scale
             )
-            .frame(height: style == .segmented ? UsageBar.segmentedHeight : UsageBar.continuousHeight)
+            .frame(height: (style == .segmented ? UsageBar.segmentedHeight : UsageBar.continuousHeight) * Self.scale)
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(verbatim: figure)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(UsageTint.isSpent(window) ? Color.pulseExhausted : .primary)
                     .monospacedDigit()
                     .fixedSize()
                 Spacer(minLength: 0)
                 if let reset {
                     Text(verbatim: reset)
-                        .font(.system(size: 12))
+                        .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
