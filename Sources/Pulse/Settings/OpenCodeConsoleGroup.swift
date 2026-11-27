@@ -52,8 +52,8 @@ struct OpenCodeConsoleGroup: View {
     /// card is the only place it shows, and a read that changed nothing on
     /// screen reads as a read that did nothing.
     private var cardHint: String? {
-        guard hasSession, !settings.showsDetailedCard(for: AccountKey(.openCodeGo)) else { return nil }
-        return String.localized("Turn on Detailed card above to see the request log on the card.")
+        guard hasSession, settings.cardParts(for: AccountKey(.openCodeGo)).isDisjoint(with: CardPart.history) else { return nil }
+        return String.localized("Turn on Today, 7 days and 31 days under Card contents to see the request log on the card.")
     }
 
     /// Which browser is about to be opened, and whether it will ask for the

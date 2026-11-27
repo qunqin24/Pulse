@@ -213,7 +213,7 @@ struct ReadmeScreenshotRenderTests {
                       spend: UsageDetailCard.Spend? = nil, glass: Bool = false,
                       forecast: Bool = false) -> some View {
         UsageDetailCard(usesGlass: glass, usage: usage, edge: .right, showsForecast: forecast,
-                        isDetailed: detailed, spend: spend, pointerCenter: pointer)
+                        parts: detailed ? CardPart.detailed : [], spend: spend, pointerCenter: pointer)
             .fixedSize()
             .foregroundStyle(.primary)
             .environment(\.colorScheme, .dark)

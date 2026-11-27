@@ -190,13 +190,14 @@ final class UsageStore {
     func refreshCodexResetCredits() {
         codexResetCreditsAsk += 1
         let ask = codexResetCreditsAsk
-        guard settings.showsCodexResetCredits, settings.isEnabled(AccountKey(.codex)) else {
+        guard settings.cardParts(for: AccountKey(.codex)).contains(.resetCredits), settings.isEnabled(AccountKey(.codex)) else {
             codexResetCredits = nil
             return
         }
         Task { [weak self, appServer] in
             let credits = await CodexAccountUsageService(server: appServer).resetCredits()
-            guard let self, ask == self.codexResetCreditsAsk, self.settings.showsCodexResetCredits else { return }
+            guard let self, ask == self.codexResetCreditsAsk,
+                  self.settings.cardParts(for: AccountKey(.codex)).contains(.resetCredits) else { return }
             self.codexResetCredits = credits
         }
     }

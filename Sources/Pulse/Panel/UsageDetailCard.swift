@@ -171,9 +171,9 @@ struct UsageDetailCard: View {
     /// Codex's limit reset credits, when its switch is on and it has been
     /// asked. Nil draws no row at all.
     var resetCredits: CodexResetCredits?
-    /// The detailed card: the plan, how far through each window the clock is
-    /// and the account's recent activity. Set per account.
-    var isDetailed = false
+    /// What this account's card shows beyond its limits, as chosen in
+    /// Settings (`AppSettings.cardParts(for:)`).
+    var parts: Set<CardPart> = []
     /// What this Mac's records say about the account, for the detailed card.
     /// Nil draws no section: Token spend is off, or this account keeps no
     /// records here.
@@ -258,7 +258,7 @@ struct UsageDetailCard: View {
         // Until this account's rows are measured, estimate them from its own
         // limits rather than the last account's height.
         let summary = current.summary ?? (DetailCardLayout.headerHeight
-            + (isDetailed ? DetailCardLayout.headerLineSpacing + DetailCardLayout.footnoteHeight : 0))
+            + (parts.contains(.updated) ? DetailCardLayout.headerLineSpacing + DetailCardLayout.footnoteHeight : 0))
         let rows = CGFloat(max(usage.windows.count, 1))
         let details = current.details
             ?? rows * DetailCardLayout.rowHeight + (rows - 1) * DetailCardLayout.contentSpacing
@@ -443,13 +443,13 @@ struct UsageDetailCard: View {
                     .foregroundStyle(.primary.opacity(0.4))
             }
 
-            if isDetailed, let spend {
-                ActivitySection(spend: spend, provider: usage.provider, promptCache: promptCache, lastStep: lastStep)
+            if !parts.isDisjoint(with: CardPart.history), let spend {
+                ActivitySection(spend: spend, provider: usage.provider, parts: parts, promptCache: promptCache, lastStep: lastStep)
                     .transition(Self.rowTransition)
             }
             // Qoder keeps no history on this Mac; its account's records stand
             // in the same place, in credits (issue #88).
-            if isDetailed, let qoderCredits {
+            if !parts.isDisjoint(with: [.figures, .chart]), let qoderCredits {
                 QoderCreditSection(credits: qoderCredits)
                     .transition(Self.rowTransition)
             }
@@ -566,7 +566,7 @@ struct UsageDetailCard: View {
     /// statistics. Nil wherever the estimator withholds it, and for a provider
     /// that states what its limits are worth (`estimatesValue`).
     private func valueText(_ window: UsageWindow) -> String? {
-        guard isDetailed, Self.estimatesValue(for: usage.provider),
+        guard parts.contains(.value), Self.estimatesValue(for: usage.provider),
               case .ledger(let ledger) = spend,
               !usedElsewhere.contains(window.id),
               let estimate = BudgetEstimator.estimate(for: window, ledger: ledger, observedAt: usage.observedAt)
@@ -709,7 +709,7 @@ struct UsageDetailCard: View {
 
                     // The plan as the provider names it. It gives way to the
                     // title, which is what says whose card this is.
-                    if isDetailed, let plan = usage.plan, !plan.isEmpty {
+                    if parts.contains(.plan), let plan = usage.plan, !plan.isEmpty {
                         Spacer(minLength: 0)
                         Text(verbatim: plan)
                             .lineLimit(1)
@@ -720,7 +720,7 @@ struct UsageDetailCard: View {
 
                 // How fresh the figures are. A stale reading says so in the
                 // footnote instead, in stronger words.
-                if isDetailed, case .live = usage.state, let observed = usage.observedAt {
+                if parts.contains(.updated), case .live = usage.state, let observed = usage.observedAt {
                     Text(verbatim: Self.updatedText(observed))
                         .font(.system(size: DetailCardLayout.footnoteFontSize, weight: .regular, design: .rounded))
                         .foregroundStyle(.primary.opacity(0.4))
@@ -849,6 +849,7 @@ private struct QoderCreditSection: View {
 private struct ActivitySection: View {
     let spend: UsageDetailCard.Spend
     let provider: Provider
+    var parts: Set<CardPart> = CardPart.history
     var promptCache: PromptCacheReading?
     var lastStep: AgentActivity.Step?
 
@@ -903,20 +904,23 @@ private struct ActivitySection: View {
                 message(String.localized("The console session has expired. Read it again in Settings."))
             case .ledger(let ledger):
                 let month = ledger.total(overLast: Self.span)
-                figures(ledger, month: month)
-                DaysChart(days: ledger.recent(Self.span), slots: Self.span)
-                    .frame(height: DetailCardLayout.chartHeight)
-                topModel(ledger)
-                cacheHitRate(ledger)
-                if let promptCache {
+                // Each as chosen in Card contents (`CardPart`).
+                if parts.contains(.figures) { figures(ledger, month: month) }
+                if parts.contains(.chart) {
+                    DaysChart(days: ledger.recent(Self.span), slots: Self.span)
+                        .frame(height: DetailCardLayout.chartHeight)
+                }
+                if parts.contains(.topModel) { topModel(ledger) }
+                if parts.contains(.cacheHitRate) { cacheHitRate(ledger) }
+                if let promptCache, parts.contains(.promptCache) {
                     PromptCacheRow(reading: promptCache)
-                } else if let lastStep {
+                } else if let lastStep, parts.contains(.lastStep) {
                     LastStepRow(step: lastStep)
                 }
                 // Only where the figures are not this Mac's own: this Mac's
                 // records carry no line saying the money is an estimate (the
                 // Token spend pane says so).
-                if isCharged || isAccountWide {
+                if (isCharged || isAccountWide), !parts.isDisjoint(with: [.figures, .chart, .topModel]) {
                     Text(isCharged
                         ? String.localized("Costs as \(provider.displayName) charged them, for the whole account.")
                         : String.localized("From \(provider.displayName), for the whole account."))

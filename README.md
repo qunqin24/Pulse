@@ -77,7 +77,7 @@
 
 ### Details when you point at a ring
 - **Every limit and its reset** on one card, in continuous or segmented bars.
-- **Detailed card** — the plan, when it was read, what each limit is worth, and recent usage from this Mac's records.
+- **Card contents** — choose, per account, what its card shows: the plan, when it was read, the forecast, what each limit is worth, and recent usage from this Mac's records.
 - **Burn-rate forecast** — tells you when your pace will run out before the window does.
 - **In the menu bar** — the fullest ring as a figure, a small ring or split limits, with an optional dashboard.
 

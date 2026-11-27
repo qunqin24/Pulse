@@ -964,6 +964,14 @@
 "%@ left" = "还剩 %@";
 "Expired" = "已过期";
 "Last step's speed" = "上一步速度";
+"Card contents" = "卡片内容";
+"Update time" = "更新时间";
+"Quota amounts" = "额度数值";
+"Today, 7 days and 31 days" = "今天、7 天和 31 天";
+"31-day chart" = "31 天柱状图";
+"Needs Token spend on." = "需要打开「Token 消耗」。";
+"Asks Codex's app server on every refresh." = "每次刷新都会询问 Codex 的 app server。";
+"Turn on Today, 7 days and 31 days under Card contents to see the request log on the card." = "在「卡片内容」里打开「今天、7 天和 31 天」，就能在卡片上看到请求记录。";
 "≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "提示缓存 · %@ 个对话";
 "Soonest in %@" = "最早 %@ 后过期";
@@ -984,7 +992,6 @@
 "Costs as %@ charged them, for the whole account." = "金额为 %@ 的实际计费，覆盖整个账号。";
 "The console session has expired. Read it again in Settings." = "控制台登录已失效，请到设置里重新读取。";
 "OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode 控制台保留 30 天的请求记录，涵盖账号下所有设备和应用，含每次请求的花费；未设置密钥或密钥被拒时，也用它读取套餐额度。Pulse 只保存控制台的登录 Cookie，加密存放在本机。";
-"Turn on Detailed card above to see the request log on the card." = "在上方打开「详细卡片」，就能在卡片上看到请求记录。";
 "Read from %@ · workspace %@." = "已从 %@ 读取 · 工作区「%@」。";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "控制台拒绝了此登录信息。请在 opencode.ai 重新登录后再读取。";
 "Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "已从 %@ 读取，但控制台没有响应，下次刷新时会再试。";

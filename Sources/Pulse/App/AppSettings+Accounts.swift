@@ -317,6 +317,7 @@ extension AppSettings {
         balanceBases[account.id] = nil
         balanceBudgets[account.id] = nil
         detailedCards.remove(account.id)
+        cardParts[account.id] = nil
         robotAccounts.remove(account.id)
         robotColours[account.id] = nil
         robotFigures[account.id] = nil

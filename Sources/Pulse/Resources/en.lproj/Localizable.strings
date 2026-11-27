@@ -964,6 +964,14 @@
 "%@ left" = "%@ left";
 "Expired" = "Expired";
 "Last step's speed" = "Last step's speed";
+"Card contents" = "Card contents";
+"Update time" = "Update time";
+"Quota amounts" = "Quota amounts";
+"Today, 7 days and 31 days" = "Today, 7 days and 31 days";
+"31-day chart" = "31-day chart";
+"Needs Token spend on." = "Needs Token spend on.";
+"Asks Codex's app server on every refresh." = "Asks Codex's app server on every refresh.";
+"Turn on Today, 7 days and 31 days under Card contents to see the request log on the card." = "Turn on Today, 7 days and 31 days under Card contents to see the request log on the card.";
 "≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "Prompt cache · %@ chats";
 "Soonest in %@" = "Soonest in %@";
@@ -984,7 +992,6 @@
 "Costs as %@ charged them, for the whole account." = "Costs as %@ charged them, for the whole account.";
 "The console session has expired. Read it again in Settings." = "The console session has expired. Read it again in Settings.";
 "OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac.";
-"Turn on Detailed card above to see the request log on the card." = "Turn on Detailed card above to see the request log on the card.";
 "Read from %@ · workspace %@." = "Read from %@ · workspace %@.";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "The console turned this session away. Sign in again at opencode.ai, then read it again.";
 "Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "Read from %@, but the console didn't answer. It will be tried again on the next refresh.";

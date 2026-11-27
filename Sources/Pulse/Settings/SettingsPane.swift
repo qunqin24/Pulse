@@ -91,7 +91,7 @@ enum SettingsPane: Hashable {
              .localized("Panel colour"), .localized("Liquid Glass"), .localized("Transparency"), .localized("Ring activity animation")]
         case .rings:
             [.localized("Percentages at the side"), .localized("Percentages across"), .localized("Figures beside the rings"),
-             .localized("Figure above the ring"), .localized("Show what's left"), .localized("Forecast"),
+             .localized("Figure above the ring"), .localized("Show what's left"),
              .localized("Second limit inside the ring"), .localized("Time until reset"),
              .localized("Time ring direction"), .localized("Turn red at"), .localized("Alert colour when docked")]
         case .placement:

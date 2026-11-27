@@ -107,11 +107,10 @@ struct FloatingUsagePanelContent: View {
                             title: selectedTitle ?? "",
                             edge: placement.edge,
                             showsRemaining: settings.showsRemaining,
-                            showsForecast: settings.showsForecast,
-                            showsAmounts: (selected.account.provider == .copilot && settings.copilotShowsAmounts)
-                                || (selected.account.provider == .qoder && settings.qoderShowsAmounts),
+                            showsForecast: settings.cardParts(for: selected.account).contains(.forecast),
+                            showsAmounts: settings.cardParts(for: selected.account).contains(.amounts),
                             resetCredits: selected.account == AccountKey(.codex) ? store.codexResetCredits : nil,
-                            isDetailed: settings.showsDetailedCard(for: selected.account),
+                            parts: settings.cardParts(for: selected.account),
                             spend: showsSpend(for: selected.account)
                                 ? cardLedgers.spend(for: selected.account.provider) : nil,
                             qoderCredits: selected.provider == .qoder ? cardLedgers.qoderCredits : nil,
@@ -203,7 +202,7 @@ struct FloatingUsagePanelContent: View {
                 // Qoder's month, from its records: asked as its detailed card
                 // opens, never on the refresh timer (issue #88).
                 if let account = selectedUsage?.account, account.provider == .qoder,
-                   settings.showsDetailedCard(for: account),
+                   !settings.cardParts(for: account).isDisjoint(with: [.figures, .chart]),
                    let cookie = APIKeyStore.key(for: .qoder) {
                     cardLedgers.readQoderCredits(cookie: cookie, site: settings.qoderSite)
                 }
@@ -350,13 +349,14 @@ struct FloatingUsagePanelContent: View {
     /// the top ever uses.
     private var railLeading: CGFloat { placement.railLeading }
 
-    /// Whether the card shows this account's recent usage: its detailed card,
-    /// for a provider with a history (`cardHistory`), on the first account —
-    /// the one the records belong to. This Mac's records need Token spend on;
-    /// a provider's own statistics are asked as its settings pane asks them.
+    /// Whether the card reads this account's recent usage: some part of it is
+    /// shown (`CardPart.history`, or the estimated value, priced from it), for
+    /// a provider with a history (`cardHistory`), on the first account — the
+    /// one the records belong to. This Mac's records need Token spend on; a
+    /// provider's own statistics are asked as its settings pane asks them.
     private func showsSpend(for account: AccountKey) -> Bool {
-        guard settings.showsDetailedCard(for: account), account.isPrimary,
-              let source = account.provider.cardHistory
+        guard account.isPrimary, let source = account.provider.cardHistory,
+              !settings.cardParts(for: account).isDisjoint(with: CardPart.history.union([.value]))
         else { return false }
         return !source.readsThisMac || settings.readsTokenSpend
     }

@@ -118,7 +118,7 @@ The arc rides the **empty ring** between icon and usage stroke, in Core Animatio
 
 ## Forecast (`BurnRate`)
 
-Off by default (`showsForecast`). One line under a limit — lasts the window, or a coarse ETA — worded as a **projection**.
+Off by default; per account, **Forecast** under Card contents (`CardPart.forecast`; the old global `showsForecast` is its default until the account's list is changed). One line under a limit — lasts the window, or a coarse ETA — worded as a **projection**.
 
 - Rate = spent share / elapsed share from **one** reading (trailing samples were dropped: [decisions/reported-figures.md](decisions/reported-figures.md#ledger-and-burn-rate)).
 - Needs a reported percentage, a reset and `reportsLength`, so sort-key lengths fall out.

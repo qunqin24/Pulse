@@ -28,6 +28,7 @@ struct AccountPane: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             AccountPanelGroup(account: account, store: store, settings: settings)
+            CardContentGroup(account: account, store: store, settings: settings)
 
             if let pulseExtension = settings.pulseExtension(for: account) {
                 ExtensionProgramGroup(pulseExtension: pulseExtension)

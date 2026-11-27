@@ -64,48 +64,6 @@ struct AccountPanelGroup: View {
                 }
             }
 
-            // Codex's first account only: the count comes from the app
-            // server, which reads the login the CLI saved — not an
-            // account Pulse signed in to itself.
-            if account == AccountKey(.codex) {
-                SettingsRowDivider()
-
-                SettingsRow(
-                    String.localized("Reset credits on the card"),
-                    subtitle: String.localized("How many limit reset credits are left, and when the next one expires. Asks Codex's app server on every refresh."),
-                    symbol: "arrow.counterclockwise.circle"
-                ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.showsCodexResetCredits },
-                        set: {
-                            settings.showsCodexResetCredits = $0
-                            store.refreshCodexResetCredits()
-                        }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                }
-            }
-
-            // Copilot's reported amounts beside the share (#118). Off by
-            // default, as Qoder's are; on the card only.
-            if account == AccountKey(.copilot) {
-                SettingsRowDivider()
-
-                SettingsRow(
-                    String.localized("Show quota amounts"),
-                    subtitle: String.localized("Each row on the card also shows the amount, such as 176 / 300. The rail keeps its percentages."),
-                    symbol: "number"
-                ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.copilotShowsAmounts },
-                        set: { settings.copilotShowsAmounts = $0 }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                }
-            }
-
             // Qoder's three parts, each spent and lapsing on its own. Off
             // by default: they count the same credits as the total again.
             if account == AccountKey(.qoder) {
@@ -123,41 +81,6 @@ struct AccountPanelGroup: View {
                     .labelsHidden()
                     .toggleStyle(.switch)
                 }
-
-                SettingsRowDivider()
-
-                // On the card only: the rail keeps its percentages.
-                SettingsRow(
-                    String.localized("Show credit amounts"),
-                    subtitle: String.localized("Each row on the card also shows the credits, such as 5,843 / 6,000. The rail keeps its percentages."),
-                    symbol: "number"
-                ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.qoderShowsAmounts },
-                        set: { settings.qoderShowsAmounts = $0 }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                }
-
-            }
-
-            SettingsRowDivider()
-
-            // The history half only where it can appear, and said the way
-            // it will: this Mac's records need Token spend, a provider's
-            // own statistics do not.
-            SettingsRow(
-                String.localized("Detailed card"),
-                subtitle: Self.detailedCardSubtitle(account.isPrimary ? provider.cardHistory : nil),
-                symbol: "list.bullet.rectangle"
-            ) {
-                Toggle("", isOn: Binding(
-                    get: { settings.showsDetailedCard(for: account) },
-                    set: { settings.setShowsDetailedCard($0, for: account) }
-                ))
-                .labelsHidden()
-                .toggleStyle(.switch)
             }
 
             SettingsRowDivider()
@@ -402,17 +325,6 @@ struct AccountPanelGroup: View {
             .labelsHidden()
             .toggleStyle(.switch)
             .disabled(shows && shownCount <= 1)
-        }
-    }
-
-    static func detailedCardSubtitle(_ history: CardHistorySource?) -> String {
-        switch history {
-        case nil:
-            String.localized("Adds the plan and when the figures were read.")
-        case .accountStatistics, .accountLogs:
-            String.localized("Adds the plan, when the figures were read and the account's usage over the last month.")
-        case .transcripts, .agents:
-            String.localized("Adds the plan, when the figures were read and, with Token spend on, this Mac's recent activity.")
         }
     }
 }

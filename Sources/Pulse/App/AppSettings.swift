@@ -355,6 +355,13 @@ final class AppSettings {
         didSet { detailedCardsChanged(from: oldValue) }
     }
 
+    /// What each account's card shows, by account id, as `CardPart` raw
+    /// values. An account absent here shows what the older switches say
+    /// (`legacyCardParts`); one somebody changed keeps its own list.
+    var cardParts: [String: [String]] = [:] {
+        didSet { cardPartsChanged(from: oldValue) }
+    }
+
     /// The accounts whose ring draws an Open Bot Avatar figure in place of the
     /// provider's mark, by account id. Off for every account until chosen.
     ///

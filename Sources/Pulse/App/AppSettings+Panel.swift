@@ -35,6 +35,7 @@ extension AppSettings.Key {
     static let showsForecast = "settings.showsForecast"
     static let usageBarStyle = "settings.usageBarStyle"
     static let detailedCards = "settings.detailedCards"
+    static let cardParts = "settings.cardParts"
     static let usesGlass = "settings.usesGlass"
     static let glassTransparency = "settings.glassTransparency"
     static let usesLightPanel = "settings.usesLightPanel"
@@ -177,7 +178,7 @@ extension AppSettings {
 
     func showsForecastChanged(from old: Bool) {
         guard showsForecast != old else { return }
-        if drivesPanelMetrics { PanelMetrics.showForecast(showsForecast) }
+        if drivesPanelMetrics { applyCardBudget() }
         defaults.set(showsForecast, forKey: Key.showsForecast)
         onLayoutChange?()
     }
@@ -186,9 +187,57 @@ extension AppSettings {
         guard detailedCards != old else { return }
         // The app's own settings only: a test's `AppSettings` must not
         // resize the frame every other test is measuring.
-        if drivesPanelMetrics { PanelMetrics.showDetailedCard(!detailedCards.isEmpty) }
+        if drivesPanelMetrics { applyCardBudget() }
         defaults.set(detailedCards.sorted(), forKey: Key.detailedCards)
         onLayoutChange?()
+    }
+
+    func cardPartsChanged(from old: [String: [String]]) {
+        guard cardParts != old else { return }
+        if drivesPanelMetrics { applyCardBudget() }
+        defaults.set(cardParts, forKey: Key.cardParts)
+        onLayoutChange?()
+    }
+
+    // MARK: - Card contents
+
+    /// What this account's card shows: its own list once changed, else what
+    /// the older switches say. Only parts the account can show at all.
+    func cardParts(for account: AccountKey) -> Set<CardPart> {
+        let available = Set(CardPart.available(for: account))
+        if let stored = cardParts[account.id] {
+            return Set(stored.compactMap(CardPart.init(rawValue:))).intersection(available)
+        }
+        return legacyCardParts(for: account).intersection(available)
+    }
+
+    func setCardPart(_ part: CardPart, shown: Bool, for account: AccountKey) {
+        var parts = cardParts(for: account)
+        if shown { parts.insert(part) } else { parts.remove(part) }
+        // Every part written out, so the list no longer follows the old
+        // switches once somebody has made it their own.
+        cardParts[account.id] = CardPart.allCases.filter(parts.contains).map(\.rawValue)
+    }
+
+    /// The card as the switches before `CardPart` drew it: the detailed
+    /// card's parts with **Detailed card** on, the global forecast, Copilot's
+    /// and Qoder's amounts, Codex's reset credits.
+    func legacyCardParts(for account: AccountKey) -> Set<CardPart> {
+        var parts: Set<CardPart> = detailedCards.contains(account.id) ? CardPart.detailed : []
+        if showsForecast { parts.insert(.forecast) }
+        if (account.provider == .copilot && copilotShowsAmounts) || (account.provider == .qoder && qoderShowsAmounts) {
+            parts.insert(.amounts)
+        }
+        if account == AccountKey(.codex), showsCodexResetCredits { parts.insert(.resetCredits) }
+        return parts
+    }
+
+    /// The panel's frame is worked out before SwiftUI lays anything out, so
+    /// it is budgeted for the tallest card any account on the rail can show.
+    func applyCardBudget() {
+        let shown = orderedAccounts.reduce(into: Set<CardPart>()) { $0.formUnion(cardParts(for: $1)) }
+        PanelMetrics.showForecast(shown.contains(.forecast))
+        PanelMetrics.showDetailedCard(!shown.isDisjoint(with: CardPart.tall))
     }
 
     func robotAccountsChanged(from old: Set<String>) {
@@ -392,14 +441,14 @@ extension AppSettings {
         PanelMetrics.putFreeAcrossFiguresBeside(freeAcrossFiguresBeside)
         PanelMetrics.showWindowClock(showsWindowClock)
         PanelMetrics.useRoundEnds(usesRoundEnds)
-        PanelMetrics.showForecast(showsForecast)
         PanelMetrics.use(usageBarStyle)
-        PanelMetrics.showDetailedCard(!detailedCards.isEmpty)
+        applyCardBudget()
     }
 
     /// The settings `init` has no parameter for.
     func restorePanel(from defaults: UserDefaults) {
         detailedCards = Set(defaults.stringArray(forKey: Key.detailedCards) ?? [])
+        cardParts = defaults.dictionary(forKey: Key.cardParts) as? [String: [String]] ?? [:]
         robotAccounts = Set(defaults.stringArray(forKey: Key.robotAccounts) ?? [])
         robotColours = defaults.dictionary(forKey: Key.robotColours) as? [String: String] ?? [:]
         robotFigures = defaults.dictionary(forKey: Key.robotFigures) as? [String: String] ?? [:]

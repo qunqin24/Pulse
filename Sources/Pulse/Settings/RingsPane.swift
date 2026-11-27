@@ -90,21 +90,6 @@ struct RingsPane: View {
                     .disabled(!settings.isPanelVisible)
                 }
 
-                SettingsRowDivider()
-
-                SettingsRow(
-                    String.localized("Forecast"),
-                    subtitle: String.localized("Whether each limit runs out early, on the card."),
-                    symbol: "chart.line.uptrend.xyaxis"
-                ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.showsForecast },
-                        set: { settings.showsForecast = $0 }
-                    ))
-                    .labelsHidden()
-                    .toggleStyle(.switch)
-                    .disabled(!settings.isPanelVisible)
-                }
             }
 
             SettingsGroup(String.localized("Rings")) {

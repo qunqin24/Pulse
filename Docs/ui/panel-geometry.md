@@ -35,7 +35,7 @@ On the card, the window's name has the top row to itself; spent and reset pair o
 
 ### Detailed card
 
-Switched on per account (`AppSettings.detailedCards`; [settings.md](settings.md#provider-panes)). It adds to the compact card:
+Each part is switched on per account under **Card contents** (`CardPart`, `AppSettings.cardParts(for:)`; [settings.md](settings.md#provider-panes)), and the card draws only those. Together they add to the compact card:
 
 - the plan beside the title and "Updated …" under it (live readings only; a stale one keeps its footnote);
 - on the first account of a provider with a history (`Provider.cardHistory`): today / 7 days / 31 days as tokens, a static 31-day chart with today lit, the top model, the cache hit rate, and a line saying where the figures are from. Bars are always sized for 31 days; sized for the days on record, a history starting today became one bar as wide as the card.

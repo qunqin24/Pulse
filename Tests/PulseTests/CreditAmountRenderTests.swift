@@ -51,7 +51,7 @@ struct CreditAmountRenderTests {
             for remaining in [true, false] {
                 let view = UsageDetailCard(
                     usage: usage, edge: .right, showsRemaining: remaining, showsAmounts: true,
-                    isDetailed: true, qoderCredits: credits,
+                    parts: [.figures, .chart], qoderCredits: credits,
                     pointerCenter: DetailCardLayout.estimatedHeight / 2
                 )
                 .padding(20)

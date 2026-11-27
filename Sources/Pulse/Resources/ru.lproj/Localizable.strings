@@ -964,6 +964,14 @@
 "%@ left" = "осталось %@";
 "Expired" = "истёк";
 "Last step's speed" = "Скорость последнего шага";
+"Card contents" = "Содержимое карточки";
+"Update time" = "Время обновления";
+"Quota amounts" = "Объём квоты";
+"Today, 7 days and 31 days" = "Сегодня, 7 и 31 день";
+"31-day chart" = "График за 31 день";
+"Needs Token spend on." = "Нужно включить «Расход токенов».";
+"Asks Codex's app server on every refresh." = "Спрашивает app server Codex при каждом обновлении.";
+"Turn on Today, 7 days and 31 days under Card contents to see the request log on the card." = "Включите «Сегодня, 7 и 31 день» в «Содержимом карточки», чтобы видеть журнал запросов на карточке.";
 "≈ %@ tok/s · %@" = "≈ %@ ток/с · %@";
 "Prompt cache · %@ chats" = "Кэш промптов · чатов: %@";
 "Soonest in %@" = "ближайший — через %@";
@@ -984,7 +992,6 @@
 "Costs as %@ charged them, for the whole account." = "Суммы — фактические списания %@ по всему аккаунту.";
 "The console session has expired. Read it again in Settings." = "Сеанс консоли истёк. Считайте его снова в настройках.";
 "OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "Журнал запросов консоли OpenCode за 30 дней: все устройства и приложения аккаунта и стоимость каждого запроса. Без ключа или при отказе ключа отсюда берутся и лимиты тарифа. Pulse хранит только cookie входа в консоль, в зашифрованном виде на этом Mac.";
-"Turn on Detailed card above to see the request log on the card." = "Включите параметр «Подробная карточка» выше, чтобы видеть журнал запросов на карточке.";
 "Read from %@ · workspace %@." = "Считано из %@ · рабочее пространство «%@».";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "Консоль отклонила этот сеанс. Войдите снова на opencode.ai и считайте сеанс ещё раз.";
 "Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "Считано из %@, но консоль не ответила. Pulse попробует снова при следующем обновлении.";

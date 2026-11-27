@@ -964,6 +964,14 @@
 "%@ left" = "残り %@";
 "Expired" = "期限切れ";
 "Last step's speed" = "直前のステップの速度";
+"Card contents" = "カードの内容";
+"Update time" = "更新時刻";
+"Quota amounts" = "クォータの数値";
+"Today, 7 days and 31 days" = "今日・7 日・31 日";
+"31-day chart" = "31 日間のグラフ";
+"Needs Token spend on." = "「トークン使用量」をオンにする必要があります。";
+"Asks Codex's app server on every refresh." = "更新のたびに Codex の app server に問い合わせます。";
+"Turn on Today, 7 days and 31 days under Card contents to see the request log on the card." = "「カードの内容」で「今日・7 日・31 日」をオンにすると、カードにリクエスト記録が表示されます。";
 "≈ %@ tok/s · %@" = "≈ %@ tok/s · %@";
 "Prompt cache · %@ chats" = "プロンプトキャッシュ · %@ 件の会話";
 "Soonest in %@" = "最短で %@後に期限切れ";
@@ -984,7 +992,6 @@
 "Costs as %@ charged them, for the whole account." = "金額は %@ の実際の請求額で、アカウント全体のものです。";
 "The console session has expired. Read it again in Settings." = "コンソールのセッションが切れました。設定で読み取り直してください。";
 "OpenCode's console keeps 30 days of requests: every machine and app on the account, and what each cost. It also gives the plan's limits when no key is set or the key is refused. Pulse keeps only the console's sign-in cookies, encrypted on this Mac." = "OpenCode のコンソールが 30 日間保持するリクエスト記録です。アカウントの全デバイス・全 App のリクエストと費用を含みます。キーが未設定か拒否されたときは、プランの上限もここから読みます。Pulse はコンソールのサインイン用 Cookie だけを、この Mac に暗号化して保存します。";
-"Turn on Detailed card above to see the request log on the card." = "上の「詳細カード」をオンにすると、カードにリクエスト記録が表示されます。";
 "Read from %@ · workspace %@." = "%@ から読み取りました · ワークスペース「%@」。";
 "The console turned this session away. Sign in again at opencode.ai, then read it again." = "コンソールがこのセッションを受け付けませんでした。opencode.ai でサインインし直してから、もう一度読み取ってください。";
 "Read from %@, but the console didn't answer. It will be tried again on the next refresh." = "%@ から読み取りましたが、コンソールが応答しませんでした。次の更新時にもう一度試します。";
