@@ -369,6 +369,20 @@ struct JetBrainsAIOnlineTests {
         #expect(!asked)
     }
 
+    @Test("A file whose quota has already reset does not keep a signed-in account off the network")
+    func staleFileAsksOnline() async {
+        let past = JetBrainsAIOnlineQuota.window(.init(used: 1, maximum: 10, resetsAt: Date(timeIntervalSinceNow: -3_600), seconds: nil),
+                                                 id: "jetbrains.quota", scope: nil)
+        let stale = context.reading([past])
+        let (signedIn, asked) = await route(local: stale, stored: .login(Self.login()))
+        #expect(asked)
+        #expect(signedIn.state == .unavailable(.signedOut))
+        // Signed out, the file is still all there is.
+        let (alone, askedAlone) = await route(local: stale, stored: .none)
+        #expect(!askedAlone)
+        #expect(alone.state == .live)
+    }
+
     @Test("An unsaved file with a login asks JetBrains, and its refusal is not papered over")
     func unsavedAsksOnline() async {
         let (usage, asked) = await route(local: local(.unavailable(.localQuotaUnsaved)), stored: .login(Self.login()))

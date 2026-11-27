@@ -70,7 +70,11 @@ enum JetBrainsAIUsageService {
 
     /// The route order, apart from the disk and the network.
     ///
-    /// 1. The file, when it holds a real quota — older IDEs; nothing is sent.
+    /// 1. The file, when it holds a real quota that is still current — older
+    ///    IDEs; nothing is sent. A file left by an IDE no longer run keeps a
+    ///    quota whose reset has passed; taken as an answer, it kept a signed-in
+    ///    account off the network, and the cache then dropped the expired
+    ///    window, so nothing showed at all (found in review).
     /// 2. Otherwise, signed in: JetBrains.
     /// 3. Otherwise the file's reason (`.localQuotaUnsaved`, `.localAppMissing`,
     ///    …), whose remedy offers the sign-in.
@@ -82,14 +86,21 @@ enum JetBrainsAIUsageService {
         local: ProviderUsage,
         storedLogin: AccountCredentialStore.StoredLogin,
         context: ProfileContext,
-        online: (AccountCredentials, ProfileContext) async -> ProviderUsage
+        online: (AccountCredentials, ProfileContext) async -> ProviderUsage,
+        now: Date = Date()
     ) async -> ProviderUsage {
-        if local.state == .live { return local }
+        if local.state == .live, isCurrent(local, at: now) { return local }
         switch storedLogin {
         case .none: return local
         case .unreadable: return context.unavailable(.signedOut)
         case .login(let login): return await online(login, context)
         }
+    }
+
+    /// A reading whose every limit has yet to reset. A limit with no reset
+    /// stated cannot be shown stale, so it counts as current.
+    static func isCurrent(_ usage: ProviderUsage, at now: Date) -> Bool {
+        !usage.windows.isEmpty && usage.windows.allSatisfy { ($0.resetsAt ?? .distantFuture) > now }
     }
 
     /// What the IDE's file says, or why it says nothing.

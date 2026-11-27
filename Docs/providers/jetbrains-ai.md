@@ -4,7 +4,7 @@ Profiled provider: [`Sources/Pulse/Providers/Profiled/JetBrainsAIUsageService.sw
 
 - **Credential:** `localLogin` — nothing pasted. Optionally, a JetBrains account sign-in from the Connection card's **JetBrains account** row, kept in `accounts.dat` under `AccountKey(.jetBrainsAI)`. The route shown on the pane is "The IDE's saved quota, or JetBrains once signed in · Without a sign-in, only the IDE's file is read."
 - **Route order** (`JetBrainsAIUsageService.choose`):
-  1. The IDE's file, when it holds a real quota (older IDEs). Nothing is sent, signed in or not.
+  1. The IDE's file, when it holds a real quota that is still current (older IDEs; `isCurrent`: every limit's reset still ahead, or unstated). Nothing is sent, signed in or not. A file whose reset has passed — left by an IDE no longer run — goes on to step 2 when signed in; taken as an answer it kept the account off the network and the cache then dropped the expired window, so nothing showed (found in review, 2026-11-27). Signed out, it is still what is shown.
   2. Otherwise, signed in: the online quota.
   3. Otherwise the file's reason (`.localQuotaUnsaved`, `.localAppMissing`, …). For `.localQuotaUnsaved` the diagnostics' remedy is **Sign in…** (`ConnectionRemedy.firstSignIn`).
 
