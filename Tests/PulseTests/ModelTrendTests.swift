@@ -89,4 +89,23 @@ struct ModelTrendTests {
         #expect(model.trend[3].tokensPerSecond == 50)
         #expect(model.trend[4].tokens == 0)
     }
+
+    @Test("The day the clocks go back has 25 hours, and the repeated one is drawn")
+    func fallBack() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "America/New_York")!
+        // 2026-11-01: clocks go back at 02:00.
+        let day = calendar.date(from: DateComponents(year: 2026, month: 11, day: 1))!
+        let late = calendar.date(byAdding: .hour, value: 24, to: day)!   // 23:00 local
+        var buckets: [String: [String: TokenTally]] = [:]
+        buckets[UsageLedgerReader.slotKey(for: late, calendar: calendar), default: [:]]["alpha"] = TokenTally(input: 7)
+        let ledger = UsageLedgerReader.price(buckets, with: Self.prices, calendar: calendar)
+        let now = calendar.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 0, minute: 30))!
+        let model = ModelSpendSummary.of([.claudeCode: ledger], named: "Alpha",
+                                         from: day, until: calendar.date(byAdding: .day, value: 1, to: day), now: now, calendar: calendar)
+        #expect(model.trendIsHourly)
+        #expect(model.trend.count == 25)
+        #expect(model.trend.compactMap(\.tokens).reduce(0, +) == 7)
+        #expect(model.trend.last?.tokens == 7)
+    }
 }

@@ -464,9 +464,14 @@ struct ModelSpendSummary: Equatable, Sendable {
         }
         let thisHour = calendar.dateInterval(of: .hour, for: now)?.start ?? now
         trend = days.flatMap { day -> [TrendPoint] in
-            (0..<24).compactMap { offset in
+            // The day's own hours: 23 when the clocks go forward, 25 when they
+            // go back. A fixed 24 dropped the repeated hour's tokens from the
+            // chart while the day's total kept them (review, New York).
+            let end = calendar.dateInterval(of: .day, for: day.date)?.end
+                ?? day.date.addingTimeInterval(24 * 3600)
+            return (0..<25).compactMap { offset in
                 guard let hour = calendar.date(byAdding: .hour, value: offset, to: day.date),
-                      calendar.isDate(hour, inSameDayAs: day.date), hour <= thisHour
+                      hour < end, hour <= thisHour
                 else { return nil }
                 let tally = hourTally[hour]
                 let tokens = tally.flatMap(Self.checkedTotal) ?? 0
