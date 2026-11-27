@@ -56,8 +56,27 @@ struct ModelGroupChoiceTests {
 
     @Test("Gemini.app's copy of agy is found when no other is installed")
     func geminiAppCLI() {
-        let found = AntigravityUsageService.geminiAppCLI(home: "/Users/someone", isExecutable: { $0 == "/Users/someone/.gemini/bin/agy" })
+        let found = AntigravityUsageService.geminiAppCLI(home: "/Users/someone", app: nil, isExecutable: { $0 == "/Users/someone/.gemini/bin/agy" })
         #expect(found?.path == "/Users/someone/.gemini/bin/agy")
-        #expect(AntigravityUsageService.geminiAppCLI(home: "/Users/someone", isExecutable: { _ in false }) == nil)
+        #expect(AntigravityUsageService.geminiAppCLI(home: "/Users/someone", app: nil, isExecutable: { _ in false }) == nil)
+    }
+
+    @Test("The copy inside Gemini.app is found when the updater has not put one in ~/.gemini/bin (#129)")
+    func geminiAppBundledCLI() {
+        let app = URL(fileURLWithPath: "/Users/someone/Applications/Gemini.app")
+        let bundled = "/Users/someone/Applications/Gemini.app/Contents/Helpers/agy"
+        let found = AntigravityUsageService.geminiAppCLI(home: "/Users/someone", app: app, isExecutable: { $0 == bundled })
+        #expect(found?.path == bundled)
+
+        // Launch Services did not answer: the usual place is still tried.
+        let fallback = "/Applications/Gemini.app/Contents/Helpers/agy"
+        #expect(AntigravityUsageService.geminiAppCLI(home: "/Users/someone", app: nil, isExecutable: { $0 == fallback })?.path == fallback)
+    }
+
+    @Test("With both copies present, the one Gemini.app's updater keeps current is asked")
+    func geminiAppPrefersUpdatedCLI() {
+        let app = URL(fileURLWithPath: "/Applications/Gemini.app")
+        let found = AntigravityUsageService.geminiAppCLI(home: "/Users/someone", app: app, isExecutable: { _ in true })
+        #expect(found?.path == "/Users/someone/.gemini/bin/agy")
     }
 }

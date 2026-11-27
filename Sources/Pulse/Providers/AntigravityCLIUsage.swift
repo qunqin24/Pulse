@@ -1,5 +1,5 @@
 // Copyright (c) 2026 qunqin24. Licensed under the Apache License, Version 2.0.
-import Foundation
+import AppKit
 
 /// Antigravity's limits as its CLI, `agy`, reports them.
 ///
@@ -52,19 +52,34 @@ extension AntigravityUsageService {
     /// into its own `bin`. Only `agy` is looked for: `antigravity` is also the
     /// name of the editor's own shell command, which is a different program.
     ///
-    /// **Then the copy Gemini.app keeps.** The Gemini desktop app carries
-    /// Antigravity and installs the same CLI to `~/.gemini/bin/agy`, kept up
-    /// to date by its own updater (`agy.version.json` beside it); it runs no
-    /// language server of its own. Someone who has only Gemini.app has only
-    /// this copy (#106). Last, so a CLI installed on purpose is the one asked.
+    /// **Then the copies Gemini.app keeps.** The Gemini desktop app carries
+    /// Antigravity and runs no language server of its own, so someone who has
+    /// only Gemini.app has only its CLI (#106). Last, so a CLI installed on
+    /// purpose is the one asked.
     static func locateCLI(home: String = NSHomeDirectory(),
+                          geminiApp: URL? = installedGeminiApp(),
                           isExecutable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:)) -> URL? {
-        CommandLocator.locate("agy") ?? geminiAppCLI(home: home, isExecutable: isExecutable)
+        CommandLocator.locate("agy") ?? geminiAppCLI(home: home, app: geminiApp, isExecutable: isExecutable)
     }
 
-    static func geminiAppCLI(home: String, isExecutable: (String) -> Bool) -> URL? {
-        let path = "\(home)/.gemini/bin/agy"
-        return isExecutable(path) ? URL(fileURLWithPath: path) : nil
+    /// `~/.gemini/bin/agy` first: Gemini.app's updater puts it there and
+    /// keeps it current (`agy.version.json` beside it). It appears only once
+    /// that updater has run, so not every Mac with Gemini.app has it (#129).
+    /// The copy inside the app, `Contents/Helpers/agy`, is always there but
+    /// is as old as the app: measured on 2026-11-27, Gemini.app 1.147 carried
+    /// agy 1.5.5 while `~/.gemini/bin` held 1.5.10, and both answered
+    /// `/usage`. `app` is where Launch Services says Gemini.app is, or nil.
+    static func geminiAppCLI(home: String, app: URL?, isExecutable: (String) -> Bool) -> URL? {
+        let bundle = app ?? URL(fileURLWithPath: "/Applications/Gemini.app")
+        return ["\(home)/.gemini/bin/agy", bundle.appendingPathComponent("Contents/Helpers/agy").path]
+            .first(where: isExecutable)
+            .map { URL(fileURLWithPath: $0) }
+    }
+
+    /// Wherever Gemini.app is — `~/Applications`, a second drive — Launch
+    /// Services knows it by its bundle id (checked on Gemini.app 1.147).
+    static func installedGeminiApp() -> URL? {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.google.GeminiMacOS")
     }
 
     static func askCLI(_ binary: URL) async -> CLIAnswer {
