@@ -134,4 +134,16 @@ struct ResponseLogTests {
         #expect(!entry.body.contains("cookievalue123"))
         #expect(entry.body.contains("bad token"))
     }
+
+    @Test("A redirect says where it pointed, without the query")
+    func redirectTarget() {
+        let url = URL(string: "https://example.com/app")!
+        let reply = HTTPURLResponse(url: url, statusCode: 302, httpVersion: nil,
+                                    headerFields: ["Location": "https://accounts.example.com/signin?continue=secret"])
+        let entry = ResponseLog.entry(URLRequest(url: url), response: reply, data: Data(), error: nil, at: Date())
+        #expect(entry.body == "Location: https://accounts.example.com/signin")
+        let relative = HTTPURLResponse(url: url, statusCode: 301, httpVersion: nil, headerFields: ["Location": "/app/"])
+        #expect(ResponseLog.entry(URLRequest(url: url), response: relative, data: Data(), error: nil, at: Date()).body
+            == "Location: https://example.com/app/")
+    }
 }

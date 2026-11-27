@@ -107,6 +107,14 @@ enum ResponseLog {
         } else {
             body = text(of: data ?? Data(), contentType: http?.value(forHTTPHeaderField: "Content-Type"))
         }
+        // A redirect's whole meaning is where it points: the sign-in page, or
+        // only another address on the same site. Scheme, host and path, as
+        // for the request's own address.
+        if let http, (300..<400).contains(http.statusCode),
+           let location = http.value(forHTTPHeaderField: "Location"),
+           let target = URL(string: location, relativeTo: response?.url ?? request.url)?.absoluteURL {
+            body = "Location: \(address(of: target))" + (body.isEmpty ? "" : "\n\(body)")
+        }
         // Whatever this request carried, wherever the reply echoes it back.
         body = masking(credentials(in: request), in: body)
         return Entry(
