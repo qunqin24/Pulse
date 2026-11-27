@@ -965,6 +965,8 @@
 "Expired" = "만료됨";
 "Last step's speed" = "직전 단계 속도";
 "Card contents" = "카드 내용";
+"Choose what the card shows" = "카드에 보일 내용 선택";
+"%@ of %@ shown." = "%@개 / %@개 표시 중.";
 "Update time" = "업데이트 시각";
 "Quota amounts" = "한도 수치";
 "Today, 7 days and 31 days" = "오늘·7일·31일";

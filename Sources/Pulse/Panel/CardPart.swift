@@ -61,6 +61,24 @@ enum CardPart: String, CaseIterable, Sendable {
         }
     }
 
+    /// The row's symbol in Card contents.
+    var symbol: String {
+        switch self {
+        case .plan: "creditcard"
+        case .updated: "clock"
+        case .forecast: "chart.line.uptrend.xyaxis"
+        case .value: "dollarsign.circle"
+        case .amounts: "number"
+        case .figures: "calendar"
+        case .chart: "chart.bar"
+        case .topModel: "cpu"
+        case .cacheHitRate: "arrow.triangle.2.circlepath"
+        case .promptCache: "timer"
+        case .lastStep: "speedometer"
+        case .resetCredits: "arrow.counterclockwise.circle"
+        }
+    }
+
     var title: String {
         switch self {
         case .plan: .localized("Plan")

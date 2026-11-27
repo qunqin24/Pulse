@@ -965,6 +965,8 @@
 "Expired" = "期限切れ";
 "Last step's speed" = "直前のステップの速度";
 "Card contents" = "カードの内容";
+"Choose what the card shows" = "カードに出す内容を選ぶ";
+"%@ of %@ shown." = "%@ / %@ 項目を表示中。";
 "Update time" = "更新時刻";
 "Quota amounts" = "クォータの数値";
 "Today, 7 days and 31 days" = "今日・7 日・31 日";

@@ -965,6 +965,8 @@
 "Expired" = "已過期";
 "Last step's speed" = "上一步速度";
 "Card contents" = "卡片內容";
+"Choose what the card shows" = "選擇卡片顯示的內容";
+"%@ of %@ shown." = "已顯示 %@ 項，共 %@ 項。";
 "Update time" = "更新時間";
 "Quota amounts" = "額度數值";
 "Today, 7 days and 31 days" = "今天、7 天和 31 天";

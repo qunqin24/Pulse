@@ -965,6 +965,8 @@
 "Expired" = "Expired";
 "Last step's speed" = "Last step's speed";
 "Card contents" = "Card contents";
+"Choose what the card shows" = "Choose what the card shows";
+"%@ of %@ shown." = "%@ of %@ shown.";
 "Update time" = "Update time";
 "Quota amounts" = "Quota amounts";
 "Today, 7 days and 31 days" = "Today, 7 days and 31 days";

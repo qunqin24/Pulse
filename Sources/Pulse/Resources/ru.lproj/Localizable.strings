@@ -965,6 +965,8 @@
 "Expired" = "истёк";
 "Last step's speed" = "Скорость последнего шага";
 "Card contents" = "Содержимое карточки";
+"Choose what the card shows" = "Выбрать, что показывает карточка";
+"%@ of %@ shown." = "Показано %@ из %@.";
 "Update time" = "Время обновления";
 "Quota amounts" = "Объём квоты";
 "Today, 7 days and 31 days" = "Сегодня, 7 и 31 день";
