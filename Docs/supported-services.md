@@ -56,7 +56,7 @@ Ported by reading [CodexBar](https://github.com/steipete/CodexBar)'s providers. 
 | | **DevPass** | Pasted API key | Weekly premium allowance and plan credits |
 | <img src="icons/elevenlabs.svg" width="24" height="24" alt=""> | **ElevenLabs** | Pasted API key | Character credits for the billing period |
 | | **Factory** | Pasted API key | 5-hour, weekly and monthly limits (Standard and Premium on older billing); extra-usage balance |
-| <img src="icons/geminicli.svg" width="24" height="24" alt=""> | **Gemini** | Gemini CLI's saved login, read only and never refreshed | Each model's quota. The login lasts about an hour, so it reads only while Gemini CLI is in use |
+| <img src="icons/geminicli.svg" width="24" height="24" alt=""> | **Gemini CLI** | Its saved login, read only and never refreshed | Each model's quota. The login lasts about an hour, so it reads only while Gemini CLI is in use |
 | | **GitKraken AI** | Pasted token | Personal credits and the shared pool |
 | <img src="icons/huggingface.svg" width="24" height="24" alt=""> | **Hugging Face** | Pasted token, or the one `hf auth login` saved | ZeroGPU quota |
 | | **Hyper** | Pasted API key | Hypercredit balance |
@@ -114,7 +114,7 @@ Token spend reads what each client leaves on this Mac — logs, databases and ex
 | <img src="icons/antigravity.svg" width="24" height="24" alt=""> | **Antigravity CLI** | `~/.gemini/antigravity-cli/conversations/` | Antigravity |
 | <img src="icons/antigravity.svg" width="24" height="24" alt=""> | **Antigravity IDE** | `~/.gemini/antigravity/conversations/`, `~/.gemini/antigravity-ide/conversations/` | Antigravity |
 | <img src="icons/antigravity.svg" width="24" height="24" alt=""> | **Antigravity (export)** | `~/.config/tokscale/antigravity-cache/sessions/` † | Antigravity |
-| <img src="icons/gemini.svg" width="24" height="24" alt=""> | **Gemini CLI** | `~/.gemini/tmp/` | Gemini |
+| <img src="icons/gemini.svg" width="24" height="24" alt=""> | **Gemini CLI** | `~/.gemini/tmp/` | Gemini CLI |
 | <img src="icons/qwen.svg" width="24" height="24" alt=""> | **Qwen Code** | `~/.qwen/projects/` | — |
 | <img src="icons/amp.svg" width="24" height="24" alt=""> | **Amp** | `~/.local/share/amp/threads/` | Amp |
 | | **Droid** | `~/.factory/sessions/` | Factory |

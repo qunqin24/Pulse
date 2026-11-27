@@ -1,4 +1,4 @@
-# Gemini
+# Gemini CLI
 
 Profiled provider: [`Sources/Pulse/Providers/Profiled/GeminiUsageService.swift`](../../Sources/Pulse/Providers/Profiled/GeminiUsageService.swift). User setup: [../setup/gemini.md](../setup/gemini.md).
 

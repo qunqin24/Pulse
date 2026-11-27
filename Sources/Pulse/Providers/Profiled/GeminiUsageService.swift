@@ -21,7 +21,7 @@ import Foundation
 /// one per token type — the one with least left is the one that bites.
 extension ProviderProfile {
     static let gemini = ProviderProfile(
-        displayName: "Gemini",
+        displayName: "Gemini CLI",
         iconResource: "geminicli",
         credential: .localLogin,
         accessDescription: { .localized("Reads the login saved in ~/.gemini/oauth_creds.json. No Keychain prompt.") },

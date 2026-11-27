@@ -1,4 +1,4 @@
-# Set up Gemini in Pulse
+# Set up Gemini CLI in Pulse
 
 Pulse shows how much of each Gemini model's quota is left in Gemini CLI, one row per model, as the fraction Google reports, with the time each one resets.
 
@@ -11,7 +11,7 @@ Google stopped serving Gemini CLI to individual, AI Pro and Ultra accounts in Ju
 ## Steps
 
 1. In Terminal, run `gemini` and sign in with Google if it asks.
-2. In Pulse: **Settings → Gemini**. Turn on **Show in panel**. There's nothing to paste: Pulse reads the login Gemini CLI saved.
+2. In Pulse: **Settings → Gemini CLI**. Turn on **Show in panel**. There's nothing to paste: Pulse reads the login Gemini CLI saved.
 3. Within a few seconds the ring appears, and the account's pane lists each model's quota and when it resets.
 
 Gemini CLI's login lasts about an hour, and only Gemini CLI renews it. If you haven't used Gemini CLI for a while, Pulse says the login has expired — run any `gemini` command and refresh.
