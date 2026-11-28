@@ -1,0 +1,4 @@
+// Navigation-only Pulse URLs: no command, credential, or login routes.
+function accountURL(id){if(typeof id!=='string'||!id||/[\s/\\]/u.test(id)||(id.match(/#/g)||[]).length>1)return null;return 'pulse://account/'+encodeURIComponent(id)}
+function parse(raw,known){if(typeof raw!=='string'||raw.length>2048||/[?#\u0000-\u0020\u007f]/.test(raw))return null;let url;try{url=new URL(raw)}catch{return null}if(url.protocol!=='pulse:'||url.username||url.password||url.port||url.search||url.hash)return null;const host=url.hostname.toLowerCase();if((host==='settings'||host==='integrations')&&(url.pathname===''||url.pathname==='/'))return {page:host==='settings'?null:host};if(host!=='account'||!/^pulse:\/\/account\/[^/?#]+$/i.test(raw)||!/^\/[^/]+$/.test(url.pathname))return null;let id;try{id=decodeURIComponent(url.pathname.slice(1))}catch{return null}if(!accountURL(id)||!Object.hasOwn(known??{},id))return null;return {page:'provider-'+id}}
+module.exports={accountURL,parse};

@@ -1,0 +1,3 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{period}=require('../src/recap-period');
+test('recap accepts explicit calendar dates and an exact week start',()=>{for(const [key,kind] of [['2026','year'],['2026-09','month'],['2026-10-18','day'],['week-2026-10-18','week'],['2024-02-29','day']]){const p=period(key);assert.equal(p.kind,kind);assert.equal(p.key,key)}const p=period(null,new Date(2026,9,18));assert.equal(p.key,'2026-10')});
+test('recap rejects malformed or nonexistent dates',()=>{for(const key of ['2026-02-29','2024-02-30','2026-13','2026-00','week-2026-10','2026-1','2026-01-1','0000','2026-01-01?x'])assert.equal(period(key),null,key)});

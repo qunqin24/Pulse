@@ -1,0 +1,8 @@
+// Rate-window estimates, derived from Pulse (Apache-2.0).
+(function(root,factory){if(typeof module==='object'&&module.exports)module.exports=factory(require('./model-pricing'));else root.budgetEstimate=factory(root.modelPricing)})(globalThis,pricing=>{
+const quarter=900000;
+function measure(slots,prices,start,end){let cost=0,tokens=0;for(const [key,models] of Object.entries(slots??{})){const at=Number(key),overlap=Math.min(at+quarter,end)-Math.max(at,start);if(!Number.isFinite(at)||overlap<=0)continue;const share=Math.min(1,overlap/quarter);for(const [model,tally] of Object.entries(models??{})){tokens+=['input','cacheRead','cacheWrite','output'].reduce((a,k)=>a+(Number.isFinite(tally[k])?tally[k]:0),0)*share;const rate=pricing.lookup(model,prices??{});if(rate)cost+=pricing.cost(tally,rate)*share}}return {cost,tokens}}
+function estimate(window,slots,prices,observedAt,now=Date.now()){const reset=Date.parse(window?.reset),seconds=window?.seconds,used=window?.usedPercent,read=Math.min(Date.parse(observedAt)||now,now);if(!Number.isFinite(reset)||!Number.isFinite(seconds)||seconds<=0||!window.reportsLength||window.scope||!Number.isFinite(used)||used<5)return null;const start=reset-seconds*1000,first=Math.min(...Object.keys(slots??{}).map(Number).filter(Number.isFinite));if(!(start<read&&read<reset)||first>start||!Number.isFinite(first))return null;const spent=measure(slots,prices,start,read).cost;if(spent<.20)return null;const full=spent/(used/100);return {full,spent,remaining:Math.max(full-spent,0)}}
+function elsewhere(rise,cost,tokens){return rise>=2-1e-7&&cost<.05&&tokens<1000}
+return {measure,estimate,elsewhere};
+});

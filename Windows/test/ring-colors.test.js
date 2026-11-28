@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{customTint}=require('../src/usage-display');
+test('custom ring tint is used for a valid colour but never hides an exhausted limit',()=>{assert.equal(customTint({usedPercent:80},'#4099ff'),'#4099FF');assert.equal(customTint({usedPercent:100},'#4099ff'),null);assert.equal(customTint({usedPercent:1,exhausted:true},'#4099ff'),null);assert.equal(customTint({usedPercent:20},'red'),null);assert.equal(customTint({usedPercent:20},null),null)});

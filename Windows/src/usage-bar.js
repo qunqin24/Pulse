@@ -1,0 +1,2 @@
+// Derived from Pulse, Copyright (c) 2026 qunqin24, Apache-2.0.
+(function(root){function ticks(width,fraction,scale=1){if(!Number.isFinite(width)||width<0)width=0;if(!Number.isFinite(scale)||scale<=0)scale=1;const count=Math.max(Math.floor((width+2*scale)/(4.5*scale)),1),f=Number.isFinite(fraction)?Math.max(0,Math.min(1,fraction)):0;let lit=Math.round(f*count);if(f>0)lit=Math.max(lit,1);if(f<1)lit=Math.min(lit,count-1);return {count,lit:f>=1?count:lit}}const api={ticks};if(typeof module!=='undefined')module.exports=api;else root.usageBar=api})(globalThis);

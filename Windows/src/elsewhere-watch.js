@@ -1,0 +1,11 @@
+// Detect rate-limit rises with no corresponding local usage, derived from Pulse.
+const {measure,elsewhere}=require('./budget-estimate');
+class ElsewhereWatch{
+ constructor(saved={}){this.last=new Map;this.pending=[];this.cycles={...saved}}
+ observe(id,scope,reading){if(!scope||reading?.status!=='live'||!['codex','claude'].includes(id))return false;const at=Date.parse(reading.observedAt);if(!Number.isFinite(at))return false;let queued=false;for(const w of reading.windows??[]){const reset=Date.parse(w.reset),used=w.usedPercent;if(w.scope||!w.id||!Number.isFinite(reset)||reset<=at||!Number.isFinite(used))continue;const key=JSON.stringify([id,scope,w.id]),old=this.last.get(key);if(old&&at<=old.at)continue;this.last.set(key,{at,reset,used});if(!old||Math.abs(old.reset-reset)>=120000||used-old.used<2-1e-7||this.marked(id,scope,w))continue;this.pending.push({id,scope,key,reset,start:old.at-900000,end:at,rise:used-old.used});queued=true}if(this.pending.length>100)this.pending.splice(0,this.pending.length-100);return queued}
+ marked(id,scope,w){const reset=Date.parse(w?.reset),value=this.cycles[JSON.stringify([id,scope,w?.id])];return Number.isFinite(reset)&&Number.isFinite(value)&&Math.abs(reset-value)<120000}
+ settle(snapshot,prices,scanStarted,currentScope,now=Date.now()){let changed=false;const keep=[];for(const entry of this.pending){if(currentScope(entry.id)!==entry.scope)continue;if(scanStarted<entry.end){keep.push(entry);continue}const agent=snapshot?.agents?.[entry.id==='codex'?'Codex':'Claude Code'];if(!agent||agent.warnings?.length||!agent.priceSlots)continue;const local=measure(agent.priceSlots,prices,entry.start,entry.end);if(!prices&&local.tokens>0)continue;if(elsewhere(entry.rise,local.cost,local.tokens)){this.cycles[entry.key]=entry.reset;changed=true}}this.pending=keep;for(const [key,reset] of Object.entries(this.cycles))if(reset<=now)delete this.cycles[key];return changed}
+ checking(currentScope){const result={};for(const entry of this.pending)if(currentScope(entry.id)===entry.scope)(result[entry.id]??={})[JSON.parse(entry.key)[2]]=true;return result}
+ public(readings,currentScope){const result={};for(const id of ['codex','claude']){const scope=currentScope(id);for(const w of readings[id]?.windows??[])if(this.marked(id,scope,w))(result[id]??={})[w.id]=true}return result}
+}
+module.exports=ElsewhereWatch;

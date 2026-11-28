@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),parts=require('../src/card-parts');
+test('card sections default on, and an explicit empty list turns them off',()=>{assert.equal(parts.has({},'codex','plan'),true);assert.equal(parts.has({},'codex','updated'),true);assert.equal(parts.has({codex:[]},'codex','plan'),false);assert.equal(parts.has({codex:['updated']},'codex','updated'),true);assert.equal(parts.has({codex:['updated']},'codex','plan'),false);assert.equal(parts.valid(['plan','updated']),true);assert.equal(parts.valid(['unexpected']),false)});

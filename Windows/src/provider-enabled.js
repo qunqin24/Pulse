@@ -1,0 +1,3 @@
+function update(state,id,enabled,providers){if(typeof id!=='string'||!Object.hasOwn(providers,id)||typeof enabled!=='boolean')throw Error('无效的服务商');const ids=Array.isArray(state.enabled)?state.enabled:[],isOn=ids.includes(id);if(!enabled&&isOn&&ids.length===1)throw Error('请至少保留一个已启用的服务商');return {...state,enabled:enabled?[...new Set([...ids,id])]:ids.filter(x=>x!==id)}}
+function preserveNewer(next,current,revisions,snapshot){const enabled=new Set(next.enabled);for(const id of Object.keys(revisions))if((revisions[id]??0)!==(snapshot[id]??0)){if(current.enabled.includes(id))enabled.add(id);else enabled.delete(id)}next.enabled=[...enabled];return next}
+module.exports={update,preserveNewer};

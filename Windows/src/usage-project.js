@@ -1,0 +1,5 @@
+// Project identities preserve stated directory spelling and never resolve filesystem paths.
+const path=require('node:path');
+function identity(raw){if(typeof raw!=='string'||!raw.trim()||raw.length>4096||/[\x00-\x1f\x7f]/.test(raw))return null;const windows=/^[A-Za-z]:[\\/]|^\\\\/.test(raw),api=windows?path.win32:path.posix;if(!api.isAbsolute(raw))return null;let value=api.normalize(raw);const root=api.parse(value).root;while(value.length>root.length&&/[\\/]$/.test(value))value=value.slice(0,-1);const bits=value.split(/[\\/]+/);const idx=bits.findIndex((x,i)=>x==='Documents'&&bits[i+1]==='Codex'&&/^\d{4}-\d{2}-\d{2}$/.test(bits[i+2]??'')&&!!bits[i+3]);if(idx>=0||bits.slice(-2).join('/')==='deepseek-harness/default-workspace')return null;const worktree=bits.findIndex((x,i)=>x==='.claude'&&bits[i+1]==='worktrees'&&!!bits[i+2]);if(worktree>0){const end=value.search(/[\\/]\.claude[\\/]worktrees[\\/]/);if(end>0)value=value.slice(0,end)}return value}
+const {labels}=require('./recap-projects');
+module.exports={identity,labels};

@@ -121,3 +121,7 @@ Only the newest row of `steps` is read (`step_type`, `status`; `AgentActivity.an
 - **Waiting** (9) is waiting for a person and is not drawn. Error, canceled, interrupted and the rest end it too: a tool denied in print mode ended the run there.
 
 The step's own time is inside a protobuf blob, so the grace is timed from the database's last write. A database without a `steps` table, or one that cannot be read at that moment (a WAL database with no journal beside it after `agy` exits, or one busy mid-recovery), is not work and is not cached: it is asked again on the next sample. `AntigravityActivityTests`.
+
+## Windows preview
+
+The experimental Electron port also checks a local Antigravity hub record for its per-launch token. It accepts the record only when the process path identifies Antigravity and the reported HTTPS port belongs to that process; stale records are ignored. It then uses the loopback quota endpoint. This route returned Gemini and Claude/GPT quota windows from Antigravity 2.35 on one Windows machine. Other versions and long-running operation still need verification. The CLI route remains a fallback when supported.
