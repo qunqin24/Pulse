@@ -1,0 +1,15 @@
+// Pulse's automatic robot colour selection and contrast rules (Apache-2.0).
+(function(root){
+const brands={claude:'#D97757',deepseek:'#4D6BFE',volcengine:'#1664FF',minimax:'#E8483F',antigravity:'#4285F4',glm:'#3A7BF7',kimi:'#7AA5FF',xiaomi:'#FF6900',sub2api:'#3875F6',qoder:'#2ADB5C',stepfun:'#0160FF',alibabatoken:'#FF6A00',alibabacoding:'#FF6A00',huggingface:'#FFD21E',perplexity:'#20808D',zoommate:'#0B5CFF'};
+function rgb(hex){if(typeof hex!=='string'||!/^#[0-9a-f]{6}$/i.test(hex))return null;return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255)}
+function hex(v){return '#'+v.map(x=>Math.round(Math.max(0,Math.min(1,x))*255).toString(16).padStart(2,'0')).join('')}
+function hue(v){const max=Math.max(...v),min=Math.min(...v),span=max-min;if(!span)return 0;let n=max===v[0]?((v[1]-v[2])/span)%6:max===v[1]?(v[2]-v[0])/span+2:(v[0]-v[1])/span+4;n/=6;return n<0?n+1:n}
+function saturation(v){const max=Math.max(...v);return max>0?(max-Math.min(...v))/max:0}
+function hsv(h,s,b){const n=(h-Math.floor(h))*6,c=b*s,x=c*(1-Math.abs(n%2-1)),v=n<1?[c,x,0]:n<2?[x,c,0]:n<3?[0,c,x]:n<4?[0,x,c]:n<5?[x,0,c]:[c,0,x];return v.map(x=>x+b-c)}
+function distance(a,b){const d=Math.abs(a-b)%1;return Math.min(d,1-d)}
+function luminance(v){const l=v.map(c=>c<=.03928?c/12.92:((c+.055)/1.055)**2.4);return .2126*l[0]+.7152*l[1]+.0722*l[2]}
+function legible(v,dark){const target=dark?1:0,panel=dark?0:luminance([.97,.97,.97]),contrast=x=>(Math.max(luminance(x),panel)+.05)/(Math.min(luminance(x),panel)+.05);if(contrast(v)>=3)return v;let low=0,high=1;for(let i=0;i<20;i++){const mid=(low+high)/2,mix=v.map(x=>x+(target-x)*mid);if(contrast(mix)<3)low=mid;else high=mid}return v.map(x=>x+(target-x)*high)}
+const usage=[[0,.9,.55],[1,.76,.15],[1,.31,.26],[.85,.09,.13]].map(hue),clearance=[66/360,50/360,35/360,35/360],wheel=Array.from({length:24},(_,i)=>i/24).filter(h=>usage.every((u,i)=>distance(h,u)>=clearance[i])).map(h=>hsv(h,.6,.95));
+function inks(entries,dark=true){const chosen=entries.map(x=>rgb(x.custom)),result=entries.map((x,i)=>chosen[i]??rgb(brands[x.provider])),used=new Set();function separation(h,others){const hs=others.filter(Boolean).filter(v=>saturation(v)>=.15).map(hue);return hs.length?Math.min(...hs.map(x=>distance(h,x))):1}for(let i=0;i<result.length;i++){if(result[i])continue;const neighbors=[result[i-1],result[i+1]],free=wheel.map((_,n)=>n).filter(n=>!used.has(n)),candidates=free.length?free:wheel.map((_,n)=>n);let best=candidates[0],bestScore=[-1,-1];for(const n of candidates){const near=separation(hue(wheel[n]),neighbors),all=separation(hue(wheel[n]),result),score=[Math.min(near,all*2),near];if(score[0]>bestScore[0]||score[0]===bestScore[0]&&score[1]>bestScore[1]){best=n;bestScore=score}}used.add(best);result[i]=wheel[best]}return result.map((v,i)=>{const color=chosen[i]?v:legible(v,dark);return {color:hex(color),eyes:luminance(color)<.18?'#eeeeee':'#151515'}})}
+const api={brands,rgb,hue,hsv,distance,luminance,legible,inks,wheel};if(typeof module!=='undefined')module.exports=api;else root.pulseRobotColors=api;
+})(globalThis);

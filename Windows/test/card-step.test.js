@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{stepLabel}=require('../src/card-history');
+test('card shows recent Codex step speed but drops stale or undersized samples',()=>{const now=20000000,step={tokens:250,duration:10,finishedAt:now-120000};assert.equal(stepLabel(step,now),'≈ 25 tok/s · 2 分钟前');assert.equal(stepLabel({...step,finishedAt:now-3600001},now),null);assert.equal(stepLabel({...step,tokens:199},now),null);assert.equal(stepLabel({...step,duration:.5},now),null)});

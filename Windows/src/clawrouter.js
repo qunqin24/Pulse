@@ -1,0 +1,4 @@
+// Derived from Pulse, Copyright (c) 2026 qunqin24, Apache-2.0.
+function parse(root){const b=root?.budget;if(!b||typeof b!=='object'||Array.isArray(b)||typeof b.configured!=='boolean'||b.limitMicros!=null&&!Number.isSafeInteger(b.limitMicros)||b.spentMicros!=null&&!Number.isSafeInteger(b.spentMicros))throw new Error('服务商返回了无法读取的数据');if(!b.configured||!(b.limitMicros>0)||!(b.spentMicros>=0))throw new Error('服务商未报告可显示的额度');return {windows:[{id:'clawrouter.monthly',name:'月度预算',seconds:2592000,reportsLength:false,usedPercent:Math.min(100,b.spentMicros/b.limitMicros*100),reset:null,exhausted:b.spentMicros>=b.limitMicros}]};}
+async function fetchClawRouter(key,transport){if(typeof key!=='string'||!key.trim())throw new Error('请在设置中填写 API 密钥');return parse(await transport('https://clawrouter.openclaw.ai/v1/usage',{Authorization:'Bearer '+key.trim(),Accept:'application/json'}));}
+module.exports={parse,fetchClawRouter};

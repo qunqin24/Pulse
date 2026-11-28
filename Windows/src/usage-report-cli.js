@@ -1,0 +1,4 @@
+// This command reads the public snapshot only. It never opens settings or credentials.
+const fs=require('node:fs'),path=require('node:path'),base=process.env.APPDATA||path.join(require('node:os').homedir(),'AppData','Roaming'),file=path.join(base,'pulse-windows-port','usage-report.json');
+let data;try{data=JSON.parse(fs.readFileSync(file,'utf8'));if(!Array.isArray(data.accounts))throw Error('invalid report')}catch(e){if(e.code!=='ENOENT'){process.stderr.write('Pulse: 无法读取用量缓存\n');process.exitCode=1;return}data={accounts:[]}}
+const now=Date.now();data.generatedAt=new Date(now).toISOString();for(const account of data.accounts){const stamp=Date.parse(account.observedAt);if(Number.isFinite(stamp))account.ageSeconds=Math.max(0,Math.round((now-stamp)/1000));else delete account.ageSeconds}process.stdout.write(JSON.stringify(data,null,2)+'\n');

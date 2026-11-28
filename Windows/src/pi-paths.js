@@ -1,0 +1,4 @@
+const path=require('node:path');
+function value(raw,home){if(typeof raw!=='string'||!raw.trim())return null;const v=raw.trim();return v==='~'?home:v.startsWith('~/')||v.startsWith('~\\')?path.join(home,v.slice(2)):v}
+function roots(home,env=process.env){const senpi=value(env.SENPI_CODING_AGENT_DIR,home)??path.join(home,'.senpi','agent'),kimchi=value(env.KIMCHI_CODING_AGENT_DIR,home);return [{client:'pi',label:'Pi',roots:[path.join(home,'.pi','agent','sessions')]},{client:'omp',label:'omp',roots:[path.join(home,'.omp','agent','sessions')]},{client:'senpi',label:'Senpi',roots:[path.join(senpi,'sessions'),value(env.SENPI_CODING_AGENT_SESSION_DIR,home)].filter(Boolean)},{client:'kimchi',label:'Kimchi',roots:[kimchi?path.join(kimchi,'sessions'):path.join(home,'.config','kimchi','harness','sessions')]}]}
+module.exports={value,roots};

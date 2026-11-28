@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),d=require('../src/usage-display');
+test('update age describes only a valid observation',()=>{const at='2026-01-01T00:00:00Z',now=Date.parse(at);assert.equal(d.updated(at,now+1000),'刚刚更新');assert.equal(d.updated(at,now+180000),'3分钟前更新');assert.equal(d.updated(at,now+7200000),'2小时前更新');assert.equal(d.updated(at,now+172800000),'2天前更新');assert.equal(d.updated(null,now),null);});

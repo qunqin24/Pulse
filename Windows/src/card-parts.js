@@ -1,0 +1,2 @@
+// Per-account card sections, derived from Pulse under Apache-2.0.
+(function(root){const known=['plan','updated','forecast','value','resetCredits'],defaults=['plan','updated','value'];function has(parts,id,part){const saved=parts?.[id];return Array.isArray(saved)?saved.includes(part):defaults.includes(part)}function valid(parts){return Array.isArray(parts)&&parts.every(x=>known.includes(x))}const api={known,has,valid};if(typeof module!=='undefined')module.exports=api;else root.cardParts=api})(globalThis);

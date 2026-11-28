@@ -1,0 +1,3 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{metricPoints,formatMetric}=require('../src/metric-chart');
+test('metric charts preserve time gaps and normalize values',()=>{const h=[{t:'2026-01-01T00:00:00Z',v:10},{t:'2026-01-01T01:00:00Z',v:20},{t:'2026-01-01T04:00:00Z',v:10}],p=metricPoints(h,100,40,0);assert.equal(p.length,3);assert.equal(p[1].x,25);assert.equal(p[1].y,0);assert.equal(p[0].y,40)});
+test('metric charts handle flat and too-short series',()=>{assert.equal(metricPoints([{t:'2026-01-01T00:00:00Z',v:1}]).length,0);const p=metricPoints([{t:'2026-01-01T00:00:00Z',v:3},{t:'2026-01-01T01:00:00Z',v:3}],100,40);assert.equal(p[0].y,20);assert.equal(formatMetric(0.0000123),'0.000012');assert.equal(formatMetric(12.345), '12.35')});

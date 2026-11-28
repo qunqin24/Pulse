@@ -1,0 +1,3 @@
+const test=require('node:test'),assert=require('node:assert/strict'),names=require('../src/account-label');
+test('custom account name takes precedence and blank names fall back',()=>{const p={name:'Codex',type:'local'};assert.equal(names.label(p,{codex:'工作账户'},'codex'),'工作账户');assert.equal(names.label(p,{codex:'   '},'codex'),'Codex');assert.equal(names.label(p,{},'codex'),'Codex');assert.equal(names.label({name:'扩展名',type:'extension'},{x:'别名'},'x'),'扩展名')});
+test('account names reject control characters and excessive input',()=>{assert.equal(names.valid('用户 账号'),true);assert.equal(names.valid('名字\n下一行'),false);assert.equal(names.valid('x'.repeat(201)),false);assert.equal(names.valid(null),false)});

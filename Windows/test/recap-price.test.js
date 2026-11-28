@@ -1,0 +1,2 @@
+const test=require('node:test'),assert=require('node:assert/strict'),{priceEntry}=require('../src/recap-data');
+test('monthly subscription price accepts original formats and refuses malformed values',()=>{for(const [s,n] of [['',null],['0',null],[' $ 1,234.50 ',1234.5],['12,50',12.5],['10000',10000],['1.234',undefined],['-1',undefined],['10000.01',undefined],['1e2',undefined]])assert.equal(priceEntry(s),n,s)});
